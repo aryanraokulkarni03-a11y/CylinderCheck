@@ -587,48 +587,90 @@ export default function App() {
                 </div>
 
                 <div style={{ ...card, marginBottom: 16 }}>
-                  <div style={secTitle}>6-Month Price History</div>
-                  <div style={{ position: "relative", height: 130, display: "flex", alignItems: "flex-end",
-                    justifyContent: "space-between", paddingTop: 10 }}>
-                    <div style={{ position: "absolute", top: 0,   left: 0, right: 0, borderTop: "1px dashed #2a2a2a" }} />
-                    <div style={{ position: "absolute", top: "50%",left: 0, right: 0, borderTop: "1px dashed #1e1e1e" }} />
-                    <div style={{ position: "absolute", bottom: 28,left: 0, right: 0, borderBottom: "1px solid #2e2e2e" }} />
-                    {[
-                      { m: "Oct 24", p: 835 },
-                      { m: "Nov 24", p: 852 },
-                      { m: "Dec 24", p: 846 },
-                      { m: "Jan 25", p: 880 },
-                      { m: "Feb 25", p: 870 },
-                      { m: "Mar 25", p: 900 },
-                      { m: "Now",    p: 903 },
-                      { m: "Apr (Est)", p: 924, proj: true },
-                    ].map((d) => {
-                      const h = Math.max(8, ((d.p - 800) / 140) * 96);
-                      const isNow = d.m === "Now";
-                      return (
-                        <div key={d.m} style={{ display: "flex", flexDirection: "column", alignItems: "center",
-                          width: "11%", height: "100%", justifyContent: "flex-end" }}>
-                          <div style={{ color: isNow ? "#fff" : d.proj ? "#FF6B00" : "#666",
-                            fontSize: 11, fontWeight: 600, marginBottom: 6 }}>₹{d.p}</div>
-                          <div style={{
-                            width: "70%", maxWidth: 36, height: h,
-                            background: isNow ? "linear-gradient(to top,#FF6B00,#FFAA40)"
-                              : d.proj ? "transparent" : "linear-gradient(to top,#141414,#1e1e1e)",
-                            border: d.proj ? "1px dashed #FF6B0066" : isNow ? "none" : "1px solid #2a2a2a",
-                            borderBottom: "none",
-                            borderTopLeftRadius: 5, borderTopRightRadius: 5,
-                            boxShadow: isNow ? "0 0 20px rgba(255,107,0,.22)" : "none",
-                          }} />
-                          <div style={{ marginTop: 10, fontSize: 10,
-                            color: isNow || d.proj ? "#FF6B00" : "#555", fontWeight: 500 }}>
-                            {d.m}
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                    <div style={secTitle}>6-Month Price History</div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 600 }}>▲ +₹68 since Oct</div>
+                      <div style={{ fontSize: 10, color: "#444", marginTop: 2 }}>Apr revision expected</div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 12, color: "#555", marginTop: 8 }}>
-                    +₹68 over 6 months. April revision likely on supply chain pressures.
+                  {(() => {
+                    const pts = [
+                      { m: "Oct", p: 835 },
+                      { m: "Nov", p: 852 },
+                      { m: "Dec", p: 846 },
+                      { m: "Jan", p: 880 },
+                      { m: "Feb", p: 870 },
+                      { m: "Mar", p: 900 },
+                      { m: "Now", p: 903 },
+                    ];
+                    const projected = { m: "Apr", p: 924 };
+                    const W = 560, H = 110, PAD = { t: 16, b: 32, l: 8, r: 8 };
+                    const minP = 820, maxP = 930;
+                    const toX = (i, total) => PAD.l + (i / (total - 1)) * (W - PAD.l - PAD.r);
+                    const toY = (p) => PAD.t + (1 - (p - minP) / (maxP - minP)) * (H - PAD.t - PAD.b);
+                    const solidPts = pts.map((d, i) => [toX(i, pts.length + 1), toY(d.p)]);
+                    const projX = toX(pts.length, pts.length + 1);
+                    const projY = toY(projected.p);
+                    const solidPath = solidPts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ");
+                    const areaPath = solidPath + ` L${solidPts[solidPts.length-1][0]},${H - PAD.b} L${solidPts[0][0]},${H - PAD.b} Z`;
+                    return (
+                      <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: "block" }}>
+                        <defs>
+                          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#FF6B00" stopOpacity="0.12"/>
+                            <stop offset="100%" stopColor="#FF6B00" stopOpacity="0"/>
+                          </linearGradient>
+                        </defs>
+                        {/* Grid lines */}
+                        {[0.25, 0.5, 0.75].map(f => (
+                          <line key={f}
+                            x1={PAD.l} y1={PAD.t + f * (H - PAD.t - PAD.b)}
+                            x2={W - PAD.r} y2={PAD.t + f * (H - PAD.t - PAD.b)}
+                            stroke="#1e1e1e" strokeWidth="1" strokeDasharray="3 4"/>
+                        ))}
+                        {/* Area fill */}
+                        <path d={areaPath} fill="url(#areaGrad)"/>
+                        {/* Solid line */}
+                        <path d={solidPath} fill="none" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        {/* Projected dashed extension */}
+                        <line
+                          x1={solidPts[solidPts.length-1][0]} y1={solidPts[solidPts.length-1][1]}
+                          x2={projX} y2={projY}
+                          stroke="#FF6B00" strokeWidth="1.5" strokeDasharray="4 4" opacity=".5"/>
+                        {/* Dots */}
+                        {solidPts.map(([x, y], i) => (
+                          <circle key={i} cx={x} cy={y} r={i === solidPts.length - 1 ? 4 : 2.5}
+                            fill={i === solidPts.length - 1 ? "#FF6B00" : "#1e1e1e"}
+                            stroke="#FF6B00" strokeWidth={i === solidPts.length - 1 ? 0 : 1.5}/>
+                        ))}
+                        {/* Projected dot */}
+                        <circle cx={projX} cy={projY} r="3" fill="#0f0f0f" stroke="#FF6B00" strokeWidth="1.5" opacity=".5" strokeDasharray="2 2"/>
+                        {/* X-axis labels */}
+                        {pts.map((d, i) => (
+                          <text key={d.m} x={toX(i, pts.length + 1)} y={H - 4}
+                            textAnchor="middle" fill={d.m === "Now" ? "#FF6B00" : "#555"}
+                            fontSize="9" fontFamily="'Instrument Sans',sans-serif" fontWeight={d.m==="Now"?"700":"400"}>
+                            {d.m}
+                          </text>
+                        ))}
+                        <text x={projX} y={H - 4} textAnchor="middle" fill="#FF6B0066"
+                          fontSize="9" fontFamily="'Instrument Sans',sans-serif">Apr</text>
+                        {/* Current price callout */}
+                        <rect x={solidPts[solidPts.length-1][0] - 22} y={solidPts[solidPts.length-1][1] - 22}
+                          width="44" height="16" rx="4" fill="#FF6B00"/>
+                        <text x={solidPts[solidPts.length-1][0]} y={solidPts[solidPts.length-1][1] - 11}
+                          textAnchor="middle" fill="#fff" fontSize="9" fontWeight="700"
+                          fontFamily="'Instrument Sans',sans-serif">₹903</text>
+                        {/* Projected price label */}
+                        <text x={projX} y={projY - 8} textAnchor="middle" fill="#FF6B0077"
+                          fontSize="9" fontFamily="'Instrument Sans',sans-serif">₹924 est.</text>
+                      </svg>
+                    );
+                  })()}
+                  <div style={{ fontSize: 12, color: "#444", marginTop: 12, paddingTop: 12, borderTop: "1px solid #1a1a1a", display: "flex", justifyContent: "space-between" }}>
+                    <span>IndianOil Delhi · 14.2 kg cylinder</span>
+                    <span style={{ color: "#333" }}>Dashed = projected</span>
                   </div>
                 </div>
 

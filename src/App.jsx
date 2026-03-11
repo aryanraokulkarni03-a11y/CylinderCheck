@@ -15,6 +15,35 @@ const BANNER_VARIANTS = [
   { zones: 49, reason: "distributor allocation cuts", region: "Eastern India" },
 ];
 
+// ─── Razorpay config — set these in .env.local (never commit) ────────────────
+const RAZORPAY_KEY_ID   = import.meta.env.VITE_RAZORPAY_KEY_ID   || "";
+const ADMIN_PASSWORD    = import.meta.env.VITE_ADMIN_PASSWORD     || "";
+const SUPABASE_FUNC_URL = "https://acrfamphpbnhbdycbtjn.supabase.co/functions/v1";
+
+// ─── Load Razorpay checkout.js dynamically ────────────────────────────────────
+function loadRazorpay() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) { resolve(true); return; }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload  = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
+// ─── AdSense slot component — swap data-ad-slot once approved ─────────────────
+const AdSlot = ({ id = "top" }) => (
+  <div style={{ background: "#0d0d0d", border: "1px dashed #1e1e1e", borderRadius: 12,
+    padding: "14px 20px", marginBottom: 14, display: "flex", alignItems: "center",
+    justifyContent: "space-between", minHeight: 80 }}>
+    {/* Replace this div with your <ins class="adsbygoogle"> tag once AdSense approves */}
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <span style={{ fontSize: 11, color: "#2a2a2a", letterSpacing: 1, fontWeight: 600 }}>ADVERTISEMENT</span>
+    </div>
+  </div>
+);
+
 // ─── Real PIN → Location lookup ───────────────────────────────────────────────
 async function lookupPIN(pin) {
   try {
@@ -134,6 +163,21 @@ export default function App() {
   const [bannerIdx, setBannerIdx]   = useState(0);
   const [bannerVisible, setBannerVisible] = useState(true);
 
+  // ── Payment state ──────────────────────────────────────────────────────────
+  const [payContact, setPayContact] = useState("");
+  const [payPin, setPayPin]         = useState("");
+  const [paying, setPaying]         = useState(false);
+  const [paySuccess, setPaySuccess] = useState(false);
+  const [payError, setPayError]     = useState("");
+
+  // ── Admin state ────────────────────────────────────────────────────────────
+  const [logoClicks, setLogoClicks]     = useState(0);
+  const [showAdminPrompt, setShowAdminPrompt] = useState(false);
+  const [adminPassword, setAdminPassword]     = useState("");
+  const [adminUnlocked, setAdminUnlocked]     = useState(false);
+  const [adminData, setAdminData]             = useState(null);
+  const [adminLoading, setAdminLoading]       = useState(false);
+
   // Rotate banner every 8 seconds
   useEffect(() => {
     const id = setInterval(() => {
@@ -198,6 +242,87 @@ export default function App() {
     setReports(prev => prev.map(x => x.id === r.id ? { ...x, votes: x.votes + 1 } : x));
     await supabase.from("reports").update({ votes: r.votes + 1 }).eq("id", r.id);
   }, [votes]);
+
+  // ── Razorpay embedded checkout ─────────────────────────────────────────────
+  const handlePayment = async () => {
+    if (!payContact) { setPayError("Enter your mobile or email to continue."); return; }
+    setPayError(""); setPaying(true);
+
+    const loaded = await loadRazorpay();
+    if (!loaded) { setPayError("Could not load payment gateway. Check your connection."); setPaying(false); return; }
+
+    try {
+      // 1. Create order via Edge Function
+      const res = await fetch(`${SUPABASE_FUNC_URL}/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact: payContact, pin: payPin }),
+      });
+      const { order_id, error: orderErr } = await res.json();
+      if (orderErr || !order_id) { setPayError(orderErr || "Could not create order."); setPaying(false); return; }
+
+      // 2. Open Razorpay modal
+      const rzp = new window.Razorpay({
+        key:         RAZORPAY_KEY_ID,
+        amount:      4900,
+        currency:    "INR",
+        order_id,
+        name:        "CylinderCheck",
+        description: "Plus — Monthly Subscription",
+        image:       "https://cylinder-check.vercel.app/favicon.ico",
+        prefill:     { contact: payContact },
+        theme:       { color: "#FF6B00" },
+        modal:       { backdropclose: false },
+        handler: async (response) => {
+          // 3. Verify payment via Edge Function
+          const verifyRes = await fetch(`${SUPABASE_FUNC_URL}/verify-payment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id:   response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature:  response.razorpay_signature,
+              contact: payContact, pin: payPin,
+            }),
+          });
+          const { success, error: verifyErr } = await verifyRes.json();
+          if (success) { setPaySuccess(true); }
+          else { setPayError(verifyErr || "Payment verification failed. Contact support."); }
+          setPaying(false);
+        },
+      });
+      rzp.on("payment.failed", () => {
+        setPayError("Payment failed. Please try again.");
+        setPaying(false);
+      });
+      rzp.open();
+    } catch (err) {
+      setPayError("Something went wrong. Try again.");
+      setPaying(false);
+    }
+  };
+
+  // ── Admin: logo click trigger ──────────────────────────────────────────────
+  const handleLogoClick = () => {
+    const next = logoClicks + 1;
+    setLogoClicks(next);
+    if (next >= 5) { setShowAdminPrompt(true); setLogoClicks(0); }
+  };
+
+  const handleAdminUnlock = async () => {
+    if (adminPassword !== ADMIN_PASSWORD) { setAdminPassword(""); return; }
+    setAdminUnlocked(true); setShowAdminPrompt(false); setAdminPassword("");
+    setTab("admin"); setAdminLoading(true);
+    // Fetch admin stats — note: subscriptions table is protected, needs service role
+    // For now we pull from alert_subscriptions (public) and reports as a proxy
+    const [{ data: subs }, { data: rpts }, { data: alerts }] = await Promise.all([
+      supabase.from("subscriptions").select("*").order("created_at", { ascending: false }).limit(50),
+      supabase.from("reports").select("count").single(),
+      supabase.from("alert_subscriptions").select("count").single(),
+    ]);
+    setAdminData({ subscriptions: subs || [], reportCount: rpts?.count || 0, alertCount: alerts?.count || 0 });
+    setAdminLoading(false);
+  };
 
   const displayPrices = useMemo(() => prices.length ? prices : [
     { company: "IndianOil", price: 903 },
@@ -370,7 +495,9 @@ export default function App() {
       <div className="app">
         {/* ── Sidebar ─────────────────────────────────────── */}
         <aside className="sidebar">
-          <div className="sb-logo">
+          <div className="sb-logo" onClick={handleLogoClick}
+            style={{ cursor: "default", userSelect: "none" }}
+            title={logoClicks > 0 ? `${5 - logoClicks} more…` : ""}>
             {Ic.flame}
             <span className="sb-name">CylinderCheck<span className="sb-dot" /></span>
           </div>
@@ -462,6 +589,9 @@ export default function App() {
                         Affiliate links help keep this tool free
                       </div>
                     </div>
+
+                    {/* AdSense slot — track tab */}
+                    <AdSlot id="track-left" />
                   </div>
 
                   {/* Right col */}
@@ -684,6 +814,9 @@ export default function App() {
                     {alertSaved ? "✓ You're on the list!" : "Notify Me on Price Changes →"}
                   </button>
                 </div>
+
+                {/* AdSense slot — prices tab */}
+                <AdSlot id="prices-bottom" />
               </div>
             )}
 
@@ -761,14 +894,21 @@ export default function App() {
             {tab === "alerts" && (
               <div className="fu">
                 <div className="pg-title">Alerts & Notifications</div>
-                <div className="pg-sub">Get notified before your booking window opens, before prices change, and when shortages hit your area.</div>
+                <div className="pg-sub">Know before the shortage hits. Get pinged when your booking window opens and when your area runs low.</div>
 
                 <div className="g2">
+                  {/* Left — Free tier */}
                   <div>
                     <div style={card}>
-                      <div style={secTitle}>Free — Booking Window Alert</div>
-                      <div style={{ fontSize: 13, color: "#666", marginBottom: 18, lineHeight: 1.6 }}>
-                        Tell us your last booking date and we'll ping you 2 days before your next window opens. No app needed.
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#22c55e", background: "#22c55e14",
+                          border: "1px solid #22c55e22", borderRadius: 99, padding: "3px 10px", letterSpacing: .8 }}>
+                          FREE
+                        </span>
+                        <div style={secTitle}>Booking Window Alert</div>
+                      </div>
+                      <div style={{ fontSize: 13, color: "#666", marginBottom: 18, lineHeight: 1.65 }}>
+                        Enter your last booking date and we'll alert you 2 days before your next window opens. No app, no spam.
                       </div>
                       <label style={lbl}>PIN Code</label>
                       <input style={inp} placeholder="6-digit PIN" value={alertPin} maxLength={6}
@@ -791,77 +931,310 @@ export default function App() {
                         {alertSaved ? "✓ Alert Activated!" : "Activate Free Alert →"}
                       </button>
                       {alertSaved && (
-                        <div style={{ fontSize: 12, color: "#22c55e", marginTop: 10, display: "flex", alignItems: "center", gap: 7 }}>
+                        <div style={{ fontSize: 12, color: "#22c55e", marginTop: 10,
+                          display: "flex", alignItems: "center", gap: 7 }}>
                           {Ic.check} You'll be notified 2 days before your window opens.
                         </div>
                       )}
                     </div>
-                  </div>
 
-                  <div>
-                    {/* Plus card */}
-                    <div style={{ ...card, background: "linear-gradient(160deg,#1a0e04,#0d0d0d 60%)",
-                      border: "1px solid #FF6B0040", position: "relative", overflow: "hidden" }}>
-                      <div style={{ position: "absolute", top: -50, right: -50, width: 220, height: 220,
-                        background: "radial-gradient(circle, #FF6B0018 0%, transparent 70%)", pointerEvents: "none" }} />
-                      <div style={{ position: "relative" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                          <div style={{ fontSize: 18, fontWeight: 800, color: "#FF7A00" }}>CylinderCheck Plus</div>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: "#FF6B00", background: "#FF6B0018",
-                            border: "1px solid #FF6B0030", borderRadius: 99, padding: "3px 9px", letterSpacing: .5 }}>
-                            POPULAR
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: "#FF6B00", marginBottom: 16,
-                          display: "inline-block", padding: "3px 9px", background: "#FF6B0018", borderRadius: 8 }}>
-                          🔥 ONLY 4 BETA SLOTS LEFT IN YOUR ZONE
-                        </div>
-                        <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 34,
-                          fontWeight: 800, color: "#f5f5f5", letterSpacing: "-.8px", marginBottom: 2 }}>
-                          ₹29<span style={{ fontSize: 14, color: "#555", fontWeight: 500, letterSpacing: 0 }}>/month</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: "#555", marginBottom: 20 }}>or ₹249/year · save ₹99</div>
-
-                        {[
-                          [true,  "SMS + WhatsApp alerts, 2 days before window opens"],
-                          [true,  "PIN-specific shortage early warning system"],
-                          [true,  "Price revision alerts 24hrs before news"],
-                          [true,  "Delivery day status ping"],
-                          [false, "Up to 3 LPG connections per account"],
-                          [false, "Priority support via WhatsApp"],
-                        ].map(([ok, l]) => (
-                          <div key={l} style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 10 }}>
-                            <span style={{ marginTop: 1, flexShrink: 0 }}>{ok ? Ic.check : Ic.xmark}</span>
-                            <span style={{ fontSize: 13, color: ok ? "#ccc" : "#3a3a3a", lineHeight: 1.4 }}>{l}</span>
+                    {/* What's free vs paid comparison */}
+                    <div style={{ ...card, background: "#0a0a0a" }}>
+                      <div style={secTitle}>Free vs Plus</div>
+                      {[
+                        ["Booking window countdown",    true,  true ],
+                        ["Official portal links",       true,  true ],
+                        ["Community shortage reports",  true,  true ],
+                        ["Email booking alert",         true,  true ],
+                        ["SMS / WhatsApp alert",        false, true ],
+                        ["Shortage early warning",      false, true ],
+                        ["Price revision alert",        false, true ],
+                        ["Delivery day ping",           false, true ],
+                      ].map(([feat, free, plus]) => (
+                        <div key={feat} style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "9px 0", borderBottom: "1px solid #161616" }}>
+                          <span style={{ fontSize: 13, color: "#777" }}>{feat}</span>
+                          <div style={{ display: "flex", gap: 28, paddingRight: 4 }}>
+                            <span style={{ fontSize: 12, color: free ? "#22c55e" : "#333", fontWeight: 600 }}>
+                              {free ? "✓" : "—"}
+                            </span>
+                            <span style={{ fontSize: 12, color: plus ? "#FF6B00" : "#333", fontWeight: 600 }}>
+                              {plus ? "✓" : "—"}
+                            </span>
                           </div>
-                        ))}
-
-                        <div style={{ display: "flex", gap: 12, marginTop: 20, marginBottom: 4 }}>
-                          <button style={{ flex: 1, background: "#111", border: "1px solid #282828",
-                            borderRadius: 10, padding: "13px", textAlign: "center", cursor: "pointer" }}>
-                            <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 20,
-                              fontWeight: 800, color: "#f5f5f5" }}>₹29</div>
-                            <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>per month</div>
-                          </button>
-                          <button style={{ flex: 1, background: "#FF6B0012", border: "2px solid #FF6B00",
-                            borderRadius: 10, padding: "13px", textAlign: "center", cursor: "pointer",
-                            boxShadow: "0 4px 16px rgba(255,107,0,.12)" }}>
-                            <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 20,
-                              fontWeight: 800, color: "#FF6B00" }}>₹249</div>
-                            <div style={{ fontSize: 11, color: "#FF6B0088", marginTop: 2 }}>per year · save ₹99</div>
-                          </button>
                         </div>
-                        <button style={{ ...btn("fill"), marginTop: 14 }}>Upgrade to Plus →</button>
+                      ))}
+                      <div style={{ display: "flex", justifyContent: "flex-end", gap: 28, paddingRight: 4, marginTop: 10 }}>
+                        <span style={{ fontSize: 10, color: "#444", fontWeight: 600 }}>FREE</span>
+                        <span style={{ fontSize: 10, color: "#FF6B00", fontWeight: 700 }}>PLUS</span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Right — Plus card */}
+                  <div>
+                    <div style={{ ...card, background: "linear-gradient(160deg,#1a0e04,#0d0d0d 55%)",
+                      border: "1px solid #FF6B0050", position: "relative", overflow: "hidden" }}>
+                      <div style={{ position: "absolute", top: -60, right: -60, width: 260, height: 260,
+                        background: "radial-gradient(circle, #FF6B0016 0%, transparent 70%)", pointerEvents: "none" }} />
+                      <div style={{ position: "relative" }}>
+
+                        {/* Header */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                          <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 20,
+                            fontWeight: 800, color: "#FF7A00" }}>CylinderCheck Plus</div>
+                          <span style={{ fontSize: 9, fontWeight: 700, color: "#FF6B00", background: "#FF6B0018",
+                            border: "1px solid #FF6B0030", borderRadius: 99, padding: "3px 9px", letterSpacing: .8 }}>
+                            EARLY ACCESS
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 11, color: "#FF6B0077", marginBottom: 20, lineHeight: 1.5 }}>
+                          Shortage intelligence for Indian households. Know before your neighbours do.
+                        </div>
+
+                        {/* Price — monthly only, no annual */}
+                        <div style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 12,
+                          padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "baseline", gap: 8 }}>
+                          <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 42,
+                            fontWeight: 800, color: "#f5f5f5", letterSpacing: "-1.5px" }}>₹49</div>
+                          <div>
+                            <div style={{ fontSize: 14, color: "#777", fontWeight: 500 }}>/month</div>
+                            <div style={{ fontSize: 11, color: "#444", marginTop: 2 }}>Cancel anytime</div>
+                          </div>
+                        </div>
+
+                        {/* Feature list */}
+                        {[
+                          ["📲", "SMS + WhatsApp alert 2 days before booking window"],
+                          ["🚨", "Shortage early warning for your PIN — before it spreads"],
+                          ["💰", "Price revision alert 24hrs before news breaks"],
+                          ["📦", "Delivery day status ping so you're home on time"],
+                          ["📊", "Monthly supply health score for your area"],
+                        ].map(([icon, feat]) => (
+                          <div key={feat} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
+                            <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.3 }}>{icon}</span>
+                            <span style={{ fontSize: 13, color: "#bbb", lineHeight: 1.5 }}>{feat}</span>
+                          </div>
+                        ))}
+
+                        {/* Crisis framing */}
+                        <div style={{ background: "#120a04", border: "1px solid #FF6B0025", borderRadius: 10,
+                          padding: "12px 14px", margin: "20px 0 16px", display: "flex", gap: 10 }}>
+                          <span style={{ fontSize: 18, flexShrink: 0 }}>🔥</span>
+                          <div style={{ fontSize: 12, color: "#cc8866", lineHeight: 1.55 }}>
+                            <strong style={{ color: "#FF8855" }}>During active shortages</strong>, Plus members get
+                            area-specific alerts up to 48 hours before the disruption is publicly reported.
+                          </div>
+                        </div>
+
+                        {/* Social proof */}
+                        <div style={{ fontSize: 12, color: "#444", marginBottom: 16, textAlign: "center" }}>
+                          Join <span style={{ color: "#FF6B00", fontWeight: 600 }}>early access</span> — limited to first 500 subscribers
+                        </div>
+
+                        {/* Payment form */}
+                        {paySuccess ? (
+                          <div style={{ background: "#0a160a", border: "1px solid #22c55e28", borderRadius: 12,
+                            padding: "20px", textAlign: "center" }}>
+                            <div style={{ fontSize: 28, marginBottom: 10 }}>🎉</div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: "#22c55e", marginBottom: 6 }}>
+                              You're a Plus member!
+                            </div>
+                            <div style={{ fontSize: 13, color: "#557755", lineHeight: 1.55 }}>
+                              Alerts will be sent to <strong style={{ color: "#88bb88" }}>{payContact}</strong>.<br />
+                              You'll get your first alert within 24 hours.
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <label style={lbl}>Your mobile or email *</label>
+                            <input style={{ ...inp, marginBottom: 10 }}
+                              placeholder="98xxxxxxxx or you@gmail.com"
+                              value={payContact} onChange={e => setPayContact(e.target.value)} />
+                            <label style={lbl}>PIN Code <span style={{ color: "#2a2a2a" }}>(optional — for area alerts)</span></label>
+                            <input style={{ ...inp, marginBottom: 16 }}
+                              placeholder="6-digit PIN" value={payPin} maxLength={6}
+                              onChange={e => setPayPin(e.target.value.replace(/\D/g, ""))} />
+                            {payError && (
+                              <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 10 }}>{payError}</div>
+                            )}
+                            <button
+                              style={{ display: "block", width: "100%", padding: "15px",
+                                borderRadius: 11, border: "none",
+                                background: paying ? "#aa4400" : "#FF6B00",
+                                color: "#fff", fontSize: 15, fontWeight: 700,
+                                fontFamily: "'Instrument Sans',sans-serif",
+                                boxShadow: "0 4px 24px rgba(255,107,0,.25)",
+                                cursor: paying ? "not-allowed" : "pointer",
+                                opacity: paying ? .7 : 1, transition: "all .2s" }}
+                              onClick={handlePayment} disabled={paying}>
+                              {paying ? "Opening payment…" : "Get Plus for ₹49/month →"}
+                            </button>
+                          </>
+                        )}
+
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center",
+                          gap: 16, marginTop: 14 }}>
+                          <span style={{ fontSize: 11, color: "#333" }}>🔒 Razorpay · 256-bit SSL</span>
+                          <span style={{ fontSize: 11, color: "#333" }}>·</span>
+                          <span style={{ fontSize: 11, color: "#333" }}>Cancel anytime</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* AdSense slot */}
+                    <AdSlot id="alerts-bottom" />
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {/* ══ ADMIN ══════════════════════════════════════ */}
+            {tab === "admin" && adminUnlocked && (
+              <div className="fu">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+                  <div>
+                    <div className="pg-title">Admin Dashboard</div>
+                    <div className="pg-sub">Revenue, subscribers, and platform health.</div>
+                  </div>
+                  <button style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8,
+                    padding: "8px 16px", color: "#666", fontSize: 12, cursor: "pointer" }}
+                    onClick={() => { setAdminUnlocked(false); setTab("track"); }}>
+                    Lock
+                  </button>
+                </div>
+
+                {adminLoading ? (
+                  <div style={{ fontSize: 14, color: "#555" }} className="pulse">Loading data…</div>
+                ) : adminData && (
+                  <>
+                    {/* KPI cards */}
+                    <div className="g3" style={{ marginBottom: 20 }}>
+                      {[
+                        ["💰", "Total Revenue", `₹${((adminData.subscriptions?.length || 0) * 49).toLocaleString("en-IN")}`, "#22c55e"],
+                        ["👥", "Active Subscribers", adminData.subscriptions?.filter(s => s.status === "active").length || 0, "#FF6B00"],
+                        ["📋", "Free Alert Signups", adminData.alertCount || 0, "#3b82f6"],
+                        ["🗣", "Community Reports", adminData.reportCount || 0, "#a855f7"],
+                        ["📈", "This Month", `₹${(adminData.subscriptions?.filter(s => {
+                          const d = new Date(s.created_at);
+                          const now = new Date();
+                          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                        }).length || 0) * 49}`, "#f59e0b"],
+                        ["🔄", "MRR", `₹${(adminData.subscriptions?.filter(s => s.status === "active").length || 0) * 49}/mo`, "#FF6B00"],
+                      ].map(([icon, label, value, color]) => (
+                        <div key={label} style={{ ...card, marginBottom: 0 }}>
+                          <div style={{ fontSize: 22, marginBottom: 8 }}>{icon}</div>
+                          <div style={{ fontSize: 11, color: "#555", fontWeight: 600, letterSpacing: .8,
+                            textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
+                          <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 28,
+                            fontWeight: 800, color, letterSpacing: "-.5px" }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Recent subscribers table */}
+                    <div style={card}>
+                      <div style={secTitle}>Recent Subscribers</div>
+                      {(!adminData.subscriptions || adminData.subscriptions.length === 0) ? (
+                        <div style={{ fontSize: 13, color: "#444", padding: "20px 0", textAlign: "center" }}>
+                          No subscribers yet — share the link!
+                        </div>
+                      ) : (
+                        <div style={{ overflowX: "auto" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                            <thead>
+                              <tr>
+                                {["Contact","PIN","Amount","Status","Date"].map(h => (
+                                  <th key={h} style={{ textAlign: "left", padding: "8px 12px",
+                                    fontSize: 10, color: "#444", fontWeight: 700, letterSpacing: 1,
+                                    textTransform: "uppercase", borderBottom: "1px solid #1e1e1e" }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {adminData.subscriptions.map((s) => (
+                                <tr key={s.id}>
+                                  <td style={{ padding: "10px 12px", color: "#ccc", borderBottom: "1px solid #141414" }}>
+                                    {s.contact}
+                                  </td>
+                                  <td style={{ padding: "10px 12px", color: "#777", borderBottom: "1px solid #141414" }}>
+                                    {s.pin || "—"}
+                                  </td>
+                                  <td style={{ padding: "10px 12px", color: "#22c55e", fontWeight: 600,
+                                    borderBottom: "1px solid #141414" }}>
+                                    ₹{((s.amount || 4900) / 100)}
+                                  </td>
+                                  <td style={{ padding: "10px 12px", borderBottom: "1px solid #141414" }}>
+                                    <span style={{ fontSize: 10, fontWeight: 700,
+                                      color: s.status === "active" ? "#22c55e" : "#ef4444",
+                                      background: s.status === "active" ? "#22c55e14" : "#ef444414",
+                                      border: `1px solid ${s.status === "active" ? "#22c55e22" : "#ef444422"}`,
+                                      borderRadius: 99, padding: "2px 8px" }}>
+                                      {s.status}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "10px 12px", color: "#555", fontSize: 11,
+                                    borderBottom: "1px solid #141414" }}>
+                                    {new Date(s.created_at).toLocaleDateString("en-IN")}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Payment ID reference */}
+                    <div style={{ ...card, background: "#0a0a0a" }}>
+                      <div style={secTitle}>Recent Payment IDs</div>
+                      <div style={{ fontSize: 12, color: "#444", marginBottom: 12 }}>
+                        Cross-reference with Razorpay dashboard if needed.
+                      </div>
+                      {(adminData.subscriptions || []).slice(0, 10).map(s => (
+                        <div key={s.id} style={{ display: "flex", justifyContent: "space-between",
+                          padding: "8px 0", borderBottom: "1px solid #141414", fontSize: 11 }}>
+                          <span style={{ color: "#555", fontFamily: "monospace" }}>{s.razorpay_payment_id || "pending"}</span>
+                          <span style={{ color: "#333" }}>{new Date(s.created_at).toLocaleDateString("en-IN")}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
           </div>
         </div>
       </div>
+
+      {/* Admin password modal */}
+      {showAdminPrompt && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "#111", border: "1px solid #222", borderRadius: 16,
+            padding: "32px", width: 320, textAlign: "center" }}>
+            <div style={{ fontSize: 24, marginBottom: 12 }}>🔒</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>Admin Access</div>
+            <div style={{ fontSize: 12, color: "#555", marginBottom: 20 }}>Enter your admin password</div>
+            <input
+              style={{ ...inp, marginBottom: 12, textAlign: "center", letterSpacing: 2 }}
+              type="password" placeholder="••••••••"
+              value={adminPassword}
+              onChange={e => setAdminPassword(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleAdminUnlock()}
+              autoFocus />
+            {adminPassword && adminPassword !== ADMIN_PASSWORD &&
+              <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={btn("ghost")} onClick={() => { setShowAdminPrompt(false); setAdminPassword(""); }}>
+                Cancel
+              </button>
+              <button style={btn("fill")} onClick={handleAdminUnlock}>Unlock</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile bottom nav */}
       <div className="bottom-nav">

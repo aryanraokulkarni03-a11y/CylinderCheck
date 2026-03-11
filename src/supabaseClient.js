@@ -8,7 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseUrl || 'sb_publishable_5TepiBRbfKL4_3oYQxSMEQ_od43t9yO',
   supabaseAnonKey || 'placeholder-key'
 )
 

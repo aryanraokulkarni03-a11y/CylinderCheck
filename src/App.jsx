@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "./supabaseClient";
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 const addDays = (date, days) => { const d = new Date(date); d.setDate(d.getDate() + days); return d; };
@@ -803,6 +804,7 @@ export default function App() {
           </button>
         ))}
       </div>
+      <SpeedInsights />
     </>
   );
 }

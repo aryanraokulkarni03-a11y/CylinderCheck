@@ -239,40 +239,21 @@ export default function App() {
       .then(({ data }) => data && setReports(data));
   }, []);
 
-  // Fetch LPG news via RSS proxy
+  // Fetch LPG news via Supabase Edge Function (server-side RSS parse — no CORS issues)
   const fetchNews = useCallback(() => {
     setNewsLoading(true);
-    // Try multiple RSS sources in order
-    const feeds = [
-      `https://news.google.com/rss/search?q=LPG+cylinder+shortage+India&hl=en-IN&gl=IN&ceid=IN:en`,
-      `https://news.google.com/rss/search?q=gas+cylinder+India+price+shortage&hl=en-IN&gl=IN&ceid=IN:en`,
-    ];
-    const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feeds[0])}&count=10`;
-    fetch(url)
+    fetch(`${SUPABASE_FUNC_URL}/lpg-news`, {
+      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+    })
       .then(r => r.json())
       .then(d => {
-        if (d.status === "ok" && d.items?.length) {
-          setNews(d.items.map(item => ({
-            title: item.title.replace(/ - [^-]+$/, "").replace(/ \| [^|]+$/, ""),
-            source: item.source_url
-              ? new URL(item.source_url).hostname.replace("www.", "")
-              : item.author || "News",
+        if (d.ok && d.articles?.length) {
+          setNews(d.articles.map(item => ({
+            title: item.title,
+            source: item.source,
             link: item.link,
             pubDate: new Date(item.pubDate),
           })));
-        } else {
-          // Fallback: try second feed
-          const url2 = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feeds[1])}&count=10`;
-          return fetch(url2).then(r => r.json()).then(d2 => {
-            if (d2.items?.length) {
-              setNews(d2.items.map(item => ({
-                title: item.title.replace(/ - [^-]+$/, ""),
-                source: item.author || "News",
-                link: item.link,
-                pubDate: new Date(item.pubDate),
-              })));
-            }
-          });
         }
       })
       .catch(() => {})

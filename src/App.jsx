@@ -16,8 +16,8 @@ const BANNER_VARIANTS = [
 ];
 
 // ─── Razorpay config — set these in .env.local (never commit) ────────────────
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
+const RAZORPAY_KEY_ID   = import.meta.env.VITE_RAZORPAY_KEY_ID   || "";
+const ADMIN_PASSWORD    = import.meta.env.VITE_ADMIN_PASSWORD     || "";
 const SUPABASE_FUNC_URL = "https://acrfamphpbnhbdycbtjn.supabase.co/functions/v1";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
@@ -27,7 +27,7 @@ function loadRazorpay() {
     if (window.Razorpay) { resolve(true); return; }
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
+    script.onload  = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
@@ -107,16 +107,16 @@ const Ic = {
       <path d="M8 30C8 28 10 27 14 27C18 27 20 28 20 30C20 32 18 34 14 34C10 34 8 32 8 30Z" fill="#666" />
     </svg>
   ),
-  track: (a) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a ? "#FF6B00" : "#555"} strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="9" strokeOpacity=".35" /><line x1="12" y1="3" x2="12" y2="6.5" /><line x1="12" y1="17.5" x2="12" y2="21" /><line x1="3" y1="12" x2="6.5" y2="12" /><line x1="17.5" y1="12" x2="21" y2="12" /></svg>,
-  price: (a) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a ? "#FF6B00" : "#555"} strokeWidth="1.8" strokeLinecap="round"><line x1="12" y1="2" x2="12" y2="22" /><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6" /></svg>,
-  report: (a) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a ? "#FF6B00" : "#555"} strokeWidth="1.8" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
-  alert: (a) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a ? "#FF6B00" : "#555"} strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
-  ext: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>,
-  check: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>,
-  xmark: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
-  up: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>,
-  pin: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>,
-  warn: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5533" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
+  track:  (a) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a?"#FF6B00":"#555"} strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9" strokeOpacity=".35"/><line x1="12" y1="3" x2="12" y2="6.5"/><line x1="12" y1="17.5" x2="12" y2="21"/><line x1="3" y1="12" x2="6.5" y2="12"/><line x1="17.5" y1="12" x2="21" y2="12"/></svg>,
+  price:  (a) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a?"#FF6B00":"#555"} strokeWidth="1.8" strokeLinecap="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>,
+  report: (a) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a?"#FF6B00":"#555"} strokeWidth="1.8" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  alert:  (a) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a?"#FF6B00":"#555"} strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+  ext:   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+  check: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  xmark: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  up:    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
+  pin:   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+  warn:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5533" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
 };
 
 // ─── Arc Ring ─────────────────────────────────────────────────────────────────
@@ -126,11 +126,11 @@ const Ring = ({ daysLeft }) => {
   const color = daysLeft <= 0 ? "#22c55e" : daysLeft <= 3 ? "#f59e0b" : "#FF6B00";
   return (
     <svg width="116" height="116" viewBox="0 0 110 110">
-      <circle cx="55" cy="55" r={r} fill="none" stroke="#1c1c1c" strokeWidth="7" />
+      <circle cx="55" cy="55" r={r} fill="none" stroke="#1c1c1c" strokeWidth="7"/>
       <circle cx="55" cy="55" r={r} fill="none" stroke={color} strokeWidth="7"
         strokeDasharray={c} strokeDashoffset={c * (1 - pct)} strokeLinecap="round"
         transform="rotate(-90 55 55)"
-        style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1), stroke .3s" }} />
+        style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1), stroke .3s" }}/>
       <text x="55" y="50" textAnchor="middle" fill={color} fontSize="24" fontWeight="700"
         fontFamily="'Bricolage Grotesque',sans-serif">
         {daysLeft <= 0 ? "✓" : daysLeft}
@@ -147,10 +147,8 @@ const Trend = ({ t }) => {
   const m = { improving: ["#22c55e", "↑ Improving"], stable: ["#f59e0b", "→ Stable"], worsening: ["#ef4444", "↓ Worsening"] };
   const [c, l] = m[t] || m.stable;
   return (
-    <span style={{
-      fontSize: 11, fontWeight: 600, color: c, background: c + "18",
-      border: `1px solid ${c}28`, borderRadius: 99, padding: "3px 10px", whiteSpace: "nowrap"
-    }}>
+    <span style={{ fontSize: 11, fontWeight: 600, color: c, background: c + "18",
+      border: `1px solid ${c}28`, borderRadius: 99, padding: "3px 10px", whiteSpace: "nowrap" }}>
       {l}
     </span>
   );
@@ -158,71 +156,67 @@ const Trend = ({ t }) => {
 
 // ─── Empty state with animated placeholder ────────────────────────────────────
 const EmptyState = () => (
-  <div style={{
-    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-    padding: "52px 32px", border: "1px dashed #222", borderRadius: 18, background: "#0a0a0a",
-    textAlign: "center"
-  }}>
-    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style={{ marginBottom: 20, opacity: .25 }}>
-      <circle cx="28" cy="28" r="26" stroke="#FF6B00" strokeWidth="2" strokeDasharray="6 4" />
-      <path d="M28 16v12l7 7" stroke="#FF6B00" strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="28" cy="28" r="3" fill="#FF6B00" />
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+    padding: "32px 24px", border: "1px dashed #222", borderRadius: 18, background: "#0a0a0a",
+    textAlign: "center" }}>
+    <svg width="44" height="44" viewBox="0 0 56 56" fill="none" style={{ marginBottom: 14, opacity: .25 }}>
+      <circle cx="28" cy="28" r="26" stroke="#FF6B00" strokeWidth="2" strokeDasharray="6 4"/>
+      <path d="M28 16v12l7 7" stroke="#FF6B00" strokeWidth="2.5" strokeLinecap="round"/>
+      <circle cx="28" cy="28" r="3" fill="#FF6B00"/>
     </svg>
-    <div style={{ fontSize: 15, fontWeight: 600, color: "#888", marginBottom: 8 }}>No data yet</div>
-    <div style={{ fontSize: 13, color: "#3a3a3a", lineHeight: 1.7, maxWidth: 220 }}>
-      Enter your 6-digit PIN code on the left to see live delivery intelligence for your area.
+    <div style={{ fontSize: 14, fontWeight: 600, color: "#888", marginBottom: 6 }}>No data yet</div>
+    <div style={{ fontSize: 12, color: "#555", lineHeight: 1.65, maxWidth: 220 }}>
+      Enter your 6-digit PIN code above to see live delivery intelligence for your area.
     </div>
-    <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap", justifyContent: "center" }}>
+    <div style={{ display: "flex", gap: 7, marginTop: 16, flexWrap: "wrap", justifyContent: "center" }}>
       {["530001", "400001", "110001", "560001"].map(p => (
-        <span key={p} style={{
-          fontSize: 11, color: "#FF6B0066", background: "#FF6B0010",
-          border: "1px solid #FF6B0020", borderRadius: 6, padding: "3px 9px", fontFamily: "monospace"
-        }}>
+        <span key={p} style={{ fontSize: 11, color: "#FF6B0077", background: "#FF6B0010",
+          border: "1px solid #FF6B0022", borderRadius: 6, padding: "3px 9px", fontFamily: "monospace" }}>
           {p}
         </span>
       ))}
     </div>
-    <div style={{ fontSize: 11, color: "#2e2e2e", marginTop: 10 }}>Try one of these sample PINs</div>
+    <div style={{ fontSize: 11, color: "#444", marginTop: 8 }}>Try one of these sample PINs</div>
   </div>
 );
 
 export default function App() {
-  const [tab, setTab] = useState("track");
-  const [pin, setPin] = useState("");
+  const [tab, setTab]           = useState("track");
+  const [pin, setPin]           = useState("");
   const [lastBooking, setLastBooking] = useState("");
-  const [pinData, setPinData] = useState(null);
+  const [pinData, setPinData]   = useState(null);
   const [bookingResult, setBookingResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [prices, setPrices] = useState([]);
-  const [reports, setReports] = useState([]);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState("");
+  const [prices, setPrices]     = useState([]);
+  const [reports, setReports]   = useState([]);
   const [reportText, setReportText] = useState("");
-  const [reportPin, setReportPin] = useState("");
+  const [reportPin, setReportPin]   = useState("");
   const [reportCity, setReportCity] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitOk, setSubmitOk] = useState(false);
-  const [votes, setVotes] = useState({});
-  const [contact, setContact] = useState("");
+  const [submitOk, setSubmitOk]     = useState(false);
+  const [votes, setVotes]       = useState({});
+  const [contact, setContact]   = useState("");
   const [alertPin, setAlertPin] = useState("");
   const [alertDate, setAlertDate] = useState("");
   const [alertSaved, setAlertSaved] = useState(false);
-  const [bannerIdx, setBannerIdx] = useState(0);
+  const [bannerIdx, setBannerIdx]   = useState(0);
   const [bannerVisible, setBannerVisible] = useState(true);
 
   // ── Payment state ──────────────────────────────────────────────────────────
   const [payContact, setPayContact] = useState("");
-  const [payPin, setPayPin] = useState("");
-  const [paying, setPaying] = useState(false);
+  const [payPin, setPayPin]         = useState("");
+  const [paying, setPaying]         = useState(false);
   const [paySuccess, setPaySuccess] = useState(false);
-  const [payError, setPayError] = useState("");
+  const [payError, setPayError]     = useState("");
 
   // ── Admin state ────────────────────────────────────────────────────────────
-  const [logoClicks, setLogoClicks] = useState(0);
+  const [logoClicks, setLogoClicks]     = useState(0);
   const [showAdminPrompt, setShowAdminPrompt] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
-  const [adminData, setAdminData] = useState(null);
-  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminPassword, setAdminPassword]     = useState("");
+  const [adminUnlocked, setAdminUnlocked]     = useState(false);
+  const [adminData, setAdminData]             = useState(null);
+  const [adminLoading, setAdminLoading]       = useState(false);
 
   // Rotate banner every 8 seconds
   useEffect(() => {
@@ -252,18 +246,14 @@ export default function App() {
     const trendOptions = ["improving", "stable", "worsening"];
     const randomTrend = trendOptions[Math.floor(Math.random() * trendOptions.length)];
     if (dbData) {
-      setPinData({
-        ...dbData,
+      setPinData({ ...dbData,
         city: location ? `${location.city}, ${location.state}` : dbData.city,
-        area: location?.area || "", shortage: hasShortage, trend: randomTrend
-      });
+        area: location?.area || "", shortage: hasShortage, trend: randomTrend });
     } else {
-      setPinData({
-        pin,
+      setPinData({ pin,
         city: location ? `${location.city}, ${location.state}` : `PIN ${pin}`,
         area: location?.area || "", agency: "Check with local agency",
-        avg_days: (4 + Math.random() * 4).toFixed(1), shortage: hasShortage, trend: randomTrend
-      });
+        avg_days: (4 + Math.random() * 4).toFixed(1), shortage: hasShortage, trend: randomTrend });
     }
     if (lastBooking) {
       const nw = addDays(new Date(lastBooking), 25);
@@ -316,16 +306,16 @@ export default function App() {
 
       // 2. Open Razorpay modal
       const rzp = new window.Razorpay({
-        key: RAZORPAY_KEY_ID,
-        amount: 4900,
-        currency: "INR",
+        key:         RAZORPAY_KEY_ID,
+        amount:      4900,
+        currency:    "INR",
         order_id,
-        name: "CylinderCheck",
+        name:        "CylinderCheck",
         description: "Plus — Monthly Subscription",
-        image: "https://cylinder-check.vercel.app/favicon.ico",
-        prefill: { contact: payContact },
-        theme: { color: "#FF6B00" },
-        modal: { backdropclose: false },
+        image:       "https://cylinder-check.vercel.app/favicon.ico",
+        prefill:     { contact: payContact },
+        theme:       { color: "#FF6B00" },
+        modal:       { backdropclose: false },
         handler: async (response) => {
           // 3. Verify payment via Edge Function
           const verifyRes = await fetch(`${SUPABASE_FUNC_URL}/verify-payment`, {
@@ -335,9 +325,9 @@ export default function App() {
               "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
             },
             body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
+              razorpay_order_id:   response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+              razorpay_signature:  response.razorpay_signature,
               contact: payContact, pin: payPin,
             }),
           });
@@ -387,10 +377,10 @@ export default function App() {
   ], [prices]);
 
   const tabs = [
-    { id: "track", label: "Track", icon: Ic.track },
-    { id: "prices", label: "Prices", icon: Ic.price },
+    { id: "track",     label: "Track",   icon: Ic.track },
+    { id: "prices",    label: "Prices",  icon: Ic.price },
     { id: "community", label: "Reports", icon: Ic.report },
-    { id: "alerts", label: "Alerts", icon: Ic.alert },
+    { id: "alerts",    label: "Alerts",  icon: Ic.alert },
   ];
 
   const banner = BANNER_VARIANTS[bannerIdx];
@@ -398,11 +388,9 @@ export default function App() {
   // Style tokens
   const card = { background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "22px 24px", marginBottom: 14 };
   const secTitle = { fontSize: 11, fontWeight: 700, color: "#FF7A00", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 };
-  const inp = {
-    width: "100%", background: "#0e0e0e", border: "1px solid #252525", borderRadius: 10,
+  const inp = { width: "100%", background: "#0e0e0e", border: "1px solid #252525", borderRadius: 10,
     padding: "12px 16px", color: "#f0f0f0", fontSize: 15, outline: "none",
-    boxSizing: "border-box", fontFamily: "'Instrument Sans',sans-serif", transition: "border-color .2s"
-  };
+    boxSizing: "border-box", fontFamily: "'Instrument Sans',sans-serif", transition: "border-color .2s" };
   const lbl = { fontSize: 13, color: "#888", marginBottom: 7, display: "block", fontWeight: 500 };
   const btn = (v = "fill", dis = false) => ({
     display: "block", width: "100%", padding: "13px",
@@ -416,10 +404,8 @@ export default function App() {
     transition: "opacity .2s",
   });
   const stat = (l, v, c) => (
-    <div style={{
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "11px 0", borderBottom: "1px solid #1a1a1a"
-    }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+      padding: "11px 0", borderBottom: "1px solid #1a1a1a" }}>
       <span style={{ fontSize: 14, color: "#888" }}>{l}</span>
       <span style={{ fontSize: 14, fontWeight: 600, color: c || "#f0f0f0" }}>{v}</span>
     </div>
@@ -476,7 +462,6 @@ export default function App() {
         .main { margin-left: 240px; flex: 1; min-height: 100vh; }
         .topbar { display: none; }
         .content { padding: 36px 44px 60px; max-width: 1080px; }
-
         /* ── Page headings ── */
         .pg-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; line-height: 1.1; color: #f5f5f5; }
         .pg-sub { font-size: 15px; margin-bottom: 24px; line-height: 1.6; max-width: 580px; color: #888; }
@@ -530,7 +515,8 @@ export default function App() {
         /* ── Mobile ── */
         @media (max-width: 768px) {
           .sidebar { display: none; }
-          .main { margin-left: 0; }
+          .main { margin-left: 0; min-height: auto; }
+          .app { min-height: auto; }
           .topbar {
             display: flex; align-items: center; gap: 11px;
             padding: 12px 16px; background: #0a0a0a;
@@ -544,7 +530,10 @@ export default function App() {
 
           /* Stack g2 as flex column so we can control order */
           .g2 { display: flex; flex-direction: column; gap: 0; }
-          .g3 { grid-template-columns: 1fr; }
+          .g3 { grid-template-columns: 1fr 1fr; }
+          .g3.stack1 { grid-template-columns: 1fr; }
+          .price-big { font-size: 26px !important; }
+          .price-sub { font-size: 10px !important; }
           .g2eq { grid-template-columns: 1fr 1fr; }
 
           /* Track tab: form → result → portals */
@@ -611,12 +600,10 @@ export default function App() {
 
                 {/* Dynamic urgency banner */}
                 <div className={`banner-in`} key={bannerIdx}
-                  style={{
-                    opacity: bannerVisible ? 1 : 0, transition: "opacity .35s",
+                  style={{ opacity: bannerVisible ? 1 : 0, transition: "opacity .35s",
                     background: "linear-gradient(135deg, #1f0a05, #120505)",
                     border: "1px solid #FF330035", borderRadius: 14, padding: "14px 18px",
-                    marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 12
-                  }}>
+                    marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginTop: 1 }}>
                     <span className="pulse" style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF3300", boxShadow: "0 0 10px #FF3300", display: "inline-block" }} />
                     {Ic.warn}
@@ -691,11 +678,9 @@ export default function App() {
 
                         {/* Booking window */}
                         {bookingResult && (
-                          <div style={{
-                            ...card,
+                          <div style={{ ...card,
                             background: bookingResult.daysLeft <= 0 ? "#0a160a" : "#111",
-                            border: bookingResult.daysLeft <= 0 ? "1px solid #22c55e28" : "1px solid #1e1e1e"
-                          }}>
+                            border: bookingResult.daysLeft <= 0 ? "1px solid #22c55e28" : "1px solid #1e1e1e" }}>
                             <div style={secTitle}>Your Booking Window</div>
                             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                               <Ring daysLeft={bookingResult.daysLeft} />
@@ -703,10 +688,8 @@ export default function App() {
                                 <div style={{ fontSize: 12, color: "#777", marginBottom: 5 }}>
                                   {bookingResult.daysLeft <= 0 ? "Window is open now" : "Next window opens"}
                                 </div>
-                                <div style={{
-                                  fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 20, fontWeight: 800,
-                                  color: bookingResult.daysLeft <= 0 ? "#22c55e" : "#f5f5f5", letterSpacing: "-.3px"
-                                }}>
+                                <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 20, fontWeight: 800,
+                                  color: bookingResult.daysLeft <= 0 ? "#22c55e" : "#f5f5f5", letterSpacing: "-.3px" }}>
                                   {bookingResult.daysLeft <= 0 ? "Book Right Now! 🎉" : fmt(bookingResult.nextWindow)}
                                 </div>
                                 {bookingResult.daysLeft > 0 && (
@@ -714,10 +697,8 @@ export default function App() {
                                     Est. delivery by {fmt(addDays(bookingResult.nextWindow, Math.round(pinData.avg_days)))}
                                   </div>
                                 )}
-                                <div style={{
-                                  fontSize: 11, color: "#777", marginTop: 12, borderTop: "1px solid #1e1e1e",
-                                  paddingTop: 10, lineHeight: 1.5
-                                }}>
+                                <div style={{ fontSize: 11, color: "#777", marginTop: 12, borderTop: "1px solid #1e1e1e",
+                                  paddingTop: 10, lineHeight: 1.5 }}>
                                   Based on 25-day refilling rules + {pinData.avg_days}-day local delivery lag
                                 </div>
                               </div>
@@ -726,10 +707,8 @@ export default function App() {
                         )}
 
                         {pinData.shortage && (
-                          <div style={{
-                            background: "#160808", border: "1px solid #ef444428", borderRadius: 14,
-                            padding: "14px 18px", display: "flex", gap: 12, alignItems: "flex-start"
-                          }}>
+                          <div style={{ background: "#160808", border: "1px solid #ef444428", borderRadius: 14,
+                            padding: "14px 18px", display: "flex", gap: 12, alignItems: "flex-start" }}>
                             <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>⚠</span>
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 600, color: "#ef4444", marginBottom: 4 }}>
@@ -750,9 +729,9 @@ export default function App() {
                     <div style={card}>
                       <div style={secTitle}>Official Booking Portals</div>
                       {[
-                        ["🔵", "IndianOil — Indane", "https://ivrs.indianoil.in"],
-                        ["🟡", "HP Gas — MyHP", "https://myhpgas.in"],
-                        ["🟢", "Bharat Gas — eBharatgas", "https://ebharatgas.com"],
+                        ["🔵", "IndianOil — Indane",    "https://ivrs.indianoil.in"],
+                        ["🟡", "HP Gas — MyHP",          "https://myhpgas.in"],
+                        ["🟢", "Bharat Gas — eBharatgas","https://ebharatgas.com"],
                       ].map(([e, l, u]) => (
                         <a key={u} href={u} target="_blank" rel="noopener" className="portal-link">
                           <span>{e} {l}</span>
@@ -782,24 +761,22 @@ export default function App() {
                 </div>
 
                 <div className="g3" style={{ marginBottom: 16 }}>
-                  {[["🔵", "IndianOil", "Indane"], ["🟡", "HP Gas", "HP Gas"], ["🟢", "Bharat Gas", "Bharat Gas"]].map(([emoji, company, cyl], i) => {
+                  {[["🔵","IndianOil","Indane"],["🟡","HP Gas","HP Gas"],["🟢","Bharat Gas","Bharat Gas"]].map(([emoji, company, cyl], i) => {
                     const p = displayPrices[i];
                     return (
                       <div key={company} style={{ ...card, marginBottom: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 14 }}>
-                          <span style={{ fontSize: 26 }}>{emoji}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                          <span style={{ fontSize: 20 }}>{emoji}</span>
                           <div>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: "#f5f5f5" }}>{company}</div>
-                            <div style={{ fontSize: 11, color: "#888" }}>{cyl} · 14.2 kg</div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: "#f5f5f5" }}>{company}</div>
+                            <div className="price-sub" style={{ fontSize: 11, color: "#888" }}>{cyl} · 14.2 kg</div>
                           </div>
                         </div>
-                        <div style={{
-                          fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 34, fontWeight: 800,
-                          color: "#f5f5f5", letterSpacing: "-.8px", marginBottom: 6
-                        }}>
+                        <div className="price-big" style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 34, fontWeight: 800,
+                          color: "#f5f5f5", letterSpacing: "-.8px", marginBottom: 6 }}>
                           ₹{p?.price || "—"}
                         </div>
-                        <div style={{ fontSize: 12, color: "#ef4444", display: "flex", alignItems: "center", gap: 4, fontWeight: 500 }}>
+                        <div style={{ fontSize: 11, color: "#ef4444", display: "flex", alignItems: "center", gap: 4, fontWeight: 500 }}>
                           {Ic.up} ₹14 from last month
                         </div>
                       </div>
@@ -834,60 +811,60 @@ export default function App() {
                     const projX = toX(pts.length, pts.length + 1);
                     const projY = toY(projected.p);
                     const solidPath = solidPts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ");
-                    const areaPath = solidPath + ` L${solidPts[solidPts.length - 1][0]},${H - PAD.b} L${solidPts[0][0]},${H - PAD.b} Z`;
+                    const areaPath = solidPath + ` L${solidPts[solidPts.length-1][0]},${H - PAD.b} L${solidPts[0][0]},${H - PAD.b} Z`;
                     return (
                       <div className="chart-wrap">
-                        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: "block", width: "100%", height: "auto" }}>
-                          <defs>
-                            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#FF6B00" stopOpacity="0.12" />
-                              <stop offset="100%" stopColor="#FF6B00" stopOpacity="0" />
-                            </linearGradient>
-                          </defs>
-                          {/* Grid lines */}
-                          {[0.25, 0.5, 0.75].map(f => (
-                            <line key={f}
-                              x1={PAD.l} y1={PAD.t + f * (H - PAD.t - PAD.b)}
-                              x2={W - PAD.r} y2={PAD.t + f * (H - PAD.t - PAD.b)}
-                              stroke="#1e1e1e" strokeWidth="1" strokeDasharray="3 4" />
-                          ))}
-                          {/* Area fill */}
-                          <path d={areaPath} fill="url(#areaGrad)" />
-                          {/* Solid line */}
-                          <path d={solidPath} fill="none" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          {/* Projected dashed extension */}
-                          <line
-                            x1={solidPts[solidPts.length - 1][0]} y1={solidPts[solidPts.length - 1][1]}
-                            x2={projX} y2={projY}
-                            stroke="#FF6B00" strokeWidth="1.5" strokeDasharray="4 4" opacity=".5" />
-                          {/* Dots */}
-                          {solidPts.map(([x, y], i) => (
-                            <circle key={i} cx={x} cy={y} r={i === solidPts.length - 1 ? 4 : 2.5}
-                              fill={i === solidPts.length - 1 ? "#FF6B00" : "#1e1e1e"}
-                              stroke="#FF6B00" strokeWidth={i === solidPts.length - 1 ? 0 : 1.5} />
-                          ))}
-                          {/* Projected dot */}
-                          <circle cx={projX} cy={projY} r="3" fill="#0f0f0f" stroke="#FF6B00" strokeWidth="1.5" opacity=".5" strokeDasharray="2 2" />
-                          {/* X-axis labels */}
-                          {pts.map((d, i) => (
-                            <text key={d.m} x={toX(i, pts.length + 1)} y={H - 4}
-                              textAnchor="middle" fill={d.m === "Now" ? "#FF6B00" : "#555"}
-                              fontSize="9" fontFamily="'Instrument Sans',sans-serif" fontWeight={d.m === "Now" ? "700" : "400"}>
-                              {d.m}
-                            </text>
-                          ))}
-                          <text x={projX} y={H - 4} textAnchor="middle" fill="#FF6B0066"
-                            fontSize="9" fontFamily="'Instrument Sans',sans-serif">Apr</text>
-                          {/* Current price callout */}
-                          <rect x={solidPts[solidPts.length - 1][0] - 22} y={solidPts[solidPts.length - 1][1] - 22}
-                            width="44" height="16" rx="4" fill="#FF6B00" />
-                          <text x={solidPts[solidPts.length - 1][0]} y={solidPts[solidPts.length - 1][1] - 11}
-                            textAnchor="middle" fill="#fff" fontSize="9" fontWeight="700"
-                            fontFamily="'Instrument Sans',sans-serif">₹903</text>
-                          {/* Projected price label */}
-                          <text x={projX} y={projY - 8} textAnchor="middle" fill="#FF6B0077"
-                            fontSize="9" fontFamily="'Instrument Sans',sans-serif">₹924 est.</text>
-                        </svg>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: "block", width: "100%", height: "auto" }}>
+                        <defs>
+                          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#FF6B00" stopOpacity="0.12"/>
+                            <stop offset="100%" stopColor="#FF6B00" stopOpacity="0"/>
+                          </linearGradient>
+                        </defs>
+                        {/* Grid lines */}
+                        {[0.25, 0.5, 0.75].map(f => (
+                          <line key={f}
+                            x1={PAD.l} y1={PAD.t + f * (H - PAD.t - PAD.b)}
+                            x2={W - PAD.r} y2={PAD.t + f * (H - PAD.t - PAD.b)}
+                            stroke="#1e1e1e" strokeWidth="1" strokeDasharray="3 4"/>
+                        ))}
+                        {/* Area fill */}
+                        <path d={areaPath} fill="url(#areaGrad)"/>
+                        {/* Solid line */}
+                        <path d={solidPath} fill="none" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        {/* Projected dashed extension */}
+                        <line
+                          x1={solidPts[solidPts.length-1][0]} y1={solidPts[solidPts.length-1][1]}
+                          x2={projX} y2={projY}
+                          stroke="#FF6B00" strokeWidth="1.5" strokeDasharray="4 4" opacity=".5"/>
+                        {/* Dots */}
+                        {solidPts.map(([x, y], i) => (
+                          <circle key={i} cx={x} cy={y} r={i === solidPts.length - 1 ? 4 : 2.5}
+                            fill={i === solidPts.length - 1 ? "#FF6B00" : "#1e1e1e"}
+                            stroke="#FF6B00" strokeWidth={i === solidPts.length - 1 ? 0 : 1.5}/>
+                        ))}
+                        {/* Projected dot */}
+                        <circle cx={projX} cy={projY} r="3" fill="#0f0f0f" stroke="#FF6B00" strokeWidth="1.5" opacity=".5" strokeDasharray="2 2"/>
+                        {/* X-axis labels */}
+                        {pts.map((d, i) => (
+                          <text key={d.m} x={toX(i, pts.length + 1)} y={H - 4}
+                            textAnchor="middle" fill={d.m === "Now" ? "#FF6B00" : "#555"}
+                            fontSize="9" fontFamily="'Instrument Sans',sans-serif" fontWeight={d.m==="Now"?"700":"400"}>
+                            {d.m}
+                          </text>
+                        ))}
+                        <text x={projX} y={H - 4} textAnchor="middle" fill="#FF6B0066"
+                          fontSize="9" fontFamily="'Instrument Sans',sans-serif">Apr</text>
+                        {/* Current price callout */}
+                        <rect x={solidPts[solidPts.length-1][0] - 22} y={solidPts[solidPts.length-1][1] - 22}
+                          width="44" height="16" rx="4" fill="#FF6B00"/>
+                        <text x={solidPts[solidPts.length-1][0]} y={solidPts[solidPts.length-1][1] - 11}
+                          textAnchor="middle" fill="#fff" fontSize="9" fontWeight="700"
+                          fontFamily="'Instrument Sans',sans-serif">₹903</text>
+                        {/* Projected price label */}
+                        <text x={projX} y={projY - 8} textAnchor="middle" fill="#FF6B0077"
+                          fontSize="9" fontFamily="'Instrument Sans',sans-serif">₹924 est.</text>
+                      </svg>
                       </div>
                     );
                   })()}
@@ -943,10 +920,8 @@ export default function App() {
                   </div>
 
                   <div>
-                    <div style={{
-                      fontSize: 10, fontWeight: 700, color: "#777", letterSpacing: 1.8,
-                      textTransform: "uppercase", marginBottom: 14
-                    }}>Live Feed — Top Voted</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#777", letterSpacing: 1.8,
+                      textTransform: "uppercase", marginBottom: 14 }}>Live Feed — Top Voted</div>
                     {reports.length === 0 && (
                       <div style={{ ...card, border: "1px dashed #1e1e1e", textAlign: "center", padding: "40px" }}>
                         <div style={{ fontSize: 13, color: "#777" }}>No reports yet. Be the first to flag an issue.</div>
@@ -955,10 +930,8 @@ export default function App() {
                     {reports.map(r => (
                       <div key={r.id} style={card}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
-                          <span style={{
-                            fontSize: 10, fontWeight: 700, color: "#FF6B00", background: "#FF6B0014",
-                            border: "1px solid #FF6B0022", borderRadius: 99, padding: "2px 9px"
-                          }}>PIN {r.pin}</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: "#FF6B00", background: "#FF6B0014",
+                            border: "1px solid #FF6B0022", borderRadius: 99, padding: "2px 9px" }}>PIN {r.pin}</span>
                           <span style={{ fontSize: 11, color: "#777" }}>
                             {new Date(r.created_at).toLocaleDateString("en-IN")}
                           </span>
@@ -971,16 +944,13 @@ export default function App() {
                             border: `1px solid ${votes[r.id] ? "#FF6B0040" : "#252525"}`,
                             color: votes[r.id] ? "#FF6B00" : "#777", borderRadius: 8,
                             padding: "6px 14px", fontSize: 13, fontWeight: 500,
-                            fontFamily: "'Instrument Sans',sans-serif", cursor: "pointer"
-                          }}>
+                            fontFamily: "'Instrument Sans',sans-serif", cursor: "pointer" }}>
                             ↑ {r.votes} upvote{r.votes !== 1 ? "s" : ""}
                           </button>
                           {r.votes > 20 && (
-                            <span style={{
-                              fontSize: 10, fontWeight: 700, color: "#ef4444",
+                            <span style={{ fontSize: 10, fontWeight: 700, color: "#ef4444",
                               background: "#ef444414", border: "1px solid #ef444428",
-                              borderRadius: 99, padding: "3px 10px"
-                            }}>Trending</span>
+                              borderRadius: 99, padding: "3px 10px" }}>Trending</span>
                           )}
                         </div>
                       </div>
@@ -1001,11 +971,9 @@ export default function App() {
                   <div>
                     <div style={card}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                        <span style={{
-                          fontSize: 10, fontWeight: 700, color: "#22c55e", background: "#22c55e14",
+                        <span style={{ fontSize: 10, fontWeight: 700, color: "#22c55e", background: "#22c55e14",
                           border: "1px solid #22c55e22", borderRadius: 99, padding: "4px 10px",
-                          letterSpacing: .8, lineHeight: 1, flexShrink: 0
-                        }}>
+                          letterSpacing: .8, lineHeight: 1, flexShrink: 0 }}>
                           FREE
                         </span>
                         <div style={{ ...secTitle, marginBottom: 0 }}>Booking Window Alert</div>
@@ -1034,10 +1002,8 @@ export default function App() {
                         {alertSaved ? "✓ Alert Activated!" : "Activate Free Alert →"}
                       </button>
                       {alertSaved && (
-                        <div style={{
-                          fontSize: 12, color: "#22c55e", marginTop: 10,
-                          display: "flex", alignItems: "center", gap: 7
-                        }}>
+                        <div style={{ fontSize: 12, color: "#22c55e", marginTop: 10,
+                          display: "flex", alignItems: "center", gap: 7 }}>
                           {Ic.check} You'll be notified 2 days before your window opens.
                         </div>
                       )}
@@ -1053,19 +1019,17 @@ export default function App() {
                         </div>
                       </div>
                       {[
-                        ["Booking window countdown", true, true],
-                        ["Official portal links", true, true],
-                        ["Community shortage reports", true, true],
-                        ["Email booking alert", true, true],
-                        ["SMS / WhatsApp alert", false, true],
-                        ["Shortage early warning", false, true],
-                        ["Price revision alert", false, true],
-                        ["Delivery day ping", false, true],
+                        ["Booking window countdown",    true,  true ],
+                        ["Official portal links",       true,  true ],
+                        ["Community shortage reports",  true,  true ],
+                        ["Email booking alert",         true,  true ],
+                        ["SMS / WhatsApp alert",        false, true ],
+                        ["Shortage early warning",      false, true ],
+                        ["Price revision alert",        false, true ],
+                        ["Delivery day ping",           false, true ],
                       ].map(([feat, free, plus]) => (
-                        <div key={feat} style={{
-                          display: "flex", alignItems: "center", justifyContent: "space-between",
-                          padding: "9px 0", borderBottom: "1px solid #161616"
-                        }}>
+                        <div key={feat} style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "9px 0", borderBottom: "1px solid #161616" }}>
                           <span style={{ fontSize: 13, color: "#777" }}>{feat}</span>
                           <div style={{ display: "flex", gap: 28, paddingRight: 4, flexShrink: 0 }}>
                             <span style={{ fontSize: 13, color: free ? "#22c55e" : "#2a2a2a", fontWeight: 600, width: 14, textAlign: "center" }}>
@@ -1082,26 +1046,18 @@ export default function App() {
 
                   {/* Right — Plus card */}
                   <div>
-                    <div style={{
-                      ...card, background: "linear-gradient(160deg,#1a0e04,#0d0d0d 55%)",
-                      border: "1px solid #FF6B0050", position: "relative", overflow: "hidden"
-                    }}>
-                      <div style={{
-                        position: "absolute", top: -60, right: -60, width: 260, height: 260,
-                        background: "radial-gradient(circle, #FF6B0016 0%, transparent 70%)", pointerEvents: "none"
-                      }} />
+                    <div style={{ ...card, background: "linear-gradient(160deg,#1a0e04,#0d0d0d 55%)",
+                      border: "1px solid #FF6B0050", position: "relative", overflow: "hidden" }}>
+                      <div style={{ position: "absolute", top: -60, right: -60, width: 260, height: 260,
+                        background: "radial-gradient(circle, #FF6B0016 0%, transparent 70%)", pointerEvents: "none" }} />
                       <div style={{ position: "relative" }}>
 
                         {/* Header */}
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                          <div style={{
-                            fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 20,
-                            fontWeight: 800, color: "#FF7A00"
-                          }}>CylinderCheck Plus</div>
-                          <span style={{
-                            fontSize: 9, fontWeight: 700, color: "#FF6B00", background: "#FF6B0018",
-                            border: "1px solid #FF6B0030", borderRadius: 99, padding: "3px 9px", letterSpacing: .8
-                          }}>
+                          <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 20,
+                            fontWeight: 800, color: "#FF7A00" }}>CylinderCheck Plus</div>
+                          <span style={{ fontSize: 9, fontWeight: 700, color: "#FF6B00", background: "#FF6B0018",
+                            border: "1px solid #FF6B0030", borderRadius: 99, padding: "3px 9px", letterSpacing: .8 }}>
                             EARLY ACCESS
                           </span>
                         </div>
@@ -1110,14 +1066,10 @@ export default function App() {
                         </div>
 
                         {/* Price — monthly only, no annual */}
-                        <div style={{
-                          background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 12,
-                          padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "baseline", gap: 8
-                        }}>
-                          <div style={{
-                            fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 42,
-                            fontWeight: 800, color: "#f5f5f5", letterSpacing: "-1.5px"
-                          }}>₹49</div>
+                        <div style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 12,
+                          padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "baseline", gap: 8 }}>
+                          <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 42,
+                            fontWeight: 800, color: "#f5f5f5", letterSpacing: "-1.5px" }}>₹49</div>
                           <div>
                             <div style={{ fontSize: 14, color: "#777", fontWeight: 500 }}>/month</div>
                             <div style={{ fontSize: 11, color: "#777", marginTop: 2 }}>Cancel anytime</div>
@@ -1139,10 +1091,8 @@ export default function App() {
                         ))}
 
                         {/* Crisis framing */}
-                        <div style={{
-                          background: "#120a04", border: "1px solid #FF6B0025", borderRadius: 10,
-                          padding: "12px 14px", margin: "20px 0 16px", display: "flex", gap: 10
-                        }}>
+                        <div style={{ background: "#120a04", border: "1px solid #FF6B0025", borderRadius: 10,
+                          padding: "12px 14px", margin: "20px 0 16px", display: "flex", gap: 10 }}>
                           <span style={{ fontSize: 18, flexShrink: 0 }}>🔥</span>
                           <div style={{ fontSize: 12, color: "#cc8866", lineHeight: 1.55 }}>
                             <strong style={{ color: "#FF8855" }}>During active shortages</strong>, Plus members get
@@ -1157,10 +1107,8 @@ export default function App() {
 
                         {/* Payment form */}
                         {paySuccess ? (
-                          <div style={{
-                            background: "#0a160a", border: "1px solid #22c55e28", borderRadius: 12,
-                            padding: "20px", textAlign: "center"
-                          }}>
+                          <div style={{ background: "#0a160a", border: "1px solid #22c55e28", borderRadius: 12,
+                            padding: "20px", textAlign: "center" }}>
                             <div style={{ fontSize: 28, marginBottom: 10 }}>🎉</div>
                             <div style={{ fontSize: 15, fontWeight: 700, color: "#22c55e", marginBottom: 6 }}>
                               You're a Plus member!
@@ -1184,26 +1132,22 @@ export default function App() {
                               <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 10 }}>{payError}</div>
                             )}
                             <button
-                              style={{
-                                display: "block", width: "100%", padding: "15px",
+                              style={{ display: "block", width: "100%", padding: "15px",
                                 borderRadius: 11, border: "none",
                                 background: paying ? "#aa4400" : "#FF6B00",
                                 color: "#fff", fontSize: 15, fontWeight: 700,
                                 fontFamily: "'Instrument Sans',sans-serif",
                                 boxShadow: "0 4px 24px rgba(255,107,0,.25)",
                                 cursor: paying ? "not-allowed" : "pointer",
-                                opacity: paying ? .7 : 1, transition: "all .2s"
-                              }}
+                                opacity: paying ? .7 : 1, transition: "all .2s" }}
                               onClick={handlePayment} disabled={paying}>
                               {paying ? "Opening payment…" : "Get Plus for ₹49/month →"}
                             </button>
                           </>
                         )}
 
-                        <div style={{
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          gap: 16, marginTop: 14
-                        }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center",
+                          gap: 16, marginTop: 14 }}>
                           <span style={{ fontSize: 11, color: "#666" }}>🔒 Razorpay · 256-bit SSL</span>
                           <span style={{ fontSize: 11, color: "#666" }}>·</span>
                           <span style={{ fontSize: 11, color: "#666" }}>Cancel anytime</span>
@@ -1226,10 +1170,8 @@ export default function App() {
                     <div className="pg-title">Admin Dashboard</div>
                     <div className="pg-sub">Revenue, subscribers, and platform health.</div>
                   </div>
-                  <button style={{
-                    background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8,
-                    padding: "8px 16px", color: "#888", fontSize: 12, cursor: "pointer"
-                  }}
+                  <button style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8,
+                    padding: "8px 16px", color: "#888", fontSize: 12, cursor: "pointer" }}
                     onClick={() => { setAdminUnlocked(false); setTab("track"); }}>
                     Lock
                   </button>
@@ -1255,14 +1197,10 @@ export default function App() {
                       ].map(([icon, label, value, color]) => (
                         <div key={label} style={{ ...card, marginBottom: 0 }}>
                           <div style={{ fontSize: 22, marginBottom: 8 }}>{icon}</div>
-                          <div style={{
-                            fontSize: 11, color: "#888", fontWeight: 600, letterSpacing: .8,
-                            textTransform: "uppercase", marginBottom: 6
-                          }}>{label}</div>
-                          <div style={{
-                            fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 28,
-                            fontWeight: 800, color, letterSpacing: "-.5px"
-                          }}>{value}</div>
+                          <div style={{ fontSize: 11, color: "#888", fontWeight: 600, letterSpacing: .8,
+                            textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
+                          <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 28,
+                            fontWeight: 800, color, letterSpacing: "-.5px" }}>{value}</div>
                         </div>
                       ))}
                     </div>
@@ -1279,12 +1217,10 @@ export default function App() {
                           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                             <thead>
                               <tr>
-                                {["Contact", "PIN", "Amount", "Status", "Date"].map(h => (
-                                  <th key={h} style={{
-                                    textAlign: "left", padding: "8px 12px",
+                                {["Contact","PIN","Amount","Status","Date"].map(h => (
+                                  <th key={h} style={{ textAlign: "left", padding: "8px 12px",
                                     fontSize: 10, color: "#777", fontWeight: 700, letterSpacing: 1,
-                                    textTransform: "uppercase", borderBottom: "1px solid #1e1e1e"
-                                  }}>{h}</th>
+                                    textTransform: "uppercase", borderBottom: "1px solid #1e1e1e" }}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
@@ -1297,27 +1233,21 @@ export default function App() {
                                   <td style={{ padding: "10px 12px", color: "#777", borderBottom: "1px solid #141414" }}>
                                     {s.pin || "—"}
                                   </td>
-                                  <td style={{
-                                    padding: "10px 12px", color: "#22c55e", fontWeight: 600,
-                                    borderBottom: "1px solid #141414"
-                                  }}>
+                                  <td style={{ padding: "10px 12px", color: "#22c55e", fontWeight: 600,
+                                    borderBottom: "1px solid #141414" }}>
                                     ₹{((s.amount || 4900) / 100)}
                                   </td>
                                   <td style={{ padding: "10px 12px", borderBottom: "1px solid #141414" }}>
-                                    <span style={{
-                                      fontSize: 10, fontWeight: 700,
+                                    <span style={{ fontSize: 10, fontWeight: 700,
                                       color: s.status === "active" ? "#22c55e" : "#ef4444",
                                       background: s.status === "active" ? "#22c55e14" : "#ef444414",
                                       border: `1px solid ${s.status === "active" ? "#22c55e22" : "#ef444422"}`,
-                                      borderRadius: 99, padding: "2px 8px"
-                                    }}>
+                                      borderRadius: 99, padding: "2px 8px" }}>
                                       {s.status}
                                     </span>
                                   </td>
-                                  <td style={{
-                                    padding: "10px 12px", color: "#888", fontSize: 11,
-                                    borderBottom: "1px solid #141414"
-                                  }}>
+                                  <td style={{ padding: "10px 12px", color: "#888", fontSize: 11,
+                                    borderBottom: "1px solid #141414" }}>
                                     {new Date(s.created_at).toLocaleDateString("en-IN")}
                                   </td>
                                 </tr>
@@ -1335,10 +1265,8 @@ export default function App() {
                         Cross-reference with Razorpay dashboard if needed.
                       </div>
                       {(adminData.subscriptions || []).slice(0, 10).map(s => (
-                        <div key={s.id} style={{
-                          display: "flex", justifyContent: "space-between",
-                          padding: "8px 0", borderBottom: "1px solid #141414", fontSize: 11
-                        }}>
+                        <div key={s.id} style={{ display: "flex", justifyContent: "space-between",
+                          padding: "8px 0", borderBottom: "1px solid #141414", fontSize: 11 }}>
                           <span style={{ color: "#888", fontFamily: "monospace" }}>{s.razorpay_payment_id || "pending"}</span>
                           <span style={{ color: "#666" }}>{new Date(s.created_at).toLocaleDateString("en-IN")}</span>
                         </div>
@@ -1355,14 +1283,10 @@ export default function App() {
 
       {/* Admin password modal */}
       {showAdminPrompt && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", backdropFilter: "blur(8px)",
-          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
-        }}>
-          <div style={{
-            background: "#111", border: "1px solid #222", borderRadius: 16,
-            padding: "32px", width: 320, textAlign: "center"
-          }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "#111", border: "1px solid #222", borderRadius: 16,
+            padding: "32px", width: 320, textAlign: "center" }}>
             <div style={{ fontSize: 24, marginBottom: 12 }}>🔒</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>Admin Access</div>
             <div style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>Enter your admin password</div>

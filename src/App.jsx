@@ -239,20 +239,40 @@ export default function App() {
       .then(({ data }) => data && setReports(data));
   }, []);
 
-  // Fetch LPG news via Google News RSS proxy
+  // Fetch LPG news via RSS proxy
   const fetchNews = useCallback(() => {
     setNewsLoading(true);
-    const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(`https://news.google.com/rss/search?q=LPG+cylinder+shortage+India&hl=en-IN&gl=IN&ceid=IN:en`)}&api_key=free&count=8`;
+    // Try multiple RSS sources in order
+    const feeds = [
+      `https://news.google.com/rss/search?q=LPG+cylinder+shortage+India&hl=en-IN&gl=IN&ceid=IN:en`,
+      `https://news.google.com/rss/search?q=gas+cylinder+India+price+shortage&hl=en-IN&gl=IN&ceid=IN:en`,
+    ];
+    const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feeds[0])}&count=10`;
     fetch(url)
       .then(r => r.json())
       .then(d => {
-        if (d.items) {
+        if (d.status === "ok" && d.items?.length) {
           setNews(d.items.map(item => ({
-            title: item.title.replace(/ - [^-]+$/, ""),
-            source: item.author || item.source?.title || "News",
+            title: item.title.replace(/ - [^-]+$/, "").replace(/ \| [^|]+$/, ""),
+            source: item.source_url
+              ? new URL(item.source_url).hostname.replace("www.", "")
+              : item.author || "News",
             link: item.link,
             pubDate: new Date(item.pubDate),
           })));
+        } else {
+          // Fallback: try second feed
+          const url2 = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feeds[1])}&count=10`;
+          return fetch(url2).then(r => r.json()).then(d2 => {
+            if (d2.items?.length) {
+              setNews(d2.items.map(item => ({
+                title: item.title.replace(/ - [^-]+$/, ""),
+                source: item.author || "News",
+                link: item.link,
+                pubDate: new Date(item.pubDate),
+              })));
+            }
+          });
         }
       })
       .catch(() => {})

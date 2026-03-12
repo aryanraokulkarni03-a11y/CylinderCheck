@@ -217,6 +217,8 @@ export default function App() {
   const [adminUnlocked, setAdminUnlocked]     = useState(false);
   const [adminData, setAdminData]             = useState(null);
   const [adminLoading, setAdminLoading]       = useState(false);
+  const [news, setNews]                       = useState([]);
+  const [newsLoading, setNewsLoading]         = useState(false);
 
   // Rotate banner every 8 seconds
   useEffect(() => {
@@ -237,23 +239,73 @@ export default function App() {
       .then(({ data }) => data && setReports(data));
   }, []);
 
+  // Fetch LPG news via Google News RSS proxy
+  const fetchNews = useCallback(() => {
+    setNewsLoading(true);
+    const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(`https://news.google.com/rss/search?q=LPG+cylinder+shortage+India&hl=en-IN&gl=IN&ceid=IN:en`)}&api_key=free&count=8`;
+    fetch(url)
+      .then(r => r.json())
+      .then(d => {
+        if (d.items) {
+          setNews(d.items.map(item => ({
+            title: item.title.replace(/ - [^-]+$/, ""),
+            source: item.author || item.source?.title || "News",
+            link: item.link,
+            pubDate: new Date(item.pubDate),
+          })));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setNewsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (tab !== "community") return;
+    fetchNews();
+  }, [tab, fetchNews]);
+
   const handleTrack = async () => {
     if (!pin || pin.length !== 6) { setError("Enter a valid 6-digit PIN code."); return; }
     setError(""); setLoading(true); setPinData(null); setBookingResult(null);
-    const { data: dbData } = await supabase.from("pin_data").select("*").eq("pin", pin).single();
-    const location = await lookupPIN(pin);
-    const hasShortage = Math.random() < 0.2;
-    const trendOptions = ["improving", "stable", "worsening"];
-    const randomTrend = trendOptions[Math.floor(Math.random() * trendOptions.length)];
+
+    // Fetch DB data + location + real shortage signal in parallel
+    const [{ data: dbData }, location, { data: recentReports }] = await Promise.all([
+      supabase.from("pin_data").select("*").eq("pin", pin).single(),
+      lookupPIN(pin),
+      // Real shortage: count reports in this PIN from last 30 days
+      supabase.from("reports")
+        .select("id, created_at", { count: "exact" })
+        .eq("pin", pin)
+        .gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString()),
+    ]);
+
+    // Shortage = 2+ community reports in last 30 days
+    const reportCount = recentReports?.length || 0;
+    const hasShortage = reportCount >= 2;
+
+    // Trend from report velocity (last 7 days vs prior 7 days)
+    const last7  = (recentReports || []).filter(r => new Date(r.created_at) > new Date(Date.now() - 7 * 86400000)).length;
+    const prior7 = reportCount - last7;
+    const trend  = last7 > prior7 + 1 ? "worsening" : last7 < prior7 ? "improving" : "stable";
+
     if (dbData) {
       setPinData({ ...dbData,
         city: location ? `${location.city}, ${location.state}` : dbData.city,
-        area: location?.area || "", shortage: hasShortage, trend: randomTrend });
+        area: location?.area || "",
+        shortage: hasShortage,
+        trend,
+        reportCount,
+      });
     } else {
       setPinData({ pin,
         city: location ? `${location.city}, ${location.state}` : `PIN ${pin}`,
-        area: location?.area || "", agency: "Check with local agency",
-        avg_days: (4 + Math.random() * 4).toFixed(1), shortage: hasShortage, trend: randomTrend });
+        area: location?.area || "",
+        agency: "Check with local agency",
+        avg_days: dbData?.avg_days || "—",
+        shortage: hasShortage,
+        trend,
+        reportCount,
+      });
     }
     if (lastBooking) {
       const nw = addDays(new Date(lastBooking), 25);
@@ -498,6 +550,7 @@ export default function App() {
         .pulse { animation: pulse 2s infinite; }
         @keyframes bannerFade { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
         .banner-in { animation: bannerFade .4s ease forwards; }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
         /* ── Mobile bottom nav ── */
         .bottom-nav { display: none; }
@@ -668,11 +721,15 @@ export default function App() {
                             </div>
                             <Trend t={pinData.trend} />
                           </div>
-                          {stat("Average Delivery Time", `${pinData.avg_days} days`)}
+                          {stat("Average Delivery Time", pinData.avg_days !== "—" ? `${pinData.avg_days} days` : "No data yet")}
                           {stat("Gas Agency", pinData.agency)}
                           {stat("Shortage Status",
-                            pinData.shortage ? "⚠ Active shortage" : "No shortage reported",
-                            pinData.shortage ? "#ef4444" : "#22c55e"
+                            pinData.shortage
+                              ? `⚠ Active (${pinData.reportCount} reports)`
+                              : pinData.reportCount > 0
+                                ? `${pinData.reportCount} report${pinData.reportCount > 1 ? "s" : ""} — monitor`
+                                : "No reports — all clear",
+                            pinData.shortage ? "#ef4444" : pinData.reportCount > 0 ? "#f59e0b" : "#22c55e"
                           )}
                         </div>
 
@@ -955,6 +1012,76 @@ export default function App() {
                         </div>
                       </div>
                     ))}
+
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                      marginBottom: 14, marginTop: 28 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: "#777", letterSpacing: 1.8,
+                        textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 }}>
+                        <span className="pulse" style={{ width: 6, height: 6, borderRadius: "50%",
+                          background: "#22c55e", display: "inline-block", flexShrink: 0 }} />
+                        LPG News — Live
+                      </div>
+                      <button onClick={fetchNews} disabled={newsLoading} style={{
+                        background: "none", border: "1px solid #252525", borderRadius: 7,
+                        padding: "4px 10px", fontSize: 11, color: newsLoading ? "#444" : "#888",
+                        fontFamily: "'Instrument Sans',sans-serif", cursor: newsLoading ? "not-allowed" : "pointer",
+                        display: "flex", alignItems: "center", gap: 5, transition: "border-color .15s" }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                          style={{ animation: newsLoading ? "spin 1s linear infinite" : "none" }}>
+                          <polyline points="23 4 23 10 17 10"/>
+                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                        {newsLoading ? "Refreshing…" : "Refresh"}
+                      </button>
+                    </div>
+
+                    {newsLoading && (
+                      <div style={{ ...card, textAlign: "center", padding: "28px" }}>
+                        <div className="pulse" style={{ fontSize: 12, color: "#666" }}>Fetching latest headlines…</div>
+                      </div>
+                    )}
+
+                    {!newsLoading && news.length === 0 && (
+                      <div style={{ ...card, border: "1px dashed #1e1e1e", textAlign: "center", padding: "28px" }}>
+                        <div style={{ fontSize: 12, color: "#666" }}>No recent news found.</div>
+                      </div>
+                    )}
+
+                    {news.map((item, i) => {
+                      const minsAgo = Math.round((Date.now() - item.pubDate) / 60000);
+                      const timeAgo = minsAgo < 60
+                        ? `${minsAgo}m ago`
+                        : minsAgo < 1440
+                          ? `${Math.round(minsAgo / 60)}h ago`
+                          : `${Math.round(minsAgo / 1440)}d ago`;
+                      return (
+                        <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
+                          style={{ display: "block", textDecoration: "none" }}>
+                          <div style={{ ...card, transition: "border-color .18s" }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = "#FF6B0033"}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = "#1e1e1e"}>
+                            <div style={{ display: "flex", justifyContent: "space-between",
+                              alignItems: "flex-start", gap: 12 }}>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: "#ddd",
+                                lineHeight: 1.55, flex: 1 }}>{item.title}</div>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                stroke="#444" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 2 }}>
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                              </svg>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+                              <span style={{ fontSize: 10, color: "#FF6B00", fontWeight: 600,
+                                background: "#FF6B0012", borderRadius: 4, padding: "2px 7px" }}>
+                                {item.source}
+                              </span>
+                              <span style={{ fontSize: 10, color: "#555" }}>{timeAgo}</span>
+                            </div>
+                          </div>
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

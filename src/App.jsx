@@ -412,14 +412,27 @@ export default function App() {
     if (adminPassword !== ADMIN_PASSWORD) { setAdminPassword(""); return; }
     setAdminUnlocked(true); setShowAdminPrompt(false); setAdminPassword("");
     setTab("admin"); setAdminLoading(true);
-    // Fetch admin stats — note: subscriptions table is protected, needs service role
-    // For now we pull from alert_subscriptions (public) and reports as a proxy
-    const [{ data: subs }, { data: rpts }, { data: alerts }] = await Promise.all([
-      supabase.from("subscriptions").select("*").order("created_at", { ascending: false }).limit(50),
-      supabase.from("reports").select("count").single(),
-      supabase.from("alert_subscriptions").select("count").single(),
-    ]);
-    setAdminData({ subscriptions: subs || [], reportCount: rpts?.count || 0, alertCount: alerts?.count || 0 });
+    try {
+      // Call the secure Edge Function — uses service role key server-side to bypass RLS
+      const res = await fetch(`${SUPABASE_FUNC_URL}/get-admin-stats`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ admin_password: ADMIN_PASSWORD }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setAdminData({
+          subscriptions: data.subscriptions || [],
+          reportCount: data.reportCount || 0,
+          alertCount: data.alertCount || 0,
+        });
+      }
+    } catch {
+      // silently fail
+    }
     setAdminLoading(false);
   };
 

@@ -946,12 +946,13 @@ export default function App() {
                   {/* Left — Free tier */}
                   <div>
                     <div style={card}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#22c55e", background: "#22c55e14",
-                          border: "1px solid #22c55e22", borderRadius: 99, padding: "3px 10px", letterSpacing: .8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: "#22c55e", background: "#22c55e14",
+                          border: "1px solid #22c55e22", borderRadius: 99, padding: "4px 10px",
+                          letterSpacing: .8, lineHeight: 1, flexShrink: 0 }}>
                           FREE
                         </span>
-                        <div style={secTitle}>Booking Window Alert</div>
+                        <div style={{ ...secTitle, marginBottom: 0 }}>Booking Window Alert</div>
                       </div>
                       <div style={{ fontSize: 13, color: "#666", marginBottom: 18, lineHeight: 1.65 }}>
                         Enter your last booking date and we'll alert you 2 days before your next window opens. No app, no spam.
@@ -986,7 +987,13 @@ export default function App() {
 
                     {/* What's free vs paid comparison */}
                     <div style={{ ...card, background: "#0a0a0a" }}>
-                      <div style={secTitle}>Free vs Plus</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                        <div style={secTitle}>Free vs Plus</div>
+                        <div style={{ display: "flex", gap: 28, paddingRight: 4 }}>
+                          <span style={{ fontSize: 10, color: "#555", fontWeight: 700, letterSpacing: .8 }}>FREE</span>
+                          <span style={{ fontSize: 10, color: "#FF6B00", fontWeight: 700, letterSpacing: .8 }}>PLUS</span>
+                        </div>
+                      </div>
                       {[
                         ["Booking window countdown",    true,  true ],
                         ["Official portal links",       true,  true ],
@@ -1000,20 +1007,16 @@ export default function App() {
                         <div key={feat} style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
                           padding: "9px 0", borderBottom: "1px solid #161616" }}>
                           <span style={{ fontSize: 13, color: "#777" }}>{feat}</span>
-                          <div style={{ display: "flex", gap: 28, paddingRight: 4 }}>
-                            <span style={{ fontSize: 12, color: free ? "#22c55e" : "#333", fontWeight: 600 }}>
+                          <div style={{ display: "flex", gap: 28, paddingRight: 4, flexShrink: 0 }}>
+                            <span style={{ fontSize: 13, color: free ? "#22c55e" : "#2a2a2a", fontWeight: 600, width: 14, textAlign: "center" }}>
                               {free ? "✓" : "—"}
                             </span>
-                            <span style={{ fontSize: 12, color: plus ? "#FF6B00" : "#333", fontWeight: 600 }}>
+                            <span style={{ fontSize: 13, color: plus ? "#FF6B00" : "#2a2a2a", fontWeight: 600, width: 14, textAlign: "center" }}>
                               {plus ? "✓" : "—"}
                             </span>
                           </div>
                         </div>
                       ))}
-                      <div style={{ display: "flex", justifyContent: "flex-end", gap: 28, paddingRight: 4, marginTop: 10 }}>
-                        <span style={{ fontSize: 10, color: "#444", fontWeight: 600 }}>FREE</span>
-                        <span style={{ fontSize: 10, color: "#FF6B00", fontWeight: 700 }}>PLUS</span>
-                      </div>
                     </div>
                   </div>
 

@@ -8,18 +8,18 @@ const CORS = {
 };
 
 const CITIES = [
-  { city: "Delhi",     slug: "new-delhi" },
-  { city: "Mumbai",    slug: "mumbai" },
+  { city: "Delhi", slug: "new-delhi" },
+  { city: "Mumbai", slug: "mumbai" },
   { city: "Bangalore", slug: "bangalore" },
   { city: "Hyderabad", slug: "hyderabad" },
-  { city: "Chennai",   slug: "chennai" },
-  { city: "Pune",      slug: "pune" },
-  { city: "Kolkata",   slug: "kolkata" },
+  { city: "Chennai", slug: "chennai" },
+  { city: "Pune", slug: "pune" },
+  { city: "Kolkata", slug: "kolkata" },
   { city: "Ahmedabad", slug: "ahmedabad" },
-  { city: "Vizag",     slug: "visakhapatnam" },
-  { city: "Jaipur",    slug: "jaipur" },
-  { city: "Lucknow",   slug: "lucknow" },
-  { city: "Patna",     slug: "patna" },
+  { city: "Vizag", slug: "visakhapatnam" },
+  { city: "Jaipur", slug: "jaipur" },
+  { city: "Lucknow", slug: "lucknow" },
+  { city: "Patna", slug: "patna" },
 ];
 
 async function scrapeCityPrices(slug: string): Promise<{

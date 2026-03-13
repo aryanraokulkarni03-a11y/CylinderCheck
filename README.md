@@ -1,5 +1,5 @@
 # 🔥 CylinderCheck
-**Real-time LPG delivery intelligence and price tracking for India.**
+**LPG delivery intelligence and price tracking for India.**
 
 CylinderCheck is a professional-grade web utility designed to solve the uncertainty around gas cylinder bookings in India. It empowers Bharat Gas, HP Gas, and Indane customers with crowd-sourced shortage data and automated booking window calculations.
 
@@ -7,7 +7,7 @@ CylinderCheck is a professional-grade web utility designed to solve the uncertai
 
 ## ✨ Key Features
 - **Booking Tracker**: Automated calculations based on standardized refilling limits and localized delivery lags.
-- **Live Price Monitoring**: Real-time domestic cylinder prices across major distributors (Delhi, Mumbai, Vizag, and more).
+- **Price Monitoring**: Weekly updated domestic cylinder prices across 12 major cities (scraped every Sunday).
 - **Shortage Intelligence**: Crowd-sourced reporting system to flag delivery delays and stockouts in specific PIN code clusters.
 - **Smart Alerts**: Personalized countdowns to your next booking window based on historical usage.
 
@@ -31,4 +31,4 @@ CylinderCheck is a professional-grade web utility designed to solve the uncertai
 CylinderCheck is an independent tool and is not affiliated with IndianOil, HP Gas, or Bharat Gas. All data is community-sourced and provided for informational purposes only.
 
 ---
-© 2025 CylinderCheck 🇮🇳
+© 2026 CylinderCheck 🇮🇳

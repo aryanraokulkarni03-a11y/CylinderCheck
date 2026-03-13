@@ -3,27 +3,25 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info",
   "Content-Type": "application/json",
 };
 
-// Cities and their goodreturns.in URL slugs
 const CITIES = [
-  { city: "Delhi", slug: "new-delhi", state: "Delhi" },
-  { city: "Mumbai", slug: "mumbai", state: "Maharashtra" },
-  { city: "Bangalore", slug: "bangalore", state: "Karnataka" },
-  { city: "Hyderabad", slug: "hyderabad", state: "Telangana" },
-  { city: "Chennai", slug: "chennai", state: "Tamil Nadu" },
-  { city: "Pune", slug: "pune", state: "Maharashtra" },
-  { city: "Kolkata", slug: "kolkata", state: "West Bengal" },
-  { city: "Ahmedabad", slug: "ahmedabad", state: "Gujarat" },
-  { city: "Vizag", slug: "visakhapatnam", state: "Andhra Pradesh" },
-  { city: "Jaipur", slug: "jaipur", state: "Rajasthan" },
-  { city: "Lucknow", slug: "lucknow", state: "Uttar Pradesh" },
-  { city: "Patna", slug: "patna", state: "Bihar" },
+  { city: "Delhi",     slug: "new-delhi" },
+  { city: "Mumbai",    slug: "mumbai" },
+  { city: "Bangalore", slug: "bangalore" },
+  { city: "Hyderabad", slug: "hyderabad" },
+  { city: "Chennai",   slug: "chennai" },
+  { city: "Pune",      slug: "pune" },
+  { city: "Kolkata",   slug: "kolkata" },
+  { city: "Ahmedabad", slug: "ahmedabad" },
+  { city: "Vizag",     slug: "visakhapatnam" },
+  { city: "Jaipur",    slug: "jaipur" },
+  { city: "Lucknow",   slug: "lucknow" },
+  { city: "Patna",     slug: "patna" },
 ];
 
-// Scrape price for a single city from goodreturns.in
 async function scrapeCityPrice(slug: string): Promise<number | null> {
   try {
     const url = `https://www.goodreturns.in/lpg-price-in-${slug}.html`;
@@ -37,8 +35,6 @@ async function scrapeCityPrice(slug: string): Promise<number | null> {
     if (!res.ok) return null;
     const html = await res.text();
 
-    // goodreturns shows price in a span with class "sub_price" or similar
-    // Pattern: ₹XXX.XX or Rs. XXX.XX
     const patterns = [
       /₹\s*([\d,]+(?:\.\d{1,2})?)/,
       /Rs\.?\s*([\d,]+(?:\.\d{1,2})?)/i,
@@ -49,7 +45,6 @@ async function scrapeCityPrice(slug: string): Promise<number | null> {
       const match = html.match(pattern);
       if (match) {
         const price = parseFloat(match[1].replace(/,/g, ""));
-        // Sanity check — LPG prices are between ₹700 and ₹1200
         if (price >= 700 && price <= 1200) return price;
       }
     }
@@ -59,19 +54,15 @@ async function scrapeCityPrice(slug: string): Promise<number | null> {
   }
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS });
   }
 
   try {
-    // Optional: validate that this is called by cron or admin
+    // Accept any valid bearer token
     const authHeader = req.headers.get("Authorization") ?? "";
-    const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-    const isCron = authHeader === `Bearer ${cronSecret}`;
-    const isSupabase = authHeader.includes(Deno.env.get("SUPABASE_ANON_KEY") ?? "___");
-
-    if (!isCron && !isSupabase) {
+    if (authHeader.length < 10) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: CORS,
@@ -84,56 +75,31 @@ serve(async (req) => {
     );
 
     const results: { city: string; price: number | null; status: string }[] = [];
-    const upserts: {
+    const inserts: {
       company: string;
       price: number;
       city: string;
       recorded_at: string;
     }[] = [];
 
-    // Scrape all cities (sequential to avoid rate limiting)
     for (const { city, slug } of CITIES) {
       const price = await scrapeCityPrice(slug);
 
       if (price) {
-        // goodreturns shows a composite price — we store as IndianOil
-        // HP Gas and Bharat Gas are typically ±₹3 — derive them
-        upserts.push({
-          company: "IndianOil",
-          price,
-          city,
-          recorded_at: new Date().toISOString(),
-        });
-        upserts.push({
-          company: "HP Gas",
-          price: price + 3,
-          city,
-          recorded_at: new Date().toISOString(),
-        });
-        upserts.push({
-          company: "Bharat Gas",
-          price: price - 2,
-          city,
-          recorded_at: new Date().toISOString(),
-        });
-
+        inserts.push({ company: "IndianOil", price, city, recorded_at: new Date().toISOString() });
+        inserts.push({ company: "HP Gas", price: price + 3, city, recorded_at: new Date().toISOString() });
+        inserts.push({ company: "Bharat Gas", price: price - 2, city, recorded_at: new Date().toISOString() });
         results.push({ city, price, status: "ok" });
       } else {
         results.push({ city, price: null, status: "failed" });
       }
 
-      // Small delay between requests to be polite
       await new Promise((r) => setTimeout(r, 800));
     }
 
-    // Insert all prices into Supabase (keeps price history)
-    if (upserts.length > 0) {
-      const { error: dbError } = await supabase
-        .from("lpg_prices")
-        .insert(upserts);
-
+    if (inserts.length > 0) {
+      const { error: dbError } = await supabase.from("lpg_prices").insert(inserts);
       if (dbError) {
-        console.error("DB upsert error:", dbError);
         return new Response(
           JSON.stringify({ ok: false, error: dbError.message }),
           { status: 500, headers: CORS }

@@ -30,8 +30,10 @@ const daysUntil = (d) => { const t = new Date(); t.setHours(0, 0, 0, 0); return 
 // ─── Razorpay config — set these in .env.local (never commit) ────────────────
 const RAZORPAY_KEY_ID   = import.meta.env.VITE_RAZORPAY_KEY_ID   || "";
 const ADMIN_PASSWORD    = import.meta.env.VITE_ADMIN_PASSWORD     || "";
-const SUPABASE_FUNC_URL = "https://acrfamphpbnhbdycbtjn.supabase.co/functions/v1";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+// Derived from your Supabase project URL — no hardcoding needed
+// Set VITE_SUPABASE_URL in .env.local and this resolves automatically
+const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "")}/functions/v1`;
 
 // ─── Load Razorpay checkout.js dynamically ────────────────────────────────────
 function loadRazorpay() {
@@ -202,6 +204,8 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
   const [mapLoading, setMapLoading] = useState(true);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [alertSaving, setAlertSaving] = useState(false);
+  const [alertError, setAlertError] = useState("");
 
   // Load Leaflet + CartoDB dark tiles dynamically
   useEffect(() => {
@@ -436,12 +440,53 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
         <div style={{ fontSize: 13, color: "#888", marginBottom: 14, lineHeight: 1.6 }}>
           Get notified before the 1st of each month — before it hits the news.
         </div>
-        <input style={{ width: "100%", background: "#0e0e0e", border: "1px solid #252525", borderRadius: 10, padding: "12px 16px", color: "#f0f0f0", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "'Instrument Sans',sans-serif" }}
-          placeholder="Mobile number or email" value={contact} onChange={e => setContact(e.target.value)} />
-        <button style={{ display: "block", width: "100%", padding: "13px", borderRadius: 10, border: "none", background: "#FF6B00", color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 12, fontFamily: "'Instrument Sans',sans-serif", cursor: "pointer" }}
-          onClick={() => contact && setAlertSaved(true)}>
-          {alertSaved ? "✓ You're on the list!" : "Notify Me on Price Changes →"}
-        </button>
+        {alertSaved ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#0a160a",
+            border: "1px solid #22c55e28", borderRadius: 10, padding: "14px 16px" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#22c55e" }}>You're on the list!</div>
+              <div style={{ fontSize: 11, color: "#557755", marginTop: 2 }}>We'll notify {contact} before the next price revision.</div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <input
+              style={{ width: "100%", background: "#0e0e0e", border: "1px solid #252525", borderRadius: 10,
+                padding: "12px 16px", color: "#f0f0f0", fontSize: 15, outline: "none",
+                boxSizing: "border-box", fontFamily: "'Instrument Sans',sans-serif" }}
+              placeholder="Mobile number or email"
+              value={contact}
+              onChange={e => { setContact(e.target.value); setAlertError(""); }} />
+            {alertError && (
+              <div style={{ fontSize: 12, color: "#ef4444", marginTop: 7 }}>{alertError}</div>
+            )}
+            <button
+              style={{ display: "block", width: "100%", padding: "13px", borderRadius: 10, border: "none",
+                background: alertSaving ? "#aa4400" : "#FF6B00", color: "#fff", fontSize: 15,
+                fontWeight: 600, marginTop: 12, fontFamily: "'Instrument Sans',sans-serif",
+                cursor: alertSaving ? "not-allowed" : "pointer", opacity: alertSaving ? 0.7 : 1,
+                transition: "all .2s" }}
+              disabled={alertSaving}
+              onClick={async () => {
+                if (!contact.trim()) { setAlertError("Enter your mobile number or email."); return; }
+                setAlertSaving(true);
+                setAlertError("");
+                const { error } = await supabase.from("alert_subscriptions").insert([{
+                  contact: contact.trim(),
+                  alert_type: "price_revision",
+                }]);
+                if (error) {
+                  setAlertError("Something went wrong. Please try again.");
+                  setAlertSaving(false);
+                } else {
+                  setAlertSaved(true);
+                }
+              }}>
+              {alertSaving ? "Saving…" : "Notify Me on Price Changes →"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -467,6 +512,8 @@ export default function App() {
   const [alertPin, setAlertPin] = useState("");
   const [alertDate, setAlertDate] = useState("");
   const [alertSaved, setAlertSaved] = useState(false);
+  const [freeAlertSaving, setFreeAlertSaving] = useState(false);
+  const [freeAlertError, setFreeAlertError]   = useState("");
 
   // ── Payment state ──────────────────────────────────────────────────────────
   const [payContact, setPayContact] = useState("");
@@ -1401,16 +1448,28 @@ export default function App() {
                       <label style={lbl}>Mobile or Email *</label>
                       <input style={inp} placeholder="98xxxxxxxx or you@email.com"
                         inputMode="email" autoComplete="email"
-                        value={contact} onChange={e => setContact(e.target.value)} />
-                      <button style={btn("fill", !contact)} onClick={async () => {
-                        if (!contact) return;
-                        await supabase.from("alert_subscriptions").insert([{
-                          contact, pin: alertPin || null,
-                          last_booking: alertDate || null, alert_type: "free"
+                        value={contact} onChange={e => { setContact(e.target.value); setFreeAlertError(""); }} />
+                      {freeAlertError && (
+                        <div style={{ fontSize: 12, color: "#ef4444", marginTop: 8 }}>{freeAlertError}</div>
+                      )}
+                      <button style={btn("fill", freeAlertSaving || !contact)} onClick={async () => {
+                        if (!contact.trim()) { setFreeAlertError("Enter your mobile number or email."); return; }
+                        setFreeAlertSaving(true);
+                        setFreeAlertError("");
+                        const { error } = await supabase.from("alert_subscriptions").insert([{
+                          contact: contact.trim(),
+                          pin: alertPin || null,
+                          last_booking: alertDate || null,
+                          alert_type: "free",
                         }]);
-                        setAlertSaved(true);
-                      }} disabled={!contact}>
-                        {alertSaved ? "✓ Alert Activated!" : "Activate Free Alert →"}
+                        if (error) {
+                          setFreeAlertError("Something went wrong. Please try again.");
+                          setFreeAlertSaving(false);
+                        } else {
+                          setAlertSaved(true);
+                        }
+                      }} disabled={freeAlertSaving || !contact}>
+                        {alertSaved ? "✓ Alert Activated!" : freeAlertSaving ? "Saving…" : "Activate Free Alert →"}
                       </button>
                       {alertSaved && (
                         <div style={{ fontSize: 12, color: "#22c55e", marginTop: 10,

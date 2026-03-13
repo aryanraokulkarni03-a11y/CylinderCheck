@@ -9,3 +9,4 @@ supabase/.temp/
 agent-skills-main
 agent-skills*/
 .agents/
+supabase/.temp/

@@ -5,3 +5,4 @@ dist
 .DS_Store
 agents.pack
 react
+supabase/.temp/

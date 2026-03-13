@@ -25,14 +25,7 @@ const addDays = (date, days) => { const d = new Date(date); d.setDate(d.getDate(
 const fmt = (d) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 const daysUntil = (d) => { const t = new Date(); t.setHours(0, 0, 0, 0); return Math.ceil((d - t) / 86400000); };
 
-// ─── Dynamic banner data — rotates every 8s, feels live ──────────────────────
-const BANNER_VARIANTS = [
-  { zones: 43, reason: "supply chain disruptions", region: "North India" },
-  { zones: 31, reason: "refinery maintenance delays", region: "Maharashtra & Goa" },
-  { zones: 57, reason: "transport strike impact", region: "South India" },
-  { zones: 28, reason: "seasonal demand surge", region: "Delhi NCR" },
-  { zones: 49, reason: "distributor allocation cuts", region: "Eastern India" },
-];
+
 
 // ─── Razorpay config — set these in .env.local (never commit) ────────────────
 const RAZORPAY_KEY_ID   = import.meta.env.VITE_RAZORPAY_KEY_ID   || "";
@@ -474,8 +467,6 @@ export default function App() {
   const [alertPin, setAlertPin] = useState("");
   const [alertDate, setAlertDate] = useState("");
   const [alertSaved, setAlertSaved] = useState(false);
-  const [bannerIdx, setBannerIdx]   = useState(0);
-  const [bannerVisible, setBannerVisible] = useState(true);
 
   // ── Payment state ──────────────────────────────────────────────────────────
   const [payContact, setPayContact] = useState("");
@@ -493,17 +484,36 @@ export default function App() {
   const [adminLoading, setAdminLoading]       = useState(false);
   const [news, setNews]                       = useState([]);
   const [newsLoading, setNewsLoading]         = useState(false);
+  // Real shortage summary — derived from live reports
+  const [shortageSummary, setShortageSummary] = useState(null);
 
-  // Rotate banner every 8 seconds
+  // Fetch real shortage summary — count distinct PINs with 2+ reports in last 30 days
   useEffect(() => {
-    const id = setInterval(() => {
-      setBannerVisible(false);
-      setTimeout(() => {
-        setBannerIdx(i => (i + 1) % BANNER_VARIANTS.length);
-        setBannerVisible(true);
-      }, 400);
-    }, 8000);
-    return () => clearInterval(id);
+    supabase
+      .from("reports")
+      .select("pin, city, created_at")
+      .gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString())
+      .then(({ data }) => {
+        if (!data || data.length === 0) { setShortageSummary(null); return; }
+        // Group by PIN, count reports per PIN
+        const pinCounts = {};
+        const pinCities = {};
+        for (const r of data) {
+          pinCounts[r.pin] = (pinCounts[r.pin] || 0) + 1;
+          if (r.city) pinCities[r.pin] = r.city;
+        }
+        // Only PINs with 2+ reports count as active shortages
+        const activePins = Object.entries(pinCounts).filter(([, count]) => count >= 2);
+        if (activePins.length === 0) { setShortageSummary(null); return; }
+        // Find the most-reported PIN for the "hotspot" label
+        const hotPin = activePins.sort((a, b) => b[1] - a[1])[0];
+        setShortageSummary({
+          activePinCount: activePins.length,
+          totalReports: data.length,
+          hotspot: pinCities[hotPin[0]] || `PIN ${hotPin[0]}`,
+          hotspotReports: hotPin[1],
+        });
+      });
   }, []);
 
   useEffect(() => {
@@ -722,8 +732,6 @@ export default function App() {
     { id: "community", label: "Reports", icon: Ic.report },
     { id: "alerts",    label: "Alerts",  icon: Ic.alert },
   ];
-
-  const banner = BANNER_VARIANTS[bannerIdx];
 
   // Style tokens
   const card = { background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "22px 24px", marginBottom: 14 };
@@ -1051,27 +1059,30 @@ export default function App() {
                 <div className="pg-title">Booking Tracker</div>
                 <div className="pg-sub">Real-time delivery intelligence for your PIN code — know when to book, when to expect delivery, and if there's a shortage near you.</div>
 
-                {/* Dynamic urgency banner */}
-                <div className={`banner-in`} key={bannerIdx}
-                  style={{ opacity: bannerVisible ? 1 : 0, transition: "opacity .35s",
+                {/* Real shortage banner — only renders when community data confirms active shortages */}
+                {shortageSummary && (
+                  <div className="fu" style={{
                     background: "linear-gradient(135deg, #1f0a05, #120505)",
                     border: "1px solid #FF330035", borderRadius: 14, padding: "14px 18px",
                     marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginTop: 1 }}>
-                    <span className="pulse" style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF3300", boxShadow: "0 0 10px #FF3300", display: "inline-block" }} />
-                    {Ic.warn}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: "#FF5533", letterSpacing: .8, marginBottom: 5 }}>
-                      SHORTAGE ALERT · {banner.region.toUpperCase()}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginTop: 1 }}>
+                      <span className="pulse" style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF3300", boxShadow: "0 0 10px #FF3300", display: "inline-block" }} />
+                      {Ic.warn}
                     </div>
-                    <div style={{ color: "#cc8866", fontSize: 13, lineHeight: 1.55 }}>
-                      High probability of stockouts detected in{" "}
-                      <span style={{ fontWeight: 700, color: "#FF8866" }}>{banner.zones} PIN zones</span>{" "}
-                      today due to {banner.reason}. Enter your PIN below to check if your area is affected.
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#FF5533", letterSpacing: .8, marginBottom: 5 }}>
+                        COMMUNITY SHORTAGE SIGNAL · {shortageSummary.activePinCount} ACTIVE PIN{shortageSummary.activePinCount > 1 ? "S" : ""}
+                      </div>
+                      <div style={{ color: "#cc8866", fontSize: 13, lineHeight: 1.55 }}>
+                        <span style={{ fontWeight: 700, color: "#FF8866" }}>{shortageSummary.totalReports} community reports</span>
+                        {" "}filed in the last 30 days across{" "}
+                        <span style={{ fontWeight: 700, color: "#FF8866" }}>{shortageSummary.activePinCount} PIN zones</span>.
+                        {" "}Hotspot: <span style={{ fontWeight: 700, color: "#FF8866" }}>{shortageSummary.hotspot}</span>
+                        {" "}({shortageSummary.hotspotReports} reports). Enter your PIN below to check your area.
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 <div className="g2">
                   {/* Form — order 1 on mobile */}

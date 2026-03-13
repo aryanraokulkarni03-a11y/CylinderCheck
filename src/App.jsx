@@ -1,5 +1,24 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "./supabaseClient";
+
+// ─── City coordinates for India map ──────────────────────────────────────────
+const CITY_COORDS = {
+  Delhi:     { lat: 28.6139, lng: 77.2090 },
+  Mumbai:    { lat: 19.0760, lng: 72.8777 },
+  Bangalore: { lat: 12.9716, lng: 77.5946 },
+  Hyderabad: { lat: 17.3850, lng: 78.4867 },
+  Chennai:   { lat: 13.0827, lng: 80.2707 },
+  Pune:      { lat: 18.5204, lng: 73.8567 },
+  Kolkata:   { lat: 22.5726, lng: 88.3639 },
+  Ahmedabad: { lat: 23.0225, lng: 72.5714 },
+  Vizag:     { lat: 17.6868, lng: 83.2185 },
+  Jaipur:    { lat: 26.9124, lng: 75.7873 },
+  Lucknow:   { lat: 26.8467, lng: 80.9462 },
+  Patna:     { lat: 25.5941, lng: 85.1376 },
+};
+const COMPANIES = ["IndianOil", "HP Gas", "Bharat Gas"];
+const COMPANY_EMOJI = { IndianOil: "🔵", "HP Gas": "🟡", "Bharat Gas": "🟢" };
+const fmtDateTime = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
 
 // ─── Utils ─────────────────────────────────────────────────────────────────────
 const addDays = (date, days) => { const d = new Date(date); d.setDate(d.getDate() + days); return d; };
@@ -179,6 +198,197 @@ const EmptyState = () => (
     <div style={{ fontSize: 11, color: "#444", marginTop: 8 }}>Try one of these sample PINs</div>
   </div>
 );
+
+// ─── PricesMap Component ──────────────────────────────────────────────────────
+function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
+  const mapRef = useRef(null);
+  const leafletMap = useRef(null);
+  const markersRef = useRef({});
+  const [mapPrices, setMapPrices] = useState({});
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+
+  // Load Leaflet + CartoDB dark tiles dynamically
+  useEffect(() => {
+    if (window.L) { setLeafletLoaded(true); return; }
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(link);
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = () => setLeafletLoaded(true);
+    document.head.appendChild(script);
+  }, []);
+
+  // Fetch prices from Supabase
+  useEffect(() => {
+    supabase.from("lpg_prices").select("*").order("recorded_at", { ascending: false })
+      .then(({ data }) => {
+        if (!data) return;
+        const grouped = {};
+        let latest = null;
+        for (const row of data) {
+          if (!grouped[row.city]) grouped[row.city] = {};
+          if (!grouped[row.city][row.company]) {
+            grouped[row.city][row.company] = { price: row.price, recorded_at: row.recorded_at };
+            if (!latest || row.recorded_at > latest) latest = row.recorded_at;
+          }
+        }
+        setMapPrices(grouped);
+        setLastUpdated(latest);
+        setMapLoading(false);
+      });
+  }, []);
+
+  // Init map
+  useEffect(() => {
+    if (!leafletLoaded || leafletMap.current) return;
+    const L = window.L;
+    leafletMap.current = L.map(mapRef.current, {
+      center: [22.5, 82.0], zoom: 5,
+      zoomControl: false, attributionControl: false,
+    });
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 })
+      .addTo(leafletMap.current);
+    L.control.zoom({ position: "bottomright" }).addTo(leafletMap.current);
+  }, [leafletLoaded]);
+
+  // Add markers
+  useEffect(() => {
+    if (!leafletLoaded || !leafletMap.current || mapLoading) return;
+    const L = window.L;
+    Object.entries(CITY_COORDS).forEach(([city, { lat, lng }]) => {
+      const cityPrices = mapPrices[city] || {};
+      const allP = COMPANIES.map(c => cityPrices[c]?.price).filter(Boolean);
+      const cheapest = allP.length ? Math.min(...allP) : null;
+      const color = !cheapest ? "#444" : cheapest < 880 ? "#22c55e" : cheapest < 930 ? "#FF6B00" : "#ef4444";
+      const icon = L.divIcon({
+        html: `<div style="position:relative;width:32px;height:32px;cursor:pointer">
+          <div style="position:absolute;inset:0;border-radius:50%;background:${color};opacity:0.2;animation:lpgPulse 2.2s ease-out infinite;"></div>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;background:${color};box-shadow:0 0 10px ${color};border:2px solid rgba(255,255,255,0.25);"></div>
+          <div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:${color};white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,0.9);font-family:'Instrument Sans',sans-serif;">${city}</div>
+          ${cheapest ? `<div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;color:#fff;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,0.9);font-family:'Instrument Sans',sans-serif;">₹${cheapest}</div>` : ""}
+        </div>`,
+        className: "", iconSize: [32, 32], iconAnchor: [16, 16],
+      });
+      if (markersRef.current[city]) markersRef.current[city].remove();
+      markersRef.current[city] = L.marker([lat, lng], { icon })
+        .addTo(leafletMap.current)
+        .on("click", () => setSelectedCity(city));
+    });
+  }, [leafletLoaded, mapPrices, mapLoading]);
+
+  const cityData = selectedCity ? mapPrices[selectedCity] || {} : null;
+  const allSelPrices = cityData ? COMPANIES.map(c => cityData[c]?.price).filter(Boolean) : [];
+  const cheapestPrice = allSelPrices.length ? Math.min(...allSelPrices) : null;
+  const cheapestCo = cheapestPrice ? COMPANIES.find(c => cityData[c]?.price === cheapestPrice) : null;
+
+  return (
+    <div style={{ position: "relative" }}>
+      <style>{`
+        @keyframes lpgPulse { 0%{transform:scale(1);opacity:0.2} 70%{transform:scale(2.8);opacity:0} 100%{transform:scale(1);opacity:0} }
+        .leaflet-container { background:#080808 !important; }
+        .city-popup { animation: popupIn 0.22s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        @keyframes popupIn { from{opacity:0;transform:scale(0.92) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        .leaflet-control-zoom a { background:#111 !important; color:#888 !important; border-color:#222 !important; }
+        .leaflet-control-zoom a:hover { background:#1a1a1a !important; color:#f0f0f0 !important; }
+      `}</style>
+
+      {/* Live status bar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <span className="pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
+        <span style={{ fontSize: 11, color: "#888", fontWeight: 600, letterSpacing: 1.2 }}>
+          LIVE · {Object.keys(mapPrices).length} CITIES · UPDATED {fmtDateTime(lastUpdated)}
+        </span>
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: "flex", gap: 16, marginBottom: 14, flexWrap: "wrap" }}>
+        {[["#22c55e", "Under ₹880"], ["#FF6B00", "₹880–₹930"], ["#ef4444", "Above ₹930"]].map(([c, l]) => (
+          <div key={l} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: c, boxShadow: `0 0 6px ${c}` }} />
+            <span style={{ fontSize: 11, color: "#666" }}>{l}</span>
+          </div>
+        ))}
+        <span style={{ fontSize: 11, color: "#444", marginLeft: "auto" }}>Click any dot for prices</span>
+      </div>
+
+      {/* Map */}
+      <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid #1e1e1e" }}>
+        <div ref={mapRef} style={{ height: 500, width: "100%", background: "#080808" }} />
+
+        {(!leafletLoaded || mapLoading) && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
+            <span className="pulse" style={{ fontSize: 13, color: "#555" }}>Loading map…</span>
+          </div>
+        )}
+
+        {/* City popup */}
+        {selectedCity && cityData && (
+          <div className="city-popup" style={{
+            position: "absolute", top: 16, right: 16, zIndex: 1000,
+            background: "#111", border: "1px solid #2a2a2a", borderRadius: 14,
+            padding: "18px 20px", minWidth: 250,
+            boxShadow: "0 8px 40px rgba(0,0,0,0.7)",
+          }}>
+            <button onClick={() => setSelectedCity(null)} style={{
+              position: "absolute", top: 10, right: 12, background: "none",
+              border: "none", color: "#555", fontSize: 18, cursor: "pointer", lineHeight: 1,
+            }}>×</button>
+
+            <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 22, fontWeight: 800, color: "#f5f5f5", letterSpacing: "-.3px", marginBottom: 6 }}>
+              {selectedCity}
+            </div>
+
+            {cheapestCo && (
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#22c55e", background: "#22c55e14", border: "1px solid #22c55e22", borderRadius: 99, padding: "3px 10px", display: "inline-block", marginBottom: 14, letterSpacing: 0.5 }}>
+                {COMPANY_EMOJI[cheapestCo]} Cheapest · {cheapestCo} · ₹{cheapestPrice}
+              </div>
+            )}
+
+            {COMPANIES.map(company => {
+              const row = cityData[company];
+              const isCheapest = company === cheapestCo;
+              return (
+                <div key={company} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid #1a1a1a" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 14 }}>{COMPANY_EMOJI[company]}</span>
+                    <span style={{ fontSize: 13, color: isCheapest ? "#f5f5f5" : "#777", fontWeight: isCheapest ? 600 : 400 }}>{company}</span>
+                    {isCheapest && <span style={{ fontSize: 9, color: "#22c55e", fontWeight: 700, letterSpacing: 0.5 }}>BEST</span>}
+                  </div>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: isCheapest ? "#22c55e" : row?.price ? "#f0f0f0" : "#333", fontFamily: "'Bricolage Grotesque',sans-serif" }}>
+                    {row?.price ? `₹${row.price}` : "—"}
+                  </span>
+                </div>
+              );
+            })}
+
+            <div style={{ fontSize: 10, color: "#444", marginTop: 10, textAlign: "right" }}>
+              Updated {fmtDateTime(Object.values(cityData)[0]?.recorded_at)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Price revision alert */}
+      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "22px 24px", marginTop: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#FF7A00", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Price Revision Alert</div>
+        <div style={{ fontSize: 13, color: "#888", marginBottom: 14, lineHeight: 1.6 }}>
+          Get notified before the 1st of each month — before it hits the news.
+        </div>
+        <input style={{ width: "100%", background: "#0e0e0e", border: "1px solid #252525", borderRadius: 10, padding: "12px 16px", color: "#f0f0f0", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "'Instrument Sans',sans-serif" }}
+          placeholder="Mobile number or email" value={contact} onChange={e => setContact(e.target.value)} />
+        <button style={{ display: "block", width: "100%", padding: "13px", borderRadius: 10, border: "none", background: "#FF6B00", color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 12, fontFamily: "'Instrument Sans',sans-serif", cursor: "pointer" }}
+          onClick={() => contact && setAlertSaved(true)}>
+          {alertSaved ? "✓ You're on the list!" : "Notify Me on Price Changes →"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [tab, setTab]           = useState("track");
@@ -824,139 +1034,8 @@ export default function App() {
             {tab === "prices" && (
               <div className="fu">
                 <div className="pg-title">LPG Prices</div>
-                <div className="pg-sub">14.2 kg domestic cylinder — prices revised on the 1st of each month across all distributors.</div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-                  <span className="pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
-                  <span style={{ fontSize: 11, color: "#888", fontWeight: 600, letterSpacing: 1.2 }}>LIVE · DELHI · MARCH 2025</span>
-                </div>
-
-                <div className="g3" style={{ marginBottom: 16 }}>
-                  {[["🔵","IndianOil","Indane"],["🟡","HP Gas","HP Gas"],["🟢","Bharat Gas","Bharat Gas"]].map(([emoji, company, cyl], i) => {
-                    const p = displayPrices[i];
-                    return (
-                      <div key={company} style={{ ...card, marginBottom: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                          <span style={{ fontSize: 20 }}>{emoji}</span>
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: "#f5f5f5" }}>{company}</div>
-                            <div className="price-sub" style={{ fontSize: 11, color: "#888" }}>{cyl} · 14.2 kg</div>
-                          </div>
-                        </div>
-                        <div className="price-big" style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 34, fontWeight: 800,
-                          color: "#f5f5f5", letterSpacing: "-.8px", marginBottom: 6 }}>
-                          ₹{p?.price || "—"}
-                        </div>
-                        <div style={{ fontSize: 11, color: "#ef4444", display: "flex", alignItems: "center", gap: 4, fontWeight: 500 }}>
-                          {Ic.up} ₹14 from last month
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div style={{ ...card, marginBottom: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-                    <div style={secTitle}>6-Month Price History</div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 600 }}>▲ +₹68 since Oct</div>
-                      <div style={{ fontSize: 10, color: "#777", marginTop: 2 }}>Apr revision expected</div>
-                    </div>
-                  </div>
-                  {(() => {
-                    const pts = [
-                      { m: "Oct", p: 835 },
-                      { m: "Nov", p: 852 },
-                      { m: "Dec", p: 846 },
-                      { m: "Jan", p: 880 },
-                      { m: "Feb", p: 870 },
-                      { m: "Mar", p: 900 },
-                      { m: "Now", p: 903 },
-                    ];
-                    const projected = { m: "Apr", p: 924 };
-                    const W = 560, H = 110, PAD = { t: 16, b: 32, l: 8, r: 8 };
-                    const minP = 820, maxP = 930;
-                    const toX = (i, total) => PAD.l + (i / (total - 1)) * (W - PAD.l - PAD.r);
-                    const toY = (p) => PAD.t + (1 - (p - minP) / (maxP - minP)) * (H - PAD.t - PAD.b);
-                    const solidPts = pts.map((d, i) => [toX(i, pts.length + 1), toY(d.p)]);
-                    const projX = toX(pts.length, pts.length + 1);
-                    const projY = toY(projected.p);
-                    const solidPath = solidPts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ");
-                    const areaPath = solidPath + ` L${solidPts[solidPts.length-1][0]},${H - PAD.b} L${solidPts[0][0]},${H - PAD.b} Z`;
-                    return (
-                      <div className="chart-wrap">
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: "block", width: "100%", height: "auto" }}>
-                        <defs>
-                          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#FF6B00" stopOpacity="0.12"/>
-                            <stop offset="100%" stopColor="#FF6B00" stopOpacity="0"/>
-                          </linearGradient>
-                        </defs>
-                        {/* Grid lines */}
-                        {[0.25, 0.5, 0.75].map(f => (
-                          <line key={f}
-                            x1={PAD.l} y1={PAD.t + f * (H - PAD.t - PAD.b)}
-                            x2={W - PAD.r} y2={PAD.t + f * (H - PAD.t - PAD.b)}
-                            stroke="#1e1e1e" strokeWidth="1" strokeDasharray="3 4"/>
-                        ))}
-                        {/* Area fill */}
-                        <path d={areaPath} fill="url(#areaGrad)"/>
-                        {/* Solid line */}
-                        <path d={solidPath} fill="none" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        {/* Projected dashed extension */}
-                        <line
-                          x1={solidPts[solidPts.length-1][0]} y1={solidPts[solidPts.length-1][1]}
-                          x2={projX} y2={projY}
-                          stroke="#FF6B00" strokeWidth="1.5" strokeDasharray="4 4" opacity=".5"/>
-                        {/* Dots */}
-                        {solidPts.map(([x, y], i) => (
-                          <circle key={i} cx={x} cy={y} r={i === solidPts.length - 1 ? 4 : 2.5}
-                            fill={i === solidPts.length - 1 ? "#FF6B00" : "#1e1e1e"}
-                            stroke="#FF6B00" strokeWidth={i === solidPts.length - 1 ? 0 : 1.5}/>
-                        ))}
-                        {/* Projected dot */}
-                        <circle cx={projX} cy={projY} r="3" fill="#0f0f0f" stroke="#FF6B00" strokeWidth="1.5" opacity=".5" strokeDasharray="2 2"/>
-                        {/* X-axis labels */}
-                        {pts.map((d, i) => (
-                          <text key={d.m} x={toX(i, pts.length + 1)} y={H - 4}
-                            textAnchor="middle" fill={d.m === "Now" ? "#FF6B00" : "#555"}
-                            fontSize="9" fontFamily="'Instrument Sans',sans-serif" fontWeight={d.m==="Now"?"700":"400"}>
-                            {d.m}
-                          </text>
-                        ))}
-                        <text x={projX} y={H - 4} textAnchor="middle" fill="#FF6B0066"
-                          fontSize="9" fontFamily="'Instrument Sans',sans-serif">Apr</text>
-                        {/* Current price callout */}
-                        <rect x={solidPts[solidPts.length-1][0] - 22} y={solidPts[solidPts.length-1][1] - 22}
-                          width="44" height="16" rx="4" fill="#FF6B00"/>
-                        <text x={solidPts[solidPts.length-1][0]} y={solidPts[solidPts.length-1][1] - 11}
-                          textAnchor="middle" fill="#fff" fontSize="9" fontWeight="700"
-                          fontFamily="'Instrument Sans',sans-serif">₹903</text>
-                        {/* Projected price label */}
-                        <text x={projX} y={projY - 8} textAnchor="middle" fill="#FF6B0077"
-                          fontSize="9" fontFamily="'Instrument Sans',sans-serif">₹924 est.</text>
-                      </svg>
-                      </div>
-                    );
-                  })()}
-                  <div style={{ fontSize: 12, color: "#777", marginTop: 12, paddingTop: 12, borderTop: "1px solid #1a1a1a", display: "flex", justifyContent: "space-between" }}>
-                    <span>IndianOil Delhi · 14.2 kg cylinder</span>
-                    <span style={{ color: "#888" }}>Dashed = projected</span>
-                  </div>
-                </div>
-
-                <div style={card}>
-                  <div style={secTitle}>Price Revision Alert</div>
-                  <div style={{ fontSize: 13, color: "#888", marginBottom: 14, lineHeight: 1.6 }}>
-                    Get notified before the 1st of each month — before it hits the news.
-                  </div>
-                  <input style={inp} placeholder="Mobile number or email" value={contact} onChange={e => setContact(e.target.value)} />
-                  <button style={btn("fill")} onClick={() => contact && setAlertSaved(true)}>
-                    {alertSaved ? "✓ You're on the list!" : "Notify Me on Price Changes →"}
-                  </button>
-                </div>
-
-                {/* AdSense — Leaderboard 728×90 */}
+                <div className="pg-sub">14.2 kg domestic cylinder — live prices across 12 cities, updated every Sunday.</div>
+                <PricesMap contact={contact} setContact={setContact} alertSaved={alertSaved} setAlertSaved={setAlertSaved} />
                 <AdSlot id="prices-bottom" type="leaderboard" />
               </div>
             )}

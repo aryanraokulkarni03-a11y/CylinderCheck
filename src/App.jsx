@@ -243,17 +243,38 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
       });
   }, []);
 
-  // Init map
+  // Init map — locked to India, no escape
   useEffect(() => {
     if (!leafletLoaded || leafletMap.current) return;
     const L = window.L;
+
+    // Tight bounding box covering all of India (J&K top → Kanyakumari bottom, Kutch left → Arunachal right)
+    const INDIA_BOUNDS = L.latLngBounds(
+      L.latLng(6.5, 68.0),   // SW corner — Kanyakumari / Lakshadweep
+      L.latLng(37.5, 97.5),  // NE corner — Arunachal Pradesh
+    );
+
     leafletMap.current = L.map(mapRef.current, {
-      center: [22.5, 82.0], zoom: 5,
-      zoomControl: false, attributionControl: false,
+      center: [22.5, 82.0],
+      zoom: 5,
+      minZoom: 4,          // Can't zoom out further than full-India view
+      maxZoom: 8,          // City level is enough — no need for street zoom
+      maxBounds: INDIA_BOUNDS,
+      maxBoundsViscosity: 1.0,  // Hard wall — map snaps back instantly, no rubber-band
+      zoomControl: false,
+      attributionControl: false,
+      // Disable gestures that feel wrong on a fixed-india map
+      doubleClickZoom: false,
     });
+
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 })
       .addTo(leafletMap.current);
+
+    // Zoom control — bottom right
     L.control.zoom({ position: "bottomright" }).addTo(leafletMap.current);
+
+    // Fit map perfectly to India bounds on init (fills the container with no dead space)
+    leafletMap.current.fitBounds(INDIA_BOUNDS, { padding: [16, 16] });
   }, [leafletLoaded]);
 
   // Add markers
@@ -295,6 +316,12 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
         @keyframes popupIn { from{opacity:0;transform:scale(0.92) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
         .leaflet-control-zoom a { background:#111 !important; color:#888 !important; border-color:#222 !important; }
         .leaflet-control-zoom a:hover { background:#1a1a1a !important; color:#f0f0f0 !important; }
+        /* Vignette to frame India and hide hard tile edges at maxBounds */
+        .india-map-frame::after {
+          content:''; position:absolute; inset:0; border-radius:16px;
+          box-shadow: inset 0 0 60px 24px rgba(8,8,8,0.6);
+          pointer-events:none; z-index:500;
+        }
       `}</style>
 
       {/* Live status bar */}
@@ -316,9 +343,9 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
         <span style={{ fontSize: 11, color: "#444", marginLeft: "auto" }}>Click any dot for prices</span>
       </div>
 
-      {/* Map */}
-      <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid #1e1e1e" }}>
-        <div ref={mapRef} style={{ height: 500, width: "100%", background: "#080808" }} />
+      {/* Map — locked to India */}
+      <div className="india-map-frame" style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid #1e1e1e" }}>
+        <div ref={mapRef} style={{ height: 560, width: "100%", background: "#080808" }} />
 
         {(!leafletLoaded || mapLoading) && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
@@ -326,9 +353,9 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
           </div>
         )}
 
-        {/* City popup */}
+        {/* City popup — desktop card */}
         {selectedCity && cityData && (
-          <div className="city-popup" style={{
+          <div className="city-popup city-popup-desktop" style={{
             position: "absolute", top: 16, right: 16, zIndex: 1000,
             background: "#111", border: "1px solid #2a2a2a", borderRadius: 14,
             padding: "18px 20px", minWidth: 250,
@@ -338,17 +365,14 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
               position: "absolute", top: 10, right: 12, background: "none",
               border: "none", color: "#555", fontSize: 18, cursor: "pointer", lineHeight: 1,
             }}>×</button>
-
             <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 22, fontWeight: 800, color: "#f5f5f5", letterSpacing: "-.3px", marginBottom: 6 }}>
               {selectedCity}
             </div>
-
             {cheapestCo && (
               <div style={{ fontSize: 10, fontWeight: 700, color: "#22c55e", background: "#22c55e14", border: "1px solid #22c55e22", borderRadius: 99, padding: "3px 10px", display: "inline-block", marginBottom: 14, letterSpacing: 0.5 }}>
                 {COMPANY_EMOJI[cheapestCo]} Cheapest · {cheapestCo} · ₹{cheapestPrice}
               </div>
             )}
-
             {COMPANIES.map(company => {
               const row = cityData[company];
               const isCheapest = company === cheapestCo;
@@ -365,9 +389,49 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
                 </div>
               );
             })}
-
             <div style={{ fontSize: 10, color: "#444", marginTop: 10, textAlign: "right" }}>
               Updated {fmtDateTime(Object.values(cityData)[0]?.recorded_at)}
+            </div>
+          </div>
+        )}
+
+        {/* City bottom sheet — mobile only */}
+        {selectedCity && cityData && (
+          <div className="city-sheet-overlay" onClick={() => setSelectedCity(null)}>
+            <div className="city-sheet" onClick={e => e.stopPropagation()}>
+              <div className="city-sheet-handle" />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 26, fontWeight: 800, color: "#f5f5f5", letterSpacing: "-.4px", lineHeight: 1 }}>
+                    {selectedCity}
+                  </div>
+                  {cheapestCo && (
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#22c55e", background: "#22c55e14", border: "1px solid #22c55e22", borderRadius: 99, padding: "4px 11px", display: "inline-block", marginTop: 8, letterSpacing: 0.5 }}>
+                      {COMPANY_EMOJI[cheapestCo]} Cheapest · {cheapestCo} · ₹{cheapestPrice}
+                    </div>
+                  )}
+                </div>
+                <button onClick={() => setSelectedCity(null)} style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 8, width: 32, height: 32, color: "#888", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
+              </div>
+              {COMPANIES.map(company => {
+                const row = cityData[company];
+                const isCheapest = company === cheapestCo;
+                return (
+                  <div key={company} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: "1px solid #1e1e1e" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 18 }}>{COMPANY_EMOJI[company]}</span>
+                      <span style={{ fontSize: 15, color: isCheapest ? "#f5f5f5" : "#888", fontWeight: isCheapest ? 600 : 400 }}>{company}</span>
+                      {isCheapest && <span style={{ fontSize: 10, color: "#22c55e", fontWeight: 700 }}>BEST</span>}
+                    </div>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: isCheapest ? "#22c55e" : row?.price ? "#f0f0f0" : "#333", fontFamily: "'Bricolage Grotesque',sans-serif" }}>
+                      {row?.price ? `₹${row.price}` : "—"}
+                    </span>
+                  </div>
+                );
+              })}
+              <div style={{ fontSize: 11, color: "#555", marginTop: 12, textAlign: "right" }}>
+                Updated {fmtDateTime(Object.values(cityData)[0]?.recorded_at)}
+              </div>
             </div>
           </div>
         )}
@@ -693,31 +757,31 @@ export default function App() {
         @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { -webkit-font-smoothing: antialiased; }
-        body { background: #080808; color: #e8e8e8; font-family: 'Instrument Sans', sans-serif; min-height: 100vh; }
+        html { -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; }
+        body { background: #080808; color: #e8e8e8; font-family: 'Instrument Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #252525; border-radius: 4px; }
-        input, textarea, button { font-family: 'Instrument Sans', sans-serif; }
+        input, textarea, button, select { font-family: 'Instrument Sans', sans-serif; }
         input::placeholder, textarea::placeholder { color: #383838; }
         input:focus, textarea:focus { border-color: #FF6B00 !important; outline: none; }
-        a { text-decoration: none; color: inherit; }
-        button { cursor: pointer; }
+        a { text-decoration: none; color: inherit; -webkit-tap-highlight-color: transparent; }
+        button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
         button:hover { opacity: .88; }
-        button:active { transform: scale(.985); }
+        button:active { transform: scale(.97); }
 
-        /* ── Layout ── */
+        /* ─── Layout ─────────────────────────────────────── */
         .app { display: flex; min-height: 100vh; }
 
-        /* ── Sidebar ── */
+        /* ─── Sidebar (desktop only) ──────────────────────── */
         .sidebar {
           width: 240px; min-width: 240px;
           background: #0a0a0a; border-right: 1px solid #191919;
           display: flex; flex-direction: column;
           position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
         }
-        .sb-logo { display: flex; align-items: center; gap: 11px; padding: 20px 20px 18px; border-bottom: 1px solid #191919; }
+        .sb-logo { display: flex; align-items: center; gap: 11px; padding: 20px 20px 18px; border-bottom: 1px solid #191919; cursor: default; user-select: none; }
         .sb-name { font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800; color: #f5f5f5; letter-spacing: -.3px; display: flex; align-items: baseline; }
         .sb-dot { width: 7px; height: 7px; border-radius: 50%; background: #FF6B00; display: inline-block; margin-left: 2px; flex-shrink: 0; }
         .sb-section { padding: 16px 12px 8px; }
@@ -734,29 +798,26 @@ export default function App() {
         .sb-item.active:hover { opacity: 1; }
         .sb-footer { margin-top: auto; padding: 18px 20px; border-top: 1px solid #191919; font-size: 12px; color: #555; line-height: 1.7; }
 
-        /* ── Main ── */
+        /* ─── Main content area ───────────────────────────── */
         .main { margin-left: 240px; flex: 1; min-height: 100vh; }
         .topbar { display: none; }
         .content { padding: 36px 44px 60px; max-width: 1080px; }
-        /* ── Page headings ── */
+
+        /* ─── Page headings ───────────────────────────────── */
         .pg-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; line-height: 1.1; color: #f5f5f5; }
         .pg-sub { font-size: 15px; margin-bottom: 24px; line-height: 1.6; max-width: 580px; color: #888; }
 
-        /* ── Grids ── */
-        .g2  { display: grid; grid-template-columns: 420px 1fr; gap: 20px; align-items: start; }
-        .g3  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-        .g2eq{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        /* ─── Grids ───────────────────────────────────────── */
+        .g2   { display: grid; grid-template-columns: 420px 1fr; gap: 20px; align-items: start; }
+        .g3   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .g2eq { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-        /* ── Track tab mobile reorder ── */
+        /* Track tab column ordering */
         .track-form    { order: 1; }
         .track-result  { order: 2; }
         .track-portals { order: 3; }
 
-        /* ── Chart container — prevent horizontal overflow ── */
-        .chart-wrap { width: 100%; overflow: hidden; }
-        .chart-wrap svg { display: block; width: 100%; height: auto; }
-
-        /* ── Portal link ── */
+        /* ─── Portal links ────────────────────────────────── */
         .portal-link {
           display: flex; align-items: center; justify-content: space-between;
           background: #141414; border: 1px solid #222; border-radius: 10px;
@@ -765,7 +826,7 @@ export default function App() {
         }
         .portal-link:hover { border-color: #FF6B0044; color: #f5f5f5; background: #181818; }
 
-        /* ── Animations ── */
+        /* ─── Animations ──────────────────────────────────── */
         @keyframes slideIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         .slide { animation: slideIn .4s cubic-bezier(.4,0,.2,1) forwards; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
@@ -775,63 +836,178 @@ export default function App() {
         @keyframes bannerFade { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
         .banner-in { animation: bannerFade .4s ease forwards; }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes sheetUp { from{opacity:0;transform:translateY(100%)} to{opacity:1;transform:translateY(0)} }
+        @keyframes sheetDown { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(100%)} }
 
-        /* ── Mobile bottom nav ── */
+        /* ─── Mobile bottom nav — hidden on desktop ───────── */
         .bottom-nav { display: none; }
 
-        /* ── Tablet ── */
+        /* ─── City popup — desktop card style ────────────── */
+        .city-sheet-overlay { display: none; }
+        .city-popup-desktop { display: block; }
+
+        /* ════════════════════════════════════════════════════
+           TABLET  ≤1100px
+        ════════════════════════════════════════════════════ */
         @media (max-width: 1100px) {
           .sidebar { width: 200px; min-width: 200px; }
           .main { margin-left: 200px; }
           .content { padding: 28px 28px 60px; }
-          .g2 { grid-template-columns: 340px 1fr; }
+          .g2 { grid-template-columns: 320px 1fr; }
           .g3 { grid-template-columns: repeat(2, 1fr); }
           .pg-title { font-size: 28px; }
         }
 
-        /* ── Mobile ── */
+        /* ════════════════════════════════════════════════════
+           MOBILE  ≤768px  — MOBILE FIRST, THUMB ZONE PRIORITY
+        ════════════════════════════════════════════════════ */
         @media (max-width: 768px) {
+          /* ── Shell ── */
           .sidebar { display: none; }
           .main { margin-left: 0; min-height: auto; }
-          .app { min-height: auto; }
-          .topbar {
-            display: flex; align-items: center; gap: 11px;
-            padding: 12px 16px; background: #0a0a0a;
-            border-bottom: 1px solid #191919;
-            position: sticky; top: 0; z-index: 100;
-          }
-          .topbar-name { font-family: 'Bricolage Grotesque', sans-serif; font-size: 16px; font-weight: 800; color: #f5f5f5; }
-          .content { padding: 16px 14px 90px; }
-          .pg-title { font-size: 22px; margin-bottom: 4px; }
-          .pg-sub { font-size: 13px; margin-bottom: 14px; }
+          .app { min-height: 100dvh; }
 
-          /* Stack g2 as flex column so we can control order */
-          .g2 { display: flex; flex-direction: column; gap: 0; }
-          .g3 { grid-template-columns: 1fr 1fr; }
-          .g3.stack1 { grid-template-columns: 1fr; }
-          .price-big { font-size: 26px !important; }
-          .price-sub { font-size: 10px !important; }
+          /* ── Top bar — compact, sticky, glass ── */
+          .topbar {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 16px;
+            height: 52px;
+            background: rgba(8,8,8,0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid #1a1a1a;
+            position: sticky; top: 0; z-index: 100;
+            padding-top: env(safe-area-inset-top);
+          }
+          .topbar-name {
+            font-family: 'Bricolage Grotesque', sans-serif;
+            font-size: 17px; font-weight: 800; color: #f5f5f5; letter-spacing: -.2px;
+          }
+
+          /* ── Scrollable content ── */
+          .content {
+            padding: 14px 14px calc(80px + env(safe-area-inset-bottom));
+          }
+
+          /* ── Typography ── */
+          .pg-title { font-size: 24px; margin-bottom: 4px; letter-spacing: -.5px; }
+          .pg-sub   { font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
+
+          /* ── Grid collapses to single column ── */
+          .g2   { display: flex; flex-direction: column; gap: 0; }
+          .g3   { grid-template-columns: 1fr 1fr; }
           .g2eq { grid-template-columns: 1fr 1fr; }
 
-          /* Track tab: form → result → portals */
+          /* Track tab: form first, result below, portals last */
           .track-form    { order: 1; }
           .track-result  { order: 2; }
           .track-portals { order: 3; }
 
+          /* ── Inputs — thumb-friendly height ── */
+          input[type="text"],
+          input[type="date"],
+          input[type="number"],
+          input[type="tel"],
+          input[type="email"],
+          input[type="password"],
+          textarea {
+            min-height: 50px !important;
+            font-size: 16px !important; /* prevents iOS zoom on focus */
+            padding: 14px 16px !important;
+            border-radius: 12px !important;
+          }
+          textarea { min-height: 100px !important; }
+
+          /* ── Buttons — big thumb targets ── */
+          button.primary-btn,
+          .main-cta {
+            min-height: 52px !important;
+            font-size: 16px !important;
+            border-radius: 14px !important;
+          }
+
+          /* ── Portal links — taller for thumb ── */
+          .portal-link {
+            padding: 16px 18px;
+            border-radius: 14px;
+            font-size: 15px;
+          }
+
+          /* ── Bottom nav — iOS-native feel ─────────────── */
           .bottom-nav {
-            display: flex; position: fixed; bottom: 0; left: 0; right: 0;
-            background: rgba(8,8,8,.97); backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid #1e1e1e; z-index: 200;
-            padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+            display: flex;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(10,10,10,0.97);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            z-index: 200;
+            padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
           }
           .bn-item {
             flex: 1; display: flex; flex-direction: column; align-items: center;
-            gap: 4px; padding: 5px 0; background: none; border: none;
-            font-size: 9px; font-weight: 600; color: #666;
-            letter-spacing: .5px; text-transform: uppercase; transition: color .15s;
+            gap: 3px; padding: 6px 4px;
+            background: none; border: none;
+            font-size: 10px; font-weight: 600; color: #555;
+            letter-spacing: .3px; text-transform: uppercase;
+            transition: color .15s;
+            min-height: 50px;
           }
           .bn-item.active { color: #FF6B00; }
+          .bn-item.active svg { filter: drop-shadow(0 0 6px #FF6B0066); }
+
+          /* Active tab indicator pill above icon */
+          .bn-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 28px; height: 3px;
+            background: #FF6B00;
+            border-radius: 0 0 3px 3px;
+          }
+          .bn-item { position: relative; }
+
+          /* ── Map: city popup → bottom sheet on mobile ─── */
+          .city-popup-desktop { display: none !important; }
+          .city-sheet-overlay {
+            display: flex;
+            position: fixed; inset: 0; z-index: 2000;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            align-items: flex-end;
+          }
+          .city-sheet {
+            width: 100%;
+            background: #141414;
+            border-top: 1px solid #2a2a2a;
+            border-radius: 20px 20px 0 0;
+            padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+            animation: sheetUp .28s cubic-bezier(0.34,1.2,0.64,1) forwards;
+          }
+          .city-sheet-handle {
+            width: 36px; height: 4px;
+            background: #333; border-radius: 2px;
+            margin: 0 auto 16px;
+          }
+
+          /* ── Map height on mobile ── */
+          .india-map-frame .leaflet-container { height: 380px !important; }
+
+          /* ── Stat rows — more breathing room ── */
+          .stat-row { padding: 13px 0 !important; }
+
+          /* ── Admin table — horizontal scroll ── */
+          .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        }
+
+        /* ═══════════════════════════════════════════════════
+           SMALL MOBILE  ≤390px  (iPhone SE, small Androids)
+        ═══════════════════════════════════════════════════ */
+        @media (max-width: 390px) {
+          .content { padding: 12px 12px calc(76px + env(safe-area-inset-bottom)); }
+          .pg-title { font-size: 21px; }
+          .g3 { grid-template-columns: 1fr; }
+          .g2eq { grid-template-columns: 1fr; }
         }
       `}</style>
 
@@ -905,6 +1081,7 @@ export default function App() {
                       <label style={lbl}>PIN Code</label>
                       <input style={inp} placeholder="Enter 6-digit PIN e.g. 530001"
                         value={pin} maxLength={6}
+                        inputMode="numeric" pattern="[0-9]*"
                         onChange={e => setPin(e.target.value.replace(/\D/g, ""))}
                         onKeyDown={e => e.key === "Enter" && handleTrack()} />
                       <div style={{ height: 16 }} />
@@ -1052,6 +1229,7 @@ export default function App() {
                       <div style={secTitle}>Submit a Report</div>
                       <label style={lbl}>PIN Code *</label>
                       <input style={inp} placeholder="6-digit PIN" value={reportPin} maxLength={6}
+                        inputMode="numeric" pattern="[0-9]*"
                         onChange={e => setReportPin(e.target.value.replace(/\D/g, ""))} />
                       <div style={{ height: 14 }} />
                       <label style={lbl}>Area / Colony <span style={{ color: "#2a2a2a" }}>(optional)</span></label>
@@ -1203,6 +1381,7 @@ export default function App() {
                       </div>
                       <label style={lbl}>PIN Code</label>
                       <input style={inp} placeholder="6-digit PIN" value={alertPin} maxLength={6}
+                        inputMode="numeric" pattern="[0-9]*"
                         onChange={e => setAlertPin(e.target.value.replace(/\D/g, ""))} />
                       <div style={{ height: 14 }} />
                       <label style={lbl}>Last Booking Date</label>
@@ -1210,6 +1389,7 @@ export default function App() {
                       <div style={{ height: 14 }} />
                       <label style={lbl}>Mobile or Email *</label>
                       <input style={inp} placeholder="98xxxxxxxx or you@email.com"
+                        inputMode="email" autoComplete="email"
                         value={contact} onChange={e => setContact(e.target.value)} />
                       <button style={btn("fill", !contact)} onClick={async () => {
                         if (!contact) return;
@@ -1347,6 +1527,7 @@ export default function App() {
                             <label style={lbl}>PIN Code <span style={{ color: "#2a2a2a" }}>(optional — for area alerts)</span></label>
                             <input style={{ ...inp, marginBottom: 16 }}
                               placeholder="6-digit PIN" value={payPin} maxLength={6}
+                              inputMode="numeric" pattern="[0-9]*"
                               onChange={e => setPayPin(e.target.value.replace(/\D/g, ""))} />
                             {payError && (
                               <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 10 }}>{payError}</div>
@@ -1506,7 +1687,7 @@ export default function App() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", backdropFilter: "blur(8px)",
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
           <div style={{ background: "#111", border: "1px solid #222", borderRadius: 16,
-            padding: "32px", width: 320, textAlign: "center" }}>
+            padding: "32px", width: "min(320px, calc(100vw - 32px))", textAlign: "center" }}>
             <div style={{ fontSize: 24, marginBottom: 12 }}>🔒</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>Admin Access</div>
             <div style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>Enter your admin password</div>

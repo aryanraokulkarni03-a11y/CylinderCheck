@@ -6,3 +6,6 @@ dist
 agents.pack
 react
 supabase/.temp/
+agent-skills-main
+agent-skills*/
+.agents/

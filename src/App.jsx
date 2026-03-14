@@ -126,6 +126,10 @@ const IcReport = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" str
 const IcNews = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" /><path d="M18 14h-8" /><path d="M15 18h-5" /><path d="M10 6h8v4h-8V6Z" /></svg>;
 const IcAlert = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
 const IcSupport = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>;
+const IcShop = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 9l1-5h16l1 5" /><path d="M3 9a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2" /><path d="M5 11v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" /><line x1="10" y1="15" x2="14" y2="15" /></svg>;
+const IcPhone = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.5 5.5l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>;
+const IcWhatsApp = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>;
+const IcBolt = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
 
 // ─── Module-level data (Vercel: hoist-jsx) ────────────────────────────────────
 const TABS = [
@@ -134,6 +138,7 @@ const TABS = [
   { id: "community", label: "Reports", icon: IcReport },
   { id: "news", label: "News", icon: IcNews },
   { id: "alerts", label: "Alerts", icon: IcAlert },
+  { id: "commercial", label: "For Biz", icon: IcShop },
 ];
 const PORTALS = [
   ["🔵", "IndianOil — Indane", "https://ivrs.indianoil.in"],
@@ -162,6 +167,44 @@ const PLUS_FEATURES = [
   ["📦", "Delivery day status ping so you're home on time"],
   ["📊", "Monthly supply health score for your area"],
 ];
+
+// ─── Commercial MVP — module-level constants ──────────────────────────────────
+const COMMERCIAL_CITIES = ["Mumbai", "Bangalore", "Hyderabad", "Chennai", "Delhi", "Kolkata", "Vizag"];
+
+// Normalise postal API city names → our COMMERCIAL_CITIES keys
+// Vercel: js-cache-property-access — built once at module level
+const CITY_NORMALISE = {
+  "visakhapatnam": "Vizag", "vizag": "Vizag", "vishakhapatnam": "Vizag",
+  "bengaluru": "Bangalore", "bangalore": "Bangalore",
+  "mumbai": "Mumbai", "bombay": "Mumbai",
+  "delhi": "Delhi", "new delhi": "Delhi", "new delhi": "Delhi",
+  "hyderabad": "Hyderabad",
+  "chennai": "Chennai", "madras": "Chennai",
+  "kolkata": "Kolkata", "calcutta": "Kolkata",
+};
+const BUSINESS_TYPES = [
+  ["restaurant", "Restaurant"],
+  ["hotel", "Hotel / Lodge"],
+  ["dhaba", "Dhaba"],
+  ["bakery", "Bakery"],
+  ["catering", "Catering Business"],
+  ["cloud_kitchen", "Cloud Kitchen"],
+  ["other", "Other"],
+];
+const NEED_TYPES = [
+  ["induction", "🔌 Induction Cooktop"],
+  ["electric", "⚡ Electric Range"],
+  ["kerosene", "🪔 Kerosene Supply"],
+  ["png", "🔧 PNG Connection"],
+  ["not_sure", "🤔 Not Sure — Need Advice"],
+];
+const CATEGORY_META = {
+  induction: { label: "Induction", color: "var(--info)", bg: "var(--info-soft)", border: "var(--info-border)" },
+  electric: { label: "Electric", color: "var(--warning)", bg: "var(--warning-soft)", border: "var(--warning-border)" },
+  kerosene: { label: "Kerosene", color: "var(--success)", bg: "var(--success-soft)", border: "var(--success-border)" },
+  png: { label: "PNG", color: "var(--accent)", bg: "var(--accent-soft)", border: "rgba(255,107,0,0.22)" },
+  other: { label: "Other", color: "var(--text-muted)", bg: "var(--bg-inset)", border: "var(--border)" },
+};
 
 // Hoisted static skeleton — never recreated (Vercel: hoist-jsx)
 const SkeletonCard = (
@@ -653,6 +696,345 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved, mapPrices, 
   );
 }
 
+// ─── CommercialPage ───────────────────────────────────────────────────────────
+// Vercel: rerender-no-inline-components — defined at module level
+function CommercialPage({ prefilledCity = "" }) {
+  // ── Lead form state ────────────────────────────────────────────────────────
+  const [bizName, setBizName] = useState("");
+  const [bizType, setBizType] = useState("");
+  const [city, setCity] = useState(prefilledCity);
+  const [phone, setPhone] = useState("");
+  const [needType, setNeedType] = useState("");
+  const [cylinders, setCylinders] = useState("");
+  const [message, setMessage] = useState("");
+  const [formError, setFormError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  // ── Vendor state ───────────────────────────────────────────────────────────
+  const [vendors, setVendors] = useState([]);
+  const [vendorsLoading, setVendorsLoading] = useState(false);
+  const [selectedCity, setSelectedCity] = useState(prefilledCity || COMMERCIAL_CITIES[0]);
+
+  // ── Fetch vendors when city changes ───────────────────────────────────────
+  useEffect(() => {
+    if (!selectedCity) return;
+    // Keep lead form city in sync with vendor city tab
+    setCity(selectedCity);
+    setVendorsLoading(true);
+    supabase
+      .from("vendors")
+      .select("*")
+      .eq("city", selectedCity)
+      .eq("active", true)
+      .order("featured", { ascending: false })
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        setVendors(data || []);
+        setVendorsLoading(false);
+      });
+  }, [selectedCity]);
+
+  // ── Submit lead ────────────────────────────────────────────────────────────
+  const handleSubmit = async () => {
+    if (!bizName.trim()) { setFormError("Enter your business name."); return; }
+    if (!bizType) { setFormError("Select your business type."); return; }
+    if (!city) { setFormError("Select your city."); return; }
+    if (!phone.trim()) { setFormError("Enter your phone number."); return; }
+    if (!needType) { setFormError("Tell us what you need."); return; }
+    setFormError(""); setSubmitting(true);
+    const { error } = await supabase.from("commercial_leads").insert([{
+      business_name: bizName.trim(),
+      business_type: bizType,
+      city,
+      phone: phone.trim(),
+      need_type: needType,
+      cylinders_week: cylinders ? parseInt(cylinders, 10) : null,
+      message: message.trim() || null,
+    }]);
+    if (error) { setFormError("Something went wrong. Please try again."); setSubmitting(false); }
+    else { setSubmitted(true); setSubmitting(false); }
+  };
+
+  return (
+    <div className="tab-panel">
+      {/* ── Header ── */}
+      <div className="commercial-hero">
+        <div className="commercial-hero-badge">
+          <span className="pulse-dot pulse-dot-danger" />
+          LIVE CRISIS — MARCH 2026
+        </div>
+        <h1 className="page-title" style={{ marginBottom: "var(--space-3)" }}>
+          No Commercial Gas?<br />Find Alternatives Now.
+        </h1>
+        <p className="page-subtitle" style={{ maxWidth: 520, marginBottom: 0 }}>
+          The Strait of Hormuz disruption has cut commercial LPG to restaurants across India.
+          Connect with verified suppliers of induction cooktops, electric ranges and more —
+          available in your city today.
+        </p>
+      </div>
+
+      {/* ── Stats bar ── */}
+      <div className="commercial-stats-bar">
+        {[
+          ["8,000+", "Hotels & restaurants affected"],
+          ["7", "Cities covered"],
+          ["48hrs", "Avg vendor response time"],
+        ].map(([val, label]) => (
+          <div key={label} className="commercial-stat">
+            <span className="commercial-stat-value">{val}</span>
+            <span className="t-caption">{label}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid-2col" style={{ alignItems: "start" }}>
+
+        {/* ── Left — Lead form ── */}
+        <div>
+          <div className="neu-card mb-card">
+            <div className="section-title">Get Help Today — Free</div>
+
+            {submitted ? (
+              <div className="alert-banner alert-banner-success anim-scale-in">
+                {IcCheck}
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--success)", marginBottom: 4 }}>
+                    Request submitted!
+                  </div>
+                  <p className="t-caption" style={{ margin: 0 }}>
+                    Vendors in {city} will contact you on {phone} within 24–48 hours.
+                    You can also call them directly from the cards below.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="input-group">
+                  <label className="input-label" htmlFor="cc-biz-name">Business Name *</label>
+                  <input id="cc-biz-name" className="input" placeholder="e.g. Sharma Dhaba"
+                    value={bizName} onChange={e => { setBizName(e.target.value); setFormError(""); }} />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" htmlFor="cc-biz-type">Business Type *</label>
+                  <select id="cc-biz-type" className="input" value={bizType}
+                    onChange={e => { setBizType(e.target.value); setFormError(""); }}>
+                    <option value="">Select type…</option>
+                    {BUSINESS_TYPES.map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" htmlFor="cc-city">City *</label>
+                  <select id="cc-city" className="input" value={city}
+                    onChange={e => { setCity(e.target.value); setFormError(""); }}>
+                    <option value="">Select city…</option>
+                    {COMMERCIAL_CITIES.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" htmlFor="cc-phone">Phone Number *</label>
+                  <input id="cc-phone" className="input" placeholder="98xxxxxxxx"
+                    inputMode="tel" maxLength={10}
+                    value={phone} onChange={e => { setPhone(e.target.value.replace(/\D/g, "")); setFormError(""); }} />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">What do you need? *</label>
+                  <div className="need-type-grid">
+                    {NEED_TYPES.map(([val, label]) => (
+                      <button key={val} type="button"
+                        className={`need-type-btn${needType === val ? " active" : ""}`}
+                        onClick={() => { setNeedType(val); setFormError(""); }}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" htmlFor="cc-cylinders">
+                    Cylinders per week{" "}
+                    <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
+                      (optional — helps vendors prepare)
+                    </span>
+                  </label>
+                  <input id="cc-cylinders" className="input" placeholder="e.g. 4"
+                    inputMode="numeric" maxLength={2}
+                    value={cylinders} onChange={e => setCylinders(e.target.value.replace(/\D/g, ""))} />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" htmlFor="cc-message">
+                    Anything else{" "}
+                    <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
+                      (optional)
+                    </span>
+                  </label>
+                  <textarea id="cc-message" className="input" style={{ height: 80, resize: "vertical" }}
+                    placeholder="e.g. Need delivery by tomorrow, budget is ₹50,000…"
+                    value={message} onChange={e => setMessage(e.target.value)} />
+                </div>
+
+                {formError && (
+                  <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 12 }}>
+                    {formError}
+                  </div>
+                )}
+
+                <button className="btn btn-primary btn-block" onClick={handleSubmit} disabled={submitting}>
+                  {submitting ? "Submitting…" : "Find Alternatives in My City →"}
+                </button>
+
+                <p className="t-caption" style={{ textAlign: "center", marginTop: 10 }}>
+                  Free service. Vendors contact you directly. No middleman.
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* ── Crisis context card ── */}
+          <div className="alert-banner alert-banner-danger mb-card">
+            <span className="flex-none" style={{ fontSize: 20 }}>🚨</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--danger)", marginBottom: 4 }}>
+                Why is this happening?
+              </div>
+              <p className="t-caption" style={{ margin: 0 }}>
+                The Strait of Hormuz disruption has cut India's LPG imports.
+                The government has prioritised domestic supply — commercial
+                kitchens are last in line. This is not your distributor's fault.
+                Alternatives are the only reliable solution right now.
+              </p>
+            </div>
+          </div>
+
+          {/* ── Rights card ── */}
+          <div className="neu-card">
+            <div className="section-title">Your Rights as a Business</div>
+            {[
+              ["🛡", "Overcharging is illegal", "MRP is printed on the cylinder. Any price above that is a violation of the Essential Commodities Act."],
+              ["📞", "Call 1906 for complaints", "National LPG helpline. Free, 24/7, available in Hindi and regional languages."],
+              ["🌐", "File at pgportal.gov.in", "Government grievance portal. Lodge a formal complaint if supply is withheld."],
+            ].map(([icon, title, desc]) => (
+              <div key={title} className="stat-row" style={{ alignItems: "flex-start", gap: "var(--space-3)" }}>
+                <span className="flex-none" style={{ fontSize: 16, marginTop: 2 }}>{icon}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 3 }}>{title}</div>
+                  <p className="t-caption" style={{ margin: 0 }}>{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Right — Vendor cards ── */}
+        <div>
+          {/* City filter */}
+          <div className="commercial-city-tabs mb-card">
+            {COMMERCIAL_CITIES.map(c => (
+              <button key={c}
+                className={`commercial-city-tab${selectedCity === c ? " active" : ""}`}
+                onClick={() => setSelectedCity(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+
+          <div className="t-label mb-card" style={{ paddingLeft: 2 }}>
+            Verified suppliers in {selectedCity}
+          </div>
+
+          {vendorsLoading ? (
+            [1, 2, 3].map(i => (
+              <div key={i} className="neu-card mb-card">
+                <div className="skeleton skeleton-heading" style={{ width: "60%", marginBottom: 12 }} />
+                <div className="skeleton skeleton-text" style={{ width: "90%", marginBottom: 8 }} />
+                <div className="skeleton skeleton-text" style={{ width: "70%" }} />
+              </div>
+            ))
+          ) : vendors.length === 0 ? (
+            <div className="neu-card" style={{ textAlign: "center", padding: "40px 24px" }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>🏗</div>
+              <div className="t-subheading" style={{ marginBottom: 8 }}>
+                Vendors coming soon for {selectedCity}
+              </div>
+              <p className="t-caption" style={{ marginBottom: 16 }}>
+                We're onboarding suppliers in this city right now.
+                Submit your request above and we'll match you manually within 24 hours.
+              </p>
+            </div>
+          ) : vendors.map(v => {
+            const meta = CATEGORY_META[v.category] || CATEGORY_META.other;
+            return (
+              <div key={v.id} className={`neu-card mb-card vendor-card${v.featured ? " vendor-card-featured" : ""}`}>
+                {v.featured && (
+                  <div className="vendor-featured-badge">⭐ Featured Supplier</div>
+                )}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                  <div className="t-subheading" style={{ flex: 1, paddingRight: 8 }}>{v.name}</div>
+                  <span className="badge" style={{
+                    background: meta.bg, color: meta.color,
+                    border: `1px solid ${meta.border}`, flexShrink: 0,
+                  }}>
+                    {meta.label}
+                  </span>
+                </div>
+
+                {v.tagline && (
+                  <p className="t-body" style={{ marginBottom: 14 }}>{v.tagline}</p>
+                )}
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {v.whatsapp && (
+                    <a href={`https://wa.me/${v.whatsapp}`} target="_blank" rel="noopener noreferrer"
+                      className="btn btn-primary" style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13, flex: 1, minWidth: 130 }}>
+                      {IcWhatsApp}
+                      WhatsApp
+                    </a>
+                  )}
+                  {v.phone && (
+                    <a href={`tel:${v.phone}`}
+                      className="btn btn-ghost" style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13, flex: 1, minWidth: 110 }}>
+                      {IcPhone}
+                      Call
+                    </a>
+                  )}
+                  {v.website && (
+                    <a href={v.website} target="_blank" rel="noopener noreferrer"
+                      className="btn btn-ghost" style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13 }}>
+                      {IcExt}
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* ── List your business CTA ── */}
+          <div className="neu-card" style={{ background: "var(--bg-inset)", textAlign: "center" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>🏪</div>
+            <div className="t-subheading" style={{ marginBottom: 6 }}>Are you a supplier?</div>
+            <p className="t-caption" style={{ marginBottom: 14 }}>
+              List your business here and reach restaurant owners actively looking for alternatives right now.
+            </p>
+            <a href="mailto:support@cylindercheck.in?subject=List my business on CylinderCheck"
+              className="btn btn-ghost btn-block" style={{ fontSize: 13 }}>
+              Get Listed — ₹3,000/month →
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("track");
@@ -1074,6 +1456,27 @@ export default function App() {
                             </div>
                           </div>
                         )}
+
+                        {/* Commercial alternatives nudge — shown when shortage detected */}
+                        {pinData.reportCount >= 2 && (
+                          <div className="commercial-nudge anim-scale-in">
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                              {IcBolt}
+                              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                                Running a restaurant or hotel?
+                              </span>
+                            </div>
+                            <p className="t-caption" style={{ margin: "0 0 10px" }}>
+                              Commercial LPG has been cut across India. Find induction cooktops,
+                              electric ranges and more available in your city today.
+                            </p>
+                            <button className="btn btn-primary"
+                              style={{ minHeight: "auto", padding: "8px 16px", fontSize: 13, width: "100%" }}
+                              onClick={() => setTab("commercial")}>
+                              Find Alternatives Now →
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1395,6 +1798,15 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* ══ COMMERCIAL ══════════════════════════════════════════════ */}
+            {tab === "commercial" && (
+              <CommercialPage prefilledCity={
+                pinData?.city
+                  ? CITY_NORMALISE[pinData.city.split(",")[0].trim().toLowerCase()] || ""
+                  : ""
+              } />
             )}
 
             {/* ══ ADMIN ════════════════════════════════════════════════════ */}

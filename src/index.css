@@ -1941,6 +1941,204 @@ svg {
   }
 }
 
+
+/* ============================================================
+   Commercial MVP — For Biz page
+   ============================================================ */
+
+/* ── Hero section ─────────────────────────────────────────── */
+.commercial-hero {
+  margin-bottom: var(--space-6);
+}
+
+.commercial-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-pill);
+  padding: 4px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--danger);
+  margin-bottom: var(--space-4);
+}
+
+/* ── Stats bar ────────────────────────────────────────────── */
+.commercial-stats-bar {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.commercial-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--bg-raised);
+  box-shadow: var(--neu-raised-sm);
+  border-radius: var(--radius-md);
+  padding: 12px 20px;
+  min-width: 120px;
+}
+
+.commercial-stat-value {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* ── City tabs ────────────────────────────────────────────── */
+.commercial-city-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.commercial-city-tab {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-raised);
+  box-shadow: var(--neu-raised-sm);
+  border: none;
+  cursor: pointer;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-out),
+    color var(--dur-fast),
+    background var(--dur-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.commercial-city-tab:hover {
+  color: var(--text-primary);
+  box-shadow: var(--neu-raised);
+}
+
+.commercial-city-tab.active {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: var(--neu-raised-sm);
+}
+
+.commercial-city-tab:active {
+  transform: scale(0.96);
+  transition-duration: 80ms;
+}
+
+/* ── Need type grid ───────────────────────────────────────── */
+.need-type-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.need-type-btn {
+  width: 100%;
+  text-align: left;
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-inset);
+  box-shadow: var(--neu-inset);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-out),
+    color var(--dur-fast),
+    border-color var(--dur-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.need-type-btn:hover {
+  color: var(--text-primary);
+}
+
+.need-type-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: var(--neu-inset), 0 0 0 1px var(--accent-glow);
+  font-weight: 600;
+}
+
+/* ── Vendor card ──────────────────────────────────────────── */
+.vendor-card {
+  position: relative;
+  transition:
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.vendor-card:hover {
+  box-shadow: var(--neu-raised-lg);
+  transform: translateY(-2px);
+}
+
+.vendor-card-featured {
+  border: 1px solid var(--accent-glow) !important;
+}
+
+.vendor-featured-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+/* ── Commercial nudge on Track tab ───────────────────────── */
+.commercial-nudge {
+  background: var(--bg-inset);
+  box-shadow: var(--neu-inset);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  border: 1px solid var(--border);
+  margin-top: 12px;
+}
+
+/* ── Mobile responsive ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .commercial-stats-bar {
+    gap: var(--space-3);
+  }
+
+  .commercial-stat {
+    flex: 1;
+    min-width: 90px;
+    padding: 10px 14px;
+  }
+
+  .commercial-stat-value {
+    font-size: 18px;
+  }
+
+  .commercial-city-tabs {
+    gap: 4px;
+  }
+
+  .commercial-city-tab {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .need-type-btn {
+    font-size: 13px;
+    padding: 13px 14px;
+  }
+}
+
 /* ============================================================
    Shortage Banner — stack vertically on mobile
    Only top-level tab-panel banners; NOT inline card banners

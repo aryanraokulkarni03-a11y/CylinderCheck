@@ -1537,10 +1537,6 @@ svg {
 @media (prefers-reduced-motion: reduce) {
   .price-ticker-inner {
     animation-duration: 60s;
-    flex-wrap: wrap;
-    width: 100%;
-    padding: 0 12px;
-    gap: 8px;
   }
 }
 

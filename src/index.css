@@ -2227,3 +2227,162 @@ svg {
     gap: 8px;
   }
 }
+
+/* ============================================================
+   Task 5 — v4 Structural Changes
+   ============================================================ */
+
+/* ── Tab crisis pulse dot ──────────────────────────────────── */
+/* Sits top-right of the For Biz icon in sidebar + bottom nav  */
+.tab-crisis-dot {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 6px var(--danger);
+  animation: pulse-dot 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ── Commercial hero — non-crisis neutral badge ────────────── */
+.commercial-hero-badge-neutral {
+  background: var(--bg-inset);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+/* ── Vendor coming soon card ───────────────────────────────── */
+.vendor-coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+  gap: var(--space-3);
+  border: 2px dashed var(--border);
+  background: var(--bg-raised);
+  box-shadow: none;
+}
+
+.vendor-coming-soon-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+/* ── Supplier CTA card ─────────────────────────────────────── */
+.supplier-cta-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--accent-glow);
+}
+
+.supplier-cta-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.supplier-cta-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.supplier-cta-form {
+  margin-bottom: var(--space-3);
+}
+
+/* "or" divider between form submit and WhatsApp */
+.supplier-cta-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.supplier-cta-divider::before,
+.supplier-cta-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── WhatsApp CTA button ───────────────────────────────────── */
+.btn-whatsapp {
+  background: #25D366;
+  color: #fff;
+  box-shadow: var(--neu-raised);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn-whatsapp:hover:not(:disabled) {
+  background: #1ebe5d;
+  box-shadow: var(--neu-raised-lg);
+  transform: translateY(-1px);
+}
+
+.btn-whatsapp:active:not(:disabled) {
+  box-shadow: var(--neu-pressed);
+  transform: translateY(1px);
+}
+
+/* ── Guide page back button ────────────────────────────────── */
+.guide-back-btn {
+  margin-bottom: var(--space-5);
+  padding: 6px 14px;
+  min-height: auto;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── Bottom nav — 5-tab tuning ────────────────────────────── */
+/* With 5 tabs (was 6), labels have breathing room.
+   Slightly larger icons + labels now look clean.              */
+@media (max-width: 768px) {
+  .bn-item svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .bn-item {
+    font-size: 10px;
+    gap: 2px;
+  }
+}
+
+/* ── Commercial page — layout fixes ───────────────────────── */
+/* Ensure grid-2col always has proper alignment on desktop     */
+@media (min-width: 769px) {
+  .commercial-page .grid-2col {
+    grid-template-columns: 420px 1fr;
+    gap: var(--space-5);
+  }
+}
+
+/* Stack single column on mobile cleanly */
+@media (max-width: 768px) {
+  .commercial-page .grid-2col {
+    gap: 0;
+  }
+
+  .supplier-cta-card {
+    margin-top: var(--space-4);
+  }
+
+  .vendor-coming-soon {
+    padding: var(--space-6) var(--space-4);
+  }
+}

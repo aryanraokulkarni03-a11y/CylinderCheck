@@ -121,7 +121,6 @@ const IcRefresh = (loading) => (
 );
 
 const IcTrack = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="9" strokeOpacity=".35" /><line x1="12" y1="3" x2="12" y2="6.5" /><line x1="12" y1="17.5" x2="12" y2="21" /><line x1="3" y1="12" x2="6.5" y2="12" /><line x1="17.5" y1="12" x2="21" y2="12" /></svg>;
-const IcPrice = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="12" y1="2" x2="12" y2="22" /><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6" /></svg>;
 const IcReport = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>;
 const IcNews = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" /><path d="M18 14h-8" /><path d="M15 18h-5" /><path d="M10 6h8v4h-8V6Z" /></svg>;
 const IcAlert = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
@@ -132,9 +131,9 @@ const IcWhatsApp = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" s
 const IcBolt = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
 
 // ─── Module-level data (Vercel: hoist-jsx) ────────────────────────────────────
+// 5 tabs — Prices removed in v4; For Biz stays as 5th with crisis pulse dot
 const TABS = [
   { id: "track", label: "Track", icon: IcTrack },
-  { id: "prices", label: "Prices", icon: IcPrice },
   { id: "community", label: "Reports", icon: IcReport },
   { id: "news", label: "News", icon: IcNews },
   { id: "alerts", label: "Alerts", icon: IcAlert },
@@ -698,7 +697,8 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved, mapPrices, 
 
 // ─── CommercialPage ───────────────────────────────────────────────────────────
 // Vercel: rerender-no-inline-components — defined at module level
-function CommercialPage({ prefilledCity = "" }) {
+// Option C: crisis/non-crisis mode — hero adapts, pulse dot on tab icon
+function CommercialPage({ prefilledCity = "", hasCrisis = false, crisisData = null }) {
   // ── Lead form state ────────────────────────────────────────────────────────
   const [bizName, setBizName] = useState("");
   const [bizType, setBizType] = useState("");
@@ -715,6 +715,14 @@ function CommercialPage({ prefilledCity = "" }) {
   const [vendors, setVendors] = useState([]);
   const [vendorsLoading, setVendorsLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState(prefilledCity || COMMERCIAL_CITIES[0]);
+
+  // ── Supplier lead state ────────────────────────────────────────────────────
+  const [supName, setSupName] = useState("");
+  const [supCity, setSupCity] = useState(prefilledCity || COMMERCIAL_CITIES[0]);
+  const [supPhone, setSupPhone] = useState("");
+  const [supSubmitting, setSupSubmitting] = useState(false);
+  const [supSubmitted, setSupSubmitted] = useState(false);
+  const [supError, setSupError] = useState("");
 
   // ── Fetch vendors when city changes ───────────────────────────────────────
   useEffect(() => {
@@ -756,31 +764,66 @@ function CommercialPage({ prefilledCity = "" }) {
     else { setSubmitted(true); setSubmitting(false); }
   };
 
+  // ── Supplier lead submit ───────────────────────────────────────────────────
+  const handleSupplierSubmit = async () => {
+    if (!supName.trim()) { setSupError("Enter your business name."); return; }
+    if (!supPhone.trim()) { setSupError("Enter your phone number."); return; }
+    setSupError(""); setSupSubmitting(true);
+    const { error } = await supabase.from("supplier_leads").insert([{
+      business_name: supName.trim(),
+      city: supCity,
+      phone: supPhone.trim(),
+    }]);
+    if (error) { setSupError("Something went wrong. Try again."); setSupSubmitting(false); }
+    else setSupSubmitted(true);
+  };
+
   return (
     <div className="tab-panel commercial-page">
-      {/* ── Header ── */}
+      {/* ── Header — crisis vs non-crisis (Option C) ── */}
       <div className="commercial-hero">
-        <div className="commercial-hero-badge">
-          <span className="pulse-dot pulse-dot-danger" />
-          LIVE CRISIS — MARCH 2026
-        </div>
-        <h1 className="page-title" style={{ marginBottom: "var(--space-3)" }}>
-          No Commercial Gas?<br />Find Alternatives Now.
-        </h1>
-        <p className="page-subtitle" style={{ maxWidth: 520, marginBottom: 0 }}>
-          The Strait of Hormuz disruption has cut commercial LPG to restaurants across India.
-          Connect with verified suppliers of induction cooktops, electric ranges and more —
-          available in your city today.
-        </p>
+        {hasCrisis ? (
+          <>
+            <div className="commercial-hero-badge">
+              <span className="pulse-dot pulse-dot-danger" />
+              LIVE CRISIS — MARCH 2026
+            </div>
+            <h1 className="page-title" style={{ marginBottom: "var(--space-3)" }}>
+              No Commercial Gas?<br />Find Alternatives Now.
+            </h1>
+            <p className="page-subtitle" style={{ maxWidth: 520, marginBottom: 0 }}>
+              The Strait of Hormuz disruption has cut commercial LPG to restaurants across India.
+              Connect with verified suppliers of induction cooktops, electric ranges and more —
+              available in your city today.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="commercial-hero-badge commercial-hero-badge-neutral">
+              🏪 LPG ALTERNATIVES DIRECTORY
+            </div>
+            <h1 className="page-title" style={{ marginBottom: "var(--space-3)" }}>
+              Find Reliable Alternatives<br />Before You Need Them.
+            </h1>
+            <p className="page-subtitle" style={{ maxWidth: 520, marginBottom: 0 }}>
+              LPG shortages hit without warning. Connect with verified suppliers of induction cooktops,
+              electric ranges and more — so your business is never caught off guard.
+            </p>
+          </>
+        )}
       </div>
 
       {/* ── Stats bar ── */}
       <div className="commercial-stats-bar">
-        {[
+        {(hasCrisis ? [
           ["8,000+", "Hotels & restaurants affected"],
           ["7", "Cities covered"],
           ["48hrs", "Avg vendor response time"],
-        ].map(([val, label]) => (
+        ] : [
+          ["7", "Cities covered"],
+          ["Free", "Service — no middleman"],
+          ["48hrs", "Avg vendor response"],
+        ]).map(([val, label]) => (
           <div key={label} className="commercial-stat">
             <span className="commercial-stat-value">{val}</span>
             <span className="t-caption">{label}</span>
@@ -899,21 +942,37 @@ function CommercialPage({ prefilledCity = "" }) {
             )}
           </div>
 
-          {/* ── Crisis context card ── */}
-          <div className="alert-banner alert-banner-danger mb-card">
-            <span className="flex-none" style={{ fontSize: 20 }}>🚨</span>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--danger)", marginBottom: 4 }}>
-                Why is this happening?
+          {/* ── Crisis context card — only in crisis mode ── */}
+          {hasCrisis ? (
+            <div className="alert-banner alert-banner-danger mb-card">
+              <span className="flex-none" style={{ fontSize: 20 }}>🚨</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--danger)", marginBottom: 4 }}>
+                  Why is this happening?
+                </div>
+                <p className="t-caption" style={{ margin: 0 }}>
+                  The Strait of Hormuz disruption has cut India's LPG imports.
+                  The government has prioritised domestic supply — commercial
+                  kitchens are last in line. This is not your distributor's fault.
+                  Alternatives are the only reliable solution right now.
+                </p>
               </div>
-              <p className="t-caption" style={{ margin: 0 }}>
-                The Strait of Hormuz disruption has cut India's LPG imports.
-                The government has prioritised domestic supply — commercial
-                kitchens are last in line. This is not your distributor's fault.
-                Alternatives are the only reliable solution right now.
-              </p>
             </div>
-          </div>
+          ) : (
+            <div className="alert-banner alert-banner-warning mb-card">
+              <span className="flex-none" style={{ fontSize: 20 }}>💡</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--warning)", marginBottom: 4 }}>
+                  Why connect now?
+                </div>
+                <p className="t-caption" style={{ margin: 0 }}>
+                  LPG shortages can cut supply within days. Restaurants that already
+                  have an induction or electric backup suffer zero downtime.
+                  Find your supplier before there's a crisis.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* ── Rights card ── */}
           <div className="neu-card">
@@ -960,13 +1019,13 @@ function CommercialPage({ prefilledCity = "" }) {
               </div>
             ))
           ) : vendors.length === 0 ? (
-            <div className="neu-card" style={{ textAlign: "center", padding: "40px 24px" }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>🏗</div>
-              <div className="t-subheading" style={{ marginBottom: 8 }}>
-                Vendors coming soon for {selectedCity}
+            <div className="vendor-coming-soon neu-card mb-card">
+              <div className="vendor-coming-soon-icon">🏗</div>
+              <div className="t-subheading" style={{ marginBottom: 6 }}>
+                Verified Suppliers — Coming Soon
               </div>
-              <p className="t-caption" style={{ marginBottom: 16 }}>
-                We're onboarding suppliers in this city right now.
+              <p className="t-caption" style={{ marginBottom: 0 }}>
+                We're onboarding suppliers in {selectedCity} right now.
                 Submit your request above and we'll match you manually within 24 hours.
               </p>
             </div>
@@ -974,62 +1033,138 @@ function CommercialPage({ prefilledCity = "" }) {
             const meta = CATEGORY_META[v.category] || CATEGORY_META.other;
             return (
               <div key={v.id} className={`neu-card mb-card vendor-card${v.featured ? " vendor-card-featured" : ""}`}>
-                {v.featured && (
-                  <div className="vendor-featured-badge">⭐ Featured Supplier</div>
-                )}
+                {v.featured ? <div className="vendor-featured-badge">⭐ Featured Supplier</div> : null}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                   <div className="t-subheading" style={{ flex: 1, paddingRight: 8 }}>{v.name}</div>
-                  <span className="badge" style={{
-                    background: meta.bg, color: meta.color,
-                    border: `1px solid ${meta.border}`, flexShrink: 0,
-                  }}>
+                  <span className="badge" style={{ background: meta.bg, color: meta.color, border: `1px solid ${meta.border}`, flexShrink: 0 }}>
                     {meta.label}
                   </span>
                 </div>
-
-                {v.tagline && (
-                  <p className="t-body" style={{ marginBottom: 14 }}>{v.tagline}</p>
-                )}
-
+                {v.tagline ? <p className="t-body" style={{ marginBottom: 14 }}>{v.tagline}</p> : null}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {v.whatsapp && (
+                  {v.whatsapp ? (
                     <a href={`https://wa.me/${v.whatsapp}`} target="_blank" rel="noopener noreferrer"
                       className="btn btn-primary" style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13, flex: 1, minWidth: 130 }}>
-                      {IcWhatsApp}
-                      WhatsApp
+                      {IcWhatsApp} WhatsApp
                     </a>
-                  )}
-                  {v.phone && (
-                    <a href={`tel:${v.phone}`}
-                      className="btn btn-ghost" style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13, flex: 1, minWidth: 110 }}>
-                      {IcPhone}
-                      Call
+                  ) : null}
+                  {v.phone ? (
+                    <a href={`tel:${v.phone}`} className="btn btn-ghost"
+                      style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13, flex: 1, minWidth: 110 }}>
+                      {IcPhone} Call
                     </a>
-                  )}
-                  {v.website && (
+                  ) : null}
+                  {v.website ? (
                     <a href={v.website} target="_blank" rel="noopener noreferrer"
                       className="btn btn-ghost" style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13 }}>
                       {IcExt}
                     </a>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );
           })}
 
-          {/* ── List your business CTA ── */}
-          <div className="neu-card" style={{ background: "var(--bg-inset)", textAlign: "center" }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>🏪</div>
-            <div className="t-subheading" style={{ marginBottom: 6 }}>Are you a supplier?</div>
-            <p className="t-caption" style={{ marginBottom: 14 }}>
-              List your business here and reach restaurant owners actively looking for alternatives right now.
-            </p>
-            <a href="mailto:support@cylindercheck.in?subject=List my business on CylinderCheck"
-              className="btn btn-ghost btn-block" style={{ fontSize: 13 }}>
-              Get Listed — ₹3,000/month →
-            </a>
+          {/* ── Are you a supplier? — form + WhatsApp ── */}
+          <div className="neu-card supplier-cta-card">
+            <div className="supplier-cta-header">
+              <span className="supplier-cta-icon">🏪</span>
+              <div>
+                <div className="t-subheading" style={{ marginBottom: 3 }}>Are you a supplier?</div>
+                <p className="t-caption" style={{ margin: 0 }}>
+                  List your business and reach owners actively looking for alternatives.
+                  ₹3,000/month — get direct leads.
+                </p>
+              </div>
+            </div>
+
+            {supSubmitted ? (
+              <div className="alert-banner alert-banner-success anim-scale-in" style={{ marginBottom: 0 }}>
+                {IcCheck}
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--success)" }}>
+                    Request received!
+                  </div>
+                  <p className="t-caption" style={{ margin: 0 }}>
+                    We'll reach out to you on {supPhone} within 24 hours.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="supplier-cta-form">
+                  <div className="input-group" style={{ marginBottom: "var(--space-3)" }}>
+                    <label className="input-label" htmlFor="sup-name">Business Name *</label>
+                    <input id="sup-name" className="input" placeholder="e.g. Rajesh Induction Traders"
+                      value={supName} onChange={e => { setSupName(e.target.value); setSupError(""); }} />
+                  </div>
+                  <div className="input-group" style={{ marginBottom: "var(--space-3)" }}>
+                    <label className="input-label" htmlFor="sup-city">City *</label>
+                    <select id="sup-city" className="input" value={supCity}
+                      onChange={e => setSupCity(e.target.value)}>
+                      {COMMERCIAL_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="input-group" style={{ marginBottom: "var(--space-3)" }}>
+                    <label className="input-label" htmlFor="sup-phone">Phone Number *</label>
+                    <input id="sup-phone" className="input" placeholder="98xxxxxxxx"
+                      inputMode="tel" maxLength={10}
+                      value={supPhone} onChange={e => { setSupPhone(e.target.value.replace(/\D/g, "")); setSupError(""); }} />
+                  </div>
+                  {supError ? <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{supError}</div> : null}
+                  <button className="btn btn-primary btn-block" onClick={handleSupplierSubmit} disabled={supSubmitting}
+                    style={{ marginBottom: "var(--space-3)" }}>
+                    {supSubmitting ? "Submitting…" : "Get Listed — ₹3,000/month →"}
+                  </button>
+                </div>
+
+                <div className="supplier-cta-divider">
+                  <span>or</span>
+                </div>
+
+                <a
+                  href="https://wa.me/919676460307?text=Hi%2C%20I%27d%20like%20to%20list%20my%20business%20on%20CylinderCheck."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-whatsapp btn-block"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                  Message on WhatsApp
+                </a>
+              </>
+            )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── GuidePage — placeholder; full accordion content built in Task 11 ────────
+// Vercel: rerender-no-inline-components — module level
+function GuidePage({ onBack, defaultOpenSection }) {
+  return (
+    <div className="tab-panel guide-page">
+      <button
+        className="btn btn-ghost guide-back-btn"
+        onClick={onBack}
+        aria-label="Back to app"
+      >
+        ← Back
+      </button>
+      <h1 className="page-title">LPG Guide</h1>
+      <p className="page-subtitle">
+        Your complete guide to cylinders, shortages, rights, and conservation.
+      </p>
+      <div className="neu-card" style={{ textAlign: "center", padding: "48px 24px" }}>
+        <div style={{ fontSize: 36, marginBottom: 16 }}>📖</div>
+        <div className="t-subheading" style={{ marginBottom: 10 }}>Full guide coming shortly</div>
+        <p className="t-caption" style={{ maxWidth: 340, margin: "0 auto" }}>
+          5 sections: Understanding Your Cylinder · Conservation Tips ·
+          During a Shortage · Know Your Rights · Quick Reference Links.
+        </p>
       </div>
     </div>
   );
@@ -1038,6 +1173,7 @@ function CommercialPage({ prefilledCity = "" }) {
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("track");
+  const [page, setPage] = useState(null); // null | "guide" — parallel to tab, replaces content-area
   const [pin, setPin] = useState("");
   const [lastBooking, setLastBooking] = useState("");
   const [pinData, setPinData] = useState(null);
@@ -1287,11 +1423,20 @@ export default function App() {
             <span className="sidebar-section-label">Main</span>
             {TABS.map(t => (
               <button key={t.id} className={`sidebar-item${tab === t.id ? " active" : ""}`} onClick={() => setTab(t.id)}>
-                {t.icon}{t.label}
+                <span style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+                  {t.icon}
+                  {t.id === "commercial" && shortageSummary ? <span className="tab-crisis-dot" /> : null}
+                </span>
+                {t.label}
               </button>
             ))}
           </div>
           <div className="sidebar-footer">
+            <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "flex-start", gap: 8, marginBottom: 4, minHeight: "auto", padding: "6px 8px", fontSize: 12 }}
+              onClick={() => setPage("guide")}
+              aria-label="Open LPG Guide">
+              📖 LPG Guide
+            </button>
             <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "flex-start", gap: 8, marginBottom: 8, minHeight: "auto", padding: "6px 8px", fontSize: 12 }}
               onClick={() => setShowSupport(true)}>
               {IcSupport} Support & FAQ
@@ -1339,549 +1484,541 @@ export default function App() {
           </div>
 
           <div className="content-area">
+            {page === "guide" ? <GuidePage onBack={() => setPage(null)} /> : <>
 
-            {/* ══ TRACK ══════════════════════════════════════════════════ */}
-            {tab === "track" && (
-              <div className="tab-panel">
-                <h1 className="page-title">Booking Tracker</h1>
-                <p className="page-subtitle">Know when to book. Know if there's a shortage. Real-time delivery intelligence by PIN code.</p>
-                <PriceTicker mapPrices={mapPrices} />
+              {/* ══ TRACK ══════════════════════════════════════════════════ */}
+              {tab === "track" && (
+                <div className="tab-panel">
+                  <h1 className="page-title">Booking Tracker</h1>
+                  <p className="page-subtitle">Know when to book. Know if there's a shortage. Real-time delivery intelligence by PIN code.</p>
+                  <PriceTicker mapPrices={mapPrices} />
 
-                {shortageSummary && (
-                  <div className="alert-banner alert-banner-danger anim-slide-up" style={{ marginBottom: 16 }}>
-                    <div className="flex-none" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 1, color: "var(--danger)" }}>
-                      <span className="pulse-dot pulse-dot-danger" />{IcWarn}
-                    </div>
-                    <div>
-                      <div className="t-label" style={{ color: "var(--danger)", marginBottom: 5 }}>
-                        COMMUNITY SHORTAGE SIGNAL · {shortageSummary.activePinCount} ACTIVE PIN{shortageSummary.activePinCount > 1 ? "S" : ""}
+                  {shortageSummary && (
+                    <div className="alert-banner alert-banner-danger anim-slide-up" style={{ marginBottom: 16 }}>
+                      <div className="flex-none" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 1, color: "var(--danger)" }}>
+                        <span className="pulse-dot pulse-dot-danger" />{IcWarn}
                       </div>
-                      <p className="t-body" style={{ margin: 0 }}>
-                        <strong style={{ color: "var(--danger)" }}>{shortageSummary.totalReports} community reports</strong> in the last 30 days across{" "}
-                        <strong style={{ color: "var(--danger)" }}>{shortageSummary.activePinCount} PIN zones</strong>.{" "}
-                        Hotspot: <strong style={{ color: "var(--danger)" }}>{shortageSummary.hotspot}</strong> ({shortageSummary.hotspotReports} reports).
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid-2col">
-                  <div className="track-form">
-                    <div className="neu-card mb-card">
-                      <div className="section-title">Delivery Prediction</div>
-                      <div className="input-group">
-                        <label className="input-label">PIN Code</label>
-                        <input className="input" placeholder="Enter 6-digit PIN e.g. 530001"
-                          value={pin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
-                          autoFocus={typeof window !== "undefined" && window.innerWidth < 768}
-                          onChange={e => setPin(e.target.value.replace(/\D/g, ""))}
-                          onKeyDown={e => e.key === "Enter" && handleTrack()} />
-                      </div>
-                      <div className="input-group">
-                        <label className="input-label">
-                          Last Booking Date{" "}
-                          <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: 11 }}>(optional)</span>
-                        </label>
-                        <input className="input" type="date" value={lastBooking} onChange={e => setLastBooking(e.target.value)} />
-                      </div>
-                      {error && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{error}</div>}
-                      <button className="btn btn-primary btn-block" onClick={handleTrack} disabled={loading}>
-                        {loading ? "Looking up…" : "Check My Area →"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="track-result">
-                    {!pinData && !loading && EmptyState}
-                    {loading && SkeletonCard}
-                    {pinData && !loading && (
-                      <div className="anim-slide-up result-card" ref={resultRef}>
-                        <div className="neu-card mb-card">
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-                            <div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5 }}>
-                                {IcPin}<span className="t-label" style={{ color: "var(--accent)" }}>{pinData.area || `PIN ${pinData.pin}`}</span>
-                              </div>
-                              <div className="t-heading" style={{ fontSize: 24 }}>{pinData.city}</div>
-                            </div>
-                            <Trend t={pinData.trend} />
-                          </div>
-                          <div className="stat-row">
-                            <span className="stat-label">Average Delivery Time</span>
-                            <span className="stat-value">{pinData.avg_days !== "—" ? `${pinData.avg_days} days` : "No data yet"}</span>
-                          </div>
-                          <div className="stat-row">
-                            <span className="stat-label">Gas Agency</span>
-                            <span className="stat-value">{pinData.agency}</span>
-                          </div>
-                          <div className="stat-row stat-row-last">
-                            <span className="stat-label">Shortage Status</span>
-                            {(() => {
-                              const n = pinData.reportCount;
-                              if (n === 0) return <span className="stat-value" style={{ color: "var(--success)" }}>🟢 All clear</span>;
-                              if (n === 1) return <span className="stat-value" style={{ color: "var(--warning)" }}>🟡 Early signal ({n} report)</span>;
-                              if (n <= 4) return <span className="stat-value" style={{ color: "var(--warning)" }}>🟠 Active shortage ({n} reports)</span>;
-                              return <span className="stat-value" style={{ color: "var(--danger)" }}>🔴 Severe shortage ({n} reports)</span>;
-                            })()}
-                          </div>
+                      <div>
+                        <div className="t-label" style={{ color: "var(--danger)", marginBottom: 5 }}>
+                          COMMUNITY SHORTAGE SIGNAL · {shortageSummary.activePinCount} ACTIVE PIN{shortageSummary.activePinCount > 1 ? "S" : ""}
                         </div>
-
-                        {bookingResult && (
-                          <div className={`neu-card mb-card${bookingResult.daysLeft <= 0 ? " booking-open" : ""}`}>
-                            <div className="section-title">Your Booking Window</div>
-                            <div className="booking-ring-row">
-                              <Ring daysLeft={bookingResult.daysLeft} />
-                              <div>
-                                <div className="t-caption" style={{ marginBottom: 5 }}>{bookingResult.daysLeft <= 0 ? "Window is open now" : "Next window opens"}</div>
-                                <div className="t-heading" style={{ color: bookingResult.daysLeft <= 0 ? "var(--success)" : "var(--text-primary)" }}>
-                                  {bookingResult.daysLeft <= 0 ? "Book Right Now! 🎉" : fmt(bookingResult.nextWindow)}
-                                </div>
-                                {bookingResult.daysLeft > 0 && <div className="t-caption" style={{ marginTop: 8 }}>Est. delivery by {fmt(addDays(bookingResult.nextWindow, Math.round(pinData.avg_days)))}</div>}
-                                <div className="t-caption" style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
-                                  Based on 25-day refilling rules + {pinData.avg_days}-day local delivery lag
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {pinData.reportCount >= 2 && (
-                          <div className={`alert-banner ${pinData.reportCount >= 5 ? "alert-banner-danger" : "alert-banner-warning"} anim-scale-in`}>
-                            <span className="flex-none" style={{ fontSize: 20, lineHeight: 1 }}>{pinData.reportCount >= 5 ? "🔴" : "🟠"}</span>
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: pinData.reportCount >= 5 ? "var(--danger)" : "var(--warning)", marginBottom: 4 }}>
-                                {pinData.reportCount >= 5 ? "Severe Shortage in Your Area" : "Active Shortage in Your Area"}
-                              </div>
-                              <p className="t-caption" style={{ margin: 0 }}>Expect 3–7 extra days on delivery. Book as early as your window allows.</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Commercial alternatives nudge — shown when shortage detected */}
-                        {pinData.reportCount >= 2 && (
-                          <div className="commercial-nudge anim-scale-in">
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                              {IcBolt}
-                              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
-                                Running a restaurant or hotel?
-                              </span>
-                            </div>
-                            <p className="t-caption" style={{ margin: "0 0 10px" }}>
-                              Commercial LPG has been cut across India. Find induction cooktops,
-                              electric ranges and more available in your city today.
-                            </p>
-                            <button className="btn btn-primary"
-                              style={{ minHeight: "auto", padding: "8px 16px", fontSize: 13, width: "100%" }}
-                              onClick={() => setTab("commercial")}>
-                              Find Alternatives Now →
-                            </button>
-                          </div>
-                        )}
+                        <p className="t-body" style={{ margin: 0 }}>
+                          <strong style={{ color: "var(--danger)" }}>{shortageSummary.totalReports} community reports</strong> in the last 30 days across{" "}
+                          <strong style={{ color: "var(--danger)" }}>{shortageSummary.activePinCount} PIN zones</strong>.{" "}
+                          Hotspot: <strong style={{ color: "var(--danger)" }}>{shortageSummary.hotspot}</strong> ({shortageSummary.hotspotReports} reports).
+                        </p>
                       </div>
-                    )}
-                  </div>
-
-                  <div className="track-portals">
-                    <div className="neu-card mb-card">
-                      <div className="section-title">Official Booking Portals</div>
-                      {PORTALS.map(([emoji, label, url]) => (
-                        <a key={url} href={url} target="_blank" rel="noopener" className="portal-link">
-                          <span>{emoji} {label}</span>
-                          <span style={{ color: "var(--text-muted)" }}>{IcExt}</span>
-                        </a>
-                      ))}
                     </div>
-                    <div className="neu-card mb-card">
-                      <div className="section-title">Book via UPI Apps</div>
-                      <p className="t-caption" style={{ marginBottom: 12 }}>Most users don't know this — GPay, PhonePe & Paytm have LPG booking built in.</p>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        {UPI_PORTALS.map(([letter, label, url, color]) => (
-                          <a key={url} href={url} target="_blank" rel="noopener" className="upi-portal-btn">
-                            <div className="upi-portal-icon" style={{ background: color }}>{letter}</div>
-                            <span className="t-caption" style={{ textAlign: "center", color: "var(--text-secondary)" }}>{label}</span>
+                  )}
+
+                  <div className="grid-2col">
+                    <div className="track-form">
+                      <div className="neu-card mb-card">
+                        <div className="section-title">Delivery Prediction</div>
+                        <div className="input-group">
+                          <label className="input-label">PIN Code</label>
+                          <input className="input" placeholder="Enter 6-digit PIN e.g. 530001"
+                            value={pin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
+                            autoFocus={typeof window !== "undefined" && window.innerWidth < 768}
+                            onChange={e => setPin(e.target.value.replace(/\D/g, ""))}
+                            onKeyDown={e => e.key === "Enter" && handleTrack()} />
+                        </div>
+                        <div className="input-group">
+                          <label className="input-label">
+                            Last Booking Date{" "}
+                            <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: 11 }}>(optional)</span>
+                          </label>
+                          <input className="input" type="date" value={lastBooking} onChange={e => setLastBooking(e.target.value)} />
+                        </div>
+                        {error && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{error}</div>}
+                        <button className="btn btn-primary btn-block" onClick={handleTrack} disabled={loading}>
+                          {loading ? "Looking up…" : "Check My Area →"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="track-result">
+                      {!pinData && !loading && EmptyState}
+                      {loading && SkeletonCard}
+                      {pinData && !loading && (
+                        <div className="anim-slide-up result-card" ref={resultRef}>
+                          <div className="neu-card mb-card">
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                              <div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5 }}>
+                                  {IcPin}<span className="t-label" style={{ color: "var(--accent)" }}>{pinData.area || `PIN ${pinData.pin}`}</span>
+                                </div>
+                                <div className="t-heading" style={{ fontSize: 24 }}>{pinData.city}</div>
+                              </div>
+                              <Trend t={pinData.trend} />
+                            </div>
+                            <div className="stat-row">
+                              <span className="stat-label">Average Delivery Time</span>
+                              <span className="stat-value">{pinData.avg_days !== "—" ? `${pinData.avg_days} days` : "No data yet"}</span>
+                            </div>
+                            <div className="stat-row">
+                              <span className="stat-label">Gas Agency</span>
+                              <span className="stat-value">{pinData.agency}</span>
+                            </div>
+                            <div className="stat-row stat-row-last">
+                              <span className="stat-label">Shortage Status</span>
+                              {(() => {
+                                const n = pinData.reportCount;
+                                if (n === 0) return <span className="stat-value" style={{ color: "var(--success)" }}>🟢 All clear</span>;
+                                if (n === 1) return <span className="stat-value" style={{ color: "var(--warning)" }}>🟡 Early signal ({n} report)</span>;
+                                if (n <= 4) return <span className="stat-value" style={{ color: "var(--warning)" }}>🟠 Active shortage ({n} reports)</span>;
+                                return <span className="stat-value" style={{ color: "var(--danger)" }}>🔴 Severe shortage ({n} reports)</span>;
+                              })()}
+                            </div>
+                          </div>
+
+                          {bookingResult && (
+                            <div className={`neu-card mb-card${bookingResult.daysLeft <= 0 ? " booking-open" : ""}`}>
+                              <div className="section-title">Your Booking Window</div>
+                              <div className="booking-ring-row">
+                                <Ring daysLeft={bookingResult.daysLeft} />
+                                <div>
+                                  <div className="t-caption" style={{ marginBottom: 5 }}>{bookingResult.daysLeft <= 0 ? "Window is open now" : "Next window opens"}</div>
+                                  <div className="t-heading" style={{ color: bookingResult.daysLeft <= 0 ? "var(--success)" : "var(--text-primary)" }}>
+                                    {bookingResult.daysLeft <= 0 ? "Book Right Now! 🎉" : fmt(bookingResult.nextWindow)}
+                                  </div>
+                                  {bookingResult.daysLeft > 0 && <div className="t-caption" style={{ marginTop: 8 }}>Est. delivery by {fmt(addDays(bookingResult.nextWindow, Math.round(pinData.avg_days)))}</div>}
+                                  <div className="t-caption" style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                                    Based on 25-day refilling rules + {pinData.avg_days}-day local delivery lag
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {pinData.reportCount >= 2 && (
+                            <div className={`alert-banner ${pinData.reportCount >= 5 ? "alert-banner-danger" : "alert-banner-warning"} anim-scale-in`}>
+                              <span className="flex-none" style={{ fontSize: 20, lineHeight: 1 }}>{pinData.reportCount >= 5 ? "🔴" : "🟠"}</span>
+                              <div>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: pinData.reportCount >= 5 ? "var(--danger)" : "var(--warning)", marginBottom: 4 }}>
+                                  {pinData.reportCount >= 5 ? "Severe Shortage in Your Area" : "Active Shortage in Your Area"}
+                                </div>
+                                <p className="t-caption" style={{ margin: 0 }}>Expect 3–7 extra days on delivery. Book as early as your window allows.</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Commercial alternatives nudge — shown when shortage detected */}
+                          {pinData.reportCount >= 2 && (
+                            <div className="commercial-nudge anim-scale-in">
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                                {IcBolt}
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                                  Running a restaurant or hotel?
+                                </span>
+                              </div>
+                              <p className="t-caption" style={{ margin: "0 0 10px" }}>
+                                Commercial LPG has been cut across India. Find induction cooktops,
+                                electric ranges and more available in your city today.
+                              </p>
+                              <button className="btn btn-primary"
+                                style={{ minHeight: "auto", padding: "8px 16px", fontSize: 13, width: "100%" }}
+                                onClick={() => setTab("commercial")}>
+                                Find Alternatives Now →
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="track-portals">
+                      <div className="neu-card mb-card">
+                        <div className="section-title">Official Booking Portals</div>
+                        {PORTALS.map(([emoji, label, url]) => (
+                          <a key={url} href={url} target="_blank" rel="noopener" className="portal-link">
+                            <span>{emoji} {label}</span>
+                            <span style={{ color: "var(--text-muted)" }}>{IcExt}</span>
                           </a>
                         ))}
                       </div>
+                      <div className="neu-card mb-card">
+                        <div className="section-title">Book via UPI Apps</div>
+                        <p className="t-caption" style={{ marginBottom: 12 }}>Most users don't know this — GPay, PhonePe & Paytm have LPG booking built in.</p>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          {UPI_PORTALS.map(([letter, label, url, color]) => (
+                            <a key={url} href={url} target="_blank" rel="noopener" className="upi-portal-btn">
+                              <div className="upi-portal-icon" style={{ background: color }}>{letter}</div>
+                              <span className="t-caption" style={{ textAlign: "center", color: "var(--text-secondary)" }}>{label}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                      <AdSlot id="track-left" type="rectangle" />
                     </div>
-                    <AdSlot id="track-left" type="rectangle" />
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* ══ PRICES ══════════════════════════════════════════════════ */}
-            {tab === "prices" && (
-              <div className="tab-panel">
-                <h1 className="page-title">LPG Prices</h1>
-                <p className="page-subtitle">14.2 kg domestic cylinder — live prices across 12 cities, updated every Sunday.</p>
-                <PricesMap contact={contact} setContact={setContact} alertSaved={alertSaved} setAlertSaved={setAlertSaved} mapPrices={mapPrices} lastUpdated={pricesLastUpdated} />
-                <AdSlot id="prices-bottom" type="leaderboard" />
-              </div>
-            )}
-
-            {/* ══ REPORTS ═════════════════════════════════════════════════ */}
-            {tab === "community" && (
-              <div className="tab-panel">
-                <h1 className="page-title">Community Reports</h1>
-                <p className="page-subtitle">Flag delivery delays, shortages, and agency issues in your area. Real reports from real people.</p>
-                <div className="grid-2col">
-                  <div>
-                    <div className="neu-card mb-card">
-                      <div className="section-title">Submit a Report</div>
-                      {!authLoading && !user ? (
-                        <div style={{ textAlign: "center", padding: "20px 0" }}>
-                          <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-                          <div className="t-subheading" style={{ marginBottom: 8 }}>Sign in to submit</div>
-                          <p className="t-caption" style={{ marginBottom: 16 }}>Reports require a Google account so the community stays spam-free and accountable.</p>
-                          <button className="btn btn-primary btn-block"
-                            onClick={() => {
-                              try { sessionStorage.setItem("cc-post-auth-tab", "community"); } catch { /* private mode */ }
-                              supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
-                            }}>
-                            {IcGoogle}
-                            Sign in with Google →
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="input-group">
-                            <label className="input-label">PIN Code *</label>
-                            <input className="input" placeholder="6-digit PIN" value={reportPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
-                              onChange={e => setReportPin(e.target.value.replace(/\D/g, ""))} />
-                          </div>
-                          <div className="input-group">
-                            <label className="input-label">Area / Colony <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional)</span></label>
-                            <input className="input" placeholder="e.g. Vizag — Gajuwaka" value={reportCity} onChange={e => setReportCity(e.target.value)} />
-                          </div>
-                          <div className="input-group">
-                            <label className="input-label">What's happening? *</label>
-                            <textarea className="input" style={{ height: 110, resize: "vertical" }}
-                              placeholder="e.g. No delivery in 12 days, driver demanding ₹100 extra…"
-                              value={reportText} onChange={e => setReportText(e.target.value)} />
-                          </div>
-                          <div className="input-group">
-                            <label className="input-label">Delivery took how many days? <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional — helps calibrate avg)</span></label>
-                            <input className="input" placeholder="e.g. 8" inputMode="numeric" maxLength={2}
-                              value={reportDeliveryDays} onChange={e => setReportDeliveryDays(e.target.value.replace(/\D/g, ""))} />
-                          </div>
-                          <button className="btn btn-primary btn-block" onClick={handleReport} disabled={submitting || !reportText.trim() || !reportPin}>
-                            {submitOk ? "✓ Submitted — Thank you!" : submitting ? "Submitting…" : "Submit Report →"}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="t-label mb-card">Live Feed — Top Voted</div>
-                    {reports.length === 0 ? (
-                      <div className="neu-card" style={{ textAlign: "center", padding: 40 }}>
-                        <p className="t-body">No reports yet. Be the first to flag an issue.</p>
-                      </div>
-                    ) : reports.map(r => (
-                      <div key={r.id} className="neu-card list-card mb-card">
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
-                          <span className="badge badge-accent">PIN {r.pin}</span>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span className="t-caption">{new Date(r.created_at).toLocaleDateString("en-IN")}</span>
-                            {user && r.user_id === user.id && editingReportId !== r.id && (
-                              <>
-                                <button onClick={() => { setEditingReportId(r.id); setEditingText(r.issue); }}
-                                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "2px 4px", fontSize: 13 }} title="Edit">✏️</button>
-                                <button onClick={() => handleDeleteReport(r.id)}
-                                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)", padding: "2px 4px", fontSize: 13 }} title="Delete">🗑</button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        {r.city ? <div className="t-subheading" style={{ marginBottom: 5 }}>{r.city}</div> : null}
-                        {editingReportId === r.id ? (
-                          <div>
-                            <textarea className="input" style={{ height: 90, resize: "vertical", marginBottom: 8 }} value={editingText} onChange={e => setEditingText(e.target.value)} />
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button className="btn btn-primary" style={{ flex: 1, minHeight: "auto", padding: "7px 12px", fontSize: 13 }} onClick={() => handleEditReport(r.id)}>Save</button>
-                              <button className="btn btn-ghost" style={{ minHeight: "auto", padding: "7px 12px", fontSize: 13 }} onClick={() => setEditingReportId(null)}>Cancel</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="t-body" style={{ marginBottom: 12 }}>{r.issue}</p>
-                        )}
-                        {r.delivery_days && <div className="t-caption" style={{ marginBottom: 8, color: "var(--text-muted)" }}>⏱ Delivery took {r.delivery_days} days</div>}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <button onClick={() => handleVote(r)} className={`vote-btn${votes[r.id] ? " voted" : ""}`}>
-                            ↑ {r.votes} upvote{r.votes !== 1 ? "s" : ""}
-                          </button>
-                          {r.votes > 20 && <span className="badge badge-danger">Trending</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ══ NEWS ════════════════════════════════════════════════════ */}
-            {tab === "news" && (
-              <div className="tab-panel">
-                <h1 className="page-title">LPG News</h1>
-                <p className="page-subtitle">Latest coverage on LPG pricing, supply, and policy from across India.</p>
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-                  <button onClick={() => fetchNews(true)} disabled={newsLoading} className="btn btn-ghost"
-                    style={{ minHeight: "auto", padding: "6px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                    {IcRefresh(newsLoading)}{newsLoading ? "Refreshing…" : "Refresh feed"}
-                  </button>
-                </div>
-                {/* Skeleton only on first load (no existing articles yet) */}
-                {newsLoading && !news.length ? [1, 2, 3, 4, 5].map(i => (
-                  <div key={i} className="neu-card mb-card">
-                    <div className="skeleton skeleton-text" style={{ width: "85%", marginBottom: 10 }} />
-                    <div className="skeleton skeleton-text" style={{ width: "50%" }} />
-                  </div>
-                )) : !news.length ? (
-                  <div className="neu-card" style={{ textAlign: "center", padding: 48 }}>
-                    <div style={{ fontSize: 32, marginBottom: 12 }}>📰</div>
-                    <div className="t-subheading" style={{ marginBottom: 8 }}>No recent news</div>
-                    <p className="t-caption">Try refreshing or check back later.</p>
-                  </div>
-                ) : news.map((item, i) => {
-                  const m = Math.round((Date.now() - item.pubDate) / 60000);
-                  const timeAgo = m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
-                  const waUrl = `https://wa.me/?text=${encodeURIComponent(item.title + " — cylindercheck.in")}`;
-                  return (
-                    <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
-                      className="neu-card list-card mb-card" style={{ display: "block", textDecoration: "none" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                        <p className="t-body" style={{ margin: 0, flex: 1, color: "var(--text-primary)", lineHeight: 1.5 }}>{item.title}</p>
-                        <span className="flex-none" style={{ color: "var(--text-muted)", marginTop: 2 }}>{IcExt}</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
-                        <span className="badge badge-accent">{item.source}</span>
-                        <span className="t-caption">{timeAgo}</span>
-                        <a className="whatsapp-share"
-                          href={waUrl}
-                          target="_blank" rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          title="Share on WhatsApp">
-                          📲 Share
-                        </a>
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ══ ALERTS ══════════════════════════════════════════════════ */}
-            {tab === "alerts" && (
-              <div className="tab-panel">
-                <h1 className="page-title">Alerts &amp; Notifications</h1>
-                <p className="page-subtitle">Know before the shortage hits. Get pinged when your booking window opens and when your area runs low.</p>
-                <div className="grid-2col">
-                  <div>
-                    <div className="neu-card mb-card">
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                        <span className="badge badge-success">FREE</span>
-                        <div className="section-title" style={{ marginBottom: 0 }}>Booking Window Alert</div>
-                      </div>
-                      <p className="t-body" style={{ marginBottom: 18 }}>Enter your last booking date and we'll alert you 2 days before your next window opens. No app, no spam.</p>
-                      <div className="input-group">
-                        <label className="input-label">PIN Code</label>
-                        <input className="input" placeholder="6-digit PIN" value={alertPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
-                          onChange={e => setAlertPin(e.target.value.replace(/\D/g, ""))} />
-                      </div>
-                      <div className="input-group">
-                        <label className="input-label">Last Booking Date</label>
-                        <input className="input" type="date" value={alertDate} onChange={e => setAlertDate(e.target.value)} />
-                      </div>
-                      <div className="input-group">
-                        <label className="input-label">Mobile or Email *</label>
-                        <input className="input" placeholder="98xxxxxxxx or you@email.com" inputMode="email" autoComplete="email"
-                          value={contact} onChange={e => { setContact(e.target.value); setFreeAlertError(""); }} />
-                      </div>
-                      {freeAlertError && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{freeAlertError}</div>}
-                      <button className="btn btn-primary btn-block" disabled={freeAlertSaving || !contact}
-                        onClick={async () => {
-                          if (!contact.trim()) { setFreeAlertError("Enter your mobile number or email."); return; }
-                          setFreeAlertSaving(true); setFreeAlertError("");
-                          const { error } = await supabase.from("alert_subscriptions").insert([{ contact: contact.trim(), pin: alertPin || null, last_booking: alertDate || null, alert_type: "free" }]);
-                          if (error) { setFreeAlertError("Something went wrong. Please try again."); setFreeAlertSaving(false); }
-                          else setAlertSaved(true);
-                        }}>
-                        {alertSaved ? "✓ Alert Activated!" : freeAlertSaving ? "Saving…" : "Activate Free Alert →"}
-                      </button>
-                      {alertSaved && <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 10, fontSize: 12, color: "var(--success)" }}>{IcCheck} You'll be notified 2 days before your window opens.</div>}
-                    </div>
-
-                    <div className="neu-card" style={{ background: "var(--bg-inset)" }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div className="section-title" style={{ marginBottom: 0 }}>Free vs Plus</div>
-                        <div style={{ display: "flex", gap: 28, paddingRight: 4 }}>
-                          <span className="t-label">FREE</span>
-                          <span className="t-label" style={{ color: "var(--accent)" }}>PLUS</span>
-                        </div>
-                      </div>
-                      {FEAT_COMPARISON.map(([feat, free, plus], idx) => (
-                        <div key={feat} className={`feat-row${idx === FEAT_COMPARISON.length - 1 ? " feat-row-last" : ""}`}>
-                          <span className="t-body" style={{ margin: 0 }}>{feat}</span>
-                          <div className="feat-checks">
-                            <span style={{ fontSize: 13, fontWeight: 600, width: 14, textAlign: "center", color: free ? "var(--success)" : "var(--border)" }}>{free ? "✓" : "—"}</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, width: 14, textAlign: "center", color: plus ? "var(--accent)" : "var(--border)" }}>{plus ? "✓" : "—"}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="neu-card plus-card-border" style={{ position: "relative", overflow: "hidden" }}>
-                      <div className="plus-card-glow" />
-                      <div style={{ position: "relative" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                          <div className="t-heading" style={{ color: "var(--accent)" }}>CylinderCheck Plus</div>
-                          <span className="badge badge-accent">EARLY ACCESS</span>
-                        </div>
-                        <p className="t-caption" style={{ marginBottom: 20 }}>Shortage intelligence for Indian households. Know before your neighbours do.</p>
-                        <div className="neu-inset" style={{ padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "baseline", gap: 8, borderRadius: "var(--radius-md)" }}>
-                          <div className="t-display">₹49</div>
-                          <div>
-                            <div className="t-body" style={{ margin: 0 }}>/month</div>
-                            <div className="t-caption">Cancel anytime</div>
-                          </div>
-                        </div>
-                        {PLUS_FEATURES.map(([icon, feat]) => (
-                          <div key={feat} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
-                            <span className="flex-none" style={{ fontSize: 16, lineHeight: 1.3 }}>{icon}</span>
-                            <span className="t-body" style={{ margin: 0 }}>{feat}</span>
-                          </div>
-                        ))}
-                        <div className="alert-banner alert-banner-warning" style={{ margin: "20px 0 16px" }}>
-                          <span className="flex-none" style={{ fontSize: 18 }}>🔥</span>
-                          <p className="t-caption" style={{ margin: 0 }}>
-                            <strong style={{ color: "var(--warning)" }}>During active shortages</strong>,
-                            {" "}Plus members get area-specific alerts up to 48 hours before the disruption is publicly reported.
-                          </p>
-                        </div>
-                        <p className="t-caption" style={{ marginBottom: 16, textAlign: "center" }}>
-                          Join <span style={{ color: "var(--accent)", fontWeight: 600 }}>early access</span> — limited to first 500 subscribers
-                        </p>
-                        {paySuccess ? (
-                          <div className="alert-banner alert-banner-success" style={{ flexDirection: "column", textAlign: "center", gap: 6 }}>
-                            <div style={{ fontSize: 28 }}>🎉</div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--success)" }}>You're a Plus member!</div>
-                            <p className="t-caption" style={{ margin: 0 }}>Alerts will be sent to <strong>{payContact}</strong>.<br />You'll get your first alert within 24 hours.</p>
+              {/* ══ REPORTS ═════════════════════════════════════════════════ */}
+              {tab === "community" && (
+                <div className="tab-panel">
+                  <h1 className="page-title">Community Reports</h1>
+                  <p className="page-subtitle">Flag delivery delays, shortages, and agency issues in your area. Real reports from real people.</p>
+                  <div className="grid-2col">
+                    <div>
+                      <div className="neu-card mb-card">
+                        <div className="section-title">Submit a Report</div>
+                        {!authLoading && !user ? (
+                          <div style={{ textAlign: "center", padding: "20px 0" }}>
+                            <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
+                            <div className="t-subheading" style={{ marginBottom: 8 }}>Sign in to submit</div>
+                            <p className="t-caption" style={{ marginBottom: 16 }}>Reports require a Google account so the community stays spam-free and accountable.</p>
+                            <button className="btn btn-primary btn-block"
+                              onClick={() => {
+                                try { sessionStorage.setItem("cc-post-auth-tab", "community"); } catch { /* private mode */ }
+                                supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+                              }}>
+                              {IcGoogle}
+                              Sign in with Google →
+                            </button>
                           </div>
                         ) : (
                           <>
                             <div className="input-group">
-                              <label className="input-label">Your mobile or email *</label>
-                              <input className="input" placeholder="98xxxxxxxx or you@gmail.com" value={payContact} onChange={e => setPayContact(e.target.value)} />
+                              <label className="input-label">PIN Code *</label>
+                              <input className="input" placeholder="6-digit PIN" value={reportPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
+                                onChange={e => setReportPin(e.target.value.replace(/\D/g, ""))} />
                             </div>
                             <div className="input-group">
-                              <label className="input-label">PIN Code <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional)</span></label>
-                              <input className="input" placeholder="6-digit PIN" value={payPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
-                                onChange={e => setPayPin(e.target.value.replace(/\D/g, ""))} />
+                              <label className="input-label">Area / Colony <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional)</span></label>
+                              <input className="input" placeholder="e.g. Vizag — Gajuwaka" value={reportCity} onChange={e => setReportCity(e.target.value)} />
                             </div>
-                            {payError && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{payError}</div>}
-                            <button className="btn btn-primary btn-block" onClick={handlePayment} disabled={paying}>
-                              {paying ? "Opening payment…" : "Get Plus for ₹49/month →"}
+                            <div className="input-group">
+                              <label className="input-label">What's happening? *</label>
+                              <textarea className="input" style={{ height: 110, resize: "vertical" }}
+                                placeholder="e.g. No delivery in 12 days, driver demanding ₹100 extra…"
+                                value={reportText} onChange={e => setReportText(e.target.value)} />
+                            </div>
+                            <div className="input-group">
+                              <label className="input-label">Delivery took how many days? <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional — helps calibrate avg)</span></label>
+                              <input className="input" placeholder="e.g. 8" inputMode="numeric" maxLength={2}
+                                value={reportDeliveryDays} onChange={e => setReportDeliveryDays(e.target.value.replace(/\D/g, ""))} />
+                            </div>
+                            <button className="btn btn-primary btn-block" onClick={handleReport} disabled={submitting || !reportText.trim() || !reportPin}>
+                              {submitOk ? "✓ Submitted — Thank you!" : submitting ? "Submitting…" : "Submit Report →"}
                             </button>
                           </>
                         )}
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 14 }}>
-                          <span className="t-caption">🔒 Razorpay · 256-bit SSL</span>
-                          <span className="t-caption">·</span>
-                          <span className="t-caption">Cancel anytime</span>
-                        </div>
                       </div>
                     </div>
-                    <AdSlot id="alerts-bottom" type="rectangle" />
+
+                    <div>
+                      <div className="t-label mb-card">Live Feed — Top Voted</div>
+                      {reports.length === 0 ? (
+                        <div className="neu-card" style={{ textAlign: "center", padding: 40 }}>
+                          <p className="t-body">No reports yet. Be the first to flag an issue.</p>
+                        </div>
+                      ) : reports.map(r => (
+                        <div key={r.id} className="neu-card list-card mb-card">
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
+                            <span className="badge badge-accent">PIN {r.pin}</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span className="t-caption">{new Date(r.created_at).toLocaleDateString("en-IN")}</span>
+                              {user && r.user_id === user.id && editingReportId !== r.id && (
+                                <>
+                                  <button onClick={() => { setEditingReportId(r.id); setEditingText(r.issue); }}
+                                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "2px 4px", fontSize: 13 }} title="Edit">✏️</button>
+                                  <button onClick={() => handleDeleteReport(r.id)}
+                                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)", padding: "2px 4px", fontSize: 13 }} title="Delete">🗑</button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          {r.city ? <div className="t-subheading" style={{ marginBottom: 5 }}>{r.city}</div> : null}
+                          {editingReportId === r.id ? (
+                            <div>
+                              <textarea className="input" style={{ height: 90, resize: "vertical", marginBottom: 8 }} value={editingText} onChange={e => setEditingText(e.target.value)} />
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <button className="btn btn-primary" style={{ flex: 1, minHeight: "auto", padding: "7px 12px", fontSize: 13 }} onClick={() => handleEditReport(r.id)}>Save</button>
+                                <button className="btn btn-ghost" style={{ minHeight: "auto", padding: "7px 12px", fontSize: 13 }} onClick={() => setEditingReportId(null)}>Cancel</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="t-body" style={{ marginBottom: 12 }}>{r.issue}</p>
+                          )}
+                          {r.delivery_days && <div className="t-caption" style={{ marginBottom: 8, color: "var(--text-muted)" }}>⏱ Delivery took {r.delivery_days} days</div>}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <button onClick={() => handleVote(r)} className={`vote-btn${votes[r.id] ? " voted" : ""}`}>
+                              ↑ {r.votes} upvote{r.votes !== 1 ? "s" : ""}
+                            </button>
+                            {r.votes > 20 && <span className="badge badge-danger">Trending</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* ══ COMMERCIAL ══════════════════════════════════════════════ */}
-            {tab === "commercial" && (
-              <CommercialPage prefilledCity={
-                pinData?.city
-                  ? CITY_NORMALISE[pinData.city.split(",")[0].trim().toLowerCase()] || ""
-                  : ""
-              } />
-            )}
-
-            {/* ══ ADMIN ════════════════════════════════════════════════════ */}
-            {tab === "admin" && adminUnlocked && (
-              <div className="tab-panel">
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-                  <div>
-                    <h1 className="page-title">Admin Dashboard</h1>
-                    <p className="page-subtitle" style={{ margin: 0 }}>Revenue, subscribers, and platform health.</p>
+              {/* ══ NEWS ════════════════════════════════════════════════════ */}
+              {tab === "news" && (
+                <div className="tab-panel">
+                  <h1 className="page-title">LPG News</h1>
+                  <p className="page-subtitle">Latest coverage on LPG pricing, supply, and policy from across India.</p>
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+                    <button onClick={() => fetchNews(true)} disabled={newsLoading} className="btn btn-ghost"
+                      style={{ minHeight: "auto", padding: "6px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                      {IcRefresh(newsLoading)}{newsLoading ? "Refreshing…" : "Refresh feed"}
+                    </button>
                   </div>
-                  <button className="btn btn-ghost" onClick={() => { setAdminUnlocked(false); setTab("track"); }}>🔒 Lock</button>
+                  {/* Skeleton only on first load (no existing articles yet) */}
+                  {newsLoading && !news.length ? [1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="neu-card mb-card">
+                      <div className="skeleton skeleton-text" style={{ width: "85%", marginBottom: 10 }} />
+                      <div className="skeleton skeleton-text" style={{ width: "50%" }} />
+                    </div>
+                  )) : !news.length ? (
+                    <div className="neu-card" style={{ textAlign: "center", padding: 48 }}>
+                      <div style={{ fontSize: 32, marginBottom: 12 }}>📰</div>
+                      <div className="t-subheading" style={{ marginBottom: 8 }}>No recent news</div>
+                      <p className="t-caption">Try refreshing or check back later.</p>
+                    </div>
+                  ) : news.map((item, i) => {
+                    const m = Math.round((Date.now() - item.pubDate) / 60000);
+                    const timeAgo = m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+                    const waUrl = `https://wa.me/?text=${encodeURIComponent(item.title + " — cylindercheck.in")}`;
+                    return (
+                      <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
+                        className="neu-card list-card mb-card" style={{ display: "block", textDecoration: "none" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                          <p className="t-body" style={{ margin: 0, flex: 1, color: "var(--text-primary)", lineHeight: 1.5 }}>{item.title}</p>
+                          <span className="flex-none" style={{ color: "var(--text-muted)", marginTop: 2 }}>{IcExt}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+                          <span className="badge badge-accent">{item.source}</span>
+                          <span className="t-caption">{timeAgo}</span>
+                          <a className="whatsapp-share"
+                            href={waUrl}
+                            target="_blank" rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            title="Share on WhatsApp">
+                            📲 Share
+                          </a>
+                        </div>
+                      </a>
+                    );
+                  })}
                 </div>
-                {adminLoading ? (
-                  <div className="grid-3col" style={{ marginBottom: 20 }}>
-                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton skeleton-card" />)}
+              )}
+
+              {/* ══ ALERTS ══════════════════════════════════════════════════ */}
+              {tab === "alerts" && (
+                <div className="tab-panel">
+                  <h1 className="page-title">Alerts &amp; Notifications</h1>
+                  <p className="page-subtitle">Know before the shortage hits. Get pinged when your booking window opens and when your area runs low.</p>
+                  <div className="grid-2col">
+                    <div>
+                      <div className="neu-card mb-card">
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                          <span className="badge badge-success">FREE</span>
+                          <div className="section-title" style={{ marginBottom: 0 }}>Booking Window Alert</div>
+                        </div>
+                        <p className="t-body" style={{ marginBottom: 18 }}>Enter your last booking date and we'll alert you 2 days before your next window opens. No app, no spam.</p>
+                        <div className="input-group">
+                          <label className="input-label">PIN Code</label>
+                          <input className="input" placeholder="6-digit PIN" value={alertPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
+                            onChange={e => setAlertPin(e.target.value.replace(/\D/g, ""))} />
+                        </div>
+                        <div className="input-group">
+                          <label className="input-label">Last Booking Date</label>
+                          <input className="input" type="date" value={alertDate} onChange={e => setAlertDate(e.target.value)} />
+                        </div>
+                        <div className="input-group">
+                          <label className="input-label">Mobile or Email *</label>
+                          <input className="input" placeholder="98xxxxxxxx or you@email.com" inputMode="email" autoComplete="email"
+                            value={contact} onChange={e => { setContact(e.target.value); setFreeAlertError(""); }} />
+                        </div>
+                        {freeAlertError && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{freeAlertError}</div>}
+                        <button className="btn btn-primary btn-block" disabled={freeAlertSaving || !contact}
+                          onClick={async () => {
+                            if (!contact.trim()) { setFreeAlertError("Enter your mobile number or email."); return; }
+                            setFreeAlertSaving(true); setFreeAlertError("");
+                            const { error } = await supabase.from("alert_subscriptions").insert([{ contact: contact.trim(), pin: alertPin || null, last_booking: alertDate || null, alert_type: "free" }]);
+                            if (error) { setFreeAlertError("Something went wrong. Please try again."); setFreeAlertSaving(false); }
+                            else setAlertSaved(true);
+                          }}>
+                          {alertSaved ? "✓ Alert Activated!" : freeAlertSaving ? "Saving…" : "Activate Free Alert →"}
+                        </button>
+                        {alertSaved && <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 10, fontSize: 12, color: "var(--success)" }}>{IcCheck} You'll be notified 2 days before your window opens.</div>}
+                      </div>
+
+                      <div className="neu-card" style={{ background: "var(--bg-inset)" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <div className="section-title" style={{ marginBottom: 0 }}>Free vs Plus</div>
+                          <div style={{ display: "flex", gap: 28, paddingRight: 4 }}>
+                            <span className="t-label">FREE</span>
+                            <span className="t-label" style={{ color: "var(--accent)" }}>PLUS</span>
+                          </div>
+                        </div>
+                        {FEAT_COMPARISON.map(([feat, free, plus], idx) => (
+                          <div key={feat} className={`feat-row${idx === FEAT_COMPARISON.length - 1 ? " feat-row-last" : ""}`}>
+                            <span className="t-body" style={{ margin: 0 }}>{feat}</span>
+                            <div className="feat-checks">
+                              <span style={{ fontSize: 13, fontWeight: 600, width: 14, textAlign: "center", color: free ? "var(--success)" : "var(--border)" }}>{free ? "✓" : "—"}</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, width: 14, textAlign: "center", color: plus ? "var(--accent)" : "var(--border)" }}>{plus ? "✓" : "—"}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="neu-card plus-card-border" style={{ position: "relative", overflow: "hidden" }}>
+                        <div className="plus-card-glow" />
+                        <div style={{ position: "relative" }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                            <div className="t-heading" style={{ color: "var(--accent)" }}>CylinderCheck Plus</div>
+                            <span className="badge badge-accent">EARLY ACCESS</span>
+                          </div>
+                          <p className="t-caption" style={{ marginBottom: 20 }}>Shortage intelligence for Indian households. Know before your neighbours do.</p>
+                          <div className="neu-inset" style={{ padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "baseline", gap: 8, borderRadius: "var(--radius-md)" }}>
+                            <div className="t-display">₹49</div>
+                            <div>
+                              <div className="t-body" style={{ margin: 0 }}>/month</div>
+                              <div className="t-caption">Cancel anytime</div>
+                            </div>
+                          </div>
+                          {PLUS_FEATURES.map(([icon, feat]) => (
+                            <div key={feat} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
+                              <span className="flex-none" style={{ fontSize: 16, lineHeight: 1.3 }}>{icon}</span>
+                              <span className="t-body" style={{ margin: 0 }}>{feat}</span>
+                            </div>
+                          ))}
+                          <div className="alert-banner alert-banner-warning" style={{ margin: "20px 0 16px" }}>
+                            <span className="flex-none" style={{ fontSize: 18 }}>🔥</span>
+                            <p className="t-caption" style={{ margin: 0 }}>
+                              <strong style={{ color: "var(--warning)" }}>During active shortages</strong>,
+                              {" "}Plus members get area-specific alerts up to 48 hours before the disruption is publicly reported.
+                            </p>
+                          </div>
+                          <p className="t-caption" style={{ marginBottom: 16, textAlign: "center" }}>
+                            Join <span style={{ color: "var(--accent)", fontWeight: 600 }}>early access</span> — limited to first 500 subscribers
+                          </p>
+                          {paySuccess ? (
+                            <div className="alert-banner alert-banner-success" style={{ flexDirection: "column", textAlign: "center", gap: 6 }}>
+                              <div style={{ fontSize: 28 }}>🎉</div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--success)" }}>You're a Plus member!</div>
+                              <p className="t-caption" style={{ margin: 0 }}>Alerts will be sent to <strong>{payContact}</strong>.<br />You'll get your first alert within 24 hours.</p>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="input-group">
+                                <label className="input-label">Your mobile or email *</label>
+                                <input className="input" placeholder="98xxxxxxxx or you@gmail.com" value={payContact} onChange={e => setPayContact(e.target.value)} />
+                              </div>
+                              <div className="input-group">
+                                <label className="input-label">PIN Code <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional)</span></label>
+                                <input className="input" placeholder="6-digit PIN" value={payPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
+                                  onChange={e => setPayPin(e.target.value.replace(/\D/g, ""))} />
+                              </div>
+                              {payError && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{payError}</div>}
+                              <button className="btn btn-primary btn-block" onClick={handlePayment} disabled={paying}>
+                                {paying ? "Opening payment…" : "Get Plus for ₹49/month →"}
+                              </button>
+                            </>
+                          )}
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 14 }}>
+                            <span className="t-caption">🔒 Razorpay · 256-bit SSL</span>
+                            <span className="t-caption">·</span>
+                            <span className="t-caption">Cancel anytime</span>
+                          </div>
+                        </div>
+                      </div>
+                      <AdSlot id="alerts-bottom" type="rectangle" />
+                    </div>
                   </div>
-                ) : adminData && (
-                  <>
+                </div>
+              )}
+
+              {/* ══ COMMERCIAL ══════════════════════════════════════════════ */}
+              {tab === "commercial" && (
+                <CommercialPage
+                  prefilledCity={pinData?.city ? CITY_NORMALISE[pinData.city.split(",")[0].trim().toLowerCase()] || "" : ""}
+                  hasCrisis={!!shortageSummary}
+                  crisisData={shortageSummary}
+                />
+              )}
+
+              {/* ══ ADMIN ════════════════════════════════════════════════════ */}
+              {tab === "admin" && adminUnlocked && (
+                <div className="tab-panel">
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+                    <div>
+                      <h1 className="page-title">Admin Dashboard</h1>
+                      <p className="page-subtitle" style={{ margin: 0 }}>Revenue, subscribers, and platform health.</p>
+                    </div>
+                    <button className="btn btn-ghost" onClick={() => { setAdminUnlocked(false); setTab("track"); }}>🔒 Lock</button>
+                  </div>
+                  {adminLoading ? (
                     <div className="grid-3col" style={{ marginBottom: 20 }}>
-                      {[
-                        ["💰", "Total Revenue", `₹${((adminData.subscriptions?.length || 0) * 49).toLocaleString("en-IN")}`, "var(--success)"],
-                        ["👥", "Active Subscribers", adminData.subscriptions?.filter(s => s.status === "active").length || 0, "var(--accent)"],
-                        ["📋", "Free Alert Signups", adminData.alertCount || 0, "var(--info)"],
-                        ["🗣", "Community Reports", adminData.reportCount || 0, "var(--warning)"],
-                        ["📈", "This Month", `₹${(adminData.subscriptions?.filter(s => { const d = new Date(s.created_at), n = new Date(); return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear() }).length || 0) * 49}`, "var(--warning)"],
-                        ["🔄", "MRR", `₹${(adminData.subscriptions?.filter(s => s.status === "active").length || 0) * 49}/mo`, "var(--accent)"],
-                      ].map(([icon, label, value, color]) => (
-                        <div key={label} className="neu-card" style={{ marginBottom: 0 }}>
-                          <div style={{ fontSize: 22, marginBottom: 8 }}>{icon}</div>
-                          <div className="t-label" style={{ marginBottom: 6 }}>{label}</div>
-                          {(value === 0 || value === "₹0" || value === "₹0/mo")
-                            ? <div className="t-body" style={{ color: "var(--text-muted)", margin: 0 }}>No subscribers yet</div>
-                            : <div className="t-heading" style={{ color, fontSize: 28, letterSpacing: "-0.03em" }}>{value}</div>}
-                        </div>
-                      ))}
+                      {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton skeleton-card" />)}
                     </div>
+                  ) : adminData && (
+                    <>
+                      <div className="grid-3col" style={{ marginBottom: 20 }}>
+                        {[
+                          ["💰", "Total Revenue", `₹${((adminData.subscriptions?.length || 0) * 49).toLocaleString("en-IN")}`, "var(--success)"],
+                          ["👥", "Active Subscribers", adminData.subscriptions?.filter(s => s.status === "active").length || 0, "var(--accent)"],
+                          ["📋", "Free Alert Signups", adminData.alertCount || 0, "var(--info)"],
+                          ["🗣", "Community Reports", adminData.reportCount || 0, "var(--warning)"],
+                          ["📈", "This Month", `₹${(adminData.subscriptions?.filter(s => { const d = new Date(s.created_at), n = new Date(); return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear() }).length || 0) * 49}`, "var(--warning)"],
+                          ["🔄", "MRR", `₹${(adminData.subscriptions?.filter(s => s.status === "active").length || 0) * 49}/mo`, "var(--accent)"],
+                        ].map(([icon, label, value, color]) => (
+                          <div key={label} className="neu-card" style={{ marginBottom: 0 }}>
+                            <div style={{ fontSize: 22, marginBottom: 8 }}>{icon}</div>
+                            <div className="t-label" style={{ marginBottom: 6 }}>{label}</div>
+                            {(value === 0 || value === "₹0" || value === "₹0/mo")
+                              ? <div className="t-body" style={{ color: "var(--text-muted)", margin: 0 }}>No subscribers yet</div>
+                              : <div className="t-heading" style={{ color, fontSize: 28, letterSpacing: "-0.03em" }}>{value}</div>}
+                          </div>
+                        ))}
+                      </div>
 
-                    <div className="neu-card mb-card">
-                      <div className="section-title">Recent Subscribers</div>
-                      {(!adminData.subscriptions || adminData.subscriptions.length === 0) ? (
-                        <div style={{ textAlign: "center", padding: "20px 0" }}><p className="t-body">No subscribers yet — share the link!</p></div>
-                      ) : (
-                        <div className="admin-table-wrap">
-                          <table className="admin-table">
-                            <thead><tr>{["Contact", "PIN", "Amount", "Status", "Date"].map(h => <th key={h}>{h}</th>)}</tr></thead>
-                            <tbody>
-                              {adminData.subscriptions.map(s => (
-                                <tr key={s.id}>
-                                  <td style={{ color: "var(--text-primary)" }}>{s.contact}</td>
-                                  <td>{s.pin || "—"}</td>
-                                  <td style={{ color: "var(--success)", fontWeight: 600 }}>₹{(s.amount || 4900) / 100}</td>
-                                  <td><span className={`badge ${s.status === "active" ? "badge-success" : "badge-danger"}`}>{s.status}</span></td>
-                                  <td style={{ fontSize: 11 }}>{new Date(s.created_at).toLocaleDateString("en-IN")}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
+                      <div className="neu-card mb-card">
+                        <div className="section-title">Recent Subscribers</div>
+                        {(!adminData.subscriptions || adminData.subscriptions.length === 0) ? (
+                          <div style={{ textAlign: "center", padding: "20px 0" }}><p className="t-body">No subscribers yet — share the link!</p></div>
+                        ) : (
+                          <div className="admin-table-wrap">
+                            <table className="admin-table">
+                              <thead><tr>{["Contact", "PIN", "Amount", "Status", "Date"].map(h => <th key={h}>{h}</th>)}</tr></thead>
+                              <tbody>
+                                {adminData.subscriptions.map(s => (
+                                  <tr key={s.id}>
+                                    <td style={{ color: "var(--text-primary)" }}>{s.contact}</td>
+                                    <td>{s.pin || "—"}</td>
+                                    <td style={{ color: "var(--success)", fontWeight: 600 }}>₹{(s.amount || 4900) / 100}</td>
+                                    <td><span className={`badge ${s.status === "active" ? "badge-success" : "badge-danger"}`}>{s.status}</span></td>
+                                    <td style={{ fontSize: 11 }}>{new Date(s.created_at).toLocaleDateString("en-IN")}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="neu-card" style={{ background: "var(--bg-inset)" }}>
-                      <div className="section-title">Recent Payment IDs</div>
-                      <p className="t-caption" style={{ marginBottom: 12 }}>Cross-reference with Razorpay dashboard if needed.</p>
-                      {(adminData.subscriptions || []).slice(0, 10).map(s => (
-                        <div key={s.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--bg-raised)", fontSize: 11 }}>
-                          <span style={{ color: "var(--text-muted)", fontFamily: "monospace" }}>{s.razorpay_payment_id || "pending"}</span>
-                          <span className="t-caption">{new Date(s.created_at).toLocaleDateString("en-IN")}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                      <div className="neu-card" style={{ background: "var(--bg-inset)" }}>
+                        <div className="section-title">Recent Payment IDs</div>
+                        <p className="t-caption" style={{ marginBottom: 12 }}>Cross-reference with Razorpay dashboard if needed.</p>
+                        {(adminData.subscriptions || []).slice(0, 10).map(s => (
+                          <div key={s.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--bg-raised)", fontSize: 11 }}>
+                            <span style={{ color: "var(--text-muted)", fontFamily: "monospace" }}>{s.razorpay_payment_id || "pending"}</span>
+                            <span className="t-caption">{new Date(s.created_at).toLocaleDateString("en-IN")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </>}
 
           </div>
         </div>
@@ -1923,7 +2060,11 @@ export default function App() {
       <div className="bottom-nav">
         {TABS.map(t => (
           <button key={t.id} className={`bn-item${tab === t.id ? " active" : ""}`} onClick={() => setTab(t.id)}>
-            {t.icon}{t.label}
+            <span style={{ position: "relative", display: "inline-flex" }}>
+              {t.icon}
+              {t.id === "commercial" && shortageSummary ? <span className="tab-crisis-dot" /> : null}
+            </span>
+            {t.label}
           </button>
         ))}
       </div>

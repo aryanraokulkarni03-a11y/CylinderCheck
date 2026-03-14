@@ -1965,6 +1965,8 @@ svg {
   text-transform: uppercase;
   color: var(--danger);
   margin-bottom: var(--space-4);
+  /* animate the pulse dot alongside the badge */
+  user-select: none;
 }
 
 /* ── Stats bar ────────────────────────────────────────────── */
@@ -1984,6 +1986,8 @@ svg {
   border-radius: var(--radius-md);
   padding: 12px 20px;
   min-width: 120px;
+  /* GPU hint — these animate on load via anim-slide-up parent */
+  will-change: transform;
 }
 
 .commercial-stat-value {
@@ -1993,18 +1997,33 @@ svg {
   color: var(--accent);
   letter-spacing: -0.03em;
   line-height: 1;
+  /* tabular-nums — values like "8,000+" align cleanly */
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── City tabs ────────────────────────────────────────────── */
+/* ── City tabs ─────────────────────────────────────────────── */
 .commercial-city-tabs {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  /* scroll horizontally on narrow screens — 7 cities won't wrap cleanly */
+  overflow-x: auto;
+  /* hide scrollbar but keep functionality */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* prevent layout collapse while scrolling */
+  padding-bottom: 4px;
+}
+
+.commercial-city-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .commercial-city-tab {
+  /* flex-shrink: 0 — tabs must not compress, scroll instead */
+  flex-shrink: 0;
   padding: 6px 14px;
   border-radius: var(--radius-pill);
+  font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
@@ -2012,11 +2031,15 @@ svg {
   box-shadow: var(--neu-raised-sm);
   border: none;
   cursor: pointer;
+  /* only animate compositor-friendly properties */
   transition:
     box-shadow var(--dur-fast) var(--ease-out),
     color var(--dur-fast),
     background var(--dur-fast);
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .commercial-city-tab:hover {
@@ -2035,7 +2058,7 @@ svg {
   transition-duration: 80ms;
 }
 
-/* ── Need type grid ───────────────────────────────────────── */
+/* ── Need type buttons ─────────────────────────────────────── */
 .need-type-grid {
   display: flex;
   flex-direction: column;
@@ -2047,11 +2070,14 @@ svg {
   text-align: left;
   padding: 11px 14px;
   border-radius: var(--radius-md);
+  /* explicit font — buttons don't inherit without this */
+  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
   background: var(--bg-inset);
   box-shadow: var(--neu-inset);
+  /* transparent border reserves space — prevents layout shift on active */
   border: 1px solid transparent;
   cursor: pointer;
   transition:
@@ -2059,6 +2085,8 @@ svg {
     color var(--dur-fast),
     border-color var(--dur-fast);
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .need-type-btn:hover {
@@ -2068,13 +2096,22 @@ svg {
 .need-type-btn.active {
   border-color: var(--accent);
   color: var(--accent);
+  /* inset shadow + outer accent ring — shows selection clearly */
   box-shadow: var(--neu-inset), 0 0 0 1px var(--accent-glow);
   font-weight: 600;
+  background: var(--bg-inset);
 }
 
-/* ── Vendor card ──────────────────────────────────────────── */
+.need-type-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Vendor card ────────────────────────────────────────────── */
 .vendor-card {
   position: relative;
+  /* will-change declared — GPU layer prevents repaint jank on Android */
+  will-change: transform;
   transition:
     box-shadow var(--dur-base) var(--ease-out),
     transform var(--dur-base) var(--ease-out);
@@ -2085,11 +2122,20 @@ svg {
   transform: translateY(-2px);
 }
 
+/* remove hover lift on touch devices — no hover intent */
+@media (hover: none) {
+  .vendor-card:hover {
+    box-shadow: var(--neu-raised);
+    transform: none;
+  }
+}
+
 .vendor-card-featured {
   border: 1px solid var(--accent-glow) !important;
 }
 
 .vendor-featured-badge {
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -2098,23 +2144,38 @@ svg {
   margin-bottom: 10px;
 }
 
-/* ── Commercial nudge on Track tab ───────────────────────── */
+/* ── Commercial nudge on Track tab ─────────────────────────── */
 .commercial-nudge {
   background: var(--bg-inset);
   box-shadow: var(--neu-inset);
   border-radius: var(--radius-md);
   padding: 16px;
-  border: 1px solid var(--border);
+  /* accent border — makes it stand out from surrounding alert banners */
+  border: 1px solid var(--accent-glow);
   margin-top: 12px;
 }
 
-/* ── Mobile responsive ────────────────────────────────────── */
+/* bolt icon inside nudge gets accent colour */
+.commercial-nudge svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── Windows dark mode select fix ──────────────────────────── */
+/* Native <select> on Windows ignores system dark mode without explicit colours */
+.commercial-page select.input {
+  background-color: var(--bg-inset);
+  color: var(--text-primary);
+}
+
+/* ── Mobile responsive ─────────────────────────────────────── */
 @media (max-width: 768px) {
   .commercial-stats-bar {
     gap: var(--space-3);
   }
 
   .commercial-stat {
+    /* flex: 1 — stats fill available width equally */
     flex: 1;
     min-width: 90px;
     padding: 10px 14px;
@@ -2124,18 +2185,32 @@ svg {
     font-size: 18px;
   }
 
+  /* city tabs scroll on mobile — no wrapping */
   .commercial-city-tabs {
     gap: 4px;
+    /* small negative margin + padding trick to reach edge on mobile */
+    margin-left: calc(-1 * var(--space-4));
+    margin-right: calc(-1 * var(--space-4));
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
   }
 
   .commercial-city-tab {
-    padding: 5px 10px;
+    padding: 5px 12px;
     font-size: 11px;
   }
 
   .need-type-btn {
-    font-size: 13px;
-    padding: 13px 14px;
+    /* bump for comfortable thumb targets */
+    font-size: 14px;
+    padding: 14px 14px;
+    min-height: 52px;
+  }
+
+  /* vendor action buttons stack on very small screens */
+  .vendor-card .btn {
+    min-width: unset;
+    flex: 1;
   }
 }
 

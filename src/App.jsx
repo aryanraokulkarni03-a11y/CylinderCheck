@@ -757,7 +757,7 @@ function CommercialPage({ prefilledCity = "" }) {
   };
 
   return (
-    <div className="tab-panel">
+    <div className="tab-panel commercial-page">
       {/* ── Header ── */}
       <div className="commercial-hero">
         <div className="commercial-hero-badge">

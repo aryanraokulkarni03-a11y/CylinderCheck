@@ -1536,7 +1536,7 @@ svg {
 
 @media (prefers-reduced-motion: reduce) {
   .price-ticker-inner {
-    animation: none;
+    animation-duration: 60s;
     flex-wrap: wrap;
     width: 100%;
     padding: 0 12px;
@@ -1691,6 +1691,9 @@ svg {
 
 .track-portals {
   order: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 /* Feature comparison table */
@@ -2385,4 +2388,586 @@ svg {
   .vendor-coming-soon {
     padding: var(--space-6) var(--space-4);
   }
+}
+
+/* ============================================================
+   Task 6 — Urgency Score Display
+   ============================================================ */
+
+/* Outer row — ring + labels side by side */
+.urgency-score-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0 var(--space-5);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-4);
+}
+
+/* Wrapper div that gets the CSS animation (not the SVG itself)
+   Vercel: rendering-animate-svg-wrapper */
+.urgency-ring-anim {
+  flex-shrink: 0;
+  /* Entrance pop — uses compositor-friendly transform only */
+  animation: scaleIn var(--dur-base) var(--ease-bounce) both;
+}
+
+/* Score label column */
+.urgency-score-labels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Primary action label: "Act Now", "All Good", etc. */
+.urgency-score-badge {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  /* color set via inline style (from URGENCY_META.color) */
+}
+
+/* Secondary label beneath the badge */
+.urgency-score-sublabel {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Small inline chip showing cylinder level when set */
+.urgency-cylinder-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-inset);
+  box-shadow: var(--neu-inset);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+}
+
+/* Tier-specific ring glow on hover — border-left accent line */
+.urgency-tier-low    { border-left: 3px solid var(--success); padding-left: var(--space-3); margin-left: calc(-1 * var(--space-3)); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.urgency-tier-medium { border-left: 3px solid var(--warning); padding-left: var(--space-3); margin-left: calc(-1 * var(--space-3)); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.urgency-tier-high   { border-left: 3px solid var(--accent);  padding-left: var(--space-3); margin-left: calc(-1 * var(--space-3)); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.urgency-tier-urgent { border-left: 3px solid var(--danger);  padding-left: var(--space-3); margin-left: calc(-1 * var(--space-3)); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+
+/* Mobile — stack vertically if very narrow */
+@media (max-width: 390px) {
+  .urgency-score-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+}
+
+/* ============================================================
+   Task 7 — Track Tab Rethink
+   ============================================================ */
+
+/* Welcome Back Banner */
+.welcome-back-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  margin-bottom: var(--space-5);
+  font-size: 13px;
+  color: var(--text-secondary);
+  animation: slideDown var(--dur-base) var(--ease-spring) both;
+}
+
+.welcome-back-banner strong {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+/* Base Selector Styles (Shared by Cylinder & Company) */
+.cylinder-level-selector,
+.company-picker {
+  margin-bottom: var(--space-5);
+}
+
+.cylinder-level-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.cylinder-level-optional {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.cylinder-level-buttons,
+.company-picker-buttons {
+  display: flex;
+  background: var(--bg-inset);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--neu-inset);
+  gap: 2px;
+}
+
+.cylinder-level-btn,
+.company-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--space-2) 4px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-base);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--dur-fast) ease-out;
+  /* Vercel Web Vitals: prevent tap highlight grey box on mobile */
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 480px) {
+  .cylinder-level-btn,
+  .company-btn {
+    flex-direction: row;
+    padding: var(--space-2) var(--space-3);
+    font-size: 13px;
+  }
+}
+
+.cylinder-level-emoji {
+  font-size: 16px;
+  line-height: 1;
+  filter: grayscale(1) opacity(0.6);
+  transition: filter var(--dur-fast) ease;
+}
+
+.company-btn span:first-child {
+  font-size: 14px;
+  filter: grayscale(1) opacity(0.6);
+  transition: filter var(--dur-fast) ease;
+}
+
+/* Active State */
+.cylinder-level-btn.active,
+.company-btn.active {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.cylinder-level-btn.active .cylinder-level-emoji,
+.company-btn.active span:first-child {
+  filter: grayscale(0) opacity(1);
+}
+
+/* Range Display */
+.delivery-range-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px dotted var(--border);
+}
+
+.Delivery-range-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.Delivery-range-value {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   Task 9 — News Tab Rebuild
+   ============================================================ */
+.news-desktop-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 900px) {
+  .news-desktop-layout {
+    flex-direction: row;
+    height: calc(100vh - 80px); /* 100vh minus topnav */
+  }
+  .news-feed-col {
+    flex: 1;
+    overflow-y: auto;
+    /* Soft custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .news-feed-col::-webkit-scrollbar { width: 6px; }
+  .news-feed-col::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+  
+  .news-map-col {
+    position: sticky;
+    top: 0;
+    width: 400px;
+    height: 100%;
+    border-left: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+}
+
+/* Mobile: map at top, strict height */
+@media (max-width: 899px) {
+  .news-map-col {
+    height: 280px;
+    border-bottom: 1px solid var(--border);
+    order: -1; /* map jumps above feed */
+  }
+}
+
+.news-category-section {
+  margin-top: var(--space-6);
+}
+
+.news-category-header {
+  margin-bottom: var(--space-3);
+  padding-left: var(--space-2);
+}
+
+.news-lead-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--neu-raised-sm);
+  padding: 24px;
+}
+
+/* Map markers & pulse (rendering-animate-svg-wrapper) */
+.news-map-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+.news-map-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  border: 2px solid var(--bg-base);
+  z-index: 2;
+  transition: all 0.2s;
+}
+.news-map-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0.4;
+}
+.anim-pulse {
+  animation: radarPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes radarPulse {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Active City filter state */
+.news-map-marker.active .news-map-dot {
+  background: var(--accent);
+  transform: scale(1.2);
+}
+
+/* City Filter Chips */
+.city-filter-chips {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: 4px; /* for scrollbar */
+  scrollbar-width: none; /* hide scrollbar */
+}
+.city-filter-chips::-webkit-scrollbar { display: none; }
+
+.city-filter-chip {
+  padding: 6px 14px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.city-filter-chip.active {
+  background: var(--bg-surface);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255,107,0,0.12);
+}
+.city-filter-pulse {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: block;
+}
+
+/* ============================================================
+   Task 10 — Alerts Tab Redesign
+   ============================================================ */
+.alerts-single-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.alerts-gap-nudge-card {
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+  border: 1px dashed var(--border);
+}
+
+.alert-price-revision {
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  padding: 24px;
+}
+
+/* ============================================================
+   Task 11 — LPG Guide Page
+   ============================================================ */
+.guide-back-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: var(--space-4);
+  transition: color 0.2s;
+}
+.guide-back-btn:hover {
+  color: var(--text-primary);
+}
+
+.guide-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.guide-accordion-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.guide-accordion-item.open {
+  box-shadow: var(--neu-raised-sm);
+}
+
+.guide-accordion-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.guide-accordion-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+.guide-accordion-chevron {
+  color: var(--text-secondary);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+}
+.guide-accordion-item.open .guide-accordion-chevron {
+  transform: rotate(90deg);
+}
+
+.guide-accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+.guide-accordion-item.open .guide-accordion-body {
+  grid-template-rows: 1fr;
+}
+
+.guide-accordion-content-inner {
+  overflow: hidden;
+  padding: 0 20px 0 20px;
+  transition: padding 0.3s ease;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.guide-accordion-item.open .guide-accordion-content-inner {
+  padding: 0 20px 24px 20px;
+}
+
+.guide-content-block p {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+.guide-content-block p:last-child {
+  margin-bottom: 0;
+}
+
+.guide-tip-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+.guide-tip-row:last-child {
+  margin-bottom: 0;
+}
+.guide-tip-emoji {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 20px;
+}
+.guide-list li {
+  margin-bottom: 10px;
+}
+.guide-list li:last-child {
+  margin-bottom: 0;
+}
+
+.guide-quick-ref-card {
+  padding: 16px 20px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+.guide-quick-ref-card:hover {
+  border-color: var(--accent);
+}
+
+/* ============================================================
+   Task 12 — Focus-Visible Accessibility Rings
+   ============================================================ */
+.btn:focus-visible,
+.vote-btn:focus-visible,
+.portal-link:focus-visible,
+.upi-portal-btn:focus-visible,
+.sidebar-item:focus-visible,
+.bn-item:focus-visible,
+.guide-accordion-header:focus-visible,
+.guide-back-btn:focus-visible,
+.cylinder-level-btn:focus-visible,
+.company-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+/* ============================================================
+   Task 12 — UPI Guide Collapsible
+   ============================================================ */
+.upi-guide-collapsible {
+  margin-top: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.upi-guide-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-inset);
+  list-style: none;
+  user-select: none;
+}
+.upi-guide-summary::-webkit-details-marker { display: none; }
+
+.upi-guide-chevron {
+  color: var(--text-muted);
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+details[open] > .upi-guide-summary .upi-guide-chevron {
+  transform: rotate(90deg);
+}
+
+.upi-guide-steps {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.upi-guide-app {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.upi-guide-app strong {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+.upi-guide-app ol {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+.upi-guide-app ol li {
+  margin-bottom: 4px;
+}
+.upi-guide-app ol li:last-child {
+  margin-bottom: 0;
 }

@@ -3,20 +3,6 @@ import { supabase } from "./supabaseClient";
 import { getTheme, toggleTheme } from "./theme.js";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const CITY_COORDS = {
-  Delhi: { lat: 28.6139, lng: 77.2090 },
-  Mumbai: { lat: 19.0760, lng: 72.8777 },
-  Bangalore: { lat: 12.9716, lng: 77.5946 },
-  Hyderabad: { lat: 17.3850, lng: 78.4867 },
-  Chennai: { lat: 13.0827, lng: 80.2707 },
-  Pune: { lat: 18.5204, lng: 73.8567 },
-  Kolkata: { lat: 22.5726, lng: 88.3639 },
-  Ahmedabad: { lat: 23.0225, lng: 72.5714 },
-  Vizag: { lat: 17.6868, lng: 83.2185 },
-  Jaipur: { lat: 26.9124, lng: 75.7873 },
-  Lucknow: { lat: 26.8467, lng: 80.9462 },
-  Patna: { lat: 25.5941, lng: 85.1376 },
-};
 const COMPANIES = ["IndianOil", "HP Gas", "Bharat Gas"];
 const COMPANY_EMOJI = { IndianOil: "🔵", "HP Gas": "🟡", "Bharat Gas": "🟢" };
 
@@ -105,6 +91,7 @@ const IcGoogle = (
 );
 const IcExt = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>;
 const IcCheck = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>;
+const IcChevronRight = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
 const IcWarn = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>;
 const IcPin = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>;
 const IcClock = <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>;
@@ -146,8 +133,8 @@ const PORTALS = [
 ];
 const UPI_PORTALS = [
   ["G", "Google Pay", "https://pay.google.com", "#4285F4"],
-  ["P", "PhonePe", "https://www.phonepe.com/lpg-gas-booking/", "#5f259f"],
-  ["₹", "Paytm", "https://paytm.com/lpg-gas-booking/", "#00B9F1"],
+  ["P", "PhonePe", "https://www.phonepe.com", "#5f259f"],
+  ["₹", "Paytm", "https://paytm.com", "#00B9F1"],
 ];
 const FEAT_COMPARISON = [
   ["Booking window countdown", true, true],
@@ -176,7 +163,7 @@ const CITY_NORMALISE = {
   "visakhapatnam": "Vizag", "vizag": "Vizag", "vishakhapatnam": "Vizag",
   "bengaluru": "Bangalore", "bangalore": "Bangalore",
   "mumbai": "Mumbai", "bombay": "Mumbai",
-  "delhi": "Delhi", "new delhi": "Delhi", "new delhi": "Delhi",
+  "delhi": "Delhi", "new delhi": "Delhi",
   "hyderabad": "Hyderabad",
   "chennai": "Chennai", "madras": "Chennai",
   "kolkata": "Kolkata", "calcutta": "Kolkata",
@@ -234,6 +221,106 @@ function Ring({ daysLeft }) {
         {daysLeft <= 0 ? "BOOK NOW" : "DAYS LEFT"}
       </text>
     </svg>
+  );
+}
+
+// ─── Urgency Score — Task 6 ───────────────────────────────────────────────────
+// Vercel: rerender-derived-state-no-effect — computed inline during render, never state
+// Vercel: rendering-hoist-jsx — all lookup tables are module-level constants
+
+// Maps cylinder fill level → estimated days of gas remaining
+const CYLINDER_DAYS = { full: 20, half: 12, low: 5, critical: 2 };
+
+// Explicit variant map — prevents if/else chains inside JSX (patterns-explicit-variants)
+const URGENCY_META = {
+  low:    { label: "All Good",   color: "var(--success)", track: "var(--success-soft)",  tier: "low"    }, // 1–3
+  medium: { label: "Plan Ahead", color: "var(--warning)", track: "var(--warning-soft)",  tier: "medium" }, // 4–6
+  high:   { label: "Book Soon",  color: "var(--accent)",  track: "var(--accent-soft)",   tier: "high"   }, // 7–8
+  urgent: { label: "Act Now",    color: "var(--danger)",  track: "var(--danger-soft)",   tier: "urgent" }, // 9–10
+};
+
+// Pure computation — no side effects, safe to call in render
+// Vercel: rerender-no-inline-components (function defined at module level)
+function computeUrgencyScore({ cylinderLevel, daysToWindow, reportCount, avgDays }) {
+  const safeDays  = typeof daysToWindow === "number" ? daysToWindow : 25;
+  const safeAvg   = typeof avgDays === "number" && avgDays > 0 ? avgDays : 5;
+  const safeCount = typeof reportCount === "number" ? reportCount : 0;
+
+  // Days-to-window factor — 40% weight
+  const wFactor = safeDays <= 0 ? 10 : safeDays <= 3 ? 8 : safeDays <= 7 ? 6 : safeDays <= 14 ? 4 : 1;
+  // Cylinder level factor — 30% weight (null → unknown → mid-range 3)
+  const cFactor = cylinderLevel ? ({ critical: 10, low: 7, half: 4, full: 1 }[cylinderLevel] ?? 3) : 3;
+  // Shortage severity factor — 20% weight
+  const sFactor = safeCount >= 5 ? 10 : safeCount >= 2 ? 7 : safeCount === 1 ? 4 : 1;
+  // Delivery lag factor — 10% weight
+  const dFactor = safeAvg >= 10 ? 8 : safeAvg >= 7 ? 5 : safeAvg >= 4 ? 3 : 1;
+
+  const raw = Math.round((wFactor * 4 + cFactor * 3 + sFactor * 2 + dFactor * 1) / 10);
+
+  // Hard overrides
+  if (cylinderLevel === "critical") return Math.max(raw, 8);
+  if (safeCount >= 5 && safeDays <= 2) return 10;
+  return Math.min(Math.max(raw, 1), 10);
+}
+
+// Derives tier string from score — used as key into URGENCY_META
+function getUrgencyTier(score) {
+  if (score <= 3) return "low";
+  if (score <= 6) return "medium";
+  if (score <= 8) return "high";
+  return "urgent";
+}
+
+// Module-level display component — SVG ring + bold score + label
+// Vercel: rerender-no-inline-components, rendering-animate-svg-wrapper
+function UrgencyScoreDisplay({ score, cylinderLevel }) {
+  const tier = getUrgencyTier(score);
+  const meta = URGENCY_META[tier];
+  const r = 44, circ = 2 * Math.PI * r;
+  const pct = score / 10;  // 0–1 fill
+  const levelLabel = cylinderLevel
+    ? { full: "Full", half: "Half", low: "Low", critical: "Critical" }[cylinderLevel]
+    : null;
+
+  return (
+    <div className={`urgency-score-wrap urgency-tier-${tier}`}>
+      {/* Animate the wrapper div, NOT the SVG (Vercel: rendering-animate-svg-wrapper) */}
+      <div className="urgency-ring-anim">
+        <svg width="108" height="108" viewBox="0 0 100 100" aria-hidden="true">
+          {/* Track (background ring) */}
+          <circle cx="50" cy="50" r={r} fill="none" stroke={meta.track} strokeWidth="8" />
+          {/* Fill arc */}
+          <circle cx="50" cy="50" r={r} fill="none" stroke={meta.color} strokeWidth="8"
+            strokeDasharray={circ}
+            strokeDashoffset={circ * (1 - pct)}
+            strokeLinecap="round"
+            transform="rotate(-90 50 50)"
+            style={{ transition: "stroke-dashoffset 1s cubic-bezier(.4,0,.2,1), stroke .3s" }}
+          />
+          {/* Score number */}
+          <text x="50" y="45" textAnchor="middle"
+            fill={meta.color} fontSize="28" fontWeight="800"
+            fontFamily="'Bricolage Grotesque',sans-serif">
+            {score}
+          </text>
+          {/* /10 subscript */}
+          <text x="50" y="60" textAnchor="middle"
+            fill="var(--text-muted)" fontSize="10" letterSpacing="0.5"
+            fontFamily="'Instrument Sans',sans-serif">
+            /10
+          </text>
+        </svg>
+      </div>
+      <div className="urgency-score-labels">
+        <div className="urgency-score-badge" style={{ color: meta.color }}>
+          {meta.label}
+        </div>
+        <div className="urgency-score-sublabel">
+          Urgency Score
+          {levelLabel ? <span className="urgency-cylinder-chip">{levelLabel} cylinder</span> : null}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1142,32 +1229,339 @@ function CommercialPage({ prefilledCity = "", hasCrisis = false, crisisData = nu
   );
 }
 
-// ─── GuidePage — placeholder; full accordion content built in Task 11 ────────
-// Vercel: rerender-no-inline-components — module level
-function GuidePage({ onBack, defaultOpenSection }) {
+// ─── Task 7 — Track Rethink: module-level constants + components ──────────────
+// Vercel: rerender-no-inline-components, rendering-hoist-jsx
+
+// localStorage schema version — bump to "v2" to force-clear stale saves
+const CC_USER_VERSION = "v1";
+const CC_LS_KEY = `cc-user:${CC_USER_VERSION}`;
+
+// Cylinder level options — explicit lookup (patterns-explicit-variants)
+const CYLINDER_LEVELS = [
+  { id: "full",     label: "Full",     emoji: "🟦", days: 20 },
+  { id: "half",     label: "Half",     emoji: "🔵", days: 12 },
+  { id: "low",      label: "Low",      emoji: "🟠", days: 5  },
+  { id: "critical", label: "Critical", emoji: "🔴", days: 2  },
+];
+
+// Company options for picker — mirrors COMPANIES array with display labels
+const COMPANY_PICKER_OPTS = [
+  { id: "IndianOil", label: "IndianOil", short: "IOC",  emoji: "🔵" },
+  { id: "HP Gas",    label: "HP Gas",    short: "HP",   emoji: "🟡" },
+  { id: "Bharat Gas",label: "Bharat Gas",short: "BG",   emoji: "🟢" },
+];
+
+// 4-button segmented control for cylinder fill level
+function CylinderLevelSelector({ value, onChange }) {
   return (
-    <div className="tab-panel guide-page">
-      <button
-        className="btn btn-ghost guide-back-btn"
-        onClick={onBack}
-        aria-label="Back to app"
-      >
-        ← Back
-      </button>
-      <h1 className="page-title">LPG Guide</h1>
-      <p className="page-subtitle">
-        Your complete guide to cylinders, shortages, rights, and conservation.
-      </p>
-      <div className="neu-card" style={{ textAlign: "center", padding: "48px 24px" }}>
-        <div style={{ fontSize: 36, marginBottom: 16 }}>📖</div>
-        <div className="t-subheading" style={{ marginBottom: 10 }}>Full guide coming shortly</div>
-        <p className="t-caption" style={{ maxWidth: 340, margin: "0 auto" }}>
-          5 sections: Understanding Your Cylinder · Conservation Tips ·
-          During a Shortage · Know Your Rights · Quick Reference Links.
-        </p>
+    <div className="cylinder-level-selector" role="group" aria-label="Cylinder fill level">
+      <div className="cylinder-level-label">Cylinder Level <span className="cylinder-level-optional">(optional — improves score)</span></div>
+      <div className="cylinder-level-buttons">
+        {CYLINDER_LEVELS.map(lvl => (
+          <button
+            key={lvl.id}
+            type="button"
+            className={`cylinder-level-btn${value === lvl.id ? " active" : ""}`}
+            onClick={() => onChange(value === lvl.id ? null : lvl.id)}
+            aria-pressed={value === lvl.id}
+            title={`~${lvl.days} days remaining`}
+          >
+            <span className="cylinder-level-emoji">{lvl.emoji}</span>
+            <span>{lvl.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
+}
+
+// 3-button company picker
+function CompanyPicker({ value, onChange, compact = false }) {
+  return (
+    <div className={`company-picker${compact ? " company-picker-compact" : ""}`} role="group" aria-label="LPG company">
+      {!compact && <div className="cylinder-level-label">Your Gas Company <span className="cylinder-level-optional">(optional)</span></div>}
+      <div className="company-picker-buttons">
+        {COMPANY_PICKER_OPTS.map(co => (
+          <button
+            key={co.id}
+            type="button"
+            className={`company-btn${value === co.id ? " active" : ""}`}
+            onClick={() => onChange(value === co.id ? null : co.id)}
+            aria-pressed={value === co.id}
+          >
+            <span>{co.emoji}</span>
+            <span>{compact ? co.short : co.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Task 11 — LPG Guide Page: module-level constants + components ────────────
+const GuideSection1Content = (
+  <div className="guide-content-block">
+    <p className="t-body">
+      <strong>The 25-Day Rule:</strong> By official government regulation, there is a mandatory <strong>25-day gap</strong> required between domestic LPG cylinder bookings in urban areas (45 days in rural areas). You cannot book a refill until this period has passed since your last delivery.
+    </p>
+    <p className="t-body">
+      <strong>Subsidized Limits:</strong> Households are entitled to book up to 15 domestic (14.2 kg) cylinders per financial year. Of these, 12 cylinders are provided at subsidized rates for eligible consumers. Any additional cylinders must be purchased at market rates.
+    </p>
+    <p className="t-body">
+      <strong>Why Shortages Happen:</strong> Localized shortages are usually temporary logistical bottlenecks between bottling plants and local distributors, often exacerbated during festive seasons or by global energy supply disruptions.
+    </p>
+  </div>
+);
+
+const GuideSection2Content = (
+  <div className="guide-content-block">
+    <p className="t-caption" style={{ marginBottom: 16 }}>A few practices that genuinely help extend your cylinder life:</p>
+    <div className="guide-tip-row">
+      <span className="guide-tip-emoji">🫘</span>
+      <div>
+        <strong>Soak dal, rajma, and chana overnight:</strong> Cuts cooking time by nearly half.
+      </div>
+    </div>
+    <div className="guide-tip-row">
+      <span className="guide-tip-emoji">🔥</span>
+      <div>
+        <strong>Switch off the flame 2 minutes early:</strong> Residual heat finishes the job.
+      </div>
+    </div>
+    <div className="guide-tip-row">
+      <span className="guide-tip-emoji">🍳</span>
+      <div>
+        <strong>Match vessel size to the burner:</strong> A small vessel on a large burner wastes gas.
+      </div>
+    </div>
+    <div className="guide-tip-row">
+      <span className="guide-tip-emoji">🥘</span>
+      <div>
+        <strong>Always cook with lids on:</strong> Food cooks faster, uses less gas.
+      </div>
+    </div>
+    <div className="guide-tip-row">
+      <span className="guide-tip-emoji">✨</span>
+      <div>
+        <strong>Clean burner holes regularly:</strong> Clogged holes reduce flame efficiency (look for a hot blue flame, not a yellow one).
+      </div>
+    </div>
+  </div>
+);
+
+const GuideSection3Content = (
+  <div className="guide-content-block">
+    <div className="alert-banner alert-banner-warning" style={{ marginBottom: 16 }}>
+      <span style={{ fontSize: 18, marginRight: 8 }}>⚠️</span>
+      <p className="t-caption" style={{ margin: 0 }}><strong>Do not panic buy.</strong> Hoarding cylinders in the black market drives up prices and worsens the shortage for your community.</p>
+    </div>
+    <ul className="guide-list">
+      <li><strong>Check the Tracker:</strong> If CylinderCheck shows a high urgency score for your PIN, book exactly on the 25th day since your last delivery. Do not wait for the cylinder to empty.</li>
+      <li><strong>Use Electrical Alternatives:</strong> Temporarily offset cooking load to induction cooktops or microwaves if delivery takes longer than 10 days.</li>
+      <li><strong>Verify Other Agencies:</strong> Sometimes a shortage only affects one supply chain (e.g. IOCL). Ask neighbors if HP or Bharat Gas deliveries are on time in your specific area.</li>
+    </ul>
+  </div>
+);
+
+const GuideSection4Content = (
+  <div className="guide-content-block">
+    <div className="guide-tip-row">
+      <span className="guide-tip-emoji">⚖️</span>
+      <div>
+        <strong>Mandatory Weight Check:</strong> You have the right to ask the delivery person to weigh the cylinder in front of you. They are required by law to carry a spring balance.
+      </div>
+    </div>
+    <div className="guide-tip-row">
+      <span className="guide-tip-emoji">🛑</span>
+      <div>
+        <strong>Overcharging is Illegal:</strong> Delivery personnel cannot force you to pay above the printed cash memo amount under any circumstances.
+      </div>
+    </div>
+    <div className="guide-tip-row">
+      <span className="guide-tip-emoji">📞</span>
+      <div>
+        <strong>Grievance Helplines:</strong>
+        <ul style={{ margin: "4px 0 0", paddingLeft: 20, fontSize: 13, color: "var(--text-secondary)" }}>
+          <li>National LPG Leakage & Emergency: <strong>1906</strong> (24x7)</li>
+          <li>Indane / HP Gas Toll-Free: <strong>1800-2333-555</strong></li>
+          <li>Bharat Gas Smartline: <strong>1800-22-4344</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+);
+
+const GuideSection5Content = (
+  <div className="guide-content-block" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <a href="https://www.mylpg.in/" target="_blank" rel="noopener noreferrer" className="neu-card guide-quick-ref-card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div className="t-label" style={{ marginBottom: 2 }}>MyLPG.in Portal</div>
+          <div className="t-caption">Official central hub for all LPG services</div>
+        </div>
+        <span style={{ color: "var(--accent)" }}>↗</span>
+      </div>
+    </a>
+    <a href="https://web.umang.gov.in/landing/" target="_blank" rel="noopener noreferrer" className="neu-card guide-quick-ref-card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div className="t-label" style={{ marginBottom: 2 }}>UMANG App</div>
+          <div className="t-caption">Govt app for booking and managing subsidies</div>
+        </div>
+        <span style={{ color: "var(--accent)" }}>↗</span>
+      </div>
+    </a>
+  </div>
+);
+
+const GUIDE_SECTIONS = [
+  { id: "cylinder",     emoji: "🪔", title: "Understanding Your Cylinder", content: GuideSection1Content },
+  { id: "conservation", emoji: "💡", title: "Conservation Tips",           content: GuideSection2Content },
+  { id: "shortage",     emoji: "🚨", title: "During a Shortage",           content: GuideSection3Content },
+  { id: "rights",       emoji: "🛡", title: "Know Your Rights",            content: GuideSection4Content },
+  { id: "reference",    emoji: "🔗", title: "Quick Reference",             content: GuideSection5Content },
+];
+
+function GuideAccordionItem({ id, emoji, title, isOpen, onToggle, children }) {
+  return (
+    <div className={`guide-accordion-item${isOpen ? " open" : ""}`}>
+      <button className="guide-accordion-header" onClick={() => onToggle(id)}>
+        <span className="guide-accordion-title"><span style={{ marginRight: 10, fontSize: 18 }}>{emoji}</span>{title}</span>
+        <span className="guide-accordion-chevron">{IcChevronRight}</span>
+      </button>
+      <div className="guide-accordion-body">
+        <div className="guide-accordion-content-inner">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GuideAccordion({ defaultOpen, onBack }) {
+  const [openId, setOpenId] = useState(() => defaultOpen || null);
+  
+  return (
+    <div className="tab-panel" style={{ padding: "16px 20px" }}>
+      <button className="guide-back-btn" onClick={onBack}>
+        <span style={{ transform: "rotate(180deg)" }}>{IcChevronRight}</span> Back to app
+      </button>
+      <h1 className="page-title" style={{ marginTop: 24 }}>LPG Survival Guide</h1>
+      <p className="page-subtitle" style={{ marginBottom: 24 }}>Official rules, conservation practices, and your rights as a consumer.</p>
+      
+      <div className="guide-accordion">
+        {GUIDE_SECTIONS.map(sec => (
+          <GuideAccordionItem 
+            key={sec.id} 
+            {...sec} 
+            isOpen={openId === sec.id} 
+            onToggle={id => setOpenId(prev => prev === id ? null : id)}
+          >
+            {sec.content}
+          </GuideAccordionItem>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Task 9 — News Tab: module-level constants + components ───────────────────
+// Vercel: js-hoist-regexp — compile exactly once at module load
+const RE_SHORTAGE = /shortage|delay|disruption|supply|scarcity|crisis/i;
+const RE_PRICE    = /price|rate|hike|revision|subsidy|cost|expensive/i;
+const RE_POLICY   = /ministry|government|policy|rule|regulation|announce/i;
+
+function getCategory(title) {
+  if (RE_SHORTAGE.test(title)) return "Shortage Signals";
+  if (RE_PRICE.test(title))    return "Price & Rates";
+  if (RE_POLICY.test(title))   return "Policy";
+  return "General";
+}
+
+const CITY_COORDS = {
+  "Delhi": [28.6139, 77.2090], "Mumbai": [19.0760, 72.8777],
+  "Bangalore": [12.9716, 77.5946], "Chennai": [13.0827, 80.2707],
+  "Kolkata": [22.5726, 88.3639], "Hyderabad": [17.3850, 78.4867],
+  "Pune": [18.5204, 73.8567], "Ahmedabad": [23.0225, 72.5714],
+  "Jaipur": [26.9124, 75.7873], "Lucknow": [26.8467, 80.9462],
+  "Kanpur": [26.4499, 80.3319], "Nagpur": [21.1458, 79.0882],
+  "Indore": [22.7196, 75.8577], "Bhopal": [23.2599, 77.4126],
+  "Vizag": [17.6868, 83.2185]
+};
+const CITY_KEYS_LOWER = Object.keys(CITY_COORDS).map(c => c.toLowerCase());
+
+function getCity(title) {
+  const t = title.toLowerCase();
+  for (let c of CITY_KEYS_LOWER) {
+    if (t.includes(c)) return CITY_COORDS[Object.keys(CITY_COORDS).find(k => k.toLowerCase() === c) || c] ? c : null;
+  }
+  return null;
+}
+
+// Map component — reuses dynamic inject from old PricesMap
+// Vercel: bundle-defer-third-party — loads Leaflet only when News tab active
+function NewsMap({ cityHasNews, selectedCity, onSelectCity, centerCoords }) {
+  const mapRef = useRef(null);
+  const mapInst = useRef(null);
+  const L_ref = useRef(null);
+
+  useEffect(() => {
+    let unmounted = false;
+    const initMap = async () => {
+      if (!window.L) {
+        if (!document.querySelector('link[href*="leaflet@"]')) {
+          const lk = document.createElement("link");
+          lk.rel = "stylesheet";
+          lk.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+          document.head.appendChild(lk);
+        }
+        await new Promise(r => {
+          const sc = document.createElement("script");
+          sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+          sc.onload = r;
+          document.head.appendChild(sc);
+        });
+      }
+      if (unmounted) return;
+      L_ref.current = window.L;
+      if (!mapInst.current && mapRef.current) {
+        mapInst.current = L_ref.current.map(mapRef.current, {
+          center: centerCoords || [22.5, 78.5], // Center of India
+          zoom: 4,
+          zoomControl: false,
+          maxBounds: [[6.5, 68], [35.5, 97]],
+        });
+        L_ref.current.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+          attribution: "© OpenStreetMap © CARTO", subdomains: "abcd", maxZoom: 19
+        }).addTo(mapInst.current);
+      }
+      drawMarkers();
+    };
+
+    const drawMarkers = () => {
+      if (!mapInst.current || !L_ref.current) return;
+      mapInst.current.eachLayer(l => { if (l instanceof L_ref.current.Marker) mapInst.current.removeLayer(l); });
+      Object.entries(CITY_COORDS).forEach(([city, coords]) => {
+        const hasNews = !!cityHasNews[city.toLowerCase()];
+        const isSelected = selectedCity === city.toLowerCase();
+        // Vercel: rendering-animate-svg-wrapper — pulse animation on div, not svg
+        const iconHtml = `
+          <div class="news-map-marker${isSelected ? ' active' : ''}">
+            <div class="news-map-dot"></div>
+            ${hasNews ? '<div class="news-map-pulse anim-pulse"></div>' : ''}
+          </div>
+        `;
+        const icon = L_ref.current.divIcon({ html: iconHtml, className: "", iconSize: [24, 24], iconAnchor: [12, 12] });
+        const marker = L_ref.current.marker(coords, { icon }).addTo(mapInst.current);
+        marker.on("click", () => onSelectCity(isSelected ? null : city.toLowerCase()));
+      });
+    };
+
+    initMap();
+    return () => { unmounted = true; };
+  }, [cityHasNews, selectedCity, onSelectCity, centerCoords]);
+
+  return <div ref={mapRef} style={{ height: "100%", width: "100%", background: "#f8f9fa" }} />;
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
@@ -1212,6 +1606,8 @@ export default function App() {
 
   const [news, setNews] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
+  // Task 9: transient state for map filtering
+  const [selectedNewsCity, setSelectedNewsCity] = useState(null);
   const [shortageSummary, setShortageSummary] = useState(null);
   const newsLastFetched = useRef(null); // Vercel: rerender-use-ref-transient-values
 
@@ -1231,6 +1627,29 @@ export default function App() {
   const [reportDeliveryDays, setReportDeliveryDays] = useState("");
   const [editingReportId, setEditingReportId] = useState(null);
   const [editingText, setEditingText] = useState("");
+
+  // ── Task 7 — Track Rethink state ─────────────────────────────────────────────
+  // Vercel: rerender-lazy-state-init — localStorage read in initializer, not effect
+  const [savedUser, setSavedUser] = useState(() => {
+    try { const r = localStorage.getItem(CC_LS_KEY); return r ? JSON.parse(r) : null; }
+    catch { return null; }
+  });
+  const [cylinderLevel, setCylinderLevel] = useState(null);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [showBookingDateToggle, setShowBookingDateToggle] = useState(false);
+  const [showUpiGuide, setShowUpiGuide] = useState(false);
+  const [deliveryRange, setDeliveryRange] = useState(null); // { low, high } days
+  
+  // ── Task 8 — Reports Tab state ───────────────────────────────────────────────
+  // Pre-fill from tracked company if available
+  const [reportCompany, setReportCompany] = useState(() => {
+    try { const r = localStorage.getItem(CC_LS_KEY); return r ? JSON.parse(r)?.company || null : null; }
+    catch { return null; }
+  });
+
+  // Ref used to open Guide to a specific section without triggering re-render
+  // Vercel: rerender-use-ref-transient-values
+  const guideOpenSectionRef = useRef(null);
 
   // Restore tab after OAuth redirect (sessionStorage round-trip)
   useEffect(() => {
@@ -1310,24 +1729,40 @@ export default function App() {
   // ── Handlers ────────────────────────────────────────────────────────────────
   const handleTrack = async () => {
     if (!pin || pin.length !== 6) { setError("Enter a valid 6-digit PIN code."); return; }
-    setError(""); setLoading(true); setPinData(null); setBookingResult(null);
-    // Skill: Promise.all — parallel independent fetches
-    const [{ data: dbData }, location, { data: recentReports }] = await Promise.all([
+    setError(""); setLoading(true); setPinData(null); setBookingResult(null); setDeliveryRange(null);
+    // Vercel: async-parallel — all 4 fetches in one Promise.all, RPC is 4th
+    const [{ data: dbData }, location, { data: recentReports }, { data: rpcAvgData }] = await Promise.all([
       supabase.from("pin_data").select("*").eq("pin", pin).single(),
       lookupPIN(pin),
-      supabase.from("reports").select("id, created_at", { count: "exact" }).eq("pin", pin).gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString()),
+      supabase.from("reports").select("id, created_at").eq("pin", pin).gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString()),
+      supabase.rpc("get_avg_delivery_days", { p_pin: pin }),
     ]);
     const reportCount = recentReports?.length || 0;
     const hasShortage = reportCount >= 2;
     const last7 = (recentReports || []).filter(r => new Date(r.created_at) > new Date(Date.now() - 7 * 86400000)).length;
     const prior7 = reportCount - last7;
     const trend = last7 > prior7 + 1 ? "worsening" : last7 < prior7 ? "improving" : "stable";
-    setPinData(dbData
-      ? { ...dbData, city: location ? `${location.city}, ${location.state}` : dbData.city, area: location?.area || "", shortage: hasShortage, trend, reportCount }
-      : { pin, city: location ? `${location.city}, ${location.state}` : `PIN ${pin}`, area: location?.area || "", agency: "Check with local agency", avg_days: "—", shortage: hasShortage, trend, reportCount });
+    // Avg delivery: pin_data table → RPC community avg → null (show message)
+    const avgDays = typeof dbData?.avg_days === "number"
+      ? dbData.avg_days
+      : (typeof rpcAvgData === "number" ? rpcAvgData : null);
+    // Delivery range: base ± 2, +3 if active shortage, +5 if severe
+    if (avgDays !== null) {
+      const buf = reportCount >= 5 ? 5 : reportCount >= 2 ? 3 : 2;
+      setDeliveryRange({ low: Math.max(1, Math.round(avgDays) - 1), high: Math.round(avgDays) + buf });
+    }
+    const builtPinData = dbData
+      ? { ...dbData, avg_days: avgDays ?? "—", city: location ? `${location.city}, ${location.state}` : dbData.city, area: location?.area || "", shortage: hasShortage, trend, reportCount }
+      : { pin, city: location ? `${location.city}, ${location.state}` : `PIN ${pin}`, area: location?.area || "", agency: "Check with local agency", avg_days: avgDays ?? "—", shortage: hasShortage, trend, reportCount };
+    setPinData(builtPinData);
     if (lastBooking) { const nw = addDays(new Date(lastBooking), 25); setBookingResult({ nextWindow: nw, daysLeft: daysUntil(nw) }); }
+    // ── localStorage save on success — Vercel: client-localstorage-schema ──
+    try {
+      const toSave = { pin, cylinderLevel, company: selectedCompany, savedAt: Date.now() };
+      localStorage.setItem(CC_LS_KEY, JSON.stringify(toSave));
+      setSavedUser(toSave);
+    } catch { /* private/full storage — silent fail */ }
     setLoading(false);
-    // Scroll result into view on mobile so it's not hidden under topbar
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   };
 
@@ -1340,6 +1775,7 @@ export default function App() {
       pin: reportPin, city: reportCity || `PIN ${reportPin}`, issue: reportText,
       user_id: user.id, user_email: user.email,
       delivery_days: days && days >= 1 && days <= 30 ? days : null,
+      company: reportCompany || null,
     }]).select().single();
     if (!e && data) {
       setReports(prev => [data, ...prev]);
@@ -1470,7 +1906,8 @@ export default function App() {
             <span className="topbar-name">CylinderCheck</span>
             {!authLoading && !user && (
               <button className="btn btn-ghost" style={{ minHeight: "auto", padding: "5px 10px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })}>
+                onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })}
+                aria-label="Sign in with Google">
                 {IcGoogle}
                 Sign in
               </button>
@@ -1484,7 +1921,7 @@ export default function App() {
           </div>
 
           <div className="content-area">
-            {page === "guide" ? <GuidePage onBack={() => setPage(null)} /> : <>
+            {page === "guide" ? <GuideAccordion defaultOpen={guideOpenSectionRef.current} onBack={() => { setPage(null); guideOpenSectionRef.current = null; }} /> : <>
 
               {/* ══ TRACK ══════════════════════════════════════════════════ */}
               {tab === "track" && (
@@ -1515,23 +1952,76 @@ export default function App() {
                     <div className="track-form">
                       <div className="neu-card mb-card">
                         <div className="section-title">Delivery Prediction</div>
+                        
+                        {/* Welcome Back Banner */}
+                        {savedUser ? (
+                          <div className="welcome-back-banner">
+                            <span style={{ fontSize: 16 }}>👋</span>
+                            <span>Welcome back. Checking latest status for <strong>{savedUser.pin}</strong>.</span>
+                            <button
+                              type="button"
+                              className="btn-ghost"
+                              style={{ marginLeft: "auto", fontSize: 11, padding: "2px 6px", minHeight: "auto", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)" }}
+                              onClick={() => {
+                                localStorage.removeItem(CC_LS_KEY);
+                                setSavedUser(null);
+                                setCylinderLevel(null);
+                                setSelectedCompany(null);
+                                setPin("");
+                                setPinData(null);
+                              }}
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        ) : null}
+
+                        {/* Cylinder Level Selector (Task 7) */}
+                        <CylinderLevelSelector
+                          value={cylinderLevel}
+                          onChange={setCylinderLevel}
+                        />
+
+                        {/* Company Picker (Task 7) */}
+                        <CompanyPicker
+                          value={selectedCompany}
+                          onChange={setSelectedCompany}
+                        />
+
+                        {/* PIN Input */}
                         <div className="input-group">
-                          <label className="input-label">PIN Code</label>
-                          <input className="input" placeholder="Enter 6-digit PIN e.g. 530001"
+                          <label className="input-label" htmlFor="track-pin">PIN Code *</label>
+                          <input id="track-pin" className="input" placeholder="Enter 6-digit PIN e.g. 530001"
                             value={pin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
                             autoFocus={typeof window !== "undefined" && window.innerWidth < 768}
                             onChange={e => setPin(e.target.value.replace(/\D/g, ""))}
                             onKeyDown={e => e.key === "Enter" && handleTrack()} />
                         </div>
+
+                        {/* Booking Date (Optional Toggle) */}
                         <div className="input-group">
-                          <label className="input-label">
-                            Last Booking Date{" "}
-                            <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: 11 }}>(optional)</span>
-                          </label>
-                          <input className="input" type="date" value={lastBooking} onChange={e => setLastBooking(e.target.value)} />
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            style={{ display: "flex", alignItems: "center", gap: 6, padding: 0, minHeight: "auto", color: "var(--accent)", fontSize: 14, fontWeight: 600, marginTop: 4 }}
+                            onClick={() => setShowBookingDateToggle(p => !p)}
+                          >
+                            <span style={{ transform: showBookingDateToggle ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }}>▸</span>
+                            I know my last booking date
+                          </button>
+                          
+                          {showBookingDateToggle && (
+                            <div className="anim-slide-down" style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center" }}>
+                              <input className="input" type="date" value={lastBooking} onChange={e => setLastBooking(e.target.value)} style={{ flex: 1 }} aria-label="Last Booking Date" />
+                              {lastBooking && (
+                                <button className="btn btn-ghost" onClick={() => setLastBooking("")} aria-label="Clear date" style={{ padding: "0 10px" }}>✕</button>
+                              )}
+                            </div>
+                          )}
                         </div>
+
                         {error && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{error}</div>}
-                        <button className="btn btn-primary btn-block" onClick={handleTrack} disabled={loading}>
+                        <button className="btn btn-primary btn-block" onClick={handleTrack} disabled={loading} style={{ marginTop: 12 }}>
                           {loading ? "Looking up…" : "Check My Area →"}
                         </button>
                       </div>
@@ -1543,6 +2033,7 @@ export default function App() {
                       {pinData && !loading && (
                         <div className="anim-slide-up result-card" ref={resultRef}>
                           <div className="neu-card mb-card">
+                            {/* Header: PIN label + city + trend badge */}
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
                               <div>
                                 <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5 }}>
@@ -1552,9 +2043,32 @@ export default function App() {
                               </div>
                               <Trend t={pinData.trend} />
                             </div>
+
+                            {/* ── Urgency Score — dominant visual (Task 6+7) ── */}
+                            {(() => {
+                              const urgScore = computeUrgencyScore({
+                                cylinderLevel: cylinderLevel,
+                                daysToWindow: bookingResult?.daysLeft ?? 25,
+                                reportCount: pinData.reportCount,
+                                avgDays: typeof pinData.avg_days === "number" ? pinData.avg_days : 5,
+                              });
+                              return <UrgencyScoreDisplay score={urgScore} cylinderLevel={cylinderLevel} />;
+                            })()}
+
+                            {/* Delivery Range Display */}
+                            <div className="delivery-range-display">
+                              <span className="Delivery-range-label">Expected delivery time:</span>
+                              {deliveryRange ? (
+                                <span className="Delivery-range-value">{deliveryRange.low}–{deliveryRange.high} days</span>
+                              ) : (
+                                <span className="Delivery-range-value" style={{ color: "var(--text-muted)" }}>Unknown</span>
+                              )}
+                            </div>
+
+                            {/* Stat rows */}
                             <div className="stat-row">
-                              <span className="stat-label">Average Delivery Time</span>
-                              <span className="stat-value">{pinData.avg_days !== "—" ? `${pinData.avg_days} days` : "No data yet"}</span>
+                              <span className="stat-label">Community Avg Time</span>
+                              <span className="stat-value">{pinData.avg_days !== "—" ? `${pinData.avg_days} days` : <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => setTab("community")}>Be the first to report →</span>}</span>
                             </div>
                             <div className="stat-row">
                               <span className="stat-label">Gas Agency</span>
@@ -1648,6 +2162,48 @@ export default function App() {
                             </a>
                           ))}
                         </div>
+                        {/* Collapsible UPI Guide — Task 12 */}
+                        <details className="upi-guide-collapsible" open={typeof window !== "undefined" && window.innerWidth >= 768}>
+                          <summary className="upi-guide-summary">
+                            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontSize: 15 }}>📖</span>
+                              How to book LPG via UPI apps
+                            </span>
+                            <span className="upi-guide-chevron">▸</span>
+                          </summary>
+                          <div className="upi-guide-steps">
+                            <div className="upi-guide-app">
+                              <strong>Google Pay</strong>
+                              <ol>
+                                <li>Tap <strong>+ New Payment</strong> → <strong>Bill Payments</strong></li>
+                                <li>Select <strong>LPG Cylinder Booking</strong></li>
+                                <li>Choose your supplier (Indane / HP / Bharat)</li>
+                                <li>Enter your <strong>LPG Customer ID</strong> or registered mobile number</li>
+                                <li>Tap <strong>Pay Bill</strong> and enter your UPI PIN</li>
+                              </ol>
+                            </div>
+                            <div className="upi-guide-app">
+                              <strong>PhonePe</strong>
+                              <ol>
+                                <li>Go to <strong>Recharge & Pay Bills</strong></li>
+                                <li>Tap <strong>Book a Cylinder</strong></li>
+                                <li>Select your gas provider</li>
+                                <li>Enter registered mobile or 17-digit LPG ID</li>
+                                <li>Review amount and tap <strong>Pay</strong></li>
+                              </ol>
+                            </div>
+                            <div className="upi-guide-app">
+                              <strong>Paytm</strong>
+                              <ol>
+                                <li>Scroll to <strong>Recharge & Pay Bills</strong></li>
+                                <li>Tap <strong>Book Gas Cylinder</strong></li>
+                                <li>Choose your LPG provider</li>
+                                <li>Enter your LPG ID or registered mobile</li>
+                                <li>Tap <strong>Book Cylinder</strong> and complete payment</li>
+                              </ol>
+                            </div>
+                          </div>
+                        </details>
                       </div>
                       <AdSlot id="track-left" type="rectangle" />
                     </div>
@@ -1681,23 +2237,31 @@ export default function App() {
                         ) : (
                           <>
                             <div className="input-group">
-                              <label className="input-label">PIN Code *</label>
-                              <input className="input" placeholder="6-digit PIN" value={reportPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
+                              <label className="input-label" htmlFor="report-pin">PIN Code *</label>
+                              <input id="report-pin" className="input" placeholder="6-digit PIN" value={reportPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
                                 onChange={e => setReportPin(e.target.value.replace(/\D/g, ""))} />
                             </div>
                             <div className="input-group">
-                              <label className="input-label">Area / Colony <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional)</span></label>
-                              <input className="input" placeholder="e.g. Vizag — Gajuwaka" value={reportCity} onChange={e => setReportCity(e.target.value)} />
+                              <label className="input-label" htmlFor="report-area">Area / Colony <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional)</span></label>
+                              <input id="report-area" className="input" placeholder="e.g. Vizag — Gajuwaka" value={reportCity} onChange={e => setReportCity(e.target.value)} />
                             </div>
+                            
+                            {/* Company Picker (Task 8) */}
+                            <CompanyPicker
+                              value={reportCompany}
+                              onChange={setReportCompany}
+                              compact={true}
+                            />
+
                             <div className="input-group">
-                              <label className="input-label">What's happening? *</label>
-                              <textarea className="input" style={{ height: 110, resize: "vertical" }}
+                              <label className="input-label" htmlFor="report-issue">What's happening? *</label>
+                              <textarea id="report-issue" className="input" style={{ height: 110, resize: "vertical" }}
                                 placeholder="e.g. No delivery in 12 days, driver demanding ₹100 extra…"
                                 value={reportText} onChange={e => setReportText(e.target.value)} />
                             </div>
                             <div className="input-group">
-                              <label className="input-label">Delivery took how many days? <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional — helps calibrate avg)</span></label>
-                              <input className="input" placeholder="e.g. 8" inputMode="numeric" maxLength={2}
+                              <label className="input-label" htmlFor="report-days">Delivery took how many days? <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional — helps calibrate avg)</span></label>
+                              <input id="report-days" className="input" placeholder="e.g. 8" inputMode="numeric" maxLength={2}
                                 value={reportDeliveryDays} onChange={e => setReportDeliveryDays(e.target.value.replace(/\D/g, ""))} />
                             </div>
                             <button className="btn btn-primary btn-block" onClick={handleReport} disabled={submitting || !reportText.trim() || !reportPin}>
@@ -1723,9 +2287,9 @@ export default function App() {
                               {user && r.user_id === user.id && editingReportId !== r.id && (
                                 <>
                                   <button onClick={() => { setEditingReportId(r.id); setEditingText(r.issue); }}
-                                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "2px 4px", fontSize: 13 }} title="Edit">✏️</button>
+                                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "2px 4px", fontSize: 13 }} title="Edit" aria-label="Edit report">✏️</button>
                                   <button onClick={() => handleDeleteReport(r.id)}
-                                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)", padding: "2px 4px", fontSize: 13 }} title="Delete">🗑</button>
+                                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)", padding: "2px 4px", fontSize: 13 }} title="Delete" aria-label="Delete report">🗑</button>
                                 </>
                               )}
                             </div>
@@ -1744,7 +2308,7 @@ export default function App() {
                           )}
                           {r.delivery_days && <div className="t-caption" style={{ marginBottom: 8, color: "var(--text-muted)" }}>⏱ Delivery took {r.delivery_days} days</div>}
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <button onClick={() => handleVote(r)} className={`vote-btn${votes[r.id] ? " voted" : ""}`}>
+                            <button onClick={() => handleVote(r)} className={`vote-btn${votes[r.id] ? " voted" : ""}`} aria-label={`Upvote report, ${r.votes} votes`}>
                               ↑ {r.votes} upvote{r.votes !== 1 ? "s" : ""}
                             </button>
                             {r.votes > 20 && <span className="badge badge-danger">Trending</span>}
@@ -1757,63 +2321,148 @@ export default function App() {
               )}
 
               {/* ══ NEWS ════════════════════════════════════════════════════ */}
-              {tab === "news" && (
-                <div className="tab-panel">
-                  <h1 className="page-title">LPG News</h1>
-                  <p className="page-subtitle">Latest coverage on LPG pricing, supply, and policy from across India.</p>
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-                    <button onClick={() => fetchNews(true)} disabled={newsLoading} className="btn btn-ghost"
-                      style={{ minHeight: "auto", padding: "6px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                      {IcRefresh(newsLoading)}{newsLoading ? "Refreshing…" : "Refresh feed"}
-                    </button>
+              {tab === "news" && (() => {
+                // Task 9: Process news data into categories and active map cities inside render
+                const validNews = news || [];
+                // 1. Identify active cities for the map
+                const cityHasNews = {};
+                validNews.forEach(n => {
+                  const c = getCity(n.title);
+                  if (c) cityHasNews[c] = true;
+                });
+                // 2. Filter by city if selected
+                const filteredNews = selectedNewsCity
+                  ? validNews.filter(n => getCity(n.title) === selectedNewsCity)
+                  : validNews;
+                // 3. Group by category
+                const grouped = filteredNews.reduce((acc, item) => {
+                  const cat = getCategory(item.title);
+                  (acc[cat] = acc[cat] || []).push(item);
+                  return acc;
+                }, {});
+
+                const leadStory = filteredNews[0]; // First item in feed is lead
+                const allCategories = ["Shortage Signals", "Price & Rates", "Policy", "General"];
+
+                return (
+                  <div className="tab-panel" style={{ padding: 0 }}>
+                    <div className="news-desktop-layout">
+                      {/* Left: Feed */}
+                      <div className="news-feed-col">
+                        <div style={{ padding: "0 24px" }}>
+                          <h1 className="page-title" style={{ marginTop: 24 }}>LPG Intelligence feed</h1>
+                          <p className="page-subtitle">Live tracking of shortages, price hikes, and policy shifts across India.</p>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                            <div className="city-filter-chips">
+                              <button className={`city-filter-chip${!selectedNewsCity ? " active" : ""}`}
+                                onClick={() => setSelectedNewsCity(null)}>All India</button>
+                              {Object.keys(cityHasNews).map(c => (
+                                <button key={c}
+                                  className={`city-filter-chip${selectedNewsCity === c ? " active" : ""}`}
+                                  onClick={() => setSelectedNewsCity(c)}>
+                                  {c.charAt(0).toUpperCase() + c.slice(1)}
+                                  <span className="city-filter-pulse" />
+                                </button>
+                              ))}
+                            </div>
+                            <button onClick={() => fetchNews(true)} disabled={newsLoading} className="btn btn-ghost"
+                              style={{ minHeight: "auto", padding: "6px 12px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                              {IcRefresh(newsLoading)} Refresh
+                            </button>
+                          </div>
+                        </div>
+
+                        <div style={{ padding: "0 24px 40px" }}>
+                          {newsLoading && !validNews.length ? (
+                            [1, 2, 3, 4].map(i => <div key={i}>{SkeletonCard}</div>)
+                          ) : !validNews.length ? (
+                            <div className="neu-card" style={{ textAlign: "center", padding: 48 }}>
+                              <div style={{ fontSize: 32, marginBottom: 12 }}>🤖</div>
+                              <div className="t-subheading" style={{ marginBottom: 8 }}>Scraper quiet</div>
+                              <p className="t-caption">No recent intelligence found. Try refreshing.</p>
+                            </div>
+                          ) : (
+                            <>
+                              {/* Hero/Lead Story */}
+                              {leadStory && (
+                                <a href={leadStory.link} target="_blank" rel="noopener noreferrer" className="neu-card list-card news-lead-card mb-card">
+                                  <div className="badge badge-danger" style={{ marginBottom: 12, display: "inline-flex", gap: 6 }}>
+                                    <span>●</span> Live Intelligence
+                                  </div>
+                                  <h2 className="t-heading" style={{ color: "var(--text-primary)", marginBottom: 12, lineHeight: 1.35 }}>
+                                    {leadStory.title}
+                                  </h2>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                                    <span className="badge badge-accent">{leadStory.source}</span>
+                                    <span className="t-caption">{new Date(leadStory.pubDate).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>
+                                  </div>
+                                </a>
+                              )}
+
+                              {/* Categorized Feed */}
+                              {allCategories.map(cat => {
+                                const items = grouped[cat];
+                                if (!items || items.length === 0) return null;
+                                return (
+                                  <div key={cat} className="news-category-section">
+                                    <div className="news-category-header t-label">
+                                      {cat === "Shortage Signals" ? "🚨 " : cat === "Price & Rates" ? "💰 " : cat === "Policy" ? "🏛 " : ""}
+                                      {cat}
+                                    </div>
+                                    {items.map((item, i) => {
+                                      if (item === leadStory) return null; // don't repeat lead
+                                      const m = Math.round((Date.now() - item.pubDate) / 60000);
+                                      const timeAgo = m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+                                      return (
+                                        <a key={item.link + i} href={item.link} target="_blank" rel="noopener noreferrer"
+                                          className="neu-card list-card mb-card" style={{ display: "block", textDecoration: "none", padding: "16px 20px" }}>
+                                          <p className="t-body" style={{ margin: "0 0 10px 0", color: "var(--text-primary)", lineHeight: 1.45 }}>{item.title}</p>
+                                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                            <span className="t-caption" style={{ color: "var(--text-secondary)", fontWeight: 600 }}>{item.source}</span>
+                                            <span className="t-caption" style={{ color: "var(--border)" }}>•</span>
+                                            <span className="t-caption">{timeAgo}</span>
+                                          </div>
+                                        </a>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })}
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Map */}
+                      <div className="news-map-col">
+                        <NewsMap
+                          cityHasNews={cityHasNews}
+                          selectedCity={selectedNewsCity}
+                          onSelectCity={c => setSelectedNewsCity(prev => prev === c ? null : c)}
+                        />
+                        {/* Map overlay legend */}
+                        <div className="neu-card" style={{ position: "absolute", bottom: 20, right: 20, zIndex: 400, padding: "12px 14px", width: "auto" }}>
+                          <span className="t-caption" style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
+                            <span style={{ display: "inline-block", width: 8, height: 8, background: "var(--accent)", borderRadius: "50%", boxShadow: "0 0 0 2px var(--accent-soft)" }} />
+                            Live Signals
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  {/* Skeleton only on first load (no existing articles yet) */}
-                  {newsLoading && !news.length ? [1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="neu-card mb-card">
-                      <div className="skeleton skeleton-text" style={{ width: "85%", marginBottom: 10 }} />
-                      <div className="skeleton skeleton-text" style={{ width: "50%" }} />
-                    </div>
-                  )) : !news.length ? (
-                    <div className="neu-card" style={{ textAlign: "center", padding: 48 }}>
-                      <div style={{ fontSize: 32, marginBottom: 12 }}>📰</div>
-                      <div className="t-subheading" style={{ marginBottom: 8 }}>No recent news</div>
-                      <p className="t-caption">Try refreshing or check back later.</p>
-                    </div>
-                  ) : news.map((item, i) => {
-                    const m = Math.round((Date.now() - item.pubDate) / 60000);
-                    const timeAgo = m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
-                    const waUrl = `https://wa.me/?text=${encodeURIComponent(item.title + " — cylindercheck.in")}`;
-                    return (
-                      <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
-                        className="neu-card list-card mb-card" style={{ display: "block", textDecoration: "none" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                          <p className="t-body" style={{ margin: 0, flex: 1, color: "var(--text-primary)", lineHeight: 1.5 }}>{item.title}</p>
-                          <span className="flex-none" style={{ color: "var(--text-muted)", marginTop: 2 }}>{IcExt}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
-                          <span className="badge badge-accent">{item.source}</span>
-                          <span className="t-caption">{timeAgo}</span>
-                          <a className="whatsapp-share"
-                            href={waUrl}
-                            target="_blank" rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            title="Share on WhatsApp">
-                            📲 Share
-                          </a>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              )}
+                );
+              })()}
 
               {/* ══ ALERTS ══════════════════════════════════════════════════ */}
               {tab === "alerts" && (
                 <div className="tab-panel">
-                  <h1 className="page-title">Alerts &amp; Notifications</h1>
-                  <p className="page-subtitle">Know before the shortage hits. Get pinged when your booking window opens and when your area runs low.</p>
-                  <div className="grid-2col">
-                    <div>
+                  <div style={{ maxWidth: 640, margin: "0 auto" }}>
+                    <h1 className="page-title">Alerts &amp; Notifications</h1>
+                    <p className="page-subtitle">Know before the shortage hits. Get pinged when your booking window opens, when your area runs low, and when prices drop.</p>
+                    
+                    <div className="alerts-single-col">
+                      {/* 1. Free Booking Window Alert */}
                       <div className="neu-card mb-card">
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                           <span className="badge badge-success">FREE</span>
@@ -1848,28 +2497,32 @@ export default function App() {
                         {alertSaved && <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 10, fontSize: 12, color: "var(--success)" }}>{IcCheck} You'll be notified 2 days before your window opens.</div>}
                       </div>
 
-                      <div className="neu-card" style={{ background: "var(--bg-inset)" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <div className="section-title" style={{ marginBottom: 0 }}>Free vs Plus</div>
-                          <div style={{ display: "flex", gap: 28, paddingRight: 4 }}>
-                            <span className="t-label">FREE</span>
-                            <span className="t-label" style={{ color: "var(--accent)" }}>PLUS</span>
+                      {/* 2. Gap Nudge Strip (Replaces full table) */}
+                      <div className="neu-card mb-card alerts-gap-nudge-card" style={{ background: "var(--bg-inset)", padding: "16px 20px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+                          <div>
+                            <div className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>UPGRADE TO PLUS FOR:</div>
+                            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+                              <li style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
+                                <span style={{ color: "var(--accent)" }}>✓</span> 48hr early shortage warnings
+                              </li>
+                              <li style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
+                                <span style={{ color: "var(--accent)" }}>✓</span> Black market price tracking
+                              </li>
+                              <li style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
+                                <span style={{ color: "var(--accent)" }}>✓</span> Zero ads across the platform
+                              </li>
+                            </ul>
                           </div>
+                          <button className="btn btn-ghost" style={{ alignSelf: "flex-end", color: "var(--accent)", border: "1px solid var(--accent-soft)", padding: "8px 16px" }}
+                            onClick={() => document.getElementById("plus-card").scrollIntoView({ behavior: "smooth" })}>
+                            See Details ↓
+                          </button>
                         </div>
-                        {FEAT_COMPARISON.map(([feat, free, plus], idx) => (
-                          <div key={feat} className={`feat-row${idx === FEAT_COMPARISON.length - 1 ? " feat-row-last" : ""}`}>
-                            <span className="t-body" style={{ margin: 0 }}>{feat}</span>
-                            <div className="feat-checks">
-                              <span style={{ fontSize: 13, fontWeight: 600, width: 14, textAlign: "center", color: free ? "var(--success)" : "var(--border)" }}>{free ? "✓" : "—"}</span>
-                              <span style={{ fontSize: 13, fontWeight: 600, width: 14, textAlign: "center", color: plus ? "var(--accent)" : "var(--border)" }}>{plus ? "✓" : "—"}</span>
-                            </div>
-                          </div>
-                        ))}
                       </div>
-                    </div>
 
-                    <div>
-                      <div className="neu-card plus-card-border" style={{ position: "relative", overflow: "hidden" }}>
+                      {/* 3. CylinderCheck Plus Card */}
+                      <div id="plus-card" className="neu-card plus-card-border mb-card" style={{ position: "relative", overflow: "hidden" }}>
                         <div className="plus-card-glow" />
                         <div style={{ position: "relative" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
@@ -1930,8 +2583,36 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                      <AdSlot id="alerts-bottom" type="rectangle" />
+
+                      {/* 4. Price Revision Alert (Extracted from old Prices tab) */}
+                      <div className="neu-card alert-price-revision" style={{ borderLeft: "4px solid var(--success)" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                          <span style={{ fontSize: 24 }}>📉</span>
+                          <div>
+                            <div className="section-title" style={{ marginBottom: 2 }}>Price Drop Alerts</div>
+                            <div className="t-caption">Get notified when commercial cylinder prices drop in your city.</div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 12, flexDirection: "column" }}>
+                          <div className="input-group" style={{ marginBottom: 0 }}>
+                            <input className="input" placeholder="Mobile or email" value={contact} onChange={e => setContact(e.target.value)} />
+                          </div>
+                          <button className="btn btn-ghost" style={{ background: "var(--bg-inset)" }} disabled={freeAlertSaving || !contact}
+                            onClick={async () => {
+                              if (!contact.trim()) return;
+                              setFreeAlertSaving(true);
+                              // We use the same free alert table but flag it as price
+                              const { error } = await supabase.from("alert_subscriptions").insert([{ contact: contact.trim(), alert_type: "price" }]);
+                              if (!error) setAlertSaved(true);
+                              setFreeAlertSaving(false);
+                            }}>
+                            {alertSaved ? "✓ Subscribed" : "Notify me →"}
+                          </button>
+                        </div>
+                      </div>
+
                     </div>
+                    <AdSlot id="alerts-bottom" type="rectangle" />
                   </div>
                 </div>
               )}

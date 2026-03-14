@@ -33,18 +33,24 @@ ON CONFLICT (pin) DO NOTHING;
 
 -- 2. Community reports table
 --    Crowdsourced delay / shortage reports
+--    Actual live columns (verified 2026-03-14):
 CREATE TABLE IF NOT EXISTS reports (
-  id          BIGSERIAL PRIMARY KEY,
-  pin         TEXT NOT NULL,
-  city        TEXT,
-  issue       TEXT NOT NULL,
-  votes       INT DEFAULT 0,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  id            BIGSERIAL PRIMARY KEY,
+  pin           TEXT NOT NULL,
+  city          TEXT,
+  issue         TEXT NOT NULL,
+  votes         INT DEFAULT 0,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  user_id       UUID,            -- auth.users.id — set when signed in
+  user_email    TEXT,            -- for admin reference
+  delivery_days INT,             -- optional: how many days delivery took (1–30)
+  is_hidden     BOOLEAN DEFAULT false,  -- admin soft-delete
+  company       TEXT             -- IndianOil / HP Gas / Bharat Gas (Task 8)
 );
 
--- Allow public read + insert (no auth needed for MVP)
+-- Allow public read (exclude hidden) + auth insert
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can read reports"  ON reports FOR SELECT USING (true);
+CREATE POLICY "Anyone can read reports"  ON reports FOR SELECT USING (is_hidden IS NOT TRUE);
 CREATE POLICY "Anyone can insert report" ON reports FOR INSERT WITH CHECK (true);
 
 -- 3. Alert subscriptions table

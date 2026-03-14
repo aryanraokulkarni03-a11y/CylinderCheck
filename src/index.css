@@ -50,11 +50,13 @@
   --danger-border: rgba(229, 62, 62, 0.22);
   --warning: #d97706;
   --warning-soft: rgba(217, 119, 6, 0.10);
+  --warning-border: rgba(217, 119, 6, 0.22);
   --success: #16a34a;
   --success-soft: rgba(22, 163, 74, 0.10);
   --success-border: rgba(22, 163, 74, 0.22);
   --info: #2563eb;
   --info-soft: rgba(37, 99, 235, 0.10);
+  --info-border: rgba(37, 99, 235, 0.22);
 
   /* Borders */
   --border: #c8cdd4;
@@ -129,6 +131,11 @@
 
     --skeleton-base: #292c30;
     --skeleton-shine: #32363c;
+
+    --danger-border: rgba(229, 62, 62, 0.30);
+    --warning-border: rgba(217, 119, 6, 0.30);
+    --success-border: rgba(22, 163, 74, 0.30);
+    --info-border: rgba(37, 99, 235, 0.30);
   }
 }
 
@@ -151,6 +158,11 @@
 
   --skeleton-base: #292c30;
   --skeleton-shine: #32363c;
+
+  --danger-border: rgba(229, 62, 62, 0.30);
+  --warning-border: rgba(217, 119, 6, 0.30);
+  --success-border: rgba(22, 163, 74, 0.30);
+  --info-border: rgba(37, 99, 235, 0.30);
 }
 
 /* Manual light override */
@@ -1411,6 +1423,173 @@ svg {
 }
 
 /* ============================================================
+   UPI Portal Buttons
+   ============================================================ */
+
+.upi-portal-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 6px;
+  background: var(--bg-inset);
+  box-shadow: var(--neu-inset);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  transition: box-shadow var(--dur-fast), transform var(--dur-fast);
+  min-height: 56px;
+  /* thumb target */
+}
+
+.upi-portal-btn:hover {
+  box-shadow: var(--neu-raised);
+  transform: translateY(-1px);
+}
+
+.upi-portal-btn:active {
+  box-shadow: var(--neu-inset);
+  transform: translateY(0);
+}
+
+.upi-portal-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Booking Ring — mobile column layout
+   ============================================================ */
+
+.booking-ring-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+@media (max-width: 480px) {
+  .booking-ring-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+/* ============================================================
+   Result card — scroll margin so topbar doesn't cover it
+   ============================================================ */
+
+.result-card {
+  scroll-margin-top: calc(var(--topbar-height) + 8px);
+}
+
+/* ============================================================
+   Topbar — theme toggle pushed to right edge
+   ============================================================ */
+
+.topbar .theme-toggle {
+  margin-left: auto;
+}
+
+/* ============================================================
+   Price Ticker Strip — Track tab
+   ============================================================ */
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.price-ticker-wrap {
+  overflow: hidden;
+  background: var(--bg-raised);
+  box-shadow: var(--neu-raised-sm);
+  border-radius: var(--radius-md);
+  padding: 8px 0;
+  margin-bottom: 16px;
+  user-select: none;
+}
+
+.price-ticker-inner {
+  display: flex;
+  width: max-content;
+  animation: ticker 24s linear infinite;
+}
+
+.price-ticker-wrap:hover .price-ticker-inner {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .price-ticker-inner {
+    animation: none;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 0 12px;
+    gap: 8px;
+  }
+}
+
+.price-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  font-size: 12px;
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+
+.price-ticker-sep {
+  color: var(--border);
+  font-size: 14px;
+}
+
+/* ============================================================
+   WhatsApp Share — news cards (mobile only)
+   ============================================================ */
+
+.whatsapp-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(37, 211, 102, 0.12);
+  border: 1px solid rgba(37, 211, 102, 0.25);
+  border-radius: var(--radius-pill);
+  color: #25D366;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background var(--dur-fast);
+  cursor: pointer;
+}
+
+.whatsapp-share:hover {
+  background: rgba(37, 211, 102, 0.22);
+}
+
+@media (min-width: 769px) {
+  .whatsapp-share {
+    display: none;
+  }
+}
+
+/* ============================================================
    Track Portals — full width below result on mobile
    (grid-2col is flex-column on mobile, portals span naturally;
     this adds an explicit full-width hint for clarity)
@@ -1523,7 +1702,8 @@ svg {
   border-bottom: 1px solid var(--bg-inset);
 }
 
-.feat-row:last-child {
+/* Explicit last-row class — :last-child is unreliable when siblings follow */
+.feat-row-last {
   border-bottom: none;
 }
 
@@ -1532,6 +1712,38 @@ svg {
   gap: 28px;
   padding-right: 4px;
   flex-shrink: 0;
+}
+
+/* ============================================================
+   Utility Classes
+   ============================================================ */
+
+/* flex-none — replaces all inline flexShrink: 0 */
+.flex-none {
+  flex-shrink: 0;
+}
+
+/* Ad slot wrappers — replaces all inline styles on AdSlot */
+.ad-slot-rectangle {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0;
+}
+
+.ad-slot-leaderboard {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0;
+  overflow-x: hidden;
+}
+
+.ad-slot-responsive {
+  margin: 14px 0;
+}
+
+/* ThemeToggle pushed to end of topbar flex row */
+.topbar .theme-toggle {
+  margin-left: auto;
 }
 
 /* Plus card glow bg */
@@ -1613,9 +1825,9 @@ svg {
    Plus Card
    ============================================================ */
 
-/* Accent border token for Plus card — more visible than accent-glow */
+/* Accent border for Plus card — static token, safe on all Android WebViews */
 .plus-card-border {
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
+  border: 1px solid var(--accent-glow) !important;
 }
 
 /* News item link */

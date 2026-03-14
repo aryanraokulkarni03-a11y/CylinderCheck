@@ -64,19 +64,19 @@ function AdSlot({ id = "default", type = "rectangle" }) {
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch { /* not loaded */ }
   }, [id]);
   if (type === "rectangle") return (
-    <div style={{ display: "flex", justifyContent: "center", margin: "14px 0" }}>
+    <div className="ad-slot-rectangle">
       <ins className="adsbygoogle" style={{ display: "inline-block", width: "300px", height: "250px" }}
         data-ad-client={AD_CLIENT} data-ad-slot="REPLACE_SLOT_1" />
     </div>
   );
   if (type === "leaderboard") return (
-    <div style={{ display: "flex", justifyContent: "center", margin: "14px 0", overflowX: "hidden" }}>
+    <div className="ad-slot-leaderboard">
       <ins className="adsbygoogle" style={{ display: "inline-block", width: "728px", height: "90px", maxWidth: "100%" }}
         data-ad-client={AD_CLIENT} data-ad-slot="REPLACE_SLOT_2" data-ad-format="horizontal" />
     </div>
   );
   return (
-    <div style={{ margin: "14px 0" }}>
+    <div className="ad-slot-responsive">
       <ins className="adsbygoogle" style={{ display: "block" }}
         data-ad-client={AD_CLIENT} data-ad-slot="REPLACE_SLOT_3"
         data-ad-format="auto" data-full-width-responsive="true" />
@@ -86,11 +86,21 @@ function AdSlot({ id = "default", type = "rectangle" }) {
 
 // ─── Icons — all currentColor; CSS drives active/inactive tint ───────────────
 const IcFlame = (
-  <svg width="26" height="32" viewBox="0 0 28 36" fill="none" style={{ flexShrink: 0 }}>
+  <svg width="26" height="32" viewBox="0 0 28 36" fill="none" className="flex-none">
     <path d="M14 2C14 2 20 8 20 16C20 22 17 24 14 24C11 24 8 22 8 16C8 8 14 2 14 2Z" fill="#FF6B00" />
     <path d="M14 10C14 10 17 14 17 18C17 21 16 22 14 22C12 22 11 21 11 18C11 14 14 10 14 10Z" fill="#FFAA40" />
     <rect x="10" y="24" width="8" height="6" rx="1" fill="var(--text-muted)" />
     <path d="M8 30C8 28 10 27 14 27C18 27 20 28 20 30C20 32 18 34 14 34C10 34 8 32 8 30Z" fill="var(--border)" />
+  </svg>
+);
+
+// Hoisted Google logo — used in 3 places (Vercel: rendering-hoist-jsx)
+const IcGoogle = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="flex-none">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
   </svg>
 );
 const IcExt = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>;
@@ -198,10 +208,9 @@ function Trend({ t }) {
 
 // ─── EmptyState — hoisted, no props (Vercel: hoist-jsx) ─────────────────────
 const EmptyState = (
-  <div className="anim-fade-in" style={{
+  <div className="neu-inset anim-fade-in" style={{
     display: "flex", flexDirection: "column", alignItems: "center",
-    padding: "36px 24px", borderRadius: "var(--radius-lg)",
-    background: "var(--bg-inset)", boxShadow: "var(--neu-inset)", textAlign: "center",
+    padding: "36px 24px", borderRadius: "var(--radius-lg)", textAlign: "center",
   }}>
     <svg width="44" height="44" viewBox="0 0 56 56" fill="none" style={{ opacity: .3 }}>
       <circle cx="28" cy="28" r="26" stroke="var(--accent)" strokeWidth="2" strokeDasharray="6 4" />
@@ -278,7 +287,7 @@ function SupportModal({ onClose }) {
         {/* Section tabs */}
         <div style={{ display: "flex", gap: 6, marginBottom: 20, overflowX: "auto", paddingBottom: 2 }}>
           {sections.map(s => (
-            <button key={s.id} onClick={() => { setActiveSection(s.id); setSubmitted(false); setFormError(""); }}
+            <button key={s.id} onClick={() => { setActiveSection(s.id); setSubmitted(false); setFormError(""); setOpenFaq(null); }}
               className={`btn ${activeSection === s.id ? "btn-primary" : "btn-ghost"}`}
               style={{ minHeight: "auto", padding: "6px 12px", fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }}>
               {s.label}
@@ -340,7 +349,7 @@ function SupportModal({ onClose }) {
               <a key={href} href={href} target="_blank" rel="noopener" className="portal-link" style={{ flexDirection: "column", alignItems: "flex-start", gap: 3 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
                   <span>{icon} {label}</span>
-                  <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>{IcExt}</span>
+                  <span className="ext-icon-ml-auto" style={{ color: "var(--text-muted)" }}>{IcExt}</span>
                 </div>
                 <span className="t-caption">{desc}</span>
               </a>
@@ -382,7 +391,7 @@ function SupportModal({ onClose }) {
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   style={{ background: "none", border: "none", padding: 0, cursor: "pointer", width: "100%", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                   <span className="t-body" style={{ margin: 0, fontWeight: 600 }}>{q}</span>
-                  <span style={{ color: "var(--text-muted)", fontSize: 18, flexShrink: 0, lineHeight: 1 }}>{openFaq === i ? "−" : "+"}</span>
+                  <span className="flex-none" style={{ color: "var(--text-muted)", fontSize: 18, lineHeight: 1 }}>{openFaq === i ? "−" : "+"}</span>
                 </button>
                 {openFaq === i && <p className="t-caption" style={{ marginTop: 10, marginBottom: 0 }}>{a}</p>}
               </div>
@@ -407,19 +416,54 @@ function ThemeToggle() {
   );
 }
 
+// ─── PriceTicker — scrolling price strip on Track tab ─────────────────────────
+// Vercel: rendering-hoist-jsx, rerender-no-inline-components
+function PriceTicker({ mapPrices }) {
+  const items = Object.entries(mapPrices).flatMap(([city, companies]) => {
+    const prices = COMPANIES.map(c => companies[c]?.price).filter(Boolean);
+    if (!prices.length) return [];
+    const cheapest = Math.min(...prices);
+    const color = cheapest < 880 ? "var(--success)" : cheapest < 930 ? "var(--warning)" : "var(--danger)";
+    return [{ city, price: cheapest, color }];
+  });
+
+  if (!items.length) return (
+    <div className="price-ticker-wrap">
+      <div className="skeleton skeleton-text" style={{ width: "100%", height: 14 }} />
+    </div>
+  );
+
+  // Double the list for seamless CSS loop
+  const doubled = [...items, ...items];
+
+  return (
+    <div className="price-ticker-wrap" aria-label="LPG prices ticker">
+      <div className="price-ticker-inner">
+        {doubled.map(({ city, price, color }, i) => (
+          <span key={`${city}-${i}`} className="price-ticker-item">
+            <span style={{ color: "var(--text-muted)" }}>{city}</span>
+            <span style={{ color, fontWeight: 700 }}>₹{price}</span>
+            <span className="price-ticker-sep">·</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── PricesMap — module-level (Vercel: no-inline-components) ─────────────────
-function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
+function PricesMap({ contact, setContact, alertSaved, setAlertSaved, mapPrices, lastUpdated }) {
   const mapRef = useRef(null);
   const leafletMap = useRef(null);
   const markersRef = useRef({});
 
-  const [mapPrices, setMapPrices] = useState({});
   const [selectedCity, setSelectedCity] = useState(null);
-  const [mapLoading, setMapLoading] = useState(true);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const [alertSaving, setAlertSaving] = useState(false);
   const [alertError, setAlertError] = useState("");
+
+  // mapLoading = prices not yet populated from App
+  const mapLoading = Object.keys(mapPrices).length === 0;
 
   useEffect(() => {
     if (window.L) { setLeafletLoaded(true); return; }
@@ -430,25 +474,6 @@ function PricesMap({ contact, setContact, alertSaved, setAlertSaved }) {
     script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
     script.onload = () => setLeafletLoaded(true);
     document.head.appendChild(script);
-  }, []);
-
-  useEffect(() => {
-    supabase.from("lpg_prices").select("*").order("recorded_at", { ascending: false })
-      .then(({ data }) => {
-        if (!data) return;
-        const grouped = {};
-        let latest = null;
-        for (const row of data) {
-          if (!grouped[row.city]) grouped[row.city] = {};
-          if (!grouped[row.city][row.company]) {
-            grouped[row.city][row.company] = { price: row.price, recorded_at: row.recorded_at };
-            if (!latest || row.recorded_at > latest) latest = row.recorded_at;
-          }
-        }
-        setMapPrices(grouped);
-        setLastUpdated(latest);
-        setMapLoading(false);
-      });
   }, []);
 
   useEffect(() => {
@@ -637,6 +662,7 @@ export default function App() {
   const [bookingResult, setBookingResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const resultRef = useRef(null); // scroll-into-view after track lookup
 
   const [reports, setReports] = useState([]);
   const [reportText, setReportText] = useState("");
@@ -669,6 +695,12 @@ export default function App() {
   const [news, setNews] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [shortageSummary, setShortageSummary] = useState(null);
+  const newsLastFetched = useRef(null); // Vercel: rerender-use-ref-transient-values
+
+  // Hoisted price state — shared by PriceTicker (Track tab) + PricesMap (Prices tab)
+  // Vercel: state-lift-state — avoids duplicate Supabase query across tabs
+  const [mapPrices, setMapPrices] = useState({});
+  const [pricesLastUpdated, setPricesLastUpdated] = useState(null);
 
   // Auth state
   const [user, setUser] = useState(null);
@@ -681,6 +713,14 @@ export default function App() {
   const [reportDeliveryDays, setReportDeliveryDays] = useState("");
   const [editingReportId, setEditingReportId] = useState(null);
   const [editingText, setEditingText] = useState("");
+
+  // Restore tab after OAuth redirect (sessionStorage round-trip)
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("cc-post-auth-tab");
+      if (saved) { setTab(saved); sessionStorage.removeItem("cc-post-auth-tab"); }
+    } catch { /* private mode */ }
+  }, []);
 
   // ── Data fetches ────────────────────────────────────────────────────────────
   // Auth session
@@ -713,11 +753,37 @@ export default function App() {
       .then(({ data }) => data && setReports(data));
   }, []);
 
-  const fetchNews = useCallback(() => {
+  // Hoist lpg_prices fetch — shared by PriceTicker + PricesMap (Vercel: state-lift-state)
+  useEffect(() => {
+    supabase.from("lpg_prices").select("*").order("recorded_at", { ascending: false })
+      .then(({ data }) => {
+        if (!data) return;
+        const grouped = {};
+        let latest = null;
+        for (const row of data) {
+          if (!grouped[row.city]) grouped[row.city] = {};
+          if (!grouped[row.city][row.company]) {
+            grouped[row.city][row.company] = { price: row.price, recorded_at: row.recorded_at };
+            if (!latest || row.recorded_at > latest) latest = row.recorded_at;
+          }
+        }
+        setMapPrices(grouped);
+        setPricesLastUpdated(latest);
+      });
+  }, []);
+
+  const fetchNews = useCallback((force = false) => {
+    const STALE_MS = 5 * 60 * 1000; // 5 minutes
+    if (!force && newsLastFetched.current && Date.now() - newsLastFetched.current < STALE_MS) return;
     setNewsLoading(true);
     fetch(`${SUPABASE_FUNC_URL}/lpg-news`, { headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}` } })
       .then(r => r.json())
-      .then(d => { if (d.ok && d.articles?.length) setNews(d.articles.map(a => ({ title: a.title, source: a.source, link: a.link, pubDate: new Date(a.pubDate) }))); })
+      .then(d => {
+        if (d.ok && d.articles?.length) {
+          setNews(d.articles.map(a => ({ title: a.title, source: a.source, link: a.link, pubDate: new Date(a.pubDate) })));
+          newsLastFetched.current = Date.now();
+        }
+      })
       .catch(() => { }).finally(() => setNewsLoading(false));
   }, []);
 
@@ -743,6 +809,8 @@ export default function App() {
       : { pin, city: location ? `${location.city}, ${location.state}` : `PIN ${pin}`, area: location?.area || "", agency: "Check with local agency", avg_days: "—", shortage: hasShortage, trend, reportCount });
     if (lastBooking) { const nw = addDays(new Date(lastBooking), 25); setBookingResult({ nextWindow: nw, daysLeft: daysUntil(nw) }); }
     setLoading(false);
+    // Scroll result into view on mobile so it's not hidden under topbar
+    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   };
 
   const handleReport = async () => {
@@ -771,6 +839,7 @@ export default function App() {
   };
 
   const handleDeleteReport = async (id) => {
+    if (!window.confirm("Delete this report? This cannot be undone.")) return;
     await supabase.from("reports").delete().eq("id", id);
     setReports(prev => prev.filter(r => r.id !== id));
   };
@@ -847,7 +916,7 @@ export default function App() {
             </button>
             {!authLoading && (user ? (
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--accent-soft)", border: "1px solid var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--accent)", flexShrink: 0 }}>
+                <div className="flex-none" style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--accent-soft)", border: "1px solid var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--accent)" }}>
                   {user.email?.[0]?.toUpperCase() || "U"}
                 </div>
                 <span className="t-caption" style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
@@ -856,8 +925,8 @@ export default function App() {
               </div>
             ) : (
               <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "flex-start", gap: 8, marginBottom: 8, minHeight: "auto", padding: "6px 8px", fontSize: 12 }}
-                onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } })}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+                onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })}>
+                {IcGoogle}
                 Sign in with Google
               </button>
             ))}
@@ -872,21 +941,19 @@ export default function App() {
           <div className="topbar">
             {IcFlame}
             <span className="topbar-name">CylinderCheck</span>
-            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-              {!authLoading && !user && (
-                <button className="btn btn-ghost" style={{ minHeight: "auto", padding: "5px 10px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
-                  onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } })}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
-                  Sign in
-                </button>
-              )}
-              {!authLoading && user && (
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-soft)", border: "1px solid var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>
-                  {user.email?.[0]?.toUpperCase() || "U"}
-                </div>
-              )}
-              <ThemeToggle />
-            </div>
+            {!authLoading && !user && (
+              <button className="btn btn-ghost" style={{ minHeight: "auto", padding: "5px 10px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
+                onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })}>
+                {IcGoogle}
+                Sign in
+              </button>
+            )}
+            {!authLoading && user && (
+              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-soft)", border: "1px solid var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>
+                {user.email?.[0]?.toUpperCase() || "U"}
+              </div>
+            )}
+            <ThemeToggle />
           </div>
 
           <div className="content-area">
@@ -896,10 +963,11 @@ export default function App() {
               <div className="tab-panel">
                 <h1 className="page-title">Booking Tracker</h1>
                 <p className="page-subtitle">Know when to book. Know if there's a shortage. Real-time delivery intelligence by PIN code.</p>
+                <PriceTicker mapPrices={mapPrices} />
 
                 {shortageSummary && (
                   <div className="alert-banner alert-banner-danger anim-slide-up" style={{ marginBottom: 16 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginTop: 1, color: "var(--danger)" }}>
+                    <div className="flex-none" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 1, color: "var(--danger)" }}>
                       <span className="pulse-dot pulse-dot-danger" />{IcWarn}
                     </div>
                     <div>
@@ -945,7 +1013,7 @@ export default function App() {
                     {!pinData && !loading && EmptyState}
                     {loading && SkeletonCard}
                     {pinData && !loading && (
-                      <div className="anim-slide-up">
+                      <div className="anim-slide-up result-card" ref={resultRef}>
                         <div className="neu-card mb-card">
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
                             <div>
@@ -979,7 +1047,7 @@ export default function App() {
                         {bookingResult && (
                           <div className={`neu-card mb-card${bookingResult.daysLeft <= 0 ? " booking-open" : ""}`}>
                             <div className="section-title">Your Booking Window</div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                            <div className="booking-ring-row">
                               <Ring daysLeft={bookingResult.daysLeft} />
                               <div>
                                 <div className="t-caption" style={{ marginBottom: 5 }}>{bookingResult.daysLeft <= 0 ? "Window is open now" : "Next window opens"}</div>
@@ -997,7 +1065,7 @@ export default function App() {
 
                         {pinData.reportCount >= 2 && (
                           <div className={`alert-banner ${pinData.reportCount >= 5 ? "alert-banner-danger" : "alert-banner-warning"} anim-scale-in`}>
-                            <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{pinData.reportCount >= 5 ? "🔴" : "🟠"}</span>
+                            <span className="flex-none" style={{ fontSize: 20, lineHeight: 1 }}>{pinData.reportCount >= 5 ? "🔴" : "🟠"}</span>
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 600, color: pinData.reportCount >= 5 ? "var(--danger)" : "var(--warning)", marginBottom: 4 }}>
                                 {pinData.reportCount >= 5 ? "Severe Shortage in Your Area" : "Active Shortage in Your Area"}
@@ -1025,11 +1093,8 @@ export default function App() {
                       <p className="t-caption" style={{ marginBottom: 12 }}>Most users don't know this — GPay, PhonePe & Paytm have LPG booking built in.</p>
                       <div style={{ display: "flex", gap: 8 }}>
                         {UPI_PORTALS.map(([letter, label, url, color]) => (
-                          <a key={url} href={url} target="_blank" rel="noopener"
-                            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 7, padding: "12px 6px", background: "var(--bg-inset)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", textDecoration: "none", transition: "box-shadow var(--dur-fast)" }}
-                            onMouseEnter={e => e.currentTarget.style.boxShadow = "var(--neu-raised)"}
-                            onMouseLeave={e => e.currentTarget.style.boxShadow = ""}>
-                            <div style={{ width: 36, height: 36, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#fff" }}>{letter}</div>
+                          <a key={url} href={url} target="_blank" rel="noopener" className="upi-portal-btn">
+                            <div className="upi-portal-icon" style={{ background: color }}>{letter}</div>
                             <span className="t-caption" style={{ textAlign: "center", color: "var(--text-secondary)" }}>{label}</span>
                           </a>
                         ))}
@@ -1046,7 +1111,7 @@ export default function App() {
               <div className="tab-panel">
                 <h1 className="page-title">LPG Prices</h1>
                 <p className="page-subtitle">14.2 kg domestic cylinder — live prices across 12 cities, updated every Sunday.</p>
-                <PricesMap contact={contact} setContact={setContact} alertSaved={alertSaved} setAlertSaved={setAlertSaved} />
+                <PricesMap contact={contact} setContact={setContact} alertSaved={alertSaved} setAlertSaved={setAlertSaved} mapPrices={mapPrices} lastUpdated={pricesLastUpdated} />
                 <AdSlot id="prices-bottom" type="leaderboard" />
               </div>
             )}
@@ -1066,8 +1131,11 @@ export default function App() {
                           <div className="t-subheading" style={{ marginBottom: 8 }}>Sign in to submit</div>
                           <p className="t-caption" style={{ marginBottom: 16 }}>Reports require a Google account so the community stays spam-free and accountable.</p>
                           <button className="btn btn-primary btn-block"
-                            onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } })}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ marginRight: 6 }}><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+                            onClick={() => {
+                              try { sessionStorage.setItem("cc-post-auth-tab", "community"); } catch { /* private mode */ }
+                              supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+                            }}>
+                            {IcGoogle}
                             Sign in with Google →
                           </button>
                         </div>
@@ -1155,7 +1223,7 @@ export default function App() {
                 <h1 className="page-title">LPG News</h1>
                 <p className="page-subtitle">Latest coverage on LPG pricing, supply, and policy from across India.</p>
                 <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-                  <button onClick={fetchNews} disabled={newsLoading} className="btn btn-ghost"
+                  <button onClick={() => fetchNews(true)} disabled={newsLoading} className="btn btn-ghost"
                     style={{ minHeight: "auto", padding: "6px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
                     {IcRefresh(newsLoading)}{newsLoading ? "Refreshing…" : "Refresh feed"}
                   </button>
@@ -1175,6 +1243,7 @@ export default function App() {
                 ) : news.map((item, i) => {
                   const m = Math.round((Date.now() - item.pubDate) / 60000);
                   const timeAgo = m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+                  const waUrl = `https://wa.me/?text=${encodeURIComponent(item.title + " — cylindercheck.in")}`;
                   return (
                     <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
                       className="neu-card list-card mb-card" style={{ display: "block", textDecoration: "none" }}>
@@ -1185,6 +1254,13 @@ export default function App() {
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
                         <span className="badge badge-accent">{item.source}</span>
                         <span className="t-caption">{timeAgo}</span>
+                        <a className="whatsapp-share"
+                          href={waUrl}
+                          target="_blank" rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          title="Share on WhatsApp">
+                          📲 Share
+                        </a>
                       </div>
                     </a>
                   );
@@ -1241,8 +1317,8 @@ export default function App() {
                           <span className="t-label" style={{ color: "var(--accent)" }}>PLUS</span>
                         </div>
                       </div>
-                      {FEAT_COMPARISON.map(([feat, free, plus]) => (
-                        <div key={feat} className="feat-row">
+                      {FEAT_COMPARISON.map(([feat, free, plus], idx) => (
+                        <div key={feat} className={`feat-row${idx === FEAT_COMPARISON.length - 1 ? " feat-row-last" : ""}`}>
                           <span className="t-body" style={{ margin: 0 }}>{feat}</span>
                           <div className="feat-checks">
                             <span style={{ fontSize: 13, fontWeight: 600, width: 14, textAlign: "center", color: free ? "var(--success)" : "var(--border)" }}>{free ? "✓" : "—"}</span>
@@ -1271,12 +1347,12 @@ export default function App() {
                         </div>
                         {PLUS_FEATURES.map(([icon, feat]) => (
                           <div key={feat} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
-                            <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.3 }}>{icon}</span>
+                            <span className="flex-none" style={{ fontSize: 16, lineHeight: 1.3 }}>{icon}</span>
                             <span className="t-body" style={{ margin: 0 }}>{feat}</span>
                           </div>
                         ))}
                         <div className="alert-banner alert-banner-warning" style={{ margin: "20px 0 16px" }}>
-                          <span style={{ fontSize: 18, flexShrink: 0 }}>🔥</span>
+                          <span className="flex-none" style={{ fontSize: 18 }}>🔥</span>
                           <p className="t-caption" style={{ margin: 0 }}>
                             <strong style={{ color: "var(--warning)" }}>During active shortages</strong>,
                             {" "}Plus members get area-specific alerts up to 48 hours before the disruption is publicly reported.

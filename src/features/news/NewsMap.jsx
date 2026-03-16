@@ -82,7 +82,7 @@ export default function NewsMap({ cityHasNews, selectedCity, onSelectCity, cente
         
         const iconHtml = `
           <div class="news-map-marker flex items-center justify-center p-2 rounded-full cursor-pointer transition-transform ${isSelected ? 'scale-125' : 'hover:scale-110'}">
-            <div class="w-3 h-3 rounded-full bg-accent relative z-10 shadow-[0_0_10px_rgba(255,107,0,0.8)] border-2 border-bg-body"></div>
+            <div class="w-3 h-3 rounded-full bg-accent relative z-10 shadow-[0_0_10px_rgba(255,107,0,0.8)] border-2 border-bg-base"></div>
             ${hasNews ? '<div class="absolute inset-0 rounded-full bg-accent/30 animate-ping"></div>' : ''}
           </div>
         `;

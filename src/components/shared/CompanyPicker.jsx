@@ -20,9 +20,9 @@ export default function CompanyPicker({ value, onChange, compact }) {
           <button
             key={co.id}
             type="button"
-            className={`flex items-center justify-center gap-2 py-3 px-2 rounded-[var(--radius-sm)] border transition-all ${
+            className={`flex items-center justify-center gap-2 py-3 px-2 rounded-[var(--radius-sm)] border transition-colors ${
               value === co.id 
-                ? "bg-[var(--accent-soft)] border-[var(--accent)] text-[var(--accent)] shadow-[var(--neu-pressed)]" 
+                ? "bg-[var(--accent-soft)] border-[var(--accent)] text-[var(--accent)] ring-1 ring-[var(--accent-glow)]" 
                 : "bg-[var(--bg-inset)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
             }`}
             onClick={() => onChange(value === co.id ? null : co.id)}

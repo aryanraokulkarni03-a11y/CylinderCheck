@@ -125,23 +125,23 @@ export default function NewsTab() {
         {/* Feed */}
         <div className="space-y-6">
           <div className="flex flex-wrap items-center gap-2 mb-6">
-            <button 
-              className={`px-4 py-1.5 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-all ${
-                !selectedCity ? "bg-[var(--text-primary)] text-[var(--bg-body)] border-[var(--text-primary)]" : "bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
-              }`}
-              onClick={() => setSelectedCity(null)}
-            >
-              All India
-            </button>
-            {Object.keys(cityHasNews).map(c => (
               <button 
-                key={c}
-                className={`relative px-4 py-1.5 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-all flex items-center gap-2 ${
-                  selectedCity === c ? "bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)] shadow-[var(--neu-pressed)]" : "bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
+                className={`px-4 py-1.5 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-all ${
+                !selectedCity ? "bg-[var(--text-primary)] text-[var(--bg-base)] border-[var(--text-primary)]" : "bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
                 }`}
-                onClick={() => setSelectedCity(c)}
+                onClick={() => setSelectedCity(null)}
               >
-                {c}
+                All India
+              </button>
+            {Object.keys(cityHasNews).map(c => (
+                <button 
+                  key={c}
+                  className={`relative px-4 py-1.5 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-all flex items-center gap-2 ${
+                  selectedCity === c ? "bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]" : "bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
+                  }`}
+                  onClick={() => setSelectedCity(c)}
+                >
+                  {c}
                 {selectedCity === c && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[var(--accent)] animate-pulse" />}
               </button>
             ))}

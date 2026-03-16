@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
+@import "./lib/fonts.css";
 @import "./lib/tokens.css";
 
 /* ============================================================
@@ -82,7 +83,7 @@ body::before {
 
 .card {
   background: var(--bg-raised);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
 }
@@ -111,7 +112,7 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  transition: all 200ms ease;
+  transition: background-color 200ms ease, transform 200ms ease;
 }
 .btn-primary:hover {
   background: rgba(224, 120, 48, 0.12); /* Slightly stronger whisper */
@@ -120,7 +121,7 @@ body::before {
 
 .btn-ghost {
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   font-family: theme('fontFamily.body');
   font-size: 15px;
@@ -133,7 +134,7 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  transition: all 200ms ease;
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 }
 .btn-ghost:hover {
   background: var(--bg-inset);
@@ -149,7 +150,7 @@ body::before {
 
 .input {
   background: var(--bg-inset);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-family: theme('fontFamily.body');

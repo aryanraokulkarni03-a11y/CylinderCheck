@@ -19,11 +19,11 @@ export default function AdminTab({ data, loading, onLock }) {
             <ArrowLeft size={14} /> Exit restricted Mode
           </button>
           
-          <h1 className="text-[clamp(24px,4vw,36px)] font-bold font-display tracking-tight text-[var(--status-warning)] mb-2 flex items-center gap-3">
-            <Shield size={28} className="text-[var(--status-warning)]" />
+          <h1 className="text-[clamp(24px,4vw,36px)] font-bold font-display tracking-tight text-[var(--status-early)] mb-2 flex items-center gap-3">
+            <Shield size={28} className="text-[var(--status-early)]" />
             System Control
           </h1>
-          <p className="text-[var(--status-warning)] opacity-80 text-[15px] leading-relaxed font-medium">
+          <p className="text-[var(--status-early)] opacity-80 text-[15px] leading-relaxed font-medium">
             Administrative overview. Authorized access only.
           </p>
         </div>

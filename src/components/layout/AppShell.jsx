@@ -4,7 +4,7 @@ export default function AppShell({ sidebar, topbar, bottomNav, children }) {
   return (
     <div className="flex min-h-[100dvh] w-full bg-bg-base relative text-text-primary overflow-x-hidden">
       {/* Desktop Sidebar (hidden on mobile) */}
-      <div className="hidden md:flex flex-col w-[240px] fixed inset-y-0 left-0 bg-bg-raised border-r border-border-color z-40">
+      <div className="hidden md:flex flex-col w-[240px] fixed inset-y-0 left-0 bg-bg-raised border-r border-border z-40">
         {sidebar}
       </div>
 

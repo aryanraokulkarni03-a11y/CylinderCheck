@@ -1,100 +1,160 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Lock, X, ArrowRight, Loader2 } from 'lucide-react';
-import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn';
+import React, { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { Loader2, Lock, X } from 'lucide-react'
+import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
+import { springs } from '../../lib/springs'
 
 export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPassword('')
+      setError(false)
+    }
+  }, [isOpen])
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!password) return;
-    const success = await onUnlock(password);
-    if (!success) {
-      setError(true);
-      setTimeout(() => setError(false), 2000);
-      setPassword("");
-    } else {
-      setPassword("");
-      onClose();
-    }
-  };
+    e.preventDefault()
+    if (!password) return
 
-  if (!isOpen) return null;
+    const success = await onUnlock(password)
+    if (!success) {
+      setError(true)
+      setTimeout(() => setError(false), 2000)
+      setPassword('')
+      return
+    }
+
+    setPassword('')
+    onClose()
+  }
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center isolate p-4">
-        {/* Backdrop */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-bg-body/80 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        
-        {/* Modal Content */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -10 }}
-          className="relative w-full max-w-sm card bg-bg-inset border-border-color shadow-[0_20px_40px_rgba(0,0,0,0.2)] overflow-hidden"
-        >
-          {/* Accent border top */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent via-status-warning to-accent" />
-          
-          <button 
+      {isOpen && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center isolate p-4">
+          {/* Backdrop */}
+          <motion.button
+            type="button"
+            aria-label="Close admin modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={onClose}
-            className="absolute top-4 right-4 text-text-muted hover:text-text-primary p-1 rounded-full hover:bg-bg-body transition-colors"
-          >
-            <X size={18} />
-          </button>
+          />
 
-          <div className="flex flex-col items-center pt-8 pb-4">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-6 transition-colors duration-300 ${
-              error ? "bg-status-severe-soft text-status-severe border border-status-severe/20" : "bg-bg-body text-accent border border-accent/20 shadow-[0_0_15px_rgba(255,107,0,0.15)]"
-            }`}>
-              <Lock size={24} className={error ? "animate-pulse" : ""} />
-            </div>
-            
-            <h2 className="text-xl font-bold font-display text-text-primary mb-2">Restricted Area</h2>
-            <p className="text-[13px] text-text-secondary text-center max-w-[240px] mb-8 font-medium">
-              Enter clearance code to access system metrics.
-            </p>
-            
-            <form onSubmit={handleSubmit} className="w-full px-2 space-y-4">
-              <div className="relative">
-                <input 
-                  type="password" 
-                  value={password}
-                  onChange={e => { setPassword(e.target.value); setError(false); }}
-                  placeholder="Password"
-                  autoFocus
-                  className={`w-full bg-bg-body border rounded-[var(--radius-sm)] px-4 py-3 text-[16px] text-text-primary font-data tracking-[0.2em] text-center focus:outline-none focus:ring-2 transition-all ${
-                    error ? "border-status-severe focus:ring-status-severe/20" : "border-border-color focus:border-accent focus:ring-accent/20"
-                  }`}
-                />
-              </div>
-              
-              {error && (
-                <p className="text-[11px] font-bold tracking-widest uppercase font-data text-status-severe text-center animate-bounce">
-                  Access Denied
-                </p>
-              )}
-              
-              <LiquidGlassBtn 
-                type="submit"
-                className="w-full"
-                disabled={!password || loading || error}
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -10 }}
+            transition={springs.smooth}
+            className="relative w-full max-w-sm overflow-hidden
+                       rounded-[var(--radius-xl)]
+                       border border-[var(--border)]
+                       bg-[var(--bg-raised)]
+                       shadow-[0_20px_50px_rgba(0,0,0,0.35)]"
+          >
+            {/* Accent strip */}
+            <div
+              className="absolute top-0 left-0 w-full h-1"
+              style={{
+                background:
+                  'linear-gradient(to right, var(--accent), var(--status-early), var(--accent))',
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="absolute top-4 right-4 w-9 h-9 rounded-full
+                         flex items-center justify-center
+                         text-[var(--text-muted)]
+                         hover:text-[var(--text-primary)]
+                         hover:bg-[var(--bg-inset)]
+                         transition-colors"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex flex-col items-center pt-8 pb-6 px-6">
+              <div
+                className={`w-14 h-14 rounded-full flex items-center justify-center mb-6 transition-colors duration-300 ${
+                  error
+                    ? 'bg-[rgba(184,48,48,0.14)] text-[var(--status-severe)] border border-[rgba(184,48,48,0.25)]'
+                    : 'bg-[rgba(224,120,48,0.10)] text-[var(--accent)] border border-[rgba(224,120,48,0.18)] shadow-[0_0_22px_rgba(224,120,48,0.18)]'
+                }`}
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : "Authenticate"}
-              </LiquidGlassBtn>
-            </form>
-          </div>
-        </motion.div>
-      </div>
+                <Lock size={24} className={error ? 'animate-pulse' : ''} />
+              </div>
+
+              <h2 className="text-[20px] font-bold font-display text-[var(--text-primary)] mb-2">
+                Restricted Area
+              </h2>
+              <p className="text-[13px] text-[var(--text-secondary)] text-center max-w-[260px] mb-8 font-medium leading-relaxed">
+                Enter clearance code to access system metrics.
+              </p>
+
+              <form onSubmit={handleSubmit} className="w-full space-y-4" noValidate>
+                <div>
+                  <label
+                    htmlFor="admin-password"
+                    className="block text-[11px] font-bold tracking-widest uppercase font-data text-[var(--text-muted)] mb-2"
+                  >
+                    Clearance code
+                  </label>
+                  <input
+                    id="admin-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      setError(false)
+                    }}
+                    placeholder="Password"
+                    autoFocus
+                    aria-invalid={error || undefined}
+                    className={`w-full bg-[var(--bg-inset)] border rounded-[var(--radius-sm)]
+                                px-4 py-3 text-[16px] text-[var(--text-primary)]
+                                font-data tracking-[0.2em] text-center
+                                focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-fog)]
+                                transition-colors ${
+                                  error
+                                    ? 'border-[var(--status-severe)]'
+                                    : 'border-[var(--border)] focus:border-[var(--accent)]'
+                                }`}
+                  />
+                  {error && (
+                    <p className="text-[11px] font-bold tracking-widest uppercase font-data text-[var(--status-severe)] text-center mt-2">
+                      Access denied
+                    </p>
+                  )}
+                </div>
+
+                <LiquidGlassBtn
+                  type="submit"
+                  className="w-full justify-center"
+                  disabled={!password || loading || error}
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 size={16} className="animate-spin" />
+                      Authenticatingâ€¦
+                    </span>
+                  ) : (
+                    'Authenticate'
+                  )}
+                </LiquidGlassBtn>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </AnimatePresence>
-  );
+  )
 }

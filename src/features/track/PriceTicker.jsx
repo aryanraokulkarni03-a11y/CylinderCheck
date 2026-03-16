@@ -17,8 +17,8 @@ export default function PriceTicker({ mapPrices = {} }) {
 
   if (!items.length) {
     return (
-      <div className="w-full h-10 border border-border-color/50 rounded-[var(--radius-sm)] flex items-center px-4 bg-bg-inset mb-6 overflow-hidden">
-        <div className="h-4 w-full bg-border-color/30 rounded animate-pulse" />
+      <div className="w-full h-10 border border-border rounded-[var(--radius-sm)] flex items-center px-4 bg-bg-inset mb-6 overflow-hidden">
+        <div className="h-4 w-full bg-border rounded opacity-40 animate-pulse" />
       </div>
     );
   }
@@ -27,7 +27,7 @@ export default function PriceTicker({ mapPrices = {} }) {
   const doubled = [...items, ...items];
 
   return (
-    <div className="w-full bg-bg-inset border border-border-color/50 rounded-[var(--radius-sm)] overflow-hidden mb-8 h-12 flex items-center relative" aria-label="LPG prices ticker">
+    <div className="w-full bg-bg-inset border border-border rounded-[var(--radius-sm)] overflow-hidden mb-8 h-12 flex items-center relative" aria-label="LPG prices ticker">
       {/* Absolute fade masks on the left and right edges */}
       <div className="absolute top-0 left-0 w-8 h-full bg-gradient-to-r from-bg-inset to-transparent z-10" />
       <div className="absolute top-0 right-0 w-8 h-full bg-gradient-to-l from-bg-inset to-transparent z-10" />
@@ -37,7 +37,7 @@ export default function PriceTicker({ mapPrices = {} }) {
           <span key={`${city}-${i}`} className="inline-flex items-center mx-4 gap-2">
             <span className="text-[12px] font-bold text-text-secondary uppercase tracking-wider font-body">{city}</span>
             <span className="text-[14px] font-bold font-data" style={{ color }}>₹{price}</span>
-            <span className="text-border-color ml-4">·</span>
+            <span className="text-border ml-4">&middot;</span>
           </span>
         ))}
       </div>

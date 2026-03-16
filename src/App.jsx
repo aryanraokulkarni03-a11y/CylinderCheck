@@ -22,6 +22,7 @@ import NewsTab from './features/news/NewsTab'
 import AlertsTab from './features/alerts/AlertsTab'
 import CommercialPage from './features/commercial/CommercialPage'
 import AdminTab from './features/admin/AdminTab'
+import AdminModal from './features/admin/AdminModal'
 
 // Tab icons
 import {
@@ -274,6 +275,7 @@ export default function App() {
     editingReportId, setEditingReportId,
     editingText, setEditingText,
     user,
+    authLoading,
   }
 
   const alertsProps = {
@@ -314,7 +316,7 @@ export default function App() {
         {/* Sidebar — desktop only */}
         <div className="hidden md:block">
           <Sidebar
-            tabs={TABS}
+            tabs={visibleTabs}
             activeTab={tab}
             onTabChange={setTab}
             user={user}
@@ -352,7 +354,7 @@ export default function App() {
       </div>
 
       {/* Bottom nav — mobile only */}
-      <BottomNav tabs={TABS} activeTab={tab} onTabChange={setTab} />
+      <BottomNav tabs={visibleTabs} activeTab={tab} onTabChange={setTab} />
 
       {/* Support modal */}
       <AnimatePresence>
@@ -362,6 +364,13 @@ export default function App() {
       </AnimatePresence>
 
       {/* Floating support FAB — mobile only */}
+      <AdminModal
+        isOpen={showAdminPrompt}
+        onClose={() => setShowAdminPrompt(false)}
+        onUnlock={handleAdminUnlock}
+        loading={adminLoading}
+      />
+
       <motion.button
         onClick={() => setShowSupport(true)}
         whileHover={{ scale: 1.08 }}

@@ -1,0 +1,206 @@
+/* src/lib/tokens.css */
+
+/* ─── Deeplight Dark Mode (default) ─────────────────────── */
+:root {
+  /* Surfaces */
+  --bg-base:      #0F0D14;
+  --bg-raised:    #181520;
+  --bg-inset:     #0A0810;
+  --bg-glass:     rgba(24, 21, 32, 0.72);
+
+  /* Glass tiers */
+  --glass-deep:   rgba(24, 21, 32, 0.88);
+  --glass-mid:    rgba(24, 21, 32, 0.65);
+  --glass-whisper:rgba(224, 120, 48, 0.06);
+  --fog-border:   rgba(255, 220, 160, 0.08);
+  --fog-highlight:rgba(255, 220, 160, 0.04);
+
+  /* Text */
+  --text-primary:   #F4EFE8;
+  --text-secondary: #A89880;
+  --text-muted:     #6B5E50;
+  --text-data:      #E8D4A8;
+  --text-on-accent: #FFFFFF;
+
+  /* Accent */
+  --accent:         #E07830;
+  --accent-hover:   #CC6A22;
+  --accent-soft:    rgba(224, 120, 48, 0.10);
+  --accent-glow:    rgba(224, 120, 48, 0.20);
+  --accent-fog:     rgba(224, 120, 48, 0.06);
+  --accent-pop:     #FF8C42;
+
+  /* Kalamkari palette */
+  --k-indigo:     #2D2449;
+  --k-terracotta: #8B3A2A;
+  --k-turmeric:   #C4882A;
+  --k-forest:     #2A5C3A;
+  --k-cream:      #F0E6D0;
+
+  /* Status */
+  --status-clear:       #6DB88A;
+  --status-clear-glow:  rgba(45, 92, 58, 0.25);
+  --status-early:       #E8A840;
+  --status-early-glow:  rgba(196, 136, 42, 0.25);
+  --status-active:      #C45A38;
+  --status-active-glow: rgba(139, 58, 42, 0.30);
+  --status-severe:      #B83030;
+  --status-severe-glow: rgba(107, 26, 26, 0.35);
+
+  /* Structure */
+  --border:       rgba(240, 230, 208, 0.08);
+  --divider:      rgba(240, 230, 208, 0.05);
+  --shadow-dark:  #07060A;
+  --shadow-glow:  rgba(224, 120, 48, 0.08);
+
+  /* Typography */
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-body:    'Instrument Sans', sans-serif;
+  --font-data:    'Geist Mono', 'Fira Code', monospace;
+
+  /* Spacing */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+  --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
+  --space-8: 32px;  --space-10: 40px; --space-12: 48px;
+  --space-16: 64px; --space-20: 80px;
+
+  /* Radius */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   18px;
+  --radius-xl:   24px;
+  --radius-pill: 9999px;
+
+  /* Timing */
+  --dur-instant: 80ms;
+  --dur-fast:    150ms;
+  --dur-base:    220ms;
+  --dur-slow:    400ms;
+  --ease-out:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.2, 0.64, 1);
+
+  /* Layout */
+  --sidebar-width:   240px;
+  --topbar-height:   56px;
+  --bottomnav-height:64px;
+  --content-max:     1080px;
+}
+
+/* ─── Light Mode ─────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-base:      #F5EFE4;
+  --bg-raised:    #FDFAF5;
+  --bg-inset:     #EDE4D6;
+  --bg-glass:     rgba(253, 250, 245, 0.78);
+  --glass-deep:   rgba(245, 239, 228, 0.92);
+  --glass-mid:    rgba(253, 250, 245, 0.75);
+  --glass-whisper:rgba(196, 100, 26, 0.06);
+  --fog-border:   rgba(200, 160, 80, 0.15);
+  --fog-highlight:rgba(200, 160, 80, 0.08);
+  --text-primary:   #1C1610;
+  --text-secondary: #6B5040;
+  --text-muted:     #9A8070;
+  --text-data:      #5C3C18;
+  --accent:         #C4641A;
+  --accent-hover:   #B05518;
+  --accent-soft:    rgba(196, 100, 26, 0.10);
+  --accent-glow:    rgba(196, 100, 26, 0.18);
+  --border:         rgba(180, 140, 80, 0.15);
+  --divider:        rgba(180, 140, 80, 0.08);
+  --shadow-glow:    rgba(196, 100, 26, 0.06);
+}
+
+/* ─── Global Reset ───────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--text-primary);
+  background-color: var(--bg-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: contain;
+}
+
+/* ─── Kalamkari Background Texture ──────────────────────── */
+/* Opacity 4% dark, 5% light. Invisible at first glance.    */
+/* Adds warmth subconsciously before the eye finds it.      */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cpath d='M20 60 C20 40 40 20 60 20 C80 20 100 40 100 60 C100 80 80 100 60 100 C40 100 20 80 20 60Z' fill='none' stroke='%23E8D4A8' stroke-width='0.5' opacity='0.4'/%3E%3Cpath d='M60 10 C60 10 50 30 60 50 C70 30 60 10 60 10Z' fill='%23E8D4A8' opacity='0.3'/%3E%3Ccircle cx='60' cy='60' r='3' fill='%23E8D4A8' opacity='0.3'/%3E%3Cpath d='M10 60 C30 50 50 55 60 60 C50 65 30 70 10 60Z' fill='%23E8D4A8' opacity='0.25'/%3E%3Cpath d='M110 60 C90 50 70 55 60 60 C70 65 90 70 110 60Z' fill='%23E8D4A8' opacity='0.25'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="light"] body::before {
+  opacity: 0.05;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+/* ─── Focus ──────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Interactive ────────────────────────────────────────── */
+button, a, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { cursor: pointer; font-family: var(--font-body); border: none; background: none; }
+button:disabled { cursor: not-allowed; opacity: 0.45; }
+a { text-decoration: none; color: inherit; }
+input, textarea, select { font-family: var(--font-body); }
+img, svg { display: block; max-width: 100%; }
+
+/* ─── Glass Tiers ────────────────────────────────────────── */
+.glass-btn {
+  backdrop-filter: blur(12px) saturate(160%);
+  background: var(--glass-whisper);
+  border: 1px solid rgba(224, 120, 48, 0.22);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-pop);
+  min-height: 52px;
+  padding: 0 28px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.glass-btn:hover {
+  border-color: rgba(224, 120, 48, 0.38);
+}
+
+@media (max-width: 768px) {
+  .glass-btn { min-height: 56px; font-size: 16px; }
+}

@@ -9,4 +9,7 @@ supabase/.temp/
 agent-skills-main
 agent-skills*/
 .agents/
+.agent/
+.agent
 supabase/.temp/
+ui-ux-pro-max-skill-main/

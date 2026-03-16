@@ -17,7 +17,7 @@ CylinderCheck is a professional-grade web utility designed to solve the uncertai
 - **AI-Categorized Articles**: Smart filtering for Price Revisions, Supply Scarcity, and Government Policy changes.
 
 ### 📚 LPG Survival Guide
-- **Accordion Knowledge Base**: Deep-dive into 2026 booking rules, cylinder conservation tips, and consumer rights.
+- **Accordion Knowledge Base**: Deep-dive into 2026 booking rules, cylinder conservation tips, and consumer rights. 
 - **Emergency Directory**: One-tap access to 1906 (Gas Leakage) and official OMCS Smartlines.
 
 ### 💳 Alerts & Subscriptions

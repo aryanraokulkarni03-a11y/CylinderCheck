@@ -1,2754 +1,385 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase } from "./supabaseClient";
-import { getTheme, toggleTheme } from "./theme.js";
+// src/App.jsx
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { supabase } from './supabaseClient'
+import { getTheme } from './theme.js'
+import { springs } from './lib/springs'
+import { lookupPIN, loadRazorpay, CITY_COORDS, CITY_NORMALISE, COMPANIES, addDays, daysUntil, computeUrgency } from './lib/utils'
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-const COMPANIES = ["IndianOil", "HP Gas", "Bharat Gas"];
-const COMPANY_EMOJI = { IndianOil: "🔵", "HP Gas": "🟡", "Bharat Gas": "🟢" };
+// Layout
+import { Sidebar } from './components/layout/Sidebar'
+import { Topbar } from './components/layout/Topbar'
+import { BottomNav } from './components/layout/BottomNav'
 
-// ─── Utils ────────────────────────────────────────────────────────────────────
-const addDays = (date, days) => { const d = new Date(date); d.setDate(d.getDate() + days); return d; };
-const fmt = (d) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-const daysUntil = (d) => { const t = new Date(); t.setHours(0, 0, 0, 0); return Math.ceil((d - t) / 86400000); };
-const fmtDateTime = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
+// Modals
+import { SupportModal } from './components/modals/SupportModal'
 
-// ─── Env ──────────────────────────────────────────────────────────────────────
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
-const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "")}/functions/v1`;
+// Feature tabs
+import TrackTab from './features/track/TrackTab'
+import PricesTab from './features/prices/PricesTab'
+import ReportsTab from './features/reports/ReportsTab'
+import NewsTab from './features/news/NewsTab'
+import AlertsTab from './features/alerts/AlertsTab'
+import CommercialPage from './features/commercial/CommercialPage'
+import AdminTab from './features/admin/AdminTab'
 
-// ─── Load Razorpay ────────────────────────────────────────────────────────────
-function loadRazorpay() {
-  return new Promise((resolve) => {
-    if (window.Razorpay) { resolve(true); return; }
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
-}
+// Tab icons
+import {
+  Target, DollarSign, MessageSquare,
+  Newspaper, Bell, Store, HelpCircle
+} from 'lucide-react'
 
-// ─── PIN lookup ───────────────────────────────────────────────────────────────
-async function lookupPIN(pin) {
-  try {
-    const r = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
-    const j = await r.json();
-    if (j[0]?.Status === "Success" && j[0]?.PostOffice?.length > 0) {
-      const po = j[0].PostOffice[0];
-      return { city: po.District, state: po.State, area: po.Name };
-    }
-  } catch { /* ignore */ }
-  return null;
-}
 
-// ─── AdSense ──────────────────────────────────────────────────────────────────
-const AD_CLIENT = "ca-pub-6163036693948238";
-function AdSlot({ id = "default", type = "rectangle" }) {
-  useEffect(() => {
-    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch { /* not loaded */ }
-  }, [id]);
-  if (type === "rectangle") return (
-    <div className="ad-slot-rectangle">
-      <ins className="adsbygoogle" style={{ display: "inline-block", width: "300px", height: "250px" }}
-        data-ad-client={AD_CLIENT} data-ad-slot="REPLACE_SLOT_1" />
-    </div>
-  );
-  if (type === "leaderboard") return (
-    <div className="ad-slot-leaderboard">
-      <ins className="adsbygoogle" style={{ display: "inline-block", width: "728px", height: "90px", maxWidth: "100%" }}
-        data-ad-client={AD_CLIENT} data-ad-slot="REPLACE_SLOT_2" data-ad-format="horizontal" />
-    </div>
-  );
-  return (
-    <div className="ad-slot-responsive">
-      <ins className="adsbygoogle" style={{ display: "block" }}
-        data-ad-client={AD_CLIENT} data-ad-slot="REPLACE_SLOT_3"
-        data-ad-format="auto" data-full-width-responsive="true" />
-    </div>
-  );
-}
-
-// ─── Icons — all currentColor; CSS drives active/inactive tint ───────────────
-const IcFlame = (
-  <svg width="26" height="32" viewBox="0 0 28 36" fill="none" className="flex-none">
-    <path d="M14 2C14 2 20 8 20 16C20 22 17 24 14 24C11 24 8 22 8 16C8 8 14 2 14 2Z" fill="#FF6B00" />
-    <path d="M14 10C14 10 17 14 17 18C17 21 16 22 14 22C12 22 11 21 11 18C11 14 14 10 14 10Z" fill="#FFAA40" />
-    <rect x="10" y="24" width="8" height="6" rx="1" fill="var(--text-muted)" />
-    <path d="M8 30C8 28 10 27 14 27C18 27 20 28 20 30C20 32 18 34 14 34C10 34 8 32 8 30Z" fill="var(--border)" />
-  </svg>
-);
-
-// Hoisted Google logo — used in 3 places (Vercel: rendering-hoist-jsx)
-const IcGoogle = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="flex-none">
-    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
-    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-  </svg>
-);
-const IcExt = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>;
-const IcCheck = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>;
-const IcChevronRight = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
-const IcWarn = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>;
-const IcPin = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>;
-const IcClock = <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>;
-const IcSun = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>;
-const IcMoon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>;
-
-const IcRefresh = (loading) => (
-  <span style={{ display: "inline-flex", animation: loading ? "spin 1s linear infinite" : "none" }}>
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-      <polyline points="23 4 23 10 17 10" />
-      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-    </svg>
-  </span>
-);
-
-const IcTrack = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="9" strokeOpacity=".35" /><line x1="12" y1="3" x2="12" y2="6.5" /><line x1="12" y1="17.5" x2="12" y2="21" /><line x1="3" y1="12" x2="6.5" y2="12" /><line x1="17.5" y1="12" x2="21" y2="12" /></svg>;
-const IcReport = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>;
-const IcNews = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" /><path d="M18 14h-8" /><path d="M15 18h-5" /><path d="M10 6h8v4h-8V6Z" /></svg>;
-const IcAlert = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
-const IcSupport = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>;
-const IcShop = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 9l1-5h16l1 5" /><path d="M3 9a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2" /><path d="M5 11v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" /><line x1="10" y1="15" x2="14" y2="15" /></svg>;
-const IcPhone = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.5 5.5l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>;
-const IcWhatsApp = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>;
-const IcBolt = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
-
-// ─── Module-level data (Vercel: hoist-jsx) ────────────────────────────────────
-// 5 tabs — Prices removed in v4; For Biz stays as 5th with crisis pulse dot
 const TABS = [
-  { id: "track", label: "Track", icon: IcTrack },
-  { id: "community", label: "Reports", icon: IcReport },
-  { id: "news", label: "News", icon: IcNews },
-  { id: "alerts", label: "Alerts", icon: IcAlert },
-  { id: "commercial", label: "For Biz", icon: IcShop },
-];
-const PORTALS = [
-  ["🔵", "IndianOil — Indane", "https://ivrs.indianoil.in"],
-  ["🟡", "HP Gas — MyHP", "https://myhpgas.in"],
-  ["🟢", "Bharat Gas — eBharatgas", "https://ebharatgas.com"],
-];
-const UPI_PORTALS = [
-  ["G", "Google Pay", "https://pay.google.com", "#4285F4"],
-  ["P", "PhonePe", "https://www.phonepe.com", "#5f259f"],
-  ["₹", "Paytm", "https://paytm.com", "#00B9F1"],
-];
-const FEAT_COMPARISON = [
-  ["Booking window countdown", true, true],
-  ["Official portal links", true, true],
-  ["Community shortage reports", true, true],
-  ["Email booking alert", true, true],
-  ["SMS / WhatsApp alert", false, true],
-  ["Shortage early warning", false, true],
-  ["Price revision alert", false, true],
-  ["Delivery day ping", false, true],
-];
-const PLUS_FEATURES = [
-  ["📲", "SMS + WhatsApp alert 2 days before booking window"],
-  ["🚨", "Shortage early warning for your PIN — before it spreads"],
-  ["💰", "Price revision alert 24hrs before news breaks"],
-  ["📦", "Delivery day status ping so you're home on time"],
-  ["📊", "Monthly supply health score for your area"],
-];
+  { id: 'track',      label: 'Track',    icon: Target },
+  { id: 'prices',     label: 'Prices',   icon: DollarSign },
+  { id: 'community',  label: 'Reports',  icon: MessageSquare },
+  { id: 'news',       label: 'News',     icon: Newspaper },
+  { id: 'alerts',     label: 'Alerts',   icon: Bell },
+  { id: 'commercial', label: 'For Biz',  icon: Store },
+]
+
+const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1`
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const RAZORPAY_KEY_ID   = import.meta.env.VITE_RAZORPAY_KEY_ID || ''
+const ADMIN_PASSWORD    = import.meta.env.VITE_ADMIN_PASSWORD || ''
 
-// ─── Commercial MVP — module-level constants ──────────────────────────────────
-const COMMERCIAL_CITIES = ["Mumbai", "Bangalore", "Hyderabad", "Chennai", "Delhi", "Kolkata", "Vizag"];
-
-// Normalise postal API city names → our COMMERCIAL_CITIES keys
-// Vercel: js-cache-property-access — built once at module level
-const CITY_NORMALISE = {
-  "visakhapatnam": "Vizag", "vizag": "Vizag", "vishakhapatnam": "Vizag",
-  "bengaluru": "Bangalore", "bangalore": "Bangalore",
-  "mumbai": "Mumbai", "bombay": "Mumbai",
-  "delhi": "Delhi", "new delhi": "Delhi",
-  "hyderabad": "Hyderabad",
-  "chennai": "Chennai", "madras": "Chennai",
-  "kolkata": "Kolkata", "calcutta": "Kolkata",
-};
-const BUSINESS_TYPES = [
-  ["restaurant", "Restaurant"],
-  ["hotel", "Hotel / Lodge"],
-  ["dhaba", "Dhaba"],
-  ["bakery", "Bakery"],
-  ["catering", "Catering Business"],
-  ["cloud_kitchen", "Cloud Kitchen"],
-  ["other", "Other"],
-];
-const NEED_TYPES = [
-  ["induction", "🔌 Induction Cooktop"],
-  ["electric", "⚡ Electric Range"],
-  ["kerosene", "🪔 Kerosene Supply"],
-  ["png", "🔧 PNG Connection"],
-  ["not_sure", "🤔 Not Sure — Need Advice"],
-];
-const CATEGORY_META = {
-  induction: { label: "Induction", color: "var(--info)", bg: "var(--info-soft)", border: "var(--info-border)" },
-  electric: { label: "Electric", color: "var(--warning)", bg: "var(--warning-soft)", border: "var(--warning-border)" },
-  kerosene: { label: "Kerosene", color: "var(--success)", bg: "var(--success-soft)", border: "var(--success-border)" },
-  png: { label: "PNG", color: "var(--accent)", bg: "var(--accent-soft)", border: "rgba(255,107,0,0.22)" },
-  other: { label: "Other", color: "var(--text-muted)", bg: "var(--bg-inset)", border: "var(--border)" },
-};
-
-// Hoisted static skeleton — never recreated (Vercel: hoist-jsx)
-const SkeletonCard = (
-  <div className="neu-card mb-card">
-    <div className="skeleton skeleton-heading" style={{ width: "55%", marginBottom: 18 }} />
-    <div className="skeleton skeleton-text" style={{ width: "100%", marginBottom: 10 }} />
-    <div className="skeleton skeleton-text" style={{ width: "80%", marginBottom: 10 }} />
-    <div className="skeleton skeleton-text" style={{ width: "90%" }} />
-  </div>
-);
-
-// ─── Ring ─────────────────────────────────────────────────────────────────────
-function Ring({ daysLeft }) {
-  const r = 48, c = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(1, (25 - Math.max(daysLeft, 0)) / 25));
-  const color = daysLeft <= 0 ? "var(--success)" : daysLeft <= 3 ? "var(--warning)" : "var(--accent)";
-  return (
-    <svg width="116" height="116" viewBox="0 0 110 110">
-      <circle cx="55" cy="55" r={r} fill="none" stroke="var(--bg-inset)" strokeWidth="7" />
-      <circle cx="55" cy="55" r={r} fill="none" stroke={color} strokeWidth="7"
-        strokeDasharray={c} strokeDashoffset={c * (1 - pct)} strokeLinecap="round"
-        transform="rotate(-90 55 55)"
-        style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1), stroke .3s" }} />
-      <text x="55" y="50" textAnchor="middle" fill={color} fontSize="24" fontWeight="700" fontFamily="'Bricolage Grotesque',sans-serif">
-        {daysLeft <= 0 ? "✓" : daysLeft}
-      </text>
-      <text x="55" y="66" textAnchor="middle" fill="var(--text-muted)" fontSize="9" letterSpacing="1.2" fontFamily="'Instrument Sans',sans-serif">
-        {daysLeft <= 0 ? "BOOK NOW" : "DAYS LEFT"}
-      </text>
-    </svg>
-  );
-}
-
-// ─── Urgency Score — Task 6 ───────────────────────────────────────────────────
-// Vercel: rerender-derived-state-no-effect — computed inline during render, never state
-// Vercel: rendering-hoist-jsx — all lookup tables are module-level constants
-
-// Maps cylinder fill level → estimated days of gas remaining
-const CYLINDER_DAYS = { full: 20, half: 12, low: 5, critical: 2 };
-
-// Explicit variant map — prevents if/else chains inside JSX (patterns-explicit-variants)
-const URGENCY_META = {
-  low:    { label: "All Good",   color: "var(--success)", track: "var(--success-soft)",  tier: "low"    }, // 1–3
-  medium: { label: "Plan Ahead", color: "var(--warning)", track: "var(--warning-soft)",  tier: "medium" }, // 4–6
-  high:   { label: "Book Soon",  color: "var(--accent)",  track: "var(--accent-soft)",   tier: "high"   }, // 7–8
-  urgent: { label: "Act Now",    color: "var(--danger)",  track: "var(--danger-soft)",   tier: "urgent" }, // 9–10
-};
-
-// Pure computation — no side effects, safe to call in render
-// Vercel: rerender-no-inline-components (function defined at module level)
-function computeUrgencyScore({ cylinderLevel, daysToWindow, reportCount, avgDays }) {
-  const safeDays  = typeof daysToWindow === "number" ? daysToWindow : 25;
-  const safeAvg   = typeof avgDays === "number" && avgDays > 0 ? avgDays : 5;
-  const safeCount = typeof reportCount === "number" ? reportCount : 0;
-
-  // Days-to-window factor — 40% weight
-  const wFactor = safeDays <= 0 ? 10 : safeDays <= 3 ? 8 : safeDays <= 7 ? 6 : safeDays <= 14 ? 4 : 1;
-  // Cylinder level factor — 30% weight (null → unknown → mid-range 3)
-  const cFactor = cylinderLevel ? ({ critical: 10, low: 7, half: 4, full: 1 }[cylinderLevel] ?? 3) : 3;
-  // Shortage severity factor — 20% weight
-  const sFactor = safeCount >= 5 ? 10 : safeCount >= 2 ? 7 : safeCount === 1 ? 4 : 1;
-  // Delivery lag factor — 10% weight
-  const dFactor = safeAvg >= 10 ? 8 : safeAvg >= 7 ? 5 : safeAvg >= 4 ? 3 : 1;
-
-  const raw = Math.round((wFactor * 4 + cFactor * 3 + sFactor * 2 + dFactor * 1) / 10);
-
-  // Hard overrides
-  if (cylinderLevel === "critical") return Math.max(raw, 8);
-  if (safeCount >= 5 && safeDays <= 2) return 10;
-  return Math.min(Math.max(raw, 1), 10);
-}
-
-// Derives tier string from score — used as key into URGENCY_META
-function getUrgencyTier(score) {
-  if (score <= 3) return "low";
-  if (score <= 6) return "medium";
-  if (score <= 8) return "high";
-  return "urgent";
-}
-
-// Module-level display component — SVG ring + bold score + label
-// Vercel: rerender-no-inline-components, rendering-animate-svg-wrapper
-function UrgencyScoreDisplay({ score, cylinderLevel }) {
-  const tier = getUrgencyTier(score);
-  const meta = URGENCY_META[tier];
-  const r = 44, circ = 2 * Math.PI * r;
-  const pct = score / 10;  // 0–1 fill
-  const levelLabel = cylinderLevel
-    ? { full: "Full", half: "Half", low: "Low", critical: "Critical" }[cylinderLevel]
-    : null;
-
-  return (
-    <div className={`urgency-score-wrap urgency-tier-${tier}`}>
-      {/* Animate the wrapper div, NOT the SVG (Vercel: rendering-animate-svg-wrapper) */}
-      <div className="urgency-ring-anim">
-        <svg width="108" height="108" viewBox="0 0 100 100" aria-hidden="true">
-          {/* Track (background ring) */}
-          <circle cx="50" cy="50" r={r} fill="none" stroke={meta.track} strokeWidth="8" />
-          {/* Fill arc */}
-          <circle cx="50" cy="50" r={r} fill="none" stroke={meta.color} strokeWidth="8"
-            strokeDasharray={circ}
-            strokeDashoffset={circ * (1 - pct)}
-            strokeLinecap="round"
-            transform="rotate(-90 50 50)"
-            style={{ transition: "stroke-dashoffset 1s cubic-bezier(.4,0,.2,1), stroke .3s" }}
-          />
-          {/* Score number */}
-          <text x="50" y="45" textAnchor="middle"
-            fill={meta.color} fontSize="28" fontWeight="800"
-            fontFamily="'Bricolage Grotesque',sans-serif">
-            {score}
-          </text>
-          {/* /10 subscript */}
-          <text x="50" y="60" textAnchor="middle"
-            fill="var(--text-muted)" fontSize="10" letterSpacing="0.5"
-            fontFamily="'Instrument Sans',sans-serif">
-            /10
-          </text>
-        </svg>
-      </div>
-      <div className="urgency-score-labels">
-        <div className="urgency-score-badge" style={{ color: meta.color }}>
-          {meta.label}
-        </div>
-        <div className="urgency-score-sublabel">
-          Urgency Score
-          {levelLabel ? <span className="urgency-cylinder-chip">{levelLabel} cylinder</span> : null}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Trend badge ──────────────────────────────────────────────────────────────
-function Trend({ t }) {
-  const map = {
-    improving: ["badge badge-success", "↑ Improving"],
-    stable: ["badge badge-neutral", "→ Stable"],
-    worsening: ["badge badge-danger", "↓ Worsening"],
-  };
-  const [cls, label] = map[t] || map.stable;
-  return <span className={cls}>{label}</span>;
-}
-
-// ─── EmptyState — hoisted, no props (Vercel: hoist-jsx) ─────────────────────
-const EmptyState = (
-  <div className="neu-inset anim-fade-in" style={{
-    display: "flex", flexDirection: "column", alignItems: "center",
-    padding: "36px 24px", borderRadius: "var(--radius-lg)", textAlign: "center",
-  }}>
-    <svg width="44" height="44" viewBox="0 0 56 56" fill="none" style={{ opacity: .3 }}>
-      <circle cx="28" cy="28" r="26" stroke="var(--accent)" strokeWidth="2" strokeDasharray="6 4" />
-      <path d="M28 16v12l7 7" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="28" cy="28" r="3" fill="var(--accent)" />
-    </svg>
-    <div className="t-subheading" style={{ marginBottom: 6 }}>No data yet</div>
-    <p className="t-caption" style={{ maxWidth: 220, marginBottom: 16 }}>
-      Enter your 6-digit PIN code to see live delivery intelligence for your area.
-    </p>
-    <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "center" }}>
-      {["530001", "400001", "110001", "560001"].map(p => (
-        <span key={p} className="badge badge-accent" style={{ fontFamily: "monospace" }}>{p}</span>
-      ))}
-    </div>
-    <div className="t-caption" style={{ marginTop: 8 }}>Try one of these sample PINs</div>
-  </div>
-);
-
-// ─── Auth Context ─────────────────────────────────────────────────────────────
-// AuthContext reserved for future component tree — auth state lives in App for now
-
-// ─── SupportModal ─────────────────────────────────────────────────────────────
-const FAQ_ITEMS = [
-  ["Why does it say 21–25 days?", "The government mandates a minimum 21-day gap between bookings. Many agencies enforce 25 days. CylinderCheck uses 25 days as the safe default."],
-  ["Why are prices different across cities?", "LPG pricing includes state-level taxes and transport subsidies that vary by location. Delhi prices are not the same as Mumbai or Chennai."],
-  ["How does the shortage signal work?", "When 2+ reports are filed for the same PIN in 30 days, we flag it as an active shortage. 5+ reports trigger a severe warning."],
-  ["How do I cancel Plus?", "Email us at support@cylindercheck.in with your registered mobile/email. We'll cancel and refund the current month's unused days within 24 hrs."],
-  ["Does this work for piped gas (PNG)?", "No — CylinderCheck is specifically for domestic LPG cylinders (14.2 kg). PNG billing and connection tracking are not supported yet."],
-];
-
-function SupportModal({ onClose }) {
-  const [activeSection, setActiveSection] = useState("price");
-  const [openFaq, setOpenFaq] = useState(null);
-  const [priceForm, setPriceForm] = useState({ city: "", company: "IndianOil", reported_price: "", correct_price: "", contact: "" });
-  const [feedback, setFeedback] = useState({ message: "", contact: "" });
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [formError, setFormError] = useState("");
-
-  const handlePriceSubmit = async () => {
-    if (!priceForm.city || !priceForm.correct_price) { setFormError("City and correct price are required."); return; }
-    setSubmitting(true); setFormError("");
-    const { error } = await supabase.from("price_corrections").insert([{ ...priceForm }]);
-    if (error) setFormError("Something went wrong. Try again.");
-    else setSubmitted(true);
-    setSubmitting(false);
-  };
-  const handleFeedbackSubmit = async () => {
-    if (!feedback.message.trim()) { setFormError("Please enter your feedback."); return; }
-    setSubmitting(true); setFormError("");
-    const { error } = await supabase.from("feedback").insert([{ ...feedback }]);
-    if (error) setFormError("Something went wrong. Try again.");
-    else setSubmitted(true);
-    setSubmitting(false);
-  };
-
-  const sections = [
-    { id: "price", label: "Wrong price?" },
-    { id: "billing", label: "Billing issue" },
-    { id: "feedback", label: "Feedback" },
-    { id: "faq", label: "FAQ" },
-  ];
-
-  return (
-    <div className="support-overlay" onClick={onClose}>
-      <div className="support-sheet" onClick={e => e.stopPropagation()}>
-        <div className="city-sheet-handle" />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <div className="t-heading" style={{ fontSize: 20 }}>Support</div>
-          <button onClick={onClose} className="btn btn-ghost" style={{ width: 34, height: 34, padding: 0, minHeight: "auto", borderRadius: "var(--radius-sm)" }}>✕</button>
-        </div>
-
-        {/* Section tabs */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 20, overflowX: "auto", paddingBottom: 2 }}>
-          {sections.map(s => (
-            <button key={s.id} onClick={() => { setActiveSection(s.id); setSubmitted(false); setFormError(""); setOpenFaq(null); }}
-              className={`btn ${activeSection === s.id ? "btn-primary" : "btn-ghost"}`}
-              style={{ minHeight: "auto", padding: "6px 12px", fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }}>
-              {s.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Report wrong price */}
-        {activeSection === "price" && (
-          submitted ? (
-            <div className="alert-banner alert-banner-success">
-              {IcCheck}
-              <div><div style={{ fontSize: 13, fontWeight: 600, color: "var(--success)" }}>Thanks! We'll review and update.</div></div>
-            </div>
-          ) : (
-            <>
-              <p className="t-caption" style={{ marginBottom: 14 }}>Spotted an outdated or incorrect price on the map? Tell us what it should be.</p>
-              <div className="input-group">
-                <label className="input-label">City *</label>
-                <input className="input" placeholder="e.g. Hyderabad" value={priceForm.city} onChange={e => setPriceForm(p => ({ ...p, city: e.target.value }))} />
-              </div>
-              <div className="input-group">
-                <label className="input-label">Company</label>
-                <select className="input" value={priceForm.company} onChange={e => setPriceForm(p => ({ ...p, company: e.target.value }))}>
-                  {COMPANIES.map(c => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div className="input-group">
-                  <label className="input-label">Price shown</label>
-                  <input className="input" placeholder="₹ shown" inputMode="numeric" value={priceForm.reported_price} onChange={e => setPriceForm(p => ({ ...p, reported_price: e.target.value }))} />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Correct price *</label>
-                  <input className="input" placeholder="₹ correct" inputMode="numeric" value={priceForm.correct_price} onChange={e => setPriceForm(p => ({ ...p, correct_price: e.target.value }))} />
-                </div>
-              </div>
-              <div className="input-group">
-                <label className="input-label">Your contact <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
-                <input className="input" placeholder="Mobile or email" value={priceForm.contact} onChange={e => setPriceForm(p => ({ ...p, contact: e.target.value }))} />
-              </div>
-              {formError && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{formError}</div>}
-              <button className="btn btn-primary btn-block" onClick={handlePriceSubmit} disabled={submitting}>
-                {submitting ? "Submitting…" : "Submit Price Correction →"}
-              </button>
-            </>
-          )
-        )}
-
-        {/* Billing */}
-        {activeSection === "billing" && (
-          <div>
-            <p className="t-body" style={{ marginBottom: 16 }}>For payment or subscription issues, use these resources:</p>
-            {[
-              ["🟢", "Razorpay Support", "https://razorpay.com/support/", "Payment gateway — refunds, failed transactions"],
-              ["🇮🇳", "pgportal.gov.in", "https://pgportal.gov.in", "Government grievance portal for LPG billing issues"],
-              ["📧", "Email Us", "mailto:support@cylindercheck.in", "support@cylindercheck.in — reply within 24 hrs"],
-            ].map(([icon, label, href, desc]) => (
-              <a key={href} href={href} target="_blank" rel="noopener" className="portal-link" style={{ flexDirection: "column", alignItems: "flex-start", gap: 3 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
-                  <span>{icon} {label}</span>
-                  <span className="ext-icon-ml-auto" style={{ color: "var(--text-muted)" }}>{IcExt}</span>
-                </div>
-                <span className="t-caption">{desc}</span>
-              </a>
-            ))}
-          </div>
-        )}
-
-        {/* Feedback */}
-        {activeSection === "feedback" && (
-          submitted ? (
-            <div className="alert-banner alert-banner-success">
-              {IcCheck}
-              <div><div style={{ fontSize: 13, fontWeight: 600, color: "var(--success)" }}>Thanks for the feedback!</div></div>
-            </div>
-          ) : (
-            <>
-              <p className="t-caption" style={{ marginBottom: 14 }}>Feature ideas, bugs, complaints — we read everything.</p>
-              <div className="input-group">
-                <label className="input-label">Your message *</label>
-                <textarea className="input" style={{ height: 110, resize: "vertical" }} placeholder="What's on your mind?" value={feedback.message} onChange={e => setFeedback(p => ({ ...p, message: e.target.value }))} />
-              </div>
-              <div className="input-group">
-                <label className="input-label">Contact <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
-                <input className="input" placeholder="Mobile or email if you want a reply" value={feedback.contact} onChange={e => setFeedback(p => ({ ...p, contact: e.target.value }))} />
-              </div>
-              {formError && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{formError}</div>}
-              <button className="btn btn-primary btn-block" onClick={handleFeedbackSubmit} disabled={submitting}>
-                {submitting ? "Sending…" : "Send Feedback →"}
-              </button>
-            </>
-          )
-        )}
-
-        {/* FAQ */}
-        {activeSection === "faq" && (
-          <div>
-            {FAQ_ITEMS.map(([q, a], i) => (
-              <div key={i} style={{ borderBottom: "1px solid var(--border)", paddingBottom: 12, marginBottom: 12 }}>
-                <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer", width: "100%", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                  <span className="t-body" style={{ margin: 0, fontWeight: 600 }}>{q}</span>
-                  <span className="flex-none" style={{ color: "var(--text-muted)", fontSize: 18, lineHeight: 1 }}>{openFaq === i ? "−" : "+"}</span>
-                </button>
-                {openFaq === i && <p className="t-caption" style={{ marginTop: 10, marginBottom: 0 }}>{a}</p>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── ThemeToggle — module-level (Vercel: no-inline-components) ────────────────
-function ThemeToggle() {
-  const [isDark, setIsDark] = useState(() => getTheme() === "dark");
-  return (
-    <button className="theme-toggle"
-      onClick={() => { toggleTheme(); setIsDark(p => !p); }}
-      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      aria-label="Toggle theme">
-      {isDark ? IcSun : IcMoon}
-    </button>
-  );
-}
-
-// ─── PriceTicker — scrolling price strip on Track tab ─────────────────────────
-// Vercel: rendering-hoist-jsx, rerender-no-inline-components
-function PriceTicker({ mapPrices }) {
-  const items = Object.entries(mapPrices).flatMap(([city, companies]) => {
-    const prices = COMPANIES.map(c => companies[c]?.price).filter(Boolean);
-    if (!prices.length) return [];
-    const cheapest = Math.min(...prices);
-    const color = cheapest < 880 ? "var(--success)" : cheapest < 930 ? "var(--warning)" : "var(--danger)";
-    return [{ city, price: cheapest, color }];
-  });
-
-  if (!items.length) return (
-    <div className="price-ticker-wrap">
-      <div className="skeleton skeleton-text" style={{ width: "100%", height: 14 }} />
-    </div>
-  );
-
-  // Double the list for seamless CSS loop
-  const doubled = [...items, ...items];
-
-  return (
-    <div className="price-ticker-wrap" aria-label="LPG prices ticker">
-      <div className="price-ticker-inner">
-        {doubled.map(({ city, price, color }, i) => (
-          <span key={`${city}-${i}`} className="price-ticker-item">
-            <span style={{ color: "var(--text-muted)" }}>{city}</span>
-            <span style={{ color, fontWeight: 700 }}>₹{price}</span>
-            <span className="price-ticker-sep">·</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── PricesMap — module-level (Vercel: no-inline-components) ─────────────────
-function PricesMap({ contact, setContact, alertSaved, setAlertSaved, mapPrices, lastUpdated }) {
-  const mapRef = useRef(null);
-  const leafletMap = useRef(null);
-  const markersRef = useRef({});
-
-  const [selectedCity, setSelectedCity] = useState(null);
-  const [leafletLoaded, setLeafletLoaded] = useState(false);
-  const [alertSaving, setAlertSaving] = useState(false);
-  const [alertError, setAlertError] = useState("");
-
-  // mapLoading = prices not yet populated from App
-  const mapLoading = Object.keys(mapPrices).length === 0;
-
-  useEffect(() => {
-    if (window.L) { setLeafletLoaded(true); return; }
-    const link = document.createElement("link");
-    link.rel = "stylesheet"; link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-    document.head.appendChild(link);
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => setLeafletLoaded(true);
-    document.head.appendChild(script);
-  }, []);
-
-  useEffect(() => {
-    if (!leafletLoaded || leafletMap.current) return;
-    const L = window.L;
-    const INDIA = L.latLngBounds(L.latLng(6.5, 68.0), L.latLng(37.5, 97.5));
-    leafletMap.current = L.map(mapRef.current, {
-      center: [22.5, 82.0], zoom: 5, minZoom: 4, maxZoom: 8,
-      maxBounds: INDIA, maxBoundsViscosity: 1.0,
-      zoomControl: false, attributionControl: false, doubleClickZoom: false,
-    });
-    // Tile layer — respect system/user theme
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark"
-      || (!document.documentElement.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    const tileUrl = isDark
-      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-    L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(leafletMap.current);
-    L.control.zoom({ position: "bottomright" }).addTo(leafletMap.current);
-    leafletMap.current.fitBounds(INDIA, { padding: [16, 16] });
-  }, [leafletLoaded]);
-
-  useEffect(() => {
-    if (!leafletLoaded || !leafletMap.current || mapLoading) return;
-    const L = window.L;
-    Object.entries(CITY_COORDS).forEach(([city, { lat, lng }]) => {
-      const cp = mapPrices[city] || {};
-      const allP = COMPANIES.map(c => cp[c]?.price).filter(Boolean);
-      const cheap = allP.length ? Math.min(...allP) : null;
-      const color = !cheap ? "#555" : cheap < 880 ? "#16a34a" : cheap < 930 ? "#FF6B00" : "#e53e3e";
-      const icon = L.divIcon({
-        html: `<div style="position:relative;width:32px;height:32px;cursor:pointer">
-          <div style="position:absolute;inset:0;border-radius:50%;background:${color};opacity:0.18;animation:lpgPulse 2.2s ease-out infinite;"></div>
-          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:${color};box-shadow:0 0 10px ${color};border:2px solid rgba(255,255,255,0.2);"></div>
-          <div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:${color};white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,0.9);font-family:'Instrument Sans',sans-serif;">${city}</div>
-          ${cheap ? `<div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;color:#fff;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,0.9);font-family:'Instrument Sans',sans-serif;">₹${cheap}</div>` : ""}
-        </div>`,
-        className: "", iconSize: [32, 32], iconAnchor: [16, 16],
-      });
-      if (markersRef.current[city]) markersRef.current[city].remove();
-      markersRef.current[city] = L.marker([lat, lng], { icon }).addTo(leafletMap.current).on("click", () => setSelectedCity(city));
-    });
-  }, [leafletLoaded, mapPrices, mapLoading]);
-
-  // Skill: derive during render — no extra state
-  const cityData = selectedCity ? mapPrices[selectedCity] || {} : null;
-  const allSelPrices = cityData ? COMPANIES.map(c => cityData[c]?.price).filter(Boolean) : [];
-  const cheapestPrice = allSelPrices.length ? Math.min(...allSelPrices) : null;
-  const cheapestCo = cheapestPrice ? COMPANIES.find(c => cityData[c]?.price === cheapestPrice) : null;
-
-  return (
-    <div>
-      {/* Status bar — above the map frame */}
-      <div className="map-status-bar">
-        <span style={{ color: "var(--text-muted)", display: "flex", alignItems: "center" }}>{IcClock}</span>
-        <span className="t-label" style={{ color: "var(--text-muted)" }}>
-          WEEKLY · {Object.keys(mapPrices).length} CITIES · UPDATED {fmtDateTime(lastUpdated)}
-        </span>
-      </div>
-
-      {/* Map — legend floats inside as glass overlay */}
-      <div className="india-map-frame">
-        <div ref={mapRef} style={{ height: 560, width: "100%", background: "var(--bg-inset)" }} />
-
-        {/* Floating legend — bottom-left glass pill inside the frame */}
-        <div className="map-legend-overlay">
-          {[["#16a34a", "Under ₹880"], ["#FF6B00", "₹880–₹930"], ["#e53e3e", "Above ₹930"]].map(([c, l]) => (
-            <div key={l} className="legend-item">
-              <div className="legend-dot" style={{ background: c, boxShadow: `0 0 5px ${c}55` }} />
-              {l}
-            </div>
-          ))}
-        </div>
-        {(!leafletLoaded || mapLoading) && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-inset)" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-              <div className="skeleton" style={{ width: 260, height: 160, borderRadius: "var(--radius-lg)" }} />
-              <span className="t-caption">Loading map…</span>
-            </div>
-          </div>
-        )}
-
-        {/* Desktop popup */}
-        {selectedCity && cityData && (
-          <div className="city-popup city-popup-desktop neu-card" style={{ position: "absolute", top: 16, right: 16, zIndex: 1000, minWidth: 260 }}>
-            <button onClick={() => setSelectedCity(null)}
-              style={{ position: "absolute", top: 10, right: 12, color: "var(--text-muted)", fontSize: 18, background: "none", border: "none", cursor: "pointer" }}>×</button>
-            <div className="t-heading" style={{ marginBottom: 6 }}>{selectedCity}</div>
-            {cheapestCo && <div className="badge badge-success mb-card">{COMPANY_EMOJI[cheapestCo]} Cheapest · {cheapestCo} · ₹{cheapestPrice}</div>}
-            {COMPANIES.map((company, idx) => {
-              const row = cityData[company]; const isCheapest = company === cheapestCo;
-              return (
-                <div key={company} className={`stat-row${idx === COMPANIES.length - 1 ? " stat-row-last" : ""}`}>
-                  <div className="stat-label">
-                    {COMPANY_EMOJI[company]}
-                    <span style={{ fontWeight: isCheapest ? 600 : 400 }}>{company}</span>
-                    {isCheapest && <span className="badge badge-success" style={{ fontSize: 8 }}>BEST</span>}
-                  </div>
-                  <span className="stat-value" style={{ color: isCheapest ? "var(--success)" : "var(--text-primary)" }}>
-                    {row?.price ? `₹${row.price}` : "—"}
-                  </span>
-                </div>
-              );
-            })}
-            <div className="t-caption" style={{ marginTop: 10, textAlign: "right" }}>Updated {fmtDateTime(Object.values(cityData)[0]?.recorded_at)}</div>
-          </div>
-        )}
-
-        {/* Mobile bottom sheet */}
-        {selectedCity && cityData && (
-          <div className="city-sheet-overlay" onClick={() => setSelectedCity(null)}>
-            <div className="city-sheet" onClick={e => e.stopPropagation()}>
-              <div className="city-sheet-handle" />
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <div className="t-heading" style={{ fontSize: 26 }}>{selectedCity}</div>
-                  {cheapestCo && <div className="badge badge-success" style={{ marginTop: 8 }}>{COMPANY_EMOJI[cheapestCo]} Cheapest · {cheapestCo} · ₹{cheapestPrice}</div>}
-                </div>
-                <button onClick={() => setSelectedCity(null)} className="btn btn-ghost"
-                  style={{ width: 36, height: 36, padding: 0, minHeight: "auto", borderRadius: "var(--radius-sm)" }}>×</button>
-              </div>
-              {COMPANIES.map((company, idx) => {
-                const row = cityData[company]; const isCheapest = company === cheapestCo;
-                return (
-                  <div key={company} className={`stat-row${idx === COMPANIES.length - 1 ? " stat-row-last" : ""}`}>
-                    <div className="stat-label" style={{ gap: 10 }}>
-                      <span style={{ fontSize: 18 }}>{COMPANY_EMOJI[company]}</span>
-                      <span style={{ fontSize: 15, fontWeight: isCheapest ? 600 : 400 }}>{company}</span>
-                      {isCheapest && <span className="badge badge-success" style={{ fontSize: 9 }}>BEST</span>}
-                    </div>
-                    <span className="stat-value" style={{ fontSize: 20, fontWeight: 800, color: isCheapest ? "var(--success)" : "var(--text-primary)" }}>
-                      {row?.price ? `₹${row.price}` : "—"}
-                    </span>
-                  </div>
-                );
-              })}
-              <div className="t-caption" style={{ marginTop: 12, textAlign: "right" }}>Updated {fmtDateTime(Object.values(cityData)[0]?.recorded_at)}</div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Price revision alert */}
-      <div className="neu-card" style={{ marginTop: 16 }}>
-        <div className="section-title">Price Revision Alert</div>
-        <p className="t-body mb-card">Get notified before the 1st of each month — before it hits the news.</p>
-        {alertSaved ? (
-          <div className="alert-banner alert-banner-success">
-            {IcCheck}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--success)" }}>You're on the list!</div>
-              <div className="t-caption" style={{ marginTop: 2 }}>We'll notify {contact} before the next price revision.</div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="input-group">
-              <label className="input-label">Mobile or Email</label>
-              <input className="input" placeholder="Mobile number or email"
-                value={contact} onChange={e => { setContact(e.target.value); setAlertError(""); }} />
-            </div>
-            {alertError && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{alertError}</div>}
-            <button className="btn btn-primary btn-block" disabled={alertSaving}
-              onClick={async () => {
-                if (!contact.trim()) { setAlertError("Enter your mobile number or email."); return; }
-                setAlertSaving(true); setAlertError("");
-                const { error } = await supabase.from("alert_subscriptions").insert([{ contact: contact.trim(), alert_type: "price_revision" }]);
-                if (error) { setAlertError("Something went wrong. Please try again."); setAlertSaving(false); }
-                else setAlertSaved(true);
-              }}>
-              {alertSaving ? "Saving…" : "Notify Me on Price Changes →"}
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── CommercialPage ───────────────────────────────────────────────────────────
-// Vercel: rerender-no-inline-components — defined at module level
-// Option C: crisis/non-crisis mode — hero adapts, pulse dot on tab icon
-function CommercialPage({ prefilledCity = "", hasCrisis = false, crisisData = null }) {
-  // ── Lead form state ────────────────────────────────────────────────────────
-  const [bizName, setBizName] = useState("");
-  const [bizType, setBizType] = useState("");
-  const [city, setCity] = useState(prefilledCity);
-  const [phone, setPhone] = useState("");
-  const [needType, setNeedType] = useState("");
-  const [cylinders, setCylinders] = useState("");
-  const [message, setMessage] = useState("");
-  const [formError, setFormError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  // ── Vendor state ───────────────────────────────────────────────────────────
-  const [vendors, setVendors] = useState([]);
-  const [vendorsLoading, setVendorsLoading] = useState(false);
-  const [selectedCity, setSelectedCity] = useState(prefilledCity || COMMERCIAL_CITIES[0]);
-
-  // ── Supplier lead state ────────────────────────────────────────────────────
-  const [supName, setSupName] = useState("");
-  const [supCity, setSupCity] = useState(prefilledCity || COMMERCIAL_CITIES[0]);
-  const [supPhone, setSupPhone] = useState("");
-  const [supSubmitting, setSupSubmitting] = useState(false);
-  const [supSubmitted, setSupSubmitted] = useState(false);
-  const [supError, setSupError] = useState("");
-
-  // ── Fetch vendors when city changes ───────────────────────────────────────
-  useEffect(() => {
-    if (!selectedCity) return;
-    // Keep lead form city in sync with vendor city tab
-    setCity(selectedCity);
-    setVendorsLoading(true);
-    supabase
-      .from("vendors")
-      .select("*")
-      .eq("city", selectedCity)
-      .eq("active", true)
-      .order("featured", { ascending: false })
-      .order("created_at", { ascending: true })
-      .then(({ data }) => {
-        setVendors(data || []);
-        setVendorsLoading(false);
-      });
-  }, [selectedCity]);
-
-  // ── Submit lead ────────────────────────────────────────────────────────────
-  const handleSubmit = async () => {
-    if (!bizName.trim()) { setFormError("Enter your business name."); return; }
-    if (!bizType) { setFormError("Select your business type."); return; }
-    if (!city) { setFormError("Select your city."); return; }
-    if (!phone.trim()) { setFormError("Enter your phone number."); return; }
-    if (!needType) { setFormError("Tell us what you need."); return; }
-    setFormError(""); setSubmitting(true);
-    const { error } = await supabase.from("commercial_leads").insert([{
-      business_name: bizName.trim(),
-      business_type: bizType,
-      city,
-      phone: phone.trim(),
-      need_type: needType,
-      cylinders_week: cylinders ? parseInt(cylinders, 10) : null,
-      message: message.trim() || null,
-    }]);
-    if (error) { setFormError("Something went wrong. Please try again."); setSubmitting(false); }
-    else { setSubmitted(true); setSubmitting(false); }
-  };
-
-  // ── Supplier lead submit ───────────────────────────────────────────────────
-  const handleSupplierSubmit = async () => {
-    if (!supName.trim()) { setSupError("Enter your business name."); return; }
-    if (!supPhone.trim()) { setSupError("Enter your phone number."); return; }
-    setSupError(""); setSupSubmitting(true);
-    const { error } = await supabase.from("supplier_leads").insert([{
-      business_name: supName.trim(),
-      city: supCity,
-      phone: supPhone.trim(),
-    }]);
-    if (error) { setSupError("Something went wrong. Try again."); setSupSubmitting(false); }
-    else setSupSubmitted(true);
-  };
-
-  return (
-    <div className="tab-panel commercial-page">
-      {/* ── Header — crisis vs non-crisis (Option C) ── */}
-      <div className="commercial-hero">
-        {hasCrisis ? (
-          <>
-            <div className="commercial-hero-badge">
-              <span className="pulse-dot pulse-dot-danger" />
-              LIVE CRISIS — MARCH 2026
-            </div>
-            <h1 className="page-title" style={{ marginBottom: "var(--space-3)" }}>
-              No Commercial Gas?<br />Find Alternatives Now.
-            </h1>
-            <p className="page-subtitle" style={{ maxWidth: 520, marginBottom: 0 }}>
-              The Strait of Hormuz disruption has cut commercial LPG to restaurants across India.
-              Connect with verified suppliers of induction cooktops, electric ranges and more —
-              available in your city today.
-            </p>
-          </>
-        ) : (
-          <>
-            <div className="commercial-hero-badge commercial-hero-badge-neutral">
-              🏪 LPG ALTERNATIVES DIRECTORY
-            </div>
-            <h1 className="page-title" style={{ marginBottom: "var(--space-3)" }}>
-              Find Reliable Alternatives<br />Before You Need Them.
-            </h1>
-            <p className="page-subtitle" style={{ maxWidth: 520, marginBottom: 0 }}>
-              LPG shortages hit without warning. Connect with verified suppliers of induction cooktops,
-              electric ranges and more — so your business is never caught off guard.
-            </p>
-          </>
-        )}
-      </div>
-
-      {/* ── Stats bar ── */}
-      <div className="commercial-stats-bar">
-        {(hasCrisis ? [
-          ["8,000+", "Hotels & restaurants affected"],
-          ["7", "Cities covered"],
-          ["48hrs", "Avg vendor response time"],
-        ] : [
-          ["7", "Cities covered"],
-          ["Free", "Service — no middleman"],
-          ["48hrs", "Avg vendor response"],
-        ]).map(([val, label]) => (
-          <div key={label} className="commercial-stat">
-            <span className="commercial-stat-value">{val}</span>
-            <span className="t-caption">{label}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid-2col" style={{ alignItems: "start" }}>
-
-        {/* ── Left — Lead form ── */}
-        <div>
-          <div className="neu-card mb-card">
-            <div className="section-title">Get Help Today — Free</div>
-
-            {submitted ? (
-              <div className="alert-banner alert-banner-success anim-scale-in">
-                {IcCheck}
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--success)", marginBottom: 4 }}>
-                    Request submitted!
-                  </div>
-                  <p className="t-caption" style={{ margin: 0 }}>
-                    Vendors in {city} will contact you on {phone} within 24–48 hours.
-                    You can also call them directly from the cards below.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="input-group">
-                  <label className="input-label" htmlFor="cc-biz-name">Business Name *</label>
-                  <input id="cc-biz-name" className="input" placeholder="e.g. Sharma Dhaba"
-                    value={bizName} onChange={e => { setBizName(e.target.value); setFormError(""); }} />
-                </div>
-
-                <div className="input-group">
-                  <label className="input-label" htmlFor="cc-biz-type">Business Type *</label>
-                  <select id="cc-biz-type" className="input" value={bizType}
-                    onChange={e => { setBizType(e.target.value); setFormError(""); }}>
-                    <option value="">Select type…</option>
-                    {BUSINESS_TYPES.map(([val, label]) => (
-                      <option key={val} value={val}>{label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="input-group">
-                  <label className="input-label" htmlFor="cc-city">City *</label>
-                  <select id="cc-city" className="input" value={city}
-                    onChange={e => { setCity(e.target.value); setFormError(""); }}>
-                    <option value="">Select city…</option>
-                    {COMMERCIAL_CITIES.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="input-group">
-                  <label className="input-label" htmlFor="cc-phone">Phone Number *</label>
-                  <input id="cc-phone" className="input" placeholder="98xxxxxxxx"
-                    inputMode="tel" maxLength={10}
-                    value={phone} onChange={e => { setPhone(e.target.value.replace(/\D/g, "")); setFormError(""); }} />
-                </div>
-
-                <div className="input-group">
-                  <label className="input-label">What do you need? *</label>
-                  <div className="need-type-grid">
-                    {NEED_TYPES.map(([val, label]) => (
-                      <button key={val} type="button"
-                        className={`need-type-btn${needType === val ? " active" : ""}`}
-                        onClick={() => { setNeedType(val); setFormError(""); }}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="input-group">
-                  <label className="input-label" htmlFor="cc-cylinders">
-                    Cylinders per week{" "}
-                    <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
-                      (optional — helps vendors prepare)
-                    </span>
-                  </label>
-                  <input id="cc-cylinders" className="input" placeholder="e.g. 4"
-                    inputMode="numeric" maxLength={2}
-                    value={cylinders} onChange={e => setCylinders(e.target.value.replace(/\D/g, ""))} />
-                </div>
-
-                <div className="input-group">
-                  <label className="input-label" htmlFor="cc-message">
-                    Anything else{" "}
-                    <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
-                      (optional)
-                    </span>
-                  </label>
-                  <textarea id="cc-message" className="input" style={{ height: 80, resize: "vertical" }}
-                    placeholder="e.g. Need delivery by tomorrow, budget is ₹50,000…"
-                    value={message} onChange={e => setMessage(e.target.value)} />
-                </div>
-
-                {formError && (
-                  <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 12 }}>
-                    {formError}
-                  </div>
-                )}
-
-                <button className="btn btn-primary btn-block" onClick={handleSubmit} disabled={submitting}>
-                  {submitting ? "Submitting…" : "Find Alternatives in My City →"}
-                </button>
-
-                <p className="t-caption" style={{ textAlign: "center", marginTop: 10 }}>
-                  Free service. Vendors contact you directly. No middleman.
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* ── Crisis context card — only in crisis mode ── */}
-          {hasCrisis ? (
-            <div className="alert-banner alert-banner-danger mb-card">
-              <span className="flex-none" style={{ fontSize: 20 }}>🚨</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--danger)", marginBottom: 4 }}>
-                  Why is this happening?
-                </div>
-                <p className="t-caption" style={{ margin: 0 }}>
-                  The Strait of Hormuz disruption has cut India's LPG imports.
-                  The government has prioritised domestic supply — commercial
-                  kitchens are last in line. This is not your distributor's fault.
-                  Alternatives are the only reliable solution right now.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="alert-banner alert-banner-warning mb-card">
-              <span className="flex-none" style={{ fontSize: 20 }}>💡</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--warning)", marginBottom: 4 }}>
-                  Why connect now?
-                </div>
-                <p className="t-caption" style={{ margin: 0 }}>
-                  LPG shortages can cut supply within days. Restaurants that already
-                  have an induction or electric backup suffer zero downtime.
-                  Find your supplier before there's a crisis.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ── Rights card ── */}
-          <div className="neu-card">
-            <div className="section-title">Your Rights as a Business</div>
-            {[
-              ["🛡", "Overcharging is illegal", "MRP is printed on the cylinder. Any price above that is a violation of the Essential Commodities Act."],
-              ["📞", "Call 1906 for complaints", "National LPG helpline. Free, 24/7, available in Hindi and regional languages."],
-              ["🌐", "File at pgportal.gov.in", "Government grievance portal. Lodge a formal complaint if supply is withheld."],
-            ].map(([icon, title, desc]) => (
-              <div key={title} className="stat-row" style={{ alignItems: "flex-start", gap: "var(--space-3)" }}>
-                <span className="flex-none" style={{ fontSize: 16, marginTop: 2 }}>{icon}</span>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 3 }}>{title}</div>
-                  <p className="t-caption" style={{ margin: 0 }}>{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Right — Vendor cards ── */}
-        <div>
-          {/* City filter */}
-          <div className="commercial-city-tabs mb-card">
-            {COMMERCIAL_CITIES.map(c => (
-              <button key={c}
-                className={`commercial-city-tab${selectedCity === c ? " active" : ""}`}
-                onClick={() => setSelectedCity(c)}>
-                {c}
-              </button>
-            ))}
-          </div>
-
-          <div className="t-label mb-card" style={{ paddingLeft: 2 }}>
-            Verified suppliers in {selectedCity}
-          </div>
-
-          {vendorsLoading ? (
-            [1, 2, 3].map(i => (
-              <div key={i} className="neu-card mb-card">
-                <div className="skeleton skeleton-heading" style={{ width: "60%", marginBottom: 12 }} />
-                <div className="skeleton skeleton-text" style={{ width: "90%", marginBottom: 8 }} />
-                <div className="skeleton skeleton-text" style={{ width: "70%" }} />
-              </div>
-            ))
-          ) : vendors.length === 0 ? (
-            <div className="vendor-coming-soon neu-card mb-card">
-              <div className="vendor-coming-soon-icon">🏗</div>
-              <div className="t-subheading" style={{ marginBottom: 6 }}>
-                Verified Suppliers — Coming Soon
-              </div>
-              <p className="t-caption" style={{ marginBottom: 0 }}>
-                We're onboarding suppliers in {selectedCity} right now.
-                Submit your request above and we'll match you manually within 24 hours.
-              </p>
-            </div>
-          ) : vendors.map(v => {
-            const meta = CATEGORY_META[v.category] || CATEGORY_META.other;
-            return (
-              <div key={v.id} className={`neu-card mb-card vendor-card${v.featured ? " vendor-card-featured" : ""}`}>
-                {v.featured ? <div className="vendor-featured-badge">⭐ Featured Supplier</div> : null}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                  <div className="t-subheading" style={{ flex: 1, paddingRight: 8 }}>{v.name}</div>
-                  <span className="badge" style={{ background: meta.bg, color: meta.color, border: `1px solid ${meta.border}`, flexShrink: 0 }}>
-                    {meta.label}
-                  </span>
-                </div>
-                {v.tagline ? <p className="t-body" style={{ marginBottom: 14 }}>{v.tagline}</p> : null}
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {v.whatsapp ? (
-                    <a href={`https://wa.me/${v.whatsapp}`} target="_blank" rel="noopener noreferrer"
-                      className="btn btn-primary" style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13, flex: 1, minWidth: 130 }}>
-                      {IcWhatsApp} WhatsApp
-                    </a>
-                  ) : null}
-                  {v.phone ? (
-                    <a href={`tel:${v.phone}`} className="btn btn-ghost"
-                      style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13, flex: 1, minWidth: 110 }}>
-                      {IcPhone} Call
-                    </a>
-                  ) : null}
-                  {v.website ? (
-                    <a href={v.website} target="_blank" rel="noopener noreferrer"
-                      className="btn btn-ghost" style={{ minHeight: "auto", padding: "8px 14px", fontSize: 13 }}>
-                      {IcExt}
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* ── Are you a supplier? — form + WhatsApp ── */}
-          <div className="neu-card supplier-cta-card">
-            <div className="supplier-cta-header">
-              <span className="supplier-cta-icon">🏪</span>
-              <div>
-                <div className="t-subheading" style={{ marginBottom: 3 }}>Are you a supplier?</div>
-                <p className="t-caption" style={{ margin: 0 }}>
-                  List your business and reach owners actively looking for alternatives.
-                  ₹3,000/month — get direct leads.
-                </p>
-              </div>
-            </div>
-
-            {supSubmitted ? (
-              <div className="alert-banner alert-banner-success anim-scale-in" style={{ marginBottom: 0 }}>
-                {IcCheck}
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--success)" }}>
-                    Request received!
-                  </div>
-                  <p className="t-caption" style={{ margin: 0 }}>
-                    We'll reach out to you on {supPhone} within 24 hours.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="supplier-cta-form">
-                  <div className="input-group" style={{ marginBottom: "var(--space-3)" }}>
-                    <label className="input-label" htmlFor="sup-name">Business Name *</label>
-                    <input id="sup-name" className="input" placeholder="e.g. Rajesh Induction Traders"
-                      value={supName} onChange={e => { setSupName(e.target.value); setSupError(""); }} />
-                  </div>
-                  <div className="input-group" style={{ marginBottom: "var(--space-3)" }}>
-                    <label className="input-label" htmlFor="sup-city">City *</label>
-                    <select id="sup-city" className="input" value={supCity}
-                      onChange={e => setSupCity(e.target.value)}>
-                      {COMMERCIAL_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div className="input-group" style={{ marginBottom: "var(--space-3)" }}>
-                    <label className="input-label" htmlFor="sup-phone">Phone Number *</label>
-                    <input id="sup-phone" className="input" placeholder="98xxxxxxxx"
-                      inputMode="tel" maxLength={10}
-                      value={supPhone} onChange={e => { setSupPhone(e.target.value.replace(/\D/g, "")); setSupError(""); }} />
-                  </div>
-                  {supError ? <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{supError}</div> : null}
-                  <button className="btn btn-primary btn-block" onClick={handleSupplierSubmit} disabled={supSubmitting}
-                    style={{ marginBottom: "var(--space-3)" }}>
-                    {supSubmitting ? "Submitting…" : "Get Listed — ₹3,000/month →"}
-                  </button>
-                </div>
-
-                <div className="supplier-cta-divider">
-                  <span>or</span>
-                </div>
-
-                <a
-                  href="https://wa.me/919676460307?text=Hi%2C%20I%27d%20like%20to%20list%20my%20business%20on%20CylinderCheck."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-whatsapp btn-block"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                  </svg>
-                  Message on WhatsApp
-                </a>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Task 7 — Track Rethink: module-level constants + components ──────────────
-// Vercel: rerender-no-inline-components, rendering-hoist-jsx
-
-// localStorage schema version — bump to "v2" to force-clear stale saves
-const CC_USER_VERSION = "v1";
-const CC_LS_KEY = `cc-user:${CC_USER_VERSION}`;
-
-// Cylinder level options — explicit lookup (patterns-explicit-variants)
-const CYLINDER_LEVELS = [
-  { id: "full",     label: "Full",     emoji: "🟦", days: 20 },
-  { id: "half",     label: "Half",     emoji: "🔵", days: 12 },
-  { id: "low",      label: "Low",      emoji: "🟠", days: 5  },
-  { id: "critical", label: "Critical", emoji: "🔴", days: 2  },
-];
-
-// Company options for picker — mirrors COMPANIES array with display labels
-const COMPANY_PICKER_OPTS = [
-  { id: "IndianOil", label: "IndianOil", short: "IOC",  emoji: "🔵" },
-  { id: "HP Gas",    label: "HP Gas",    short: "HP",   emoji: "🟡" },
-  { id: "Bharat Gas",label: "Bharat Gas",short: "BG",   emoji: "🟢" },
-];
-
-// 4-button segmented control for cylinder fill level
-function CylinderLevelSelector({ value, onChange }) {
-  return (
-    <div className="cylinder-level-selector" role="group" aria-label="Cylinder fill level">
-      <div className="cylinder-level-label">Cylinder Level <span className="cylinder-level-optional">(optional — improves score)</span></div>
-      <div className="cylinder-level-buttons">
-        {CYLINDER_LEVELS.map(lvl => (
-          <button
-            key={lvl.id}
-            type="button"
-            className={`cylinder-level-btn${value === lvl.id ? " active" : ""}`}
-            onClick={() => onChange(value === lvl.id ? null : lvl.id)}
-            aria-pressed={value === lvl.id}
-            title={`~${lvl.days} days remaining`}
-          >
-            <span className="cylinder-level-emoji">{lvl.emoji}</span>
-            <span>{lvl.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// 3-button company picker
-function CompanyPicker({ value, onChange, compact = false }) {
-  return (
-    <div className={`company-picker${compact ? " company-picker-compact" : ""}`} role="group" aria-label="LPG company">
-      {!compact && <div className="cylinder-level-label">Your Gas Company <span className="cylinder-level-optional">(optional)</span></div>}
-      <div className="company-picker-buttons">
-        {COMPANY_PICKER_OPTS.map(co => (
-          <button
-            key={co.id}
-            type="button"
-            className={`company-btn${value === co.id ? " active" : ""}`}
-            onClick={() => onChange(value === co.id ? null : co.id)}
-            aria-pressed={value === co.id}
-          >
-            <span>{co.emoji}</span>
-            <span>{compact ? co.short : co.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Task 11 — LPG Guide Page: module-level constants + components ────────────
-const GuideSection1Content = (
-  <div className="guide-content-block">
-    <p className="t-body">
-      <strong>The 25-Day Rule:</strong> By official government regulation, there is a mandatory <strong>25-day gap</strong> required between domestic LPG cylinder bookings in urban areas (45 days in rural areas). You cannot book a refill until this period has passed since your last delivery.
-    </p>
-    <p className="t-body">
-      <strong>Subsidized Limits:</strong> Households are entitled to book up to 15 domestic (14.2 kg) cylinders per financial year. Of these, 12 cylinders are provided at subsidized rates for eligible consumers. Any additional cylinders must be purchased at market rates.
-    </p>
-    <p className="t-body">
-      <strong>Why Shortages Happen:</strong> Localized shortages are usually temporary logistical bottlenecks between bottling plants and local distributors, often exacerbated during festive seasons or by global energy supply disruptions.
-    </p>
-  </div>
-);
-
-const GuideSection2Content = (
-  <div className="guide-content-block">
-    <p className="t-caption" style={{ marginBottom: 16 }}>A few practices that genuinely help extend your cylinder life:</p>
-    <div className="guide-tip-row">
-      <span className="guide-tip-emoji">🫘</span>
-      <div>
-        <strong>Soak dal, rajma, and chana overnight:</strong> Cuts cooking time by nearly half.
-      </div>
-    </div>
-    <div className="guide-tip-row">
-      <span className="guide-tip-emoji">🔥</span>
-      <div>
-        <strong>Switch off the flame 2 minutes early:</strong> Residual heat finishes the job.
-      </div>
-    </div>
-    <div className="guide-tip-row">
-      <span className="guide-tip-emoji">🍳</span>
-      <div>
-        <strong>Match vessel size to the burner:</strong> A small vessel on a large burner wastes gas.
-      </div>
-    </div>
-    <div className="guide-tip-row">
-      <span className="guide-tip-emoji">🥘</span>
-      <div>
-        <strong>Always cook with lids on:</strong> Food cooks faster, uses less gas.
-      </div>
-    </div>
-    <div className="guide-tip-row">
-      <span className="guide-tip-emoji">✨</span>
-      <div>
-        <strong>Clean burner holes regularly:</strong> Clogged holes reduce flame efficiency (look for a hot blue flame, not a yellow one).
-      </div>
-    </div>
-  </div>
-);
-
-const GuideSection3Content = (
-  <div className="guide-content-block">
-    <div className="alert-banner alert-banner-warning" style={{ marginBottom: 16 }}>
-      <span style={{ fontSize: 18, marginRight: 8 }}>⚠️</span>
-      <p className="t-caption" style={{ margin: 0 }}><strong>Do not panic buy.</strong> Hoarding cylinders in the black market drives up prices and worsens the shortage for your community.</p>
-    </div>
-    <ul className="guide-list">
-      <li><strong>Check the Tracker:</strong> If CylinderCheck shows a high urgency score for your PIN, book exactly on the 25th day since your last delivery. Do not wait for the cylinder to empty.</li>
-      <li><strong>Use Electrical Alternatives:</strong> Temporarily offset cooking load to induction cooktops or microwaves if delivery takes longer than 10 days.</li>
-      <li><strong>Verify Other Agencies:</strong> Sometimes a shortage only affects one supply chain (e.g. IOCL). Ask neighbors if HP or Bharat Gas deliveries are on time in your specific area.</li>
-    </ul>
-  </div>
-);
-
-const GuideSection4Content = (
-  <div className="guide-content-block">
-    <div className="guide-tip-row">
-      <span className="guide-tip-emoji">⚖️</span>
-      <div>
-        <strong>Mandatory Weight Check:</strong> You have the right to ask the delivery person to weigh the cylinder in front of you. They are required by law to carry a spring balance.
-      </div>
-    </div>
-    <div className="guide-tip-row">
-      <span className="guide-tip-emoji">🛑</span>
-      <div>
-        <strong>Overcharging is Illegal:</strong> Delivery personnel cannot force you to pay above the printed cash memo amount under any circumstances.
-      </div>
-    </div>
-    <div className="guide-tip-row">
-      <span className="guide-tip-emoji">📞</span>
-      <div>
-        <strong>Grievance Helplines:</strong>
-        <ul style={{ margin: "4px 0 0", paddingLeft: 20, fontSize: 13, color: "var(--text-secondary)" }}>
-          <li>National LPG Leakage & Emergency: <strong>1906</strong> (24x7)</li>
-          <li>Indane / HP Gas Toll-Free: <strong>1800-2333-555</strong></li>
-          <li>Bharat Gas Smartline: <strong>1800-22-4344</strong></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-);
-
-const GuideSection5Content = (
-  <div className="guide-content-block" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-    <a href="https://www.mylpg.in/" target="_blank" rel="noopener noreferrer" className="neu-card guide-quick-ref-card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <div className="t-label" style={{ marginBottom: 2 }}>MyLPG.in Portal</div>
-          <div className="t-caption">Official central hub for all LPG services</div>
-        </div>
-        <span style={{ color: "var(--accent)" }}>↗</span>
-      </div>
-    </a>
-    <a href="https://web.umang.gov.in/landing/" target="_blank" rel="noopener noreferrer" className="neu-card guide-quick-ref-card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <div className="t-label" style={{ marginBottom: 2 }}>UMANG App</div>
-          <div className="t-caption">Govt app for booking and managing subsidies</div>
-        </div>
-        <span style={{ color: "var(--accent)" }}>↗</span>
-      </div>
-    </a>
-  </div>
-);
-
-const GUIDE_SECTIONS = [
-  { id: "cylinder",     emoji: "🪔", title: "Understanding Your Cylinder", content: GuideSection1Content },
-  { id: "conservation", emoji: "💡", title: "Conservation Tips",           content: GuideSection2Content },
-  { id: "shortage",     emoji: "🚨", title: "During a Shortage",           content: GuideSection3Content },
-  { id: "rights",       emoji: "🛡", title: "Know Your Rights",            content: GuideSection4Content },
-  { id: "reference",    emoji: "🔗", title: "Quick Reference",             content: GuideSection5Content },
-];
-
-function GuideAccordionItem({ id, emoji, title, isOpen, onToggle, children }) {
-  return (
-    <div className={`guide-accordion-item${isOpen ? " open" : ""}`}>
-      <button className="guide-accordion-header" onClick={() => onToggle(id)}>
-        <span className="guide-accordion-title"><span style={{ marginRight: 10, fontSize: 18 }}>{emoji}</span>{title}</span>
-        <span className="guide-accordion-chevron">{IcChevronRight}</span>
-      </button>
-      <div className="guide-accordion-body">
-        <div className="guide-accordion-content-inner">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function GuideAccordion({ defaultOpen, onBack }) {
-  const [openId, setOpenId] = useState(() => defaultOpen || null);
-  
-  return (
-    <div className="tab-panel" style={{ padding: "16px 20px" }}>
-      <button className="guide-back-btn" onClick={onBack}>
-        <span style={{ transform: "rotate(180deg)" }}>{IcChevronRight}</span> Back to app
-      </button>
-      <h1 className="page-title" style={{ marginTop: 24 }}>LPG Survival Guide</h1>
-      <p className="page-subtitle" style={{ marginBottom: 24 }}>Official rules, conservation practices, and your rights as a consumer.</p>
-      
-      <div className="guide-accordion">
-        {GUIDE_SECTIONS.map(sec => (
-          <GuideAccordionItem 
-            key={sec.id} 
-            {...sec} 
-            isOpen={openId === sec.id} 
-            onToggle={id => setOpenId(prev => prev === id ? null : id)}
-          >
-            {sec.content}
-          </GuideAccordionItem>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Task 9 — News Tab: module-level constants + components ───────────────────
-// Vercel: js-hoist-regexp — compile exactly once at module load
-const RE_SHORTAGE = /shortage|delay|disruption|supply|scarcity|crisis/i;
-const RE_PRICE    = /price|rate|hike|revision|subsidy|cost|expensive/i;
-const RE_POLICY   = /ministry|government|policy|rule|regulation|announce/i;
-
-function getCategory(title) {
-  if (RE_SHORTAGE.test(title)) return "Shortage Signals";
-  if (RE_PRICE.test(title))    return "Price & Rates";
-  if (RE_POLICY.test(title))   return "Policy";
-  return "General";
-}
-
-const CITY_COORDS = {
-  "Delhi": [28.6139, 77.2090], "Mumbai": [19.0760, 72.8777],
-  "Bangalore": [12.9716, 77.5946], "Chennai": [13.0827, 80.2707],
-  "Kolkata": [22.5726, 88.3639], "Hyderabad": [17.3850, 78.4867],
-  "Pune": [18.5204, 73.8567], "Ahmedabad": [23.0225, 72.5714],
-  "Jaipur": [26.9124, 75.7873], "Lucknow": [26.8467, 80.9462],
-  "Kanpur": [26.4499, 80.3319], "Nagpur": [21.1458, 79.0882],
-  "Indore": [22.7196, 75.8577], "Bhopal": [23.2599, 77.4126],
-  "Vizag": [17.6868, 83.2185]
-};
-const CITY_KEYS_LOWER = Object.keys(CITY_COORDS).map(c => c.toLowerCase());
-
-function getCity(title) {
-  const t = title.toLowerCase();
-  for (let c of CITY_KEYS_LOWER) {
-    if (t.includes(c)) return CITY_COORDS[Object.keys(CITY_COORDS).find(k => k.toLowerCase() === c) || c] ? c : null;
-  }
-  return null;
-}
-
-// Map component — reuses dynamic inject from old PricesMap
-// Vercel: bundle-defer-third-party — loads Leaflet only when News tab active
-function NewsMap({ cityHasNews, selectedCity, onSelectCity, centerCoords }) {
-  const mapRef = useRef(null);
-  const mapInst = useRef(null);
-  const L_ref = useRef(null);
-
-  useEffect(() => {
-    let unmounted = false;
-    const initMap = async () => {
-      if (!window.L) {
-        if (!document.querySelector('link[href*="leaflet@"]')) {
-          const lk = document.createElement("link");
-          lk.rel = "stylesheet";
-          lk.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-          document.head.appendChild(lk);
-        }
-        await new Promise(r => {
-          const sc = document.createElement("script");
-          sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-          sc.onload = r;
-          document.head.appendChild(sc);
-        });
-      }
-      if (unmounted) return;
-      L_ref.current = window.L;
-      if (!mapInst.current && mapRef.current) {
-        mapInst.current = L_ref.current.map(mapRef.current, {
-          center: centerCoords || [22.5, 78.5], // Center of India
-          zoom: 4,
-          zoomControl: false,
-          maxBounds: [[6.5, 68], [35.5, 97]],
-        });
-        L_ref.current.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-          attribution: "© OpenStreetMap © CARTO", subdomains: "abcd", maxZoom: 19
-        }).addTo(mapInst.current);
-      }
-      drawMarkers();
-    };
-
-    const drawMarkers = () => {
-      if (!mapInst.current || !L_ref.current) return;
-      mapInst.current.eachLayer(l => { if (l instanceof L_ref.current.Marker) mapInst.current.removeLayer(l); });
-      Object.entries(CITY_COORDS).forEach(([city, coords]) => {
-        const hasNews = !!cityHasNews[city.toLowerCase()];
-        const isSelected = selectedCity === city.toLowerCase();
-        // Vercel: rendering-animate-svg-wrapper — pulse animation on div, not svg
-        const iconHtml = `
-          <div class="news-map-marker${isSelected ? ' active' : ''}">
-            <div class="news-map-dot"></div>
-            ${hasNews ? '<div class="news-map-pulse anim-pulse"></div>' : ''}
-          </div>
-        `;
-        const icon = L_ref.current.divIcon({ html: iconHtml, className: "", iconSize: [24, 24], iconAnchor: [12, 12] });
-        const marker = L_ref.current.marker(coords, { icon }).addTo(mapInst.current);
-        marker.on("click", () => onSelectCity(isSelected ? null : city.toLowerCase()));
-      });
-    };
-
-    initMap();
-    return () => { unmounted = true; };
-  }, [cityHasNews, selectedCity, onSelectCity, centerCoords]);
-
-  return <div ref={mapRef} style={{ height: "100%", width: "100%", background: "#f8f9fa" }} />;
-}
-
-// ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [tab, setTab] = useState("track");
-  const [page, setPage] = useState(null); // null | "guide" — parallel to tab, replaces content-area
-  const [pin, setPin] = useState("");
-  const [lastBooking, setLastBooking] = useState("");
-  const [pinData, setPinData] = useState(null);
-  const [bookingResult, setBookingResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const resultRef = useRef(null); // scroll-into-view after track lookup
+  // ── Tab state ────────────────────────────────────────────
+  const [tab, setTab] = useState('track')
 
-  const [reports, setReports] = useState([]);
-  const [reportText, setReportText] = useState("");
-  const [reportPin, setReportPin] = useState("");
-  const [reportCity, setReportCity] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitOk, setSubmitOk] = useState(false);
-  const [votes, setVotes] = useState({});
+  // ── Track tab ────────────────────────────────────────────
+  const [pin, setPin] = useState('')
+  const [lastBooking, setLastBooking] = useState('')
+  const [pinData, setPinData] = useState(null)
+  const [bookingResult, setBookingResult] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [cylinderLevel, setCylinderLevel] = useState(null)
+  const resultRef = useRef(null)
 
-  const [contact, setContact] = useState("");
-  const [alertPin, setAlertPin] = useState("");
-  const [alertDate, setAlertDate] = useState("");
-  const [alertSaved, setAlertSaved] = useState(false);
-  const [freeAlertSaving, setFreeAlertSaving] = useState(false);
-  const [freeAlertError, setFreeAlertError] = useState("");
+  // ── Reports ──────────────────────────────────────────────
+  const [reports, setReports] = useState([])
+  const [reportText, setReportText] = useState('')
+  const [reportPin, setReportPin] = useState('')
+  const [reportCity, setReportCity] = useState('')
+  const [reportDeliveryDays, setReportDeliveryDays] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitOk, setSubmitOk] = useState(false)
+  const [votes, setVotes] = useState({})
+  const [editingReportId, setEditingReportId] = useState(null)
+  const [editingText, setEditingText] = useState('')
 
-  const [payContact, setPayContact] = useState("");
-  const [payPin, setPayPin] = useState("");
-  const [paying, setPaying] = useState(false);
-  const [paySuccess, setPaySuccess] = useState(false);
-  const [payError, setPayError] = useState("");
+  // ── Alerts ───────────────────────────────────────────────
+  const [contact, setContact] = useState('')
+  const [alertPin, setAlertPin] = useState('')
+  const [alertDate, setAlertDate] = useState('')
+  const [alertSaved, setAlertSaved] = useState(false)
+  const [freeAlertSaving, setFreeAlertSaving] = useState(false)
+  const [freeAlertError, setFreeAlertError] = useState('')
 
-  const [logoClicks, setLogoClicks] = useState(0);
-  const [showAdminPrompt, setShowAdminPrompt] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
-  const [adminData, setAdminData] = useState(null);
-  const [adminLoading, setAdminLoading] = useState(false);
+  // ── Payment ──────────────────────────────────────────────
+  const [payContact, setPayContact] = useState('')
+  const [payPin, setPayPin] = useState('')
+  const [paying, setPaying] = useState(false)
+  const [paySuccess, setPaySuccess] = useState(false)
+  const [payError, setPayError] = useState('')
 
-  const [news, setNews] = useState([]);
-  const [newsLoading, setNewsLoading] = useState(false);
-  // Task 9: transient state for map filtering
-  const [selectedNewsCity, setSelectedNewsCity] = useState(null);
-  const [shortageSummary, setShortageSummary] = useState(null);
-  const newsLastFetched = useRef(null); // Vercel: rerender-use-ref-transient-values
+  // ── Admin ────────────────────────────────────────────────
+  const [logoClicks, setLogoClicks] = useState(0)
+  const [showAdminPrompt, setShowAdminPrompt] = useState(false)
+  const [adminPassword, setAdminPassword] = useState('')
+  const [adminUnlocked, setAdminUnlocked] = useState(false)
+  const [adminData, setAdminData] = useState(null)
+  const [adminLoading, setAdminLoading] = useState(false)
 
-  // Hoisted price state — shared by PriceTicker (Track tab) + PricesMap (Prices tab)
-  // Vercel: state-lift-state — avoids duplicate Supabase query across tabs
-  const [mapPrices, setMapPrices] = useState({});
-  const [pricesLastUpdated, setPricesLastUpdated] = useState(null);
+  // ── News ─────────────────────────────────────────────────
+  const [news, setNews] = useState([])
+  const [newsLoading, setNewsLoading] = useState(false)
+  const [shortageSummary, setShortageSummary] = useState(null)
+  const newsLastFetched = useRef(null)
 
-  // Auth state
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  // ── Prices ───────────────────────────────────────────────
+  const [mapPrices, setMapPrices] = useState({})
+  const [pricesLastUpdated, setPricesLastUpdated] = useState(null)
 
-  // Support modal
-  const [showSupport, setShowSupport] = useState(false);
+  // ── Auth ─────────────────────────────────────────────────
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
 
-  // Report extras
-  const [reportDeliveryDays, setReportDeliveryDays] = useState("");
-  const [editingReportId, setEditingReportId] = useState(null);
-  const [editingText, setEditingText] = useState("");
+  // ── UI ───────────────────────────────────────────────────
+  const [showSupport, setShowSupport] = useState(false)
 
-  // ── Task 7 — Track Rethink state ─────────────────────────────────────────────
-  // Vercel: rerender-lazy-state-init — localStorage read in initializer, not effect
-  const [savedUser, setSavedUser] = useState(() => {
-    try { const r = localStorage.getItem(CC_LS_KEY); return r ? JSON.parse(r) : null; }
-    catch { return null; }
-  });
-  const [cylinderLevel, setCylinderLevel] = useState(null);
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [showBookingDateToggle, setShowBookingDateToggle] = useState(false);
-  const [showUpiGuide, setShowUpiGuide] = useState(false);
-  const [deliveryRange, setDeliveryRange] = useState(null); // { low, high } days
-  
-  // ── Task 8 — Reports Tab state ───────────────────────────────────────────────
-  // Pre-fill from tracked company if available
-  const [reportCompany, setReportCompany] = useState(() => {
-    try { const r = localStorage.getItem(CC_LS_KEY); return r ? JSON.parse(r)?.company || null : null; }
-    catch { return null; }
-  });
-
-  // Ref used to open Guide to a specific section without triggering re-render
-  // Vercel: rerender-use-ref-transient-values
-  const guideOpenSectionRef = useRef(null);
-
-  // Restore tab after OAuth redirect (sessionStorage round-trip)
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem("cc-post-auth-tab");
-      if (saved) { setTab(saved); sessionStorage.removeItem("cc-post-auth-tab"); }
-    } catch { /* private mode */ }
-  }, []);
-
-  // ── Data fetches ────────────────────────────────────────────────────────────
-  // Auth session
+  // ── Auth effect ──────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setAuthLoading(false);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-  useEffect(() => {
-    supabase.from("reports").select("pin, city, created_at")
-      .gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString())
-      .then(({ data }) => {
-        if (!data?.length) { setShortageSummary(null); return; }
-        const pinCounts = {}, pinCities = {};
-        for (const r of data) { pinCounts[r.pin] = (pinCounts[r.pin] || 0) + 1; if (r.city) pinCities[r.pin] = r.city; }
-        const active = Object.entries(pinCounts).filter(([, n]) => n >= 2);
-        if (!active.length) { setShortageSummary(null); return; }
-        const hot = active.toSorted((a, b) => b[1] - a[1])[0];
-        setShortageSummary({ activePinCount: active.length, totalReports: data.length, hotspot: pinCities[hot[0]] || `PIN ${hot[0]}`, hotspotReports: hot[1] });
-      });
-  }, []);
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
+  // ── Prices & shortage summary effect ────────────────────
   useEffect(() => {
-    supabase.from("reports").select("*").order("votes", { ascending: false }).limit(20)
-      .then(({ data }) => data && setReports(data));
-  }, []);
-
-  // Hoist lpg_prices fetch — shared by PriceTicker + PricesMap (Vercel: state-lift-state)
-  useEffect(() => {
-    supabase.from("lpg_prices").select("*").order("recorded_at", { ascending: false })
+    supabase.from('lpg_prices').select('*').order('recorded_at', { ascending: false })
       .then(({ data }) => {
-        if (!data) return;
-        const grouped = {};
-        let latest = null;
+        if (!data) return
+        const grouped = {}
         for (const row of data) {
-          if (!grouped[row.city]) grouped[row.city] = {};
+          if (!grouped[row.city]) grouped[row.city] = {}
           if (!grouped[row.city][row.company]) {
-            grouped[row.city][row.company] = { price: row.price, recorded_at: row.recorded_at };
-            if (!latest || row.recorded_at > latest) latest = row.recorded_at;
+            grouped[row.city][row.company] = { price: row.price }
+            if (!pricesLastUpdated || new Date(row.recorded_at) > new Date(pricesLastUpdated)) {
+              setPricesLastUpdated(row.recorded_at)
+            }
           }
         }
-        setMapPrices(grouped);
-        setPricesLastUpdated(latest);
-      });
-  }, []);
+        setMapPrices(grouped)
+      })
 
-  const fetchNews = useCallback((force = false) => {
-    const STALE_MS = 5 * 60 * 1000; // 5 minutes
-    if (!force && newsLastFetched.current && Date.now() - newsLastFetched.current < STALE_MS) return;
-    setNewsLoading(true);
-    fetch(`${SUPABASE_FUNC_URL}/lpg-news`, { headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}` } })
-      .then(r => r.json())
-      .then(d => {
-        if (d.ok && d.articles?.length) {
-          setNews(d.articles.map(a => ({ title: a.title, source: a.source, link: a.link, pubDate: new Date(a.pubDate) })));
-          newsLastFetched.current = Date.now();
+    supabase.from('reports').select('pin, city, created_at')
+      .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString())
+      .then(({ data }) => {
+        if (!data?.length) return
+        const pinCounts = {}, pinCities = {}
+        data.forEach(r => {
+          pinCounts[r.pin] = (pinCounts[r.pin] || 0) + 1
+          if (r.city) pinCities[r.pin] = r.city
+        })
+        const active = Object.entries(pinCounts).filter(([, n]) => n >= 2)
+        if (active.length) {
+          const hot = active.sort((a, b) => b[1] - a[1])[0]
+          setShortageSummary({
+            activePinCount: active.length,
+            totalReports: data.length,
+            hotspot: pinCities[hot[0]] || `PIN ${hot[0]}`,
+            hotspotReports: hot[1],
+          })
         }
       })
-      .catch(() => { }).finally(() => setNewsLoading(false));
-  }, []);
+  }, [])
 
-  useEffect(() => { if (tab === "news") fetchNews(); }, [tab, fetchNews]);
+  // ── Handlers ─────────────────────────────────────────────
+  const handleTrack = useCallback(async () => {
+    if (!pin || pin.length !== 6) { setError('Enter a valid 6-digit PIN code.'); return }
+    setError(''); setLoading(true); setPinData(null); setBookingResult(null)
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleTrack = async () => {
-    if (!pin || pin.length !== 6) { setError("Enter a valid 6-digit PIN code."); return; }
-    setError(""); setLoading(true); setPinData(null); setBookingResult(null); setDeliveryRange(null);
-    // Vercel: async-parallel — all 4 fetches in one Promise.all, RPC is 4th
     const [{ data: dbData }, location, { data: recentReports }, { data: rpcAvgData }] = await Promise.all([
-      supabase.from("pin_data").select("*").eq("pin", pin).single(),
+      supabase.from('pin_data').select('*').eq('pin', pin).single(),
       lookupPIN(pin),
-      supabase.from("reports").select("id, created_at").eq("pin", pin).gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString()),
-      supabase.rpc("get_avg_delivery_days", { p_pin: pin }),
-    ]);
-    const reportCount = recentReports?.length || 0;
-    const hasShortage = reportCount >= 2;
-    const last7 = (recentReports || []).filter(r => new Date(r.created_at) > new Date(Date.now() - 7 * 86400000)).length;
-    const prior7 = reportCount - last7;
-    const trend = last7 > prior7 + 1 ? "worsening" : last7 < prior7 ? "improving" : "stable";
-    // Avg delivery: pin_data table → RPC community avg → null (show message)
-    const avgDays = typeof dbData?.avg_days === "number"
+      supabase.from('reports').select('id, created_at').eq('pin', pin)
+        .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString()),
+      supabase.rpc('get_avg_delivery_days', { p_pin: pin }),
+    ])
+
+    const reportCount = recentReports?.length || 0
+    const last7 = (recentReports || []).filter(r => new Date(r.created_at) > new Date(Date.now() - 7 * 86400000)).length
+    const prior7 = reportCount - last7
+    const trend = last7 > prior7 + 1 ? 'worsening' : last7 < prior7 ? 'improving' : 'stable'
+
+    const avgDays = typeof dbData?.avg_days === 'number'
       ? dbData.avg_days
-      : (typeof rpcAvgData === "number" ? rpcAvgData : null);
-    // Delivery range: base ± 2, +3 if active shortage, +5 if severe
-    if (avgDays !== null) {
-      const buf = reportCount >= 5 ? 5 : reportCount >= 2 ? 3 : 2;
-      setDeliveryRange({ low: Math.max(1, Math.round(avgDays) - 1), high: Math.round(avgDays) + buf });
-    }
+      : (typeof rpcAvgData === 'number' ? rpcAvgData : null)
+
     const builtPinData = dbData
-      ? { ...dbData, avg_days: avgDays ?? "—", city: location ? `${location.city}, ${location.state}` : dbData.city, area: location?.area || "", shortage: hasShortage, trend, reportCount }
-      : { pin, city: location ? `${location.city}, ${location.state}` : `PIN ${pin}`, area: location?.area || "", agency: "Check with local agency", avg_days: avgDays ?? "—", shortage: hasShortage, trend, reportCount };
-    setPinData(builtPinData);
-    if (lastBooking) { const nw = addDays(new Date(lastBooking), 25); setBookingResult({ nextWindow: nw, daysLeft: daysUntil(nw) }); }
-    // ── localStorage save on success — Vercel: client-localstorage-schema ──
-    try {
-      const toSave = { pin, cylinderLevel, company: selectedCompany, savedAt: Date.now() };
-      localStorage.setItem(CC_LS_KEY, JSON.stringify(toSave));
-      setSavedUser(toSave);
-    } catch { /* private/full storage — silent fail */ }
-    setLoading(false);
-    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
-  };
+      ? { ...dbData, avg_days: avgDays ?? '—', city: location ? `${location.city}, ${location.state}` : dbData.city, area: location?.area || '', trend, reportCount }
+      : { pin, city: location ? `${location.city}, ${location.state}` : `PIN ${pin}`, area: location?.area || '', agency: 'Check with local agency', avg_days: avgDays ?? '—', trend, reportCount }
 
-  const handleReport = async () => {
-    if (!reportText.trim() || !reportPin) return;
-    if (!user) return; // auth guard — UI should prevent reaching here
-    setSubmitting(true);
-    const days = reportDeliveryDays ? parseInt(reportDeliveryDays, 10) : null;
-    const { data, error: e } = await supabase.from("reports").insert([{
-      pin: reportPin, city: reportCity || `PIN ${reportPin}`, issue: reportText,
-      user_id: user.id, user_email: user.email,
-      delivery_days: days && days >= 1 && days <= 30 ? days : null,
-      company: reportCompany || null,
-    }]).select().single();
-    if (!e && data) {
-      setReports(prev => [data, ...prev]);
-      setReportText(""); setReportPin(""); setReportCity(""); setReportDeliveryDays("");
-      setSubmitOk(true); setTimeout(() => setSubmitOk(false), 3000);
+    // Compute urgency score when cylinder level is known
+    const dLeft = lastBooking ? daysUntil(addDays(new Date(lastBooking), 25)) : null
+    if (cylinderLevel) {
+      builtPinData.urgencyScore = computeUrgency({
+        cylinderLevel,
+        daysLeft: dLeft,
+        reportCount,
+        avgDays: typeof avgDays === 'number' ? avgDays : 5,
+      })
     }
-    setSubmitting(false);
-  };
 
-  const handleEditReport = async (id) => {
-    if (!editingText.trim()) return;
-    await supabase.from("reports").update({ issue: editingText }).eq("id", id);
-    setReports(prev => prev.map(r => r.id === id ? { ...r, issue: editingText } : r));
-    setEditingReportId(null); setEditingText("");
-  };
+    setPinData(builtPinData)
 
-  const handleDeleteReport = async (id) => {
-    if (!window.confirm("Delete this report? This cannot be undone.")) return;
-    await supabase.from("reports").delete().eq("id", id);
-    setReports(prev => prev.filter(r => r.id !== id));
-  };
+    if (lastBooking) {
+      const nw = addDays(new Date(lastBooking), 25)
+      setBookingResult({ nextWindow: nw, daysLeft: daysUntil(nw) })
+    }
 
-  const handleVote = useCallback(async (r) => {
-    if (votes[r.id]) return;
-    setVotes(prev => ({ ...prev, [r.id]: true }));             // Skill: functional setState
-    setReports(prev => prev.map(x => x.id === r.id ? { ...x, votes: x.votes + 1 } : x));
-    await supabase.from("reports").update({ votes: r.votes + 1 }).eq("id", r.id);
-  }, [votes]);
+    setLoading(false)
+    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+  }, [pin, lastBooking])
 
-  const handlePayment = async () => {
-    if (!payContact) { setPayError("Enter your mobile or email to continue."); return; }
-    setPayError(""); setPaying(true);
-    const loaded = await loadRazorpay();
-    if (!loaded) { setPayError("Could not load payment gateway."); setPaying(false); return; }
+  const handleLogoClick = useCallback(() => {
+    const next = logoClicks + 1
+    setLogoClicks(next)
+    if (next >= 5) {
+      setLogoClicks(0)
+      setShowAdminPrompt(true)
+    }
+  }, [logoClicks])
+
+  const handleAdminUnlock = useCallback(async (password) => {
+    if (password !== ADMIN_PASSWORD) return false
+    setShowAdminPrompt(false)
+    setAdminUnlocked(true)
+    setTab('admin')
+    setAdminLoading(true)
     try {
-      const res = await fetch(`${SUPABASE_FUNC_URL}/create-order`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, body: JSON.stringify({ contact: payContact, pin: payPin }) });
-      const { order_id, error: orderErr } = await res.json();
-      if (orderErr || !order_id) { setPayError(orderErr || "Could not create order."); setPaying(false); return; }
-      const rzp = new window.Razorpay({
-        key: RAZORPAY_KEY_ID, amount: 4900, currency: "INR", order_id, name: "CylinderCheck", description: "Plus — Monthly Subscription", prefill: { contact: payContact }, theme: { color: "#FF6B00" }, modal: { backdropclose: false },
-        handler: async (response) => {
-          const vr = await fetch(`${SUPABASE_FUNC_URL}/verify-payment`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, body: JSON.stringify({ ...response, contact: payContact, pin: payPin }) });
-          const { success, error: verifyErr } = await vr.json();
-          if (success) setPaySuccess(true); else setPayError(verifyErr || "Payment verification failed.");
-          setPaying(false);
-        },
-      });
-      rzp.on("payment.failed", () => { setPayError("Payment failed. Please try again."); setPaying(false); });
-      rzp.open();
-    } catch { setPayError("Something went wrong. Try again."); setPaying(false); }
-  };
+      const res = await fetch(`${SUPABASE_FUNC_URL}/get-admin-stats`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ admin_password: password }),
+      })
+      const data = await res.json()
+      if (data.ok) setAdminData(data)
+    } catch { /* silent */ }
+    setAdminLoading(false)
+    return true
+  }, [])
 
-  const handleLogoClick = () => {
-    setLogoClicks(prev => { const next = prev + 1; if (next >= 5) { setShowAdminPrompt(true); return 0; } return next; }); // Skill: functional setState
-  };
-
-  const handleAdminUnlock = async () => {
-    if (adminPassword !== ADMIN_PASSWORD) { setAdminPassword(""); return; }
-    setAdminUnlocked(true); setShowAdminPrompt(false); setAdminPassword("");
-    setTab("admin"); setAdminLoading(true);
+  const fetchNews = useCallback(async (force = false) => {
+    if (!force && newsLastFetched.current && Date.now() - newsLastFetched.current < 5 * 60 * 1000) return
+    setNewsLoading(true)
     try {
-      const res = await fetch(`${SUPABASE_FUNC_URL}/get-admin-stats`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, body: JSON.stringify({ admin_password: ADMIN_PASSWORD }) });
-      const data = await res.json();
-      if (data.ok) setAdminData({ subscriptions: data.subscriptions || [], reportCount: data.reportCount || 0, alertCount: data.alertCount || 0 });
-    } catch { /* silently fail */ }
-    setAdminLoading(false);
-  };
+      const res = await fetch(`${SUPABASE_FUNC_URL}/lpg-news`, {
+        headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+      })
+      const data = await res.json()
+      if (data.articles) { setNews(data.articles); newsLastFetched.current = Date.now() }
+    } catch { /* silent */ }
+    setNewsLoading(false)
+  }, [])
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (tab === 'news') fetchNews()
+  }, [tab, fetchNews])
+
+  // ── Render ───────────────────────────────────────────────
+  const trackProps = {
+    pin, setPin, lastBooking, setLastBooking,
+    pinData, bookingResult, loading, error,
+    cylinderLevel, setCylinderLevel,
+    handleTrack, resultRef,
+    shortageSummary, mapPrices,
+    onCommercialClick: () => setTab('commercial'),
+  }
+
+  const reportsProps = {
+    reports, setReports, reportText, setReportText,
+    reportPin, setReportPin, reportCity, setReportCity,
+    reportDeliveryDays, setReportDeliveryDays,
+    submitting, setSubmitting, submitOk, setSubmitOk,
+    votes, setVotes,
+    editingReportId, setEditingReportId,
+    editingText, setEditingText,
+    user,
+  }
+
+  const alertsProps = {
+    contact, setContact, alertPin, setAlertPin,
+    alertDate, setAlertDate, alertSaved, setAlertSaved,
+    freeAlertSaving, setFreeAlertSaving,
+    freeAlertError, setFreeAlertError,
+    payContact, setPayContact, payPin, setPayPin,
+    paying, setPaying, paySuccess, setPaySuccess,
+    payError, setPayError,
+  }
+
+  const activeTabContent = {
+    track:      <TrackTab {...trackProps} />,
+    prices:     <PricesTab mapPrices={mapPrices} lastUpdated={pricesLastUpdated}
+                           contact={contact} setContact={setContact}
+                           alertSaved={alertSaved} setAlertSaved={setAlertSaved} />,
+    community:  <ReportsTab {...reportsProps} />,
+    news:       <NewsTab />,
+    alerts:     <AlertsTab />,
+    commercial: <CommercialPage prefilledCity={
+                  pinData?.city
+                    ? CITY_NORMALISE[pinData.city.split(',')[0].trim().toLowerCase()] || ''
+                    : ''
+                } />,
+    admin:      adminUnlocked ? <AdminTab data={adminData} loading={adminLoading}
+                                          onLock={() => { setAdminUnlocked(false); setTab('track') }} />
+                               : null,
+  }
+
+  const visibleTabs = adminUnlocked
+    ? [...TABS, { id: 'admin', label: 'Admin', icon: Target }]
+    : TABS
+
   return (
     <>
-      <div className="app-shell">
-
-        {/* Sidebar */}
-        <aside className="sidebar">
-          <div className="sidebar-logo" onClick={handleLogoClick} title={logoClicks > 0 ? `${5 - logoClicks} more…` : ""}>
-            {IcFlame}
-            <span className="sidebar-logo-name">CylinderCheck<span className="sidebar-logo-dot" /></span>
-          </div>
-          <div className="sidebar-section">
-            <span className="sidebar-section-label">Main</span>
-            {TABS.map(t => (
-              <button key={t.id} className={`sidebar-item${tab === t.id ? " active" : ""}`} onClick={() => setTab(t.id)}>
-                <span style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
-                  {t.icon}
-                  {t.id === "commercial" && shortageSummary ? <span className="tab-crisis-dot" /> : null}
-                </span>
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <div className="sidebar-footer">
-            <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "flex-start", gap: 8, marginBottom: 4, minHeight: "auto", padding: "6px 8px", fontSize: 12 }}
-              onClick={() => setPage("guide")}
-              aria-label="Open LPG Guide">
-              📖 LPG Guide
-            </button>
-            <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "flex-start", gap: 8, marginBottom: 8, minHeight: "auto", padding: "6px 8px", fontSize: 12 }}
-              onClick={() => setShowSupport(true)}>
-              {IcSupport} Support & FAQ
-            </button>
-            {!authLoading && (user ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <div className="flex-none" style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--accent-soft)", border: "1px solid var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--accent)" }}>
-                  {user.email?.[0]?.toUpperCase() || "U"}
-                </div>
-                <span className="t-caption" style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
-                <button className="btn btn-ghost" style={{ minHeight: "auto", padding: "3px 8px", fontSize: 11 }}
-                  onClick={() => supabase.auth.signOut()}>Out</button>
-              </div>
-            ) : (
-              <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "flex-start", gap: 8, marginBottom: 8, minHeight: "auto", padding: "6px 8px", fontSize: 12 }}
-                onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })}>
-                {IcGoogle}
-                Sign in with Google
-              </button>
-            ))}
-            Not affiliated with IndianOil,<br />HP Gas, or Bharat Gas.<br />
-            Data is community-sourced.<br /><br />
-            © 2026 CylinderCheck 🇮🇳
-          </div>
-        </aside>
+      <div className="flex min-h-screen min-h-dvh">
+        {/* Sidebar — desktop only */}
+        <div className="hidden md:block">
+          <Sidebar
+            tabs={TABS}
+            activeTab={tab}
+            onTabChange={setTab}
+            user={user}
+            authLoading={authLoading}
+            logoClicks={logoClicks}
+            onLogoClick={handleLogoClick}
+            onSupportOpen={() => setShowSupport(true)}
+          />
+        </div>
 
         {/* Main */}
-        <div className="main-content">
-          <div className="topbar">
-            {IcFlame}
-            <span className="topbar-name">CylinderCheck</span>
-            {!authLoading && !user && (
-              <button className="btn btn-ghost" style={{ minHeight: "auto", padding: "5px 10px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })}
-                aria-label="Sign in with Google">
-                {IcGoogle}
-                Sign in
-              </button>
-            )}
-            {!authLoading && user && (
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-soft)", border: "1px solid var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>
-                {user.email?.[0]?.toUpperCase() || "U"}
-              </div>
-            )}
-            <ThemeToggle />
-          </div>
+        <div className="md:ml-[var(--sidebar-width)] flex-1 flex flex-col">
+          {/* Topbar — mobile only */}
+          <Topbar user={user} authLoading={authLoading} />
 
-          <div className="content-area">
-            {page === "guide" ? <GuideAccordion defaultOpen={guideOpenSectionRef.current} onBack={() => { setPage(null); guideOpenSectionRef.current = null; }} /> : <>
-
-              {/* ══ TRACK ══════════════════════════════════════════════════ */}
-              {tab === "track" && (
-                <div className="tab-panel">
-                  <h1 className="page-title">Booking Tracker</h1>
-                  <p className="page-subtitle">Know when to book. Know if there's a shortage. Real-time delivery intelligence by PIN code.</p>
-                  <PriceTicker mapPrices={mapPrices} />
-
-                  {shortageSummary && (
-                    <div className="alert-banner alert-banner-danger anim-slide-up" style={{ marginBottom: 16 }}>
-                      <div className="flex-none" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 1, color: "var(--danger)" }}>
-                        <span className="pulse-dot pulse-dot-danger" />{IcWarn}
-                      </div>
-                      <div>
-                        <div className="t-label" style={{ color: "var(--danger)", marginBottom: 5 }}>
-                          COMMUNITY SHORTAGE SIGNAL · {shortageSummary.activePinCount} ACTIVE PIN{shortageSummary.activePinCount > 1 ? "S" : ""}
-                        </div>
-                        <p className="t-body" style={{ margin: 0 }}>
-                          <strong style={{ color: "var(--danger)" }}>{shortageSummary.totalReports} community reports</strong> in the last 30 days across{" "}
-                          <strong style={{ color: "var(--danger)" }}>{shortageSummary.activePinCount} PIN zones</strong>.{" "}
-                          Hotspot: <strong style={{ color: "var(--danger)" }}>{shortageSummary.hotspot}</strong> ({shortageSummary.hotspotReports} reports).
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid-2col">
-                    <div className="track-form">
-                      <div className="neu-card mb-card">
-                        <div className="section-title">Delivery Prediction</div>
-                        
-                        {/* Welcome Back Banner */}
-                        {savedUser ? (
-                          <div className="welcome-back-banner">
-                            <span style={{ fontSize: 16 }}>👋</span>
-                            <span>Welcome back. Checking latest status for <strong>{savedUser.pin}</strong>.</span>
-                            <button
-                              type="button"
-                              className="btn-ghost"
-                              style={{ marginLeft: "auto", fontSize: 11, padding: "2px 6px", minHeight: "auto", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)" }}
-                              onClick={() => {
-                                localStorage.removeItem(CC_LS_KEY);
-                                setSavedUser(null);
-                                setCylinderLevel(null);
-                                setSelectedCompany(null);
-                                setPin("");
-                                setPinData(null);
-                              }}
-                            >
-                              Clear
-                            </button>
-                          </div>
-                        ) : null}
-
-                        {/* Cylinder Level Selector (Task 7) */}
-                        <CylinderLevelSelector
-                          value={cylinderLevel}
-                          onChange={setCylinderLevel}
-                        />
-
-                        {/* Company Picker (Task 7) */}
-                        <CompanyPicker
-                          value={selectedCompany}
-                          onChange={setSelectedCompany}
-                        />
-
-                        {/* PIN Input */}
-                        <div className="input-group">
-                          <label className="input-label" htmlFor="track-pin">PIN Code *</label>
-                          <input id="track-pin" className="input" placeholder="Enter 6-digit PIN e.g. 530001"
-                            value={pin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
-                            autoFocus={typeof window !== "undefined" && window.innerWidth < 768}
-                            onChange={e => setPin(e.target.value.replace(/\D/g, ""))}
-                            onKeyDown={e => e.key === "Enter" && handleTrack()} />
-                        </div>
-
-                        {/* Booking Date (Optional Toggle) */}
-                        <div className="input-group">
-                          <button
-                            type="button"
-                            className="btn btn-ghost"
-                            style={{ display: "flex", alignItems: "center", gap: 6, padding: 0, minHeight: "auto", color: "var(--accent)", fontSize: 14, fontWeight: 600, marginTop: 4 }}
-                            onClick={() => setShowBookingDateToggle(p => !p)}
-                          >
-                            <span style={{ transform: showBookingDateToggle ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }}>▸</span>
-                            I know my last booking date
-                          </button>
-                          
-                          {showBookingDateToggle && (
-                            <div className="anim-slide-down" style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center" }}>
-                              <input className="input" type="date" value={lastBooking} onChange={e => setLastBooking(e.target.value)} style={{ flex: 1 }} aria-label="Last Booking Date" />
-                              {lastBooking && (
-                                <button className="btn btn-ghost" onClick={() => setLastBooking("")} aria-label="Clear date" style={{ padding: "0 10px" }}>✕</button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {error && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{error}</div>}
-                        <button className="btn btn-primary btn-block" onClick={handleTrack} disabled={loading} style={{ marginTop: 12 }}>
-                          {loading ? "Looking up…" : "Check My Area →"}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="track-result">
-                      {!pinData && !loading && EmptyState}
-                      {loading && SkeletonCard}
-                      {pinData && !loading && (
-                        <div className="anim-slide-up result-card" ref={resultRef}>
-                          <div className="neu-card mb-card">
-                            {/* Header: PIN label + city + trend badge */}
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-                              <div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5 }}>
-                                  {IcPin}<span className="t-label" style={{ color: "var(--accent)" }}>{pinData.area || `PIN ${pinData.pin}`}</span>
-                                </div>
-                                <div className="t-heading" style={{ fontSize: 24 }}>{pinData.city}</div>
-                              </div>
-                              <Trend t={pinData.trend} />
-                            </div>
-
-                            {/* ── Urgency Score — dominant visual (Task 6+7) ── */}
-                            {(() => {
-                              const urgScore = computeUrgencyScore({
-                                cylinderLevel: cylinderLevel,
-                                daysToWindow: bookingResult?.daysLeft ?? 25,
-                                reportCount: pinData.reportCount,
-                                avgDays: typeof pinData.avg_days === "number" ? pinData.avg_days : 5,
-                              });
-                              return <UrgencyScoreDisplay score={urgScore} cylinderLevel={cylinderLevel} />;
-                            })()}
-
-                            {/* Delivery Range Display */}
-                            <div className="delivery-range-display">
-                              <span className="Delivery-range-label">Expected delivery time:</span>
-                              {deliveryRange ? (
-                                <span className="Delivery-range-value">{deliveryRange.low}–{deliveryRange.high} days</span>
-                              ) : (
-                                <span className="Delivery-range-value" style={{ color: "var(--text-muted)" }}>Unknown</span>
-                              )}
-                            </div>
-
-                            {/* Stat rows */}
-                            <div className="stat-row">
-                              <span className="stat-label">Community Avg Time</span>
-                              <span className="stat-value">{pinData.avg_days !== "—" ? `${pinData.avg_days} days` : <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => setTab("community")}>Be the first to report →</span>}</span>
-                            </div>
-                            <div className="stat-row">
-                              <span className="stat-label">Gas Agency</span>
-                              <span className="stat-value">{pinData.agency}</span>
-                            </div>
-                            <div className="stat-row stat-row-last">
-                              <span className="stat-label">Shortage Status</span>
-                              {(() => {
-                                const n = pinData.reportCount;
-                                if (n === 0) return <span className="stat-value" style={{ color: "var(--success)" }}>🟢 All clear</span>;
-                                if (n === 1) return <span className="stat-value" style={{ color: "var(--warning)" }}>🟡 Early signal ({n} report)</span>;
-                                if (n <= 4) return <span className="stat-value" style={{ color: "var(--warning)" }}>🟠 Active shortage ({n} reports)</span>;
-                                return <span className="stat-value" style={{ color: "var(--danger)" }}>🔴 Severe shortage ({n} reports)</span>;
-                              })()}
-                            </div>
-                          </div>
-
-                          {bookingResult && (
-                            <div className={`neu-card mb-card${bookingResult.daysLeft <= 0 ? " booking-open" : ""}`}>
-                              <div className="section-title">Your Booking Window</div>
-                              <div className="booking-ring-row">
-                                <Ring daysLeft={bookingResult.daysLeft} />
-                                <div>
-                                  <div className="t-caption" style={{ marginBottom: 5 }}>{bookingResult.daysLeft <= 0 ? "Window is open now" : "Next window opens"}</div>
-                                  <div className="t-heading" style={{ color: bookingResult.daysLeft <= 0 ? "var(--success)" : "var(--text-primary)" }}>
-                                    {bookingResult.daysLeft <= 0 ? "Book Right Now! 🎉" : fmt(bookingResult.nextWindow)}
-                                  </div>
-                                  {bookingResult.daysLeft > 0 && <div className="t-caption" style={{ marginTop: 8 }}>Est. delivery by {fmt(addDays(bookingResult.nextWindow, Math.round(pinData.avg_days)))}</div>}
-                                  <div className="t-caption" style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
-                                    Based on 25-day refilling rules + {pinData.avg_days}-day local delivery lag
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {pinData.reportCount >= 2 && (
-                            <div className={`alert-banner ${pinData.reportCount >= 5 ? "alert-banner-danger" : "alert-banner-warning"} anim-scale-in`}>
-                              <span className="flex-none" style={{ fontSize: 20, lineHeight: 1 }}>{pinData.reportCount >= 5 ? "🔴" : "🟠"}</span>
-                              <div>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: pinData.reportCount >= 5 ? "var(--danger)" : "var(--warning)", marginBottom: 4 }}>
-                                  {pinData.reportCount >= 5 ? "Severe Shortage in Your Area" : "Active Shortage in Your Area"}
-                                </div>
-                                <p className="t-caption" style={{ margin: 0 }}>Expect 3–7 extra days on delivery. Book as early as your window allows.</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Commercial alternatives nudge — shown when shortage detected */}
-                          {pinData.reportCount >= 2 && (
-                            <div className="commercial-nudge anim-scale-in">
-                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                                {IcBolt}
-                                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
-                                  Running a restaurant or hotel?
-                                </span>
-                              </div>
-                              <p className="t-caption" style={{ margin: "0 0 10px" }}>
-                                Commercial LPG has been cut across India. Find induction cooktops,
-                                electric ranges and more available in your city today.
-                              </p>
-                              <button className="btn btn-primary"
-                                style={{ minHeight: "auto", padding: "8px 16px", fontSize: 13, width: "100%" }}
-                                onClick={() => setTab("commercial")}>
-                                Find Alternatives Now →
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="track-portals">
-                      <div className="neu-card mb-card">
-                        <div className="section-title">Official Booking Portals</div>
-                        {PORTALS.map(([emoji, label, url]) => (
-                          <a key={url} href={url} target="_blank" rel="noopener" className="portal-link">
-                            <span>{emoji} {label}</span>
-                            <span style={{ color: "var(--text-muted)" }}>{IcExt}</span>
-                          </a>
-                        ))}
-                      </div>
-                      <div className="neu-card mb-card">
-                        <div className="section-title">Book via UPI Apps</div>
-                        <p className="t-caption" style={{ marginBottom: 12 }}>Most users don't know this — GPay, PhonePe & Paytm have LPG booking built in.</p>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          {UPI_PORTALS.map(([letter, label, url, color]) => (
-                            <a key={url} href={url} target="_blank" rel="noopener" className="upi-portal-btn">
-                              <div className="upi-portal-icon" style={{ background: color }}>{letter}</div>
-                              <span className="t-caption" style={{ textAlign: "center", color: "var(--text-secondary)" }}>{label}</span>
-                            </a>
-                          ))}
-                        </div>
-                        {/* Collapsible UPI Guide — Task 12 */}
-                        <details className="upi-guide-collapsible" open={typeof window !== "undefined" && window.innerWidth >= 768}>
-                          <summary className="upi-guide-summary">
-                            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ fontSize: 15 }}>📖</span>
-                              How to book LPG via UPI apps
-                            </span>
-                            <span className="upi-guide-chevron">▸</span>
-                          </summary>
-                          <div className="upi-guide-steps">
-                            <div className="upi-guide-app">
-                              <strong>Google Pay</strong>
-                              <ol>
-                                <li>Tap <strong>+ New Payment</strong> → <strong>Bill Payments</strong></li>
-                                <li>Select <strong>LPG Cylinder Booking</strong></li>
-                                <li>Choose your supplier (Indane / HP / Bharat)</li>
-                                <li>Enter your <strong>LPG Customer ID</strong> or registered mobile number</li>
-                                <li>Tap <strong>Pay Bill</strong> and enter your UPI PIN</li>
-                              </ol>
-                            </div>
-                            <div className="upi-guide-app">
-                              <strong>PhonePe</strong>
-                              <ol>
-                                <li>Go to <strong>Recharge & Pay Bills</strong></li>
-                                <li>Tap <strong>Book a Cylinder</strong></li>
-                                <li>Select your gas provider</li>
-                                <li>Enter registered mobile or 17-digit LPG ID</li>
-                                <li>Review amount and tap <strong>Pay</strong></li>
-                              </ol>
-                            </div>
-                            <div className="upi-guide-app">
-                              <strong>Paytm</strong>
-                              <ol>
-                                <li>Scroll to <strong>Recharge & Pay Bills</strong></li>
-                                <li>Tap <strong>Book Gas Cylinder</strong></li>
-                                <li>Choose your LPG provider</li>
-                                <li>Enter your LPG ID or registered mobile</li>
-                                <li>Tap <strong>Book Cylinder</strong> and complete payment</li>
-                              </ol>
-                            </div>
-                          </div>
-                        </details>
-                      </div>
-                      <AdSlot id="track-left" type="rectangle" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ══ REPORTS ═════════════════════════════════════════════════ */}
-              {tab === "community" && (
-                <div className="tab-panel">
-                  <h1 className="page-title">Community Reports</h1>
-                  <p className="page-subtitle">Flag delivery delays, shortages, and agency issues in your area. Real reports from real people.</p>
-                  <div className="grid-2col">
-                    <div>
-                      <div className="neu-card mb-card">
-                        <div className="section-title">Submit a Report</div>
-                        {!authLoading && !user ? (
-                          <div style={{ textAlign: "center", padding: "20px 0" }}>
-                            <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-                            <div className="t-subheading" style={{ marginBottom: 8 }}>Sign in to submit</div>
-                            <p className="t-caption" style={{ marginBottom: 16 }}>Reports require a Google account so the community stays spam-free and accountable.</p>
-                            <button className="btn btn-primary btn-block"
-                              onClick={() => {
-                                try { sessionStorage.setItem("cc-post-auth-tab", "community"); } catch { /* private mode */ }
-                                supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
-                              }}>
-                              {IcGoogle}
-                              Sign in with Google →
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="input-group">
-                              <label className="input-label" htmlFor="report-pin">PIN Code *</label>
-                              <input id="report-pin" className="input" placeholder="6-digit PIN" value={reportPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
-                                onChange={e => setReportPin(e.target.value.replace(/\D/g, ""))} />
-                            </div>
-                            <div className="input-group">
-                              <label className="input-label" htmlFor="report-area">Area / Colony <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional)</span></label>
-                              <input id="report-area" className="input" placeholder="e.g. Vizag — Gajuwaka" value={reportCity} onChange={e => setReportCity(e.target.value)} />
-                            </div>
-                            
-                            {/* Company Picker (Task 8) */}
-                            <CompanyPicker
-                              value={reportCompany}
-                              onChange={setReportCompany}
-                              compact={true}
-                            />
-
-                            <div className="input-group">
-                              <label className="input-label" htmlFor="report-issue">What's happening? *</label>
-                              <textarea id="report-issue" className="input" style={{ height: 110, resize: "vertical" }}
-                                placeholder="e.g. No delivery in 12 days, driver demanding ₹100 extra…"
-                                value={reportText} onChange={e => setReportText(e.target.value)} />
-                            </div>
-                            <div className="input-group">
-                              <label className="input-label" htmlFor="report-days">Delivery took how many days? <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional — helps calibrate avg)</span></label>
-                              <input id="report-days" className="input" placeholder="e.g. 8" inputMode="numeric" maxLength={2}
-                                value={reportDeliveryDays} onChange={e => setReportDeliveryDays(e.target.value.replace(/\D/g, ""))} />
-                            </div>
-                            <button className="btn btn-primary btn-block" onClick={handleReport} disabled={submitting || !reportText.trim() || !reportPin}>
-                              {submitOk ? "✓ Submitted — Thank you!" : submitting ? "Submitting…" : "Submit Report →"}
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="t-label mb-card">Live Feed — Top Voted</div>
-                      {reports.length === 0 ? (
-                        <div className="neu-card" style={{ textAlign: "center", padding: 40 }}>
-                          <p className="t-body">No reports yet. Be the first to flag an issue.</p>
-                        </div>
-                      ) : reports.map(r => (
-                        <div key={r.id} className="neu-card list-card mb-card">
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
-                            <span className="badge badge-accent">PIN {r.pin}</span>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <span className="t-caption">{new Date(r.created_at).toLocaleDateString("en-IN")}</span>
-                              {user && r.user_id === user.id && editingReportId !== r.id && (
-                                <>
-                                  <button onClick={() => { setEditingReportId(r.id); setEditingText(r.issue); }}
-                                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "2px 4px", fontSize: 13 }} title="Edit" aria-label="Edit report">✏️</button>
-                                  <button onClick={() => handleDeleteReport(r.id)}
-                                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)", padding: "2px 4px", fontSize: 13 }} title="Delete" aria-label="Delete report">🗑</button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          {r.city ? <div className="t-subheading" style={{ marginBottom: 5 }}>{r.city}</div> : null}
-                          {editingReportId === r.id ? (
-                            <div>
-                              <textarea className="input" style={{ height: 90, resize: "vertical", marginBottom: 8 }} value={editingText} onChange={e => setEditingText(e.target.value)} />
-                              <div style={{ display: "flex", gap: 8 }}>
-                                <button className="btn btn-primary" style={{ flex: 1, minHeight: "auto", padding: "7px 12px", fontSize: 13 }} onClick={() => handleEditReport(r.id)}>Save</button>
-                                <button className="btn btn-ghost" style={{ minHeight: "auto", padding: "7px 12px", fontSize: 13 }} onClick={() => setEditingReportId(null)}>Cancel</button>
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="t-body" style={{ marginBottom: 12 }}>{r.issue}</p>
-                          )}
-                          {r.delivery_days && <div className="t-caption" style={{ marginBottom: 8, color: "var(--text-muted)" }}>⏱ Delivery took {r.delivery_days} days</div>}
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <button onClick={() => handleVote(r)} className={`vote-btn${votes[r.id] ? " voted" : ""}`} aria-label={`Upvote report, ${r.votes} votes`}>
-                              ↑ {r.votes} upvote{r.votes !== 1 ? "s" : ""}
-                            </button>
-                            {r.votes > 20 && <span className="badge badge-danger">Trending</span>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ══ NEWS ════════════════════════════════════════════════════ */}
-              {tab === "news" && (() => {
-                // Task 9: Process news data into categories and active map cities inside render
-                const validNews = news || [];
-                // 1. Identify active cities for the map
-                const cityHasNews = {};
-                validNews.forEach(n => {
-                  const c = getCity(n.title);
-                  if (c) cityHasNews[c] = true;
-                });
-                // 2. Filter by city if selected
-                const filteredNews = selectedNewsCity
-                  ? validNews.filter(n => getCity(n.title) === selectedNewsCity)
-                  : validNews;
-                // 3. Group by category
-                const grouped = filteredNews.reduce((acc, item) => {
-                  const cat = getCategory(item.title);
-                  (acc[cat] = acc[cat] || []).push(item);
-                  return acc;
-                }, {});
-
-                const leadStory = filteredNews[0]; // First item in feed is lead
-                const allCategories = ["Shortage Signals", "Price & Rates", "Policy", "General"];
-
-                return (
-                  <div className="tab-panel" style={{ padding: 0 }}>
-                    <div className="news-desktop-layout">
-                      {/* Left: Feed */}
-                      <div className="news-feed-col">
-                        <div style={{ padding: "0 24px" }}>
-                          <h1 className="page-title" style={{ marginTop: 24 }}>LPG Intelligence feed</h1>
-                          <p className="page-subtitle">Live tracking of shortages, price hikes, and policy shifts across India.</p>
-
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                            <div className="city-filter-chips">
-                              <button className={`city-filter-chip${!selectedNewsCity ? " active" : ""}`}
-                                onClick={() => setSelectedNewsCity(null)}>All India</button>
-                              {Object.keys(cityHasNews).map(c => (
-                                <button key={c}
-                                  className={`city-filter-chip${selectedNewsCity === c ? " active" : ""}`}
-                                  onClick={() => setSelectedNewsCity(c)}>
-                                  {c.charAt(0).toUpperCase() + c.slice(1)}
-                                  <span className="city-filter-pulse" />
-                                </button>
-                              ))}
-                            </div>
-                            <button onClick={() => fetchNews(true)} disabled={newsLoading} className="btn btn-ghost"
-                              style={{ minHeight: "auto", padding: "6px 12px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                              {IcRefresh(newsLoading)} Refresh
-                            </button>
-                          </div>
-                        </div>
-
-                        <div style={{ padding: "0 24px 40px" }}>
-                          {newsLoading && !validNews.length ? (
-                            [1, 2, 3, 4].map(i => <div key={i}>{SkeletonCard}</div>)
-                          ) : !validNews.length ? (
-                            <div className="neu-card" style={{ textAlign: "center", padding: 48 }}>
-                              <div style={{ fontSize: 32, marginBottom: 12 }}>🤖</div>
-                              <div className="t-subheading" style={{ marginBottom: 8 }}>Scraper quiet</div>
-                              <p className="t-caption">No recent intelligence found. Try refreshing.</p>
-                            </div>
-                          ) : (
-                            <>
-                              {/* Hero/Lead Story */}
-                              {leadStory && (
-                                <a href={leadStory.link} target="_blank" rel="noopener noreferrer" className="neu-card list-card news-lead-card mb-card">
-                                  <div className="badge badge-danger" style={{ marginBottom: 12, display: "inline-flex", gap: 6 }}>
-                                    <span>●</span> Live Intelligence
-                                  </div>
-                                  <h2 className="t-heading" style={{ color: "var(--text-primary)", marginBottom: 12, lineHeight: 1.35 }}>
-                                    {leadStory.title}
-                                  </h2>
-                                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                                    <span className="badge badge-accent">{leadStory.source}</span>
-                                    <span className="t-caption">{new Date(leadStory.pubDate).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>
-                                  </div>
-                                </a>
-                              )}
-
-                              {/* Categorized Feed */}
-                              {allCategories.map(cat => {
-                                const items = grouped[cat];
-                                if (!items || items.length === 0) return null;
-                                return (
-                                  <div key={cat} className="news-category-section">
-                                    <div className="news-category-header t-label">
-                                      {cat === "Shortage Signals" ? "🚨 " : cat === "Price & Rates" ? "💰 " : cat === "Policy" ? "🏛 " : ""}
-                                      {cat}
-                                    </div>
-                                    {items.map((item, i) => {
-                                      if (item === leadStory) return null; // don't repeat lead
-                                      const m = Math.round((Date.now() - item.pubDate) / 60000);
-                                      const timeAgo = m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
-                                      return (
-                                        <a key={item.link + i} href={item.link} target="_blank" rel="noopener noreferrer"
-                                          className="neu-card list-card mb-card" style={{ display: "block", textDecoration: "none", padding: "16px 20px" }}>
-                                          <p className="t-body" style={{ margin: "0 0 10px 0", color: "var(--text-primary)", lineHeight: 1.45 }}>{item.title}</p>
-                                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                            <span className="t-caption" style={{ color: "var(--text-secondary)", fontWeight: 600 }}>{item.source}</span>
-                                            <span className="t-caption" style={{ color: "var(--border)" }}>•</span>
-                                            <span className="t-caption">{timeAgo}</span>
-                                          </div>
-                                        </a>
-                                      );
-                                    })}
-                                  </div>
-                                );
-                              })}
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right: Map */}
-                      <div className="news-map-col">
-                        <NewsMap
-                          cityHasNews={cityHasNews}
-                          selectedCity={selectedNewsCity}
-                          onSelectCity={c => setSelectedNewsCity(prev => prev === c ? null : c)}
-                        />
-                        {/* Map overlay legend */}
-                        <div className="neu-card" style={{ position: "absolute", bottom: 20, right: 20, zIndex: 400, padding: "12px 14px", width: "auto" }}>
-                          <span className="t-caption" style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
-                            <span style={{ display: "inline-block", width: 8, height: 8, background: "var(--accent)", borderRadius: "50%", boxShadow: "0 0 0 2px var(--accent-soft)" }} />
-                            Live Signals
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* ══ ALERTS ══════════════════════════════════════════════════ */}
-              {tab === "alerts" && (
-                <div className="tab-panel">
-                  <div style={{ maxWidth: 640, margin: "0 auto" }}>
-                    <h1 className="page-title">Alerts &amp; Notifications</h1>
-                    <p className="page-subtitle">Know before the shortage hits. Get pinged when your booking window opens, when your area runs low, and when prices drop.</p>
-                    
-                    <div className="alerts-single-col">
-                      {/* 1. Free Booking Window Alert */}
-                      <div className="neu-card mb-card">
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                          <span className="badge badge-success">FREE</span>
-                          <div className="section-title" style={{ marginBottom: 0 }}>Booking Window Alert</div>
-                        </div>
-                        <p className="t-body" style={{ marginBottom: 18 }}>Enter your last booking date and we'll alert you 2 days before your next window opens. No app, no spam.</p>
-                        <div className="input-group">
-                          <label className="input-label">PIN Code</label>
-                          <input className="input" placeholder="6-digit PIN" value={alertPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
-                            onChange={e => setAlertPin(e.target.value.replace(/\D/g, ""))} />
-                        </div>
-                        <div className="input-group">
-                          <label className="input-label">Last Booking Date</label>
-                          <input className="input" type="date" value={alertDate} onChange={e => setAlertDate(e.target.value)} />
-                        </div>
-                        <div className="input-group">
-                          <label className="input-label">Mobile or Email *</label>
-                          <input className="input" placeholder="98xxxxxxxx or you@email.com" inputMode="email" autoComplete="email"
-                            value={contact} onChange={e => { setContact(e.target.value); setFreeAlertError(""); }} />
-                        </div>
-                        {freeAlertError && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{freeAlertError}</div>}
-                        <button className="btn btn-primary btn-block" disabled={freeAlertSaving || !contact}
-                          onClick={async () => {
-                            if (!contact.trim()) { setFreeAlertError("Enter your mobile number or email."); return; }
-                            setFreeAlertSaving(true); setFreeAlertError("");
-                            const { error } = await supabase.from("alert_subscriptions").insert([{ contact: contact.trim(), pin: alertPin || null, last_booking: alertDate || null, alert_type: "free" }]);
-                            if (error) { setFreeAlertError("Something went wrong. Please try again."); setFreeAlertSaving(false); }
-                            else setAlertSaved(true);
-                          }}>
-                          {alertSaved ? "✓ Alert Activated!" : freeAlertSaving ? "Saving…" : "Activate Free Alert →"}
-                        </button>
-                        {alertSaved && <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 10, fontSize: 12, color: "var(--success)" }}>{IcCheck} You'll be notified 2 days before your window opens.</div>}
-                      </div>
-
-                      {/* 2. Gap Nudge Strip (Replaces full table) */}
-                      <div className="neu-card mb-card alerts-gap-nudge-card" style={{ background: "var(--bg-inset)", padding: "16px 20px" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-                          <div>
-                            <div className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>UPGRADE TO PLUS FOR:</div>
-                            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
-                              <li style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
-                                <span style={{ color: "var(--accent)" }}>✓</span> 48hr early shortage warnings
-                              </li>
-                              <li style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
-                                <span style={{ color: "var(--accent)" }}>✓</span> Black market price tracking
-                              </li>
-                              <li style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
-                                <span style={{ color: "var(--accent)" }}>✓</span> Zero ads across the platform
-                              </li>
-                            </ul>
-                          </div>
-                          <button className="btn btn-ghost" style={{ alignSelf: "flex-end", color: "var(--accent)", border: "1px solid var(--accent-soft)", padding: "8px 16px" }}
-                            onClick={() => document.getElementById("plus-card").scrollIntoView({ behavior: "smooth" })}>
-                            See Details ↓
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 3. CylinderCheck Plus Card */}
-                      <div id="plus-card" className="neu-card plus-card-border mb-card" style={{ position: "relative", overflow: "hidden" }}>
-                        <div className="plus-card-glow" />
-                        <div style={{ position: "relative" }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                            <div className="t-heading" style={{ color: "var(--accent)" }}>CylinderCheck Plus</div>
-                            <span className="badge badge-accent">EARLY ACCESS</span>
-                          </div>
-                          <p className="t-caption" style={{ marginBottom: 20 }}>Shortage intelligence for Indian households. Know before your neighbours do.</p>
-                          <div className="neu-inset" style={{ padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "baseline", gap: 8, borderRadius: "var(--radius-md)" }}>
-                            <div className="t-display">₹49</div>
-                            <div>
-                              <div className="t-body" style={{ margin: 0 }}>/month</div>
-                              <div className="t-caption">Cancel anytime</div>
-                            </div>
-                          </div>
-                          {PLUS_FEATURES.map(([icon, feat]) => (
-                            <div key={feat} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
-                              <span className="flex-none" style={{ fontSize: 16, lineHeight: 1.3 }}>{icon}</span>
-                              <span className="t-body" style={{ margin: 0 }}>{feat}</span>
-                            </div>
-                          ))}
-                          <div className="alert-banner alert-banner-warning" style={{ margin: "20px 0 16px" }}>
-                            <span className="flex-none" style={{ fontSize: 18 }}>🔥</span>
-                            <p className="t-caption" style={{ margin: 0 }}>
-                              <strong style={{ color: "var(--warning)" }}>During active shortages</strong>,
-                              {" "}Plus members get area-specific alerts up to 48 hours before the disruption is publicly reported.
-                            </p>
-                          </div>
-                          <p className="t-caption" style={{ marginBottom: 16, textAlign: "center" }}>
-                            Join <span style={{ color: "var(--accent)", fontWeight: 600 }}>early access</span> — limited to first 500 subscribers
-                          </p>
-                          {paySuccess ? (
-                            <div className="alert-banner alert-banner-success" style={{ flexDirection: "column", textAlign: "center", gap: 6 }}>
-                              <div style={{ fontSize: 28 }}>🎉</div>
-                              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--success)" }}>You're a Plus member!</div>
-                              <p className="t-caption" style={{ margin: 0 }}>Alerts will be sent to <strong>{payContact}</strong>.<br />You'll get your first alert within 24 hours.</p>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="input-group">
-                                <label className="input-label">Your mobile or email *</label>
-                                <input className="input" placeholder="98xxxxxxxx or you@gmail.com" value={payContact} onChange={e => setPayContact(e.target.value)} />
-                              </div>
-                              <div className="input-group">
-                                <label className="input-label">PIN Code <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>(optional)</span></label>
-                                <input className="input" placeholder="6-digit PIN" value={payPin} maxLength={6} inputMode="numeric" pattern="[0-9]*"
-                                  onChange={e => setPayPin(e.target.value.replace(/\D/g, ""))} />
-                              </div>
-                              {payError && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10 }}>{payError}</div>}
-                              <button className="btn btn-primary btn-block" onClick={handlePayment} disabled={paying}>
-                                {paying ? "Opening payment…" : "Get Plus for ₹49/month →"}
-                              </button>
-                            </>
-                          )}
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 14 }}>
-                            <span className="t-caption">🔒 Razorpay · 256-bit SSL</span>
-                            <span className="t-caption">·</span>
-                            <span className="t-caption">Cancel anytime</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 4. Price Revision Alert (Extracted from old Prices tab) */}
-                      <div className="neu-card alert-price-revision" style={{ borderLeft: "4px solid var(--success)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                          <span style={{ fontSize: 24 }}>📉</span>
-                          <div>
-                            <div className="section-title" style={{ marginBottom: 2 }}>Price Drop Alerts</div>
-                            <div className="t-caption">Get notified when commercial cylinder prices drop in your city.</div>
-                          </div>
-                        </div>
-                        <div style={{ display: "flex", gap: 12, flexDirection: "column" }}>
-                          <div className="input-group" style={{ marginBottom: 0 }}>
-                            <input className="input" placeholder="Mobile or email" value={contact} onChange={e => setContact(e.target.value)} />
-                          </div>
-                          <button className="btn btn-ghost" style={{ background: "var(--bg-inset)" }} disabled={freeAlertSaving || !contact}
-                            onClick={async () => {
-                              if (!contact.trim()) return;
-                              setFreeAlertSaving(true);
-                              // We use the same free alert table but flag it as price
-                              const { error } = await supabase.from("alert_subscriptions").insert([{ contact: contact.trim(), alert_type: "price" }]);
-                              if (!error) setAlertSaved(true);
-                              setFreeAlertSaving(false);
-                            }}>
-                            {alertSaved ? "✓ Subscribed" : "Notify me →"}
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
-                    <AdSlot id="alerts-bottom" type="rectangle" />
-                  </div>
-                </div>
-              )}
-
-              {/* ══ COMMERCIAL ══════════════════════════════════════════════ */}
-              {tab === "commercial" && (
-                <CommercialPage
-                  prefilledCity={pinData?.city ? CITY_NORMALISE[pinData.city.split(",")[0].trim().toLowerCase()] || "" : ""}
-                  hasCrisis={!!shortageSummary}
-                  crisisData={shortageSummary}
-                />
-              )}
-
-              {/* ══ ADMIN ════════════════════════════════════════════════════ */}
-              {tab === "admin" && adminUnlocked && (
-                <div className="tab-panel">
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-                    <div>
-                      <h1 className="page-title">Admin Dashboard</h1>
-                      <p className="page-subtitle" style={{ margin: 0 }}>Revenue, subscribers, and platform health.</p>
-                    </div>
-                    <button className="btn btn-ghost" onClick={() => { setAdminUnlocked(false); setTab("track"); }}>🔒 Lock</button>
-                  </div>
-                  {adminLoading ? (
-                    <div className="grid-3col" style={{ marginBottom: 20 }}>
-                      {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton skeleton-card" />)}
-                    </div>
-                  ) : adminData && (
-                    <>
-                      <div className="grid-3col" style={{ marginBottom: 20 }}>
-                        {[
-                          ["💰", "Total Revenue", `₹${((adminData.subscriptions?.length || 0) * 49).toLocaleString("en-IN")}`, "var(--success)"],
-                          ["👥", "Active Subscribers", adminData.subscriptions?.filter(s => s.status === "active").length || 0, "var(--accent)"],
-                          ["📋", "Free Alert Signups", adminData.alertCount || 0, "var(--info)"],
-                          ["🗣", "Community Reports", adminData.reportCount || 0, "var(--warning)"],
-                          ["📈", "This Month", `₹${(adminData.subscriptions?.filter(s => { const d = new Date(s.created_at), n = new Date(); return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear() }).length || 0) * 49}`, "var(--warning)"],
-                          ["🔄", "MRR", `₹${(adminData.subscriptions?.filter(s => s.status === "active").length || 0) * 49}/mo`, "var(--accent)"],
-                        ].map(([icon, label, value, color]) => (
-                          <div key={label} className="neu-card" style={{ marginBottom: 0 }}>
-                            <div style={{ fontSize: 22, marginBottom: 8 }}>{icon}</div>
-                            <div className="t-label" style={{ marginBottom: 6 }}>{label}</div>
-                            {(value === 0 || value === "₹0" || value === "₹0/mo")
-                              ? <div className="t-body" style={{ color: "var(--text-muted)", margin: 0 }}>No subscribers yet</div>
-                              : <div className="t-heading" style={{ color, fontSize: 28, letterSpacing: "-0.03em" }}>{value}</div>}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="neu-card mb-card">
-                        <div className="section-title">Recent Subscribers</div>
-                        {(!adminData.subscriptions || adminData.subscriptions.length === 0) ? (
-                          <div style={{ textAlign: "center", padding: "20px 0" }}><p className="t-body">No subscribers yet — share the link!</p></div>
-                        ) : (
-                          <div className="admin-table-wrap">
-                            <table className="admin-table">
-                              <thead><tr>{["Contact", "PIN", "Amount", "Status", "Date"].map(h => <th key={h}>{h}</th>)}</tr></thead>
-                              <tbody>
-                                {adminData.subscriptions.map(s => (
-                                  <tr key={s.id}>
-                                    <td style={{ color: "var(--text-primary)" }}>{s.contact}</td>
-                                    <td>{s.pin || "—"}</td>
-                                    <td style={{ color: "var(--success)", fontWeight: 600 }}>₹{(s.amount || 4900) / 100}</td>
-                                    <td><span className={`badge ${s.status === "active" ? "badge-success" : "badge-danger"}`}>{s.status}</span></td>
-                                    <td style={{ fontSize: 11 }}>{new Date(s.created_at).toLocaleDateString("en-IN")}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="neu-card" style={{ background: "var(--bg-inset)" }}>
-                        <div className="section-title">Recent Payment IDs</div>
-                        <p className="t-caption" style={{ marginBottom: 12 }}>Cross-reference with Razorpay dashboard if needed.</p>
-                        {(adminData.subscriptions || []).slice(0, 10).map(s => (
-                          <div key={s.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--bg-raised)", fontSize: 11 }}>
-                            <span style={{ color: "var(--text-muted)", fontFamily: "monospace" }}>{s.razorpay_payment_id || "pending"}</span>
-                            <span className="t-caption">{new Date(s.created_at).toLocaleDateString("en-IN")}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </>}
-
-          </div>
+          {/* Content */}
+          <main id="main-content"
+            className="flex-1 px-4 md:px-11 pt-6 max-w-[var(--content-max)]"
+            style={{
+              paddingBottom: 'calc(80px + env(safe-area-inset-bottom))'
+            }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={tab}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={springs.smooth}
+              >
+                {activeTabContent[tab]}
+              </motion.div>
+            </AnimatePresence>
+          </main>
         </div>
       </div>
 
-      {/* Admin modal */}
-      {showAdminPrompt && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div className="neu-card anim-scale-in" style={{ width: "min(340px,calc(100vw - 32px))", textAlign: "center" }}>
-            <div style={{ fontSize: 28, marginBottom: 12 }}>🔒</div>
-            <div className="t-subheading" style={{ marginBottom: 4 }}>Admin Access</div>
-            <p className="t-caption" style={{ marginBottom: 20 }}>Enter your admin password</p>
-            <div className="input-group">
-              <input className="input" type="password" placeholder="••••••••"
-                value={adminPassword} onChange={e => setAdminPassword(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleAdminUnlock()} autoFocus
-                style={{ textAlign: "center", letterSpacing: 4 }} />
-            </div>
-            {adminPassword && adminPassword !== ADMIN_PASSWORD && (
-              <div style={{ fontSize: 11, color: "var(--danger)", marginBottom: 8 }}>Incorrect password</div>
-            )}
-            <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => { setShowAdminPrompt(false); setAdminPassword(""); }}>Cancel</button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleAdminUnlock}>Unlock</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Bottom nav — mobile only */}
+      <BottomNav tabs={TABS} activeTab={tab} onTabChange={setTab} />
 
       {/* Support modal */}
-      {showSupport && <SupportModal onClose={() => setShowSupport(false)} />}
+      <AnimatePresence>
+        {showSupport && (
+          <SupportModal onClose={() => setShowSupport(false)} />
+        )}
+      </AnimatePresence>
 
-      {/* Floating support button — mobile only */}
-      <button className="support-fab" onClick={() => setShowSupport(true)} aria-label="Support">
-        {IcSupport}
-      </button>
-
-      {/* Mobile bottom nav */}
-      <div className="bottom-nav">
-        {TABS.map(t => (
-          <button key={t.id} className={`bn-item${tab === t.id ? " active" : ""}`} onClick={() => setTab(t.id)}>
-            <span style={{ position: "relative", display: "inline-flex" }}>
-              {t.icon}
-              {t.id === "commercial" && shortageSummary ? <span className="tab-crisis-dot" /> : null}
-            </span>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Floating support FAB — mobile only */}
+      <motion.button
+        onClick={() => setShowSupport(true)}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.94 }}
+        aria-label="Support"
+        className="md:hidden fixed z-[190] w-[42px] h-[42px] rounded-full
+                   flex items-center justify-center
+                   bg-[var(--bg-raised)] border border-[var(--border)]
+                   text-[var(--text-secondary)] hover:text-[var(--accent)]
+                   transition-colors duration-150"
+        style={{
+          bottom: 'calc(var(--bottomnav-height) + 14px + env(safe-area-inset-bottom))',
+          right: '14px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.24)',
+        }}
+      >
+        <HelpCircle size={16} strokeWidth={1.8} />
+      </motion.button>
     </>
-  );
+  )
 }

@@ -1,0 +1,81 @@
+// src/components/shared/PriceTicker.jsx
+// Scrolling LPG price strip — motion marquee, pauses on hover
+// Task 21: motion.div animate x infinite, prefers-reduced-motion aware
+
+import { motion, useReducedMotion } from 'motion/react'
+import { COMPANIES } from '../../lib/utils'
+
+export function PriceTicker({ mapPrices = {} }) {
+  const prefersReduced = useReducedMotion()
+  const duration = prefersReduced ? 60 : 24
+
+  const items = Object.entries(mapPrices).flatMap(([city, comps]) => {
+    const prices = COMPANIES.map(c => comps[c]?.price).filter(Boolean)
+    if (!prices.length) return []
+    const cheapest = Math.min(...prices)
+    const color = cheapest < 880
+      ? 'var(--status-clear)'
+      : cheapest < 930
+        ? 'var(--status-early)'
+        : 'var(--status-active)'
+    return [{ city, price: cheapest, color }]
+  })
+
+  if (!items.length) {
+    return (
+      <div className="w-full h-10 border border-[var(--border)] rounded-md
+                      flex items-center px-4 bg-[var(--bg-inset)] mb-6">
+        <div className="h-3 w-full rounded bg-[var(--divider)] animate-pulse" />
+      </div>
+    )
+  }
+
+  // Double for seamless CSS infinite scroll
+  const doubled = [...items, ...items]
+
+  return (
+    <div
+      className="w-full bg-[var(--bg-inset)] border border-[var(--border)]
+                 rounded-md overflow-hidden mb-6 h-11 flex items-center
+                 relative select-none"
+      aria-label="LPG prices ticker"
+    >
+      {/* Edge fade masks */}
+      <div className="absolute left-0 top-0 w-8 h-full z-10
+                      bg-gradient-to-r from-[var(--bg-inset)] to-transparent
+                      pointer-events-none" />
+      <div className="absolute right-0 top-0 w-8 h-full z-10
+                      bg-gradient-to-l from-[var(--bg-inset)] to-transparent
+                      pointer-events-none" />
+
+      <motion.div
+        className="flex whitespace-nowrap"
+        animate={{ x: ['0%', '-50%'] }}
+        transition={{
+          duration,
+          repeat: Infinity,
+          ease: 'linear',
+          repeatType: 'loop',
+        }}
+        whileHover={{ animationPlayState: 'paused' }}
+      >
+        {doubled.map(({ city, price, color }, i) => (
+          <span key={`${city}-${i}`}
+            className="inline-flex items-center gap-2 mx-5">
+            <span className="font-body text-[11px] uppercase
+                             tracking-[0.1em] text-[var(--text-muted)]">
+              {city}
+            </span>
+            <span className="font-data text-[14px] font-bold"
+                  style={{ color }}>
+              ₹{price}
+            </span>
+            <span className="text-[var(--divider)]">·</span>
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  )
+}
+
+export default PriceTicker

@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
   Bell,
-  DollarSign,
   HelpCircle,
   MessageSquare,
   Newspaper,
@@ -22,13 +21,12 @@ import {
 } from './lib/utils'
 
 import AppShell from './components/layout/AppShell'
-import { Sidebar } from './components/layout/Sidebar'
 import { Topbar } from './components/layout/Topbar'
 import { BottomNav } from './components/layout/BottomNav'
 import { SupportModal } from './components/modals/SupportModal'
+import { Footer } from './components/layout/Footer'
 
 import TrackTab from './features/track/TrackTab'
-import PricesTab from './features/prices/PricesTab'
 import ReportsTab from './features/reports/ReportsTab'
 import NewsTab from './features/news/NewsTab'
 import AlertsTab from './features/alerts/AlertsTab'
@@ -38,7 +36,6 @@ import AdminModal from './features/admin/AdminModal'
 
 const TABS = [
   { id: 'track', label: 'Track', icon: Target },
-  { id: 'prices', label: 'Prices', icon: DollarSign },
   { id: 'community', label: 'Reports', icon: MessageSquare },
   { id: 'news', label: 'News', icon: Newspaper },
   { id: 'alerts', label: 'Alerts', icon: Bell },
@@ -68,7 +65,6 @@ export default function App() {
 
   // Prices + national summary (used on Track tab)
   const [mapPrices, setMapPrices] = useState({})
-  const [pricesLastUpdated, setPricesLastUpdated] = useState(null)
   const [shortageSummary, setShortageSummary] = useState(null)
 
   // Auth
@@ -119,10 +115,8 @@ export default function App() {
               }
             }
             setMapPrices(grouped)
-            setPricesLastUpdated(prices[0].recorded_at)
           } else {
             setMapPrices({})
-            setPricesLastUpdated(null)
           }
         }
 
@@ -312,7 +306,6 @@ export default function App() {
 
   const activeTabContent = {
     track: <TrackTab {...trackProps} />,
-    prices: <PricesTab mapPrices={mapPrices} lastUpdated={pricesLastUpdated} />,
     community: <ReportsTab user={user} authLoading={authLoading} />,
     news: <NewsTab />,
     alerts: <AlertsTab />,
@@ -332,22 +325,20 @@ export default function App() {
   return (
     <>
       <AppShell
-        sidebar={
-          <div className="hidden md:block">
-            <Sidebar
-              tabs={visibleTabs}
-              activeTab={tab}
-              onTabChange={setTab}
-              user={user}
-              authLoading={authLoading}
-              logoClicks={logoClicks}
-              onLogoClick={handleLogoClick}
-              onSupportOpen={() => setShowSupport(true)}
-            />
-          </div>
+        topbar={
+          <Topbar
+            tabs={visibleTabs}
+            activeTab={tab}
+            onTabChange={setTab}
+            user={user}
+            authLoading={authLoading}
+            logoClicks={logoClicks}
+            onLogoClick={handleLogoClick}
+            onSupportOpen={() => setShowSupport(true)}
+          />
         }
-        topbar={<Topbar user={user} authLoading={authLoading} />}
         bottomNav={<BottomNav tabs={visibleTabs} activeTab={tab} onTabChange={setTab} />}
+        footer={<Footer onSupportOpen={() => setShowSupport(true)} />}
       >
         <AnimatePresence mode="wait">
           <motion.div

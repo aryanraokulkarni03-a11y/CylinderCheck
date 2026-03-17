@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn';
 import { Check, Loader2, Send } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { springs } from '../../lib/springs';
 
 // Aligned to actual commercial_leads DB schema:
@@ -26,6 +26,7 @@ const NEED_TYPES = [
 ];
 
 export default function LeadForm({ selectedCity = '' }) {
+  const shouldReduceMotion = useReducedMotion();
   const [businessName, setBusinessName] = useState('');
   const [businessType, setBusinessType] = useState('restaurant');
   const [phone, setPhone] = useState('');
@@ -94,10 +95,10 @@ export default function LeadForm({ selectedCity = '' }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            transition={springs.delight}
+            transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
             className="flex flex-col items-center justify-center text-center py-12 min-h-[300px]"
           >
-            <div className="w-16 h-16 rounded-full bg-[rgba(45,92,58,0.1)] flex items-center justify-center mb-6 border border-[rgba(45,92,58,0.2)]">
+            <div className="w-16 h-16 rounded-full bg-[var(--status-clear-soft)] flex items-center justify-center mb-6 border border-[var(--status-clear-border)]">
               <Check size={32} className="text-[var(--status-clear)]" />
             </div>
             <h3 className="text-[22px] font-bold font-display text-[var(--status-clear)] mb-3">
@@ -113,7 +114,7 @@ export default function LeadForm({ selectedCity = '' }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={springs.smooth}
+            transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
             onSubmit={handleSubmit}
             className="space-y-6"
             noValidate
@@ -141,7 +142,7 @@ export default function LeadForm({ selectedCity = '' }) {
                     onClick={() => setBusinessType(value)}
                     className={`py-2 px-2 rounded-md text-[12px] font-bold transition-colors border
                       ${businessType === value
-                        ? 'bg-[rgba(224,120,48,0.10)] text-[var(--accent)] border-[var(--accent)]'
+                        ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
                         : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'}`}
                   >
                     {label}
@@ -164,7 +165,7 @@ export default function LeadForm({ selectedCity = '' }) {
                     onClick={() => setNeedType(value)}
                     className={`py-1.5 px-3 rounded-pill text-[12px] font-bold transition-colors border
                       ${needType === value
-                        ? 'bg-[rgba(224,120,48,0.10)] text-[var(--accent)] border-[var(--accent)]'
+                        ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
                         : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'}`}
                   >
                     {label}
@@ -281,8 +282,9 @@ export default function LeadForm({ selectedCity = '' }) {
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                 className="text-[12px] text-[var(--status-severe)] font-medium
-                           bg-[rgba(224,48,48,0.1)] px-3 py-2 rounded-md border border-[rgba(224,48,48,0.2)]"
+                           bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)]"
               >
                 {submitError}
               </motion.div>
@@ -295,7 +297,7 @@ export default function LeadForm({ selectedCity = '' }) {
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 size={16} className="animate-spin" /> Submitting…
+                  <Loader2 size={16} className="animate-spin" /> Submitting...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">

@@ -1,8 +1,10 @@
 // src/components/layout/BottomNav.jsx
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { springs } from '../../lib/springs'
 
 export function BottomNav({ tabs, activeTab, onTabChange }) {
+  const shouldReduceMotion = useReducedMotion()
+
   return (
     <nav
       className="md:hidden fixed bottom-0 left-0 right-0 z-[200]
@@ -19,8 +21,8 @@ export function BottomNav({ tabs, activeTab, onTabChange }) {
         <motion.button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          whileTap={{ scale: 0.92 }}
-          transition={{ duration: 0.08 }}
+          whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}
+          transition={shouldReduceMotion ? { duration: 0.01 } : { duration: 0.08 }}
           className={`flex-1 flex flex-col items-center gap-[3px]
                       px-[2px] py-[5px] relative min-h-[50px]
                       text-[10px] font-bold tracking-[0.04em] uppercase

@@ -3,7 +3,7 @@
 // Pre-PIN: national intelligence feed + PIN input
 // Post-PIN: local intelligence + urgency score
 
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { MapPin } from 'lucide-react'
 import { SectionMarker } from '../../components/shared/SectionMarker'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
@@ -32,6 +32,8 @@ export function TrackTab({
   shortageSummary, mapPrices,
   onCommercialClick,
 }) {
+  const shouldReduceMotion = useReducedMotion()
+
   return (
     <div>
       <SectionMarker
@@ -144,12 +146,12 @@ export function TrackTab({
                                 border text-center transition-colors
                                 ${cylinderLevel === value
                                   ? value === 'critical'
-                                    ? 'bg-[rgba(184,48,48,0.12)] border-[var(--status-severe)] text-[var(--status-severe)]'
+                                    ? 'bg-[var(--status-severe-soft)] border-[var(--status-severe)] text-[var(--status-severe)]'
                                     : value === 'low'
-                                      ? 'bg-[rgba(196,90,56,0.12)] border-[var(--status-active)] text-[var(--status-active)]'
+                                      ? 'bg-[var(--status-active-soft)] border-[var(--status-active)] text-[var(--status-active)]'
                                       : value === 'half'
-                                        ? 'bg-[rgba(232,168,64,0.12)] border-[var(--status-early)] text-[var(--status-early)]'
-                                        : 'bg-[rgba(45,92,58,0.12)] border-[var(--status-clear)] text-[var(--status-clear)]'
+                                        ? 'bg-[var(--status-early-soft)] border-[var(--status-early)] text-[var(--status-early)]'
+                                        : 'bg-[var(--status-clear-soft)] border-[var(--status-clear)] text-[var(--status-clear)]'
                                   : 'bg-[var(--bg-inset)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
                                 }`}
                   >
@@ -172,7 +174,7 @@ export function TrackTab({
               disabled={loading}
               className="w-full justify-center"
             >
-              {loading ? 'Looking up…' : 'See what\'s happening →'}
+              {loading ? 'Looking up...' : "See what's happening ->"}
             </LiquidGlassBtn>
           </div>
         </div>
@@ -183,6 +185,7 @@ export function TrackTab({
             {loading && (
               <motion.div key="skeleton"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                 className="rounded-lg border border-[var(--border)]
                            bg-[var(--bg-raised)] p-6">
                 {[55, 100, 80, 90].map((w, i) => (
@@ -225,9 +228,9 @@ export function TrackTab({
                                           ? 'text-[var(--status-active)] bg-[var(--status-active-glow)]'
                                           : 'text-[var(--text-muted)] bg-[var(--bg-inset)]'
                                       }`}>
-                      {pinData.trend === 'improving' ? '↑ Improving'
-                        : pinData.trend === 'worsening' ? '↓ Worsening'
-                        : '→ Stable'}
+                      {pinData.trend === 'improving' ? 'Up: improving'
+                        : pinData.trend === 'worsening' ? 'Down: worsening'
+                        : 'Stable'}
                     </span>
                   </div>
 
@@ -276,7 +279,7 @@ export function TrackTab({
                 {bookingResult && (
                   <div className={`rounded-lg border p-6 mb-4
                     ${bookingResult.daysLeft <= 0
-                      ? 'border-[var(--status-clear-glow)] bg-[rgba(45,92,58,0.08)]'
+                      ? 'border-[var(--status-clear-border)] bg-[var(--status-clear-soft)]'
                       : 'border-[var(--border)] bg-[var(--bg-raised)]'}`}>
                     <div className="font-data text-[10px] uppercase
                                     tracking-[0.18em] text-[var(--accent)] mb-4">
@@ -330,7 +333,7 @@ export function TrackTab({
                   <motion.div
                     initial={{ opacity: 0, scale: 0.97 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={springs.urgent}
+                    transition={shouldReduceMotion ? { duration: 0.01 } : springs.urgent}
                     className="flex items-start gap-3 p-4 rounded-lg
                                border mb-4"
                     style={{
@@ -338,8 +341,8 @@ export function TrackTab({
                         ? 'var(--status-severe-glow)'
                         : 'var(--status-active-glow)',
                       background: pinData.reportCount >= 5
-                        ? 'rgba(107,26,26,0.10)'
-                        : 'rgba(139,58,42,0.08)',
+                        ? 'var(--status-severe-soft)'
+                        : 'var(--status-active-soft)',
                     }}
                   >
                     <StatusDot
@@ -359,7 +362,7 @@ export function TrackTab({
                           : 'Active shortage in your area'}
                       </div>
                       <p className="text-[13px] text-[var(--text-secondary)]">
-                        Expect 3–7 extra days on delivery.
+                        Expect 3-7 extra days on delivery.
                         Book as early as your window allows.
                       </p>
                     </div>
@@ -371,7 +374,7 @@ export function TrackTab({
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ ...springs.arrival, delay: 0.4 }}
+                    transition={shouldReduceMotion ? { duration: 0.01 } : { ...springs.arrival, delay: 0.4 }}
                     className="p-4 rounded-lg border
                                border-[var(--accent-glow)]
                                bg-[var(--accent-fog)]"
@@ -390,7 +393,7 @@ export function TrackTab({
                                  text-[var(--accent)] hover:text-[var(--accent-pop)]
                                  transition-colors duration-150"
                     >
-                      Find alternatives now →
+                      Find alternatives now {' \u2192'}
                     </button>
                   </motion.div>
                 )}
@@ -403,6 +406,7 @@ export function TrackTab({
                 key="empty"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                 className="hidden md:flex flex-col items-center
                            justify-center py-12 text-center"
               >

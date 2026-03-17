@@ -1,6 +1,5 @@
 import React from 'react';
 import { Shield, Users, Bell, AlertTriangle, ArrowLeft } from 'lucide-react';
-import { motion } from 'motion/react';
 import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerContainer';
 import { FadeIn } from '../../components/motion/FadeIn';
 
@@ -8,7 +7,7 @@ export default function AdminTab({ data, loading, onLock }) {
   const { subscriptions = [], reportCount = 0, alertCount = 0 } = data || {};
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-4xl mx-auto md:px-4">
+    <div className="space-y-8 pb-12 w-full">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 mt-4 border-b border-[var(--border)] pb-6">
         <div>
@@ -65,7 +64,7 @@ export default function AdminTab({ data, loading, onLock }) {
         <h2 className="text-[14px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data mb-4">Subscribers Directory</h2>
         <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-inset)] overflow-x-auto">
           <table className="w-full text-left relative min-w-[600px]">
-            <thead className="border-b border-[var(--border)] bg-[rgba(255,255,255,0.02)]">
+            <thead className="border-b border-[var(--border)] bg-[var(--bg-raised)]">
               <tr>
                 <th className="px-5 py-3 text-[11px] font-bold tracking-widest uppercase font-data text-[var(--text-muted)]">ID / Contact</th>
                 <th className="px-5 py-3 text-[11px] font-bold tracking-widest uppercase font-data text-[var(--text-muted)]">Payment ID</th>
@@ -84,7 +83,7 @@ export default function AdminTab({ data, loading, onLock }) {
                 </tr>
               ) : (
                 subscriptions.map((s, i) => (
-                  <tr key={s.id || i} className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                  <tr key={s.id || i} className="hover:bg-[var(--bg-raised)] transition-colors">
                     <td className="px-5 py-4">
                       <div className="text-[13px] font-bold text-[var(--text-primary)] mb-1">{s.contact}</div>
                       <div className="text-[11px] text-[var(--text-muted)] font-body">Joined {new Date(s.created_at).toLocaleDateString()}</div>
@@ -92,7 +91,7 @@ export default function AdminTab({ data, loading, onLock }) {
                     <td className="px-5 py-4 text-[12px] font-mono text-[var(--text-secondary)]">{s.razorpay_payment_id || "—"}</td>
                     <td className="px-5 py-4 text-[13px] font-bold text-[var(--text-primary)]">{s.amount ? `₹${s.amount}` : "—"}</td>
                     <td className="px-5 py-4">
-                      <span className="bg-[rgba(45,92,58,0.1)] text-[var(--status-clear)] border border-[rgba(45,92,58,0.2)] text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-[var(--radius-xs)] font-data inline-flex items-center gap-1.5">
+                      <span className="bg-[var(--status-clear-soft)] text-[var(--status-clear)] border border-[var(--status-clear-border)] text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-[var(--radius-xs)] font-data inline-flex items-center gap-1.5">
                         <span className="w-1 h-1 rounded-full bg-[var(--status-clear)]" /> Active
                       </span>
                     </td>

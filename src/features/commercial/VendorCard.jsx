@@ -1,7 +1,7 @@
 import React from 'react'
 import { ExternalLink, MapPin, Phone, ShieldCheck } from 'lucide-react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { StaggerItem } from '../../components/motion/StaggerContainer'
 import { springs } from '../../lib/springs'
 
@@ -18,6 +18,11 @@ function digitsOnly(v) {
 }
 
 export default function VendorCard({ vendor }) {
+  const shouldReduceMotion = useReducedMotion()
+  const isHoverDevice = typeof window !== 'undefined'
+    ? window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches
+    : false
+
   const isFeatured = !!vendor?.featured
   const category = CATEGORY_LABEL[vendor?.category] || 'Supplier'
 
@@ -35,12 +40,12 @@ export default function VendorCard({ vendor }) {
   return (
     <StaggerItem>
       <motion.div
-        whileHover={{ y: -4 }}
-        transition={springs.delight}
+        whileHover={(!shouldReduceMotion && isHoverDevice) ? { y: -4 } : undefined}
+        transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
         className={`relative overflow-hidden group rounded-lg border bg-[var(--bg-raised)] p-5 md:p-6 transition-colors duration-300 ${
           isFeatured
-            ? 'border-[var(--accent)] shadow-[0_8px_30px_rgba(224,120,48,0.12)]'
-            : 'border-[var(--border)] hover:border-[var(--accent-glow)] hover:shadow-[0_8px_30px_rgba(224,120,48,0.06)]'
+            ? 'border-[var(--accent)] shadow-[0_8px_30px_var(--shadow-glow)]'
+            : 'border-[var(--border)] hover:border-[var(--accent-glow)] hover:shadow-[0_8px_30px_var(--shadow-glow)]'
         }`}
       >
         {isFeatured && (
@@ -74,11 +79,11 @@ export default function VendorCard({ vendor }) {
             </div>
 
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
-              <span className="bg-[rgba(255,255,255,0.04)] text-[var(--text-secondary)] border border-[var(--border)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
+              <span className="bg-[var(--bg-inset)] text-[var(--text-secondary)] border border-[var(--border)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
                 {category}
               </span>
               {isFeatured && (
-                <span className="bg-[rgba(224,120,48,0.10)] text-[var(--accent)] border border-[rgba(224,120,48,0.18)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
+                <span className="bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-glow)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
                   Featured
                 </span>
               )}

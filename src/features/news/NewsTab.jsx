@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import NewsMap, { getCity } from './NewsMap';
 import { SectionMarker } from '../../components/shared/SectionMarker';
 import { Newspaper, RefreshCw, AlertTriangle, TrendingUp, Landmark, FileText, Loader2, MapPin } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { FadeIn } from '../../components/motion/FadeIn';
 import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerContainer';
 
@@ -97,7 +96,7 @@ export default function NewsTab() {
   };
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-7xl mx-auto md:px-4">
+    <div className="space-y-8 pb-12 w-full">
       
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 mt-4">
         <div>
@@ -126,7 +125,7 @@ export default function NewsTab() {
         <div className="space-y-6">
           <div className="flex flex-wrap items-center gap-2 mb-6">
               <button 
-                className={`px-4 py-1.5 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-all ${
+                className={`px-4 py-1.5 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-colors duration-150 ${
                 !selectedCity ? "bg-[var(--text-primary)] text-[var(--bg-base)] border-[var(--text-primary)]" : "bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
                 }`}
                 onClick={() => setSelectedCity(null)}
@@ -136,7 +135,7 @@ export default function NewsTab() {
             {Object.keys(cityHasNews).map(c => (
                 <button 
                   key={c}
-                  className={`relative px-4 py-1.5 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-all flex items-center gap-2 ${
+                  className={`relative px-4 py-1.5 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-colors duration-150 flex items-center gap-2 ${
                   selectedCity === c ? "bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]" : "bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
                   }`}
                   onClick={() => setSelectedCity(c)}
@@ -155,7 +154,7 @@ export default function NewsTab() {
             </div>
           ) : !validNews.length ? (
             <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-raised)] text-center py-12">
-              <div className="text-4xl mb-4">📰</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] font-data text-[var(--text-muted)] mb-4">No feed yet</div>
               <div className="text-[16px] font-bold font-display text-[var(--text-primary)] mb-2">Scraper quiet</div>
               <p className="text-[14px] text-[var(--text-secondary)]">No recent intelligence found. Try refreshing.</p>
             </div>
@@ -170,7 +169,7 @@ export default function NewsTab() {
                     
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-2">
-                        <span className="bg-[rgba(224,48,48,0.1)] text-[var(--status-severe)] border border-[rgba(224,48,48,0.2)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data inline-flex items-center gap-1.5">
+                        <span className="bg-[var(--status-severe-soft)] text-[var(--status-severe)] border border-[var(--status-severe-border)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data inline-flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-severe)] animate-pulse" /> Live Intelligence
                         </span>
                         {leadStory.city && (
@@ -180,7 +179,7 @@ export default function NewsTab() {
                         )}
                       </div>
                       
-                      <a href={buildWhatsAppLink(leadStory)} target="_blank" rel="noopener noreferrer" className="text-[var(--text-muted)] hover:text-[#25D366] transition-colors" title="Share to WhatsApp">
+                      <a href={buildWhatsAppLink(leadStory)} target="_blank" rel="noopener noreferrer" className="text-[var(--text-muted)] hover:text-[var(--status-clear)] transition-colors" title="Share to WhatsApp">
                         <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                       </a>
                     </div>
@@ -192,7 +191,7 @@ export default function NewsTab() {
                     </a>
                     
                     <div className="flex items-center gap-3">
-                      <span className="bg-[rgba(255,255,255,0.05)] border border-[var(--border)] text-[var(--text-primary)] text-[11px] font-bold tracking-widest uppercase font-data px-2 py-0.5 rounded-[var(--radius-xs)]">
+                      <span className="bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-primary)] text-[11px] font-bold tracking-widest uppercase font-data px-2 py-0.5 rounded-[var(--radius-xs)]">
                         {leadStory.source}
                       </span>
                       <span className="text-[11px] text-[var(--text-muted)] font-medium font-body">
@@ -252,7 +251,7 @@ export default function NewsTab() {
                                     </span>
                                   </div>
                                 </a>
-                                <a href={buildWhatsAppLink(item)} target="_blank" rel="noopener noreferrer" className="text-[var(--text-muted)] hover:text-[#25D366] transition-colors p-1 flex-shrink-0" title="Share to WhatsApp">
+                                <a href={buildWhatsAppLink(item)} target="_blank" rel="noopener noreferrer" className="text-[var(--text-muted)] hover:text-[var(--status-clear)] transition-colors p-1 flex-shrink-0" title="Share to WhatsApp">
                                   <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                                 </a>
                               </div>
@@ -280,7 +279,7 @@ export default function NewsTab() {
             {/* Map Overlay Legend */}
             <div className="absolute bottom-6 right-6 z-[400] rounded-md border border-[var(--border)] bg-[var(--glass-deep)] p-3 pointer-events-none" style={{ backdropFilter: 'blur(16px)' }}>
               <div className="flex items-center gap-2 text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data">
-                <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse shadow-[0_0_8px_rgba(255,107,0,0.6)]" />
+                <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse shadow-[0_0_18px_var(--accent-glow)]" />
                 Live Signals
               </div>
             </div>

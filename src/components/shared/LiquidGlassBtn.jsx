@@ -21,7 +21,7 @@ export default function LiquidGlassBtn({
   const liquidId = useMemo(() => `liquid-${toDomSafeId(rid)}`, [rid])
 
   useEffect(() => {
-    setIsHoverDevice(window.matchMedia('(hover: hover)').matches)
+    setIsHoverDevice(window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   }, [])
 
   const hoverEffect =
@@ -82,12 +82,12 @@ export default function LiquidGlassBtn({
         )}
 
         {/* Accent glow on hover */}
-        {isHoverDevice && !disabled && (
+        {isHoverDevice && !disabled && !shouldReduceMotion && (
           <motion.span
             className="absolute inset-0 rounded-[inherit]"
             initial={{ opacity: 0 }}
             whileHover={{ opacity: 1 }}
-            transition={{ duration: timing.fast }}
+            transition={shouldReduceMotion ? { duration: 0.01 } : { duration: timing.fast }}
             style={{
               background:
                 'radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 70%)',
@@ -139,12 +139,12 @@ export default function LiquidGlassBtn({
       )}
 
       {/* Accent glow on hover */}
-      {isHoverDevice && !disabled && (
+      {isHoverDevice && !disabled && !shouldReduceMotion && (
         <motion.span
           className="absolute inset-0 rounded-[inherit]"
           initial={{ opacity: 0 }}
           whileHover={{ opacity: 1 }}
-          transition={{ duration: timing.fast }}
+          transition={shouldReduceMotion ? { duration: 0.01 } : { duration: timing.fast }}
           style={{
             background: 'radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 70%)',
           }}

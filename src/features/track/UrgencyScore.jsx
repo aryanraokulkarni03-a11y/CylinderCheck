@@ -1,13 +1,13 @@
 // src/features/track/UrgencyScore.jsx
 import { useEffect, useRef } from 'react'
-import { motion, useMotionValue, useTransform, animate } from 'motion/react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { springs, easing } from '../../lib/springs'
 
 const scoreConfig = {
   low:     { color: 'var(--status-clear)',  label: "You're good",    bg: 'var(--k-forest)' },
   medium:  { color: 'var(--status-early)',  label: 'Plan ahead',     bg: 'var(--k-indigo)' },
   high:    { color: 'var(--status-active)', label: 'Book soon',      bg: 'var(--k-terracotta)' },
-  critical:{ color: 'var(--status-severe)', label: 'Book right now', bg: '#3D0A0A' },
+  critical:{ color: 'var(--status-severe)', label: 'Book right now', bg: 'var(--status-severe-glow)' },
 }
 
 function getConfig(score) {
@@ -19,6 +19,7 @@ function getConfig(score) {
 
 export function UrgencyScore({ score }) {
   const config = getConfig(score)
+  const shouldReduceMotion = useReducedMotion()
   const count = useMotionValue(0)
   const rounded = useTransform(count, Math.round)
   const hasRun = useRef(false)
@@ -37,19 +38,25 @@ export function UrgencyScore({ score }) {
     if (hasRun.current) return
     hasRun.current = true
 
+    if (shouldReduceMotion) {
+      count.set(score)
+      ringProgress.set(1)
+      return
+    }
+
     // Count up the number
     animate(count, score, { duration: 1.4, ease: easing.data })
 
     // Draw the ring simultaneously
     animate(ringProgress, 1, { duration: 1.4, ease: easing.data })
-  }, [score, count, ringProgress])
+  }, [score, count, ringProgress, shouldReduceMotion])
 
   return (
     <motion.div
       className="flex flex-col items-center gap-3"
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={springs.reveal}
+      transition={shouldReduceMotion ? { duration: 0.01 } : springs.reveal}
     >
       {/* Ring */}
       <div className="relative">
@@ -101,7 +108,7 @@ export function UrgencyScore({ score }) {
         className="text-center"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ ...springs.arrival, delay: 0.8 }}
+        transition={shouldReduceMotion ? { duration: 0.01 } : { ...springs.arrival, delay: 0.8 }}
       >
         <div
           className="text-sm font-semibold uppercase tracking-widest font-data"

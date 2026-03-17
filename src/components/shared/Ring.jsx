@@ -1,9 +1,10 @@
 // src/components/shared/Ring.jsx
-import { motion, useMotionValue, useTransform, animate } from 'motion/react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { useEffect, useRef } from 'react'
-import { springs } from '../../lib/springs'
+import { easing } from '../../lib/springs'
 
 export function Ring({ daysLeft }) {
+  const shouldReduceMotion = useReducedMotion()
   const r = 48
   const circumference = 2 * Math.PI * r
   const pct = Math.max(0, Math.min(1, (25 - Math.max(daysLeft, 0)) / 25))
@@ -23,8 +24,14 @@ export function Ring({ daysLeft }) {
   useEffect(() => {
     if (hasRun.current) return
     hasRun.current = true
-    animate(progress, 1, { duration: 1.2, ease: [0.25, 0.1, 0.25, 1] })
-  }, [progress])
+
+    if (shouldReduceMotion) {
+      progress.set(1)
+      return
+    }
+
+    animate(progress, 1, { duration: 1.2, ease: easing.data })
+  }, [progress, shouldReduceMotion])
 
   return (
     <svg width="116" height="116" viewBox="0 0 110 110">

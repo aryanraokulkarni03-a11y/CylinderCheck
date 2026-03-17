@@ -4,7 +4,7 @@ import CompanyPicker from '../../components/shared/CompanyPicker';
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn';
 import EmptyState from '../../components/shared/EmptyState';
 import { Users, AlertCircle, Edit2, Trash2, ArrowUp, Send, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { FadeIn } from '../../components/motion/FadeIn';
 import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerContainer';
 import { springs } from '../../lib/springs';
@@ -13,6 +13,7 @@ const CC_USER_VERSION = "v1";
 const CC_LS_KEY = `cc-user:${CC_USER_VERSION}`;
 
 export default function ReportsTab({ user, authLoading }) {
+  const shouldReduceMotion = useReducedMotion();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -90,7 +91,6 @@ export default function ReportsTab({ user, authLoading }) {
 
   return (
     <div className="space-y-8">
-      <div className="max-w-2xl mx-auto">
         <h1 className="text-[clamp(24px,4vw,36px)] font-bold font-display tracking-tight text-[var(--text-primary)] mb-2 flex items-center gap-3">
           <Users size={28} className="text-[var(--accent)]" />
           Community Reports
@@ -106,7 +106,9 @@ export default function ReportsTab({ user, authLoading }) {
             
             {!authLoading && !user ? (
               <div className="text-center py-8">
-                <div className="text-4xl mb-4">🔒</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] font-data text-[var(--text-muted)] mb-4">
+                  Sign in required
+                </div>
                 <div className="text-[16px] font-bold text-[var(--text-primary)] mb-2 font-display">Sign in to submit</div>
                 <p className="text-[13px] text-[var(--text-secondary)] mb-6 leading-relaxed">
                   Reports require a Google account so the community stays spam-free and accountable.
@@ -118,7 +120,7 @@ export default function ReportsTab({ user, authLoading }) {
                     supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
                   }}
                 >
-                  Sign in with Google →
+                  Sign in with Google {' \u2192'}
                 </LiquidGlassBtn>
               </div>
             ) : (
@@ -155,7 +157,7 @@ export default function ReportsTab({ user, authLoading }) {
                     onClick={handleReport} 
                     disabled={submitting || !reportText.trim() || !reportPin}
                   >
-                    {submitOk ? "✓ Submitted — Thank you!" : submitting ? (
+                    {submitOk ? "Submitted - thank you." : submitting ? (
                       <span className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Submitting...</span>
                     ) : (
                       <span className="flex items-center justify-center gap-2"><Send size={16} /> Submit Report</span>
@@ -168,9 +170,9 @@ export default function ReportsTab({ user, authLoading }) {
 
           {/* Feed */}
           <div>
-            <div className="flex items-center gap-2 text-[12px] font-bold text-[var(--accent)] uppercase tracking-widest font-data mb-4 pl-1">
-              <AlertCircle size={14} /> Live Feed — Top Voted
-            </div>
+              <div className="flex items-center gap-2 text-[12px] font-bold text-[var(--accent)] uppercase tracking-widest font-data mb-4 pl-1">
+                <AlertCircle size={14} /> Live Feed | Top Voted
+              </div>
 
             {loading ? (
               <div className="space-y-4">
@@ -192,7 +194,7 @@ export default function ReportsTab({ user, authLoading }) {
                       style={{ contentVisibility: 'auto' }}
                     >
                       <div className="flex justify-between items-start mb-3">
-                        <span className="bg-[rgba(255,107,0,0.1)] text-[var(--accent)] text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data border border-[rgba(255,107,0,0.2)]">
+                        <span className="bg-[var(--accent-soft)] text-[var(--accent)] text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data border border-[var(--accent-glow)]">
                           PIN {r.pin}
                         </span>
                         <div className="flex items-center gap-3">
@@ -204,7 +206,7 @@ export default function ReportsTab({ user, authLoading }) {
                               <button onClick={() => { setEditingReportId(r.id); setEditingText(r.issue); }} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1" title="Edit">
                                 <Edit2 size={13} />
                               </button>
-                              <button onClick={() => handleDeleteReport(r.id)} className="text-[var(--status-severe)] hover:bg-[rgba(224,48,48,0.1)] rounded p-1" title="Delete">
+                              <button onClick={() => handleDeleteReport(r.id)} className="text-[var(--status-severe)] hover:bg-[var(--status-severe-soft)] rounded p-1" title="Delete">
                                 <Trash2 size={13} />
                               </button>
                             </div>
@@ -235,19 +237,19 @@ export default function ReportsTab({ user, authLoading }) {
 
                       <div className="flex justify-between items-center pt-3 border-t border-[var(--divider)] mt-auto">
                         <motion.button 
-                          whileTap={{ scale: 1.15 }}
-                          transition={springs.delight}
+                          whileTap={shouldReduceMotion ? undefined : { scale: 1.15 }}
+                          transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
                           onClick={() => handleVote(r)} 
                           className={`flex items-center gap-1.5 text-[12px] font-bold tracking-widest px-3 py-1.5 rounded-full transition-colors ${
-                            votes[r.id] ? "bg-[var(--accent)] text-white" : "bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]"
+                            votes[r.id] ? "bg-[var(--accent)] text-[var(--text-on-accent)]" : "bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]"
                           }`}
                         >
-                          <ArrowUp size={14} className={votes[r.id] ? "text-white" : "text-[var(--text-muted)]"} />
+                          <ArrowUp size={14} className={votes[r.id] ? "text-[var(--text-on-accent)]" : "text-[var(--text-muted)]"} />
                           {r.votes} UPVOTE{r.votes !== 1 ? "S" : ""}
                         </motion.button>
                         
                         {r.votes > 20 && (
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--status-severe)] bg-[rgba(224,48,48,0.1)] px-2 py-0.5 rounded-[var(--radius-xs)] flex items-center gap-1 border border-[rgba(224,48,48,0.2)]">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--status-severe)] bg-[var(--status-severe-soft)] px-2 py-0.5 rounded-[var(--radius-xs)] flex items-center gap-1 border border-[var(--status-severe-border)]">
                             <span className="w-1.5 h-1.5 bg-[var(--status-severe)] rounded-full animate-pulse" /> Trending
                           </span>
                         )}
@@ -259,7 +261,6 @@ export default function ReportsTab({ user, authLoading }) {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 }

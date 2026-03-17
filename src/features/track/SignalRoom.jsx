@@ -2,12 +2,13 @@
 // The national live intelligence feed shown BEFORE user enters PIN
 // This is the "control room of Indian LPG intelligence"
 
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerContainer'
 import { StatusDot } from '../../components/shared/StatusDot'
 import { springs } from '../../lib/springs'
 
 export function SignalRoom({ shortageSummary, mapPrices }) {
+  const shouldReduceMotion = useReducedMotion()
   // Derive national stats
   const activeCities = shortageSummary?.activePinCount || 0
   const totalReports = shortageSummary?.totalReports || 0  // sourced from shortageSummary, not raw reports
@@ -27,7 +28,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      transition={springs.arrival}
+      transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
       className="mb-8"
     >
       {/* National status header */}
@@ -35,7 +36,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
         <StatusDot status={overallStatus} size={8} />
         <span className="font-data text-[11px] uppercase tracking-[0.14em]
                          text-[var(--text-muted)]">
-          National LPG Intelligence · Live
+          National LPG Intelligence | Live
         </span>
       </div>
 
@@ -49,7 +50,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
             status: activeCities > 0 ? 'active' : 'clear',
           },
           {
-            value: cheapestPrice ? `₹ ${cheapestPrice}` : '—',
+            value: cheapestPrice ? `Rs ${cheapestPrice}` : '-',
             label: 'lowest price today',
             status: 'clear',
           },
@@ -80,16 +81,16 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={springs.delight}
+          transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
           className="flex items-start gap-3 p-4 rounded-lg
                      border border-[var(--status-active-glow)]"
-          style={{ background: 'rgba(139,58,42,0.08)' }}
+          style={{ background: 'var(--status-active-soft)' }}
         >
           <StatusDot status="active" size={7} />
           <div>
             <div className="font-data text-[11px] uppercase tracking-[0.12em]
                             text-[var(--status-active)] mb-1">
-              Hotspot · {shortageSummary.hotspot}
+              Hotspot | {shortageSummary.hotspot}
             </div>
             <p className="text-[13px] text-[var(--text-secondary)]">
               <span className="font-data text-[var(--text-data)]">

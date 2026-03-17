@@ -1,5 +1,5 @@
 // src/components/layout/Sidebar.jsx
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { FlameIcon } from '../shared/FlameIcon'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { SectionMarker } from '../shared/SectionMarker'
@@ -9,6 +9,11 @@ import { HelpCircle } from 'lucide-react'
 export function Sidebar({ tabs, activeTab, onTabChange,
                            user, authLoading, logoClicks,
                            onLogoClick, onSupportOpen }) {
+  const shouldReduceMotion = useReducedMotion()
+  const isHoverDevice = typeof window !== 'undefined'
+    ? window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches
+    : false
+
   return (
     <aside className="fixed top-0 left-0 bottom-0 z-[200]
                       flex flex-col
@@ -45,8 +50,8 @@ export function Sidebar({ tabs, activeTab, onTabChange,
           <motion.button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            whileHover={{ x: 2 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={(!shouldReduceMotion && isHoverDevice) ? { x: 2 } : undefined}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
             className={`flex items-center gap-3 px-4 py-3 rounded-md
                         text-[14px] font-medium w-full text-left
                         transition-colors duration-150

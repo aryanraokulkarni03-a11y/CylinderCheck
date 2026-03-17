@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ShieldCheck, FileText, RefreshCw } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { StaggerContainer } from '../../components/motion/StaggerContainer';
 import { SectionMarker } from '../../components/shared/SectionMarker';
 import { COMMERCIAL_CITIES } from '../../lib/utils';
+import { springs } from '../../lib/springs';
 import CommercialHero from './CommercialHero';
 import VendorCard from './VendorCard';
 import LeadForm from './LeadForm';
 
 export default function CommercialPage({ prefilledCity }) {
+  const shouldReduceMotion = useReducedMotion();
   const defaultCity = prefilledCity && COMMERCIAL_CITIES.includes(prefilledCity)
     ? prefilledCity
     : COMMERCIAL_CITIES[0];
@@ -55,16 +57,16 @@ export default function CommercialPage({ prefilledCity }) {
     <div className="pb-24 w-full">
       <CommercialHero />
 
-      <div id="commercial-vendors" className="max-w-[1200px] mx-auto px-4 md:px-8 mt-16 md:mt-24 w-full">
+      <div id="commercial-vendors" className="mt-16 md:mt-24 w-full">
         {/* Trust banner */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8
-                        mb-16 py-6 border-y border-[var(--border)] bg-[rgba(255,255,255,0.01)]
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8
+                        mb-16 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)]
                         text-[12px] font-bold tracking-widest uppercase font-data text-[var(--text-muted)] w-full">
           <span className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-[var(--status-clear)]" />
             Verified Agencies Only
           </span>
-          <span className="hidden sm:inline">·</span>
+          <span className="hidden sm:inline">|</span>
           <span className="flex items-center gap-2">
             <FileText size={16} className="text-[var(--text-secondary)]" />
             Transparent Pricing
@@ -102,7 +104,7 @@ export default function CommercialPage({ prefilledCity }) {
                   <motion.div
                     layoutId="city-indicator"
                     className="absolute inset-0 bg-[var(--text-primary)] rounded-full -z-10"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                   />
                 )}
                 {city}
@@ -133,18 +135,30 @@ export default function CommercialPage({ prefilledCity }) {
 
             <AnimatePresence mode="popLayout">
               {vendorsLoading ? (
-                <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                <motion.div
+                  key="skeleton"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
+                  className="space-y-4"
+                >
                   {[1, 2].map(i => (
                     <div key={i} className="h-44 rounded-lg border border-[var(--border)] bg-[var(--bg-raised)] animate-pulse opacity-50" />
                   ))}
                 </motion.div>
               ) : vendorError ? (
-                <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  className="rounded-lg border border-[var(--status-active-glow)] bg-[rgba(139,58,42,0.06)] p-8 text-center">
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
+                  className="rounded-lg border border-[var(--status-active-border)] bg-[var(--status-active-soft)] p-8 text-center"
+                >
                   <p className="text-[14px] text-[var(--text-secondary)] mb-3">{vendorError}</p>
                   <button onClick={() => fetchVendors(activeCity)}
                     className="text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors">
-                    Try again →
+                    Try again {' \u2192'}
                   </button>
                 </motion.div>
               ) : vendors.length > 0 ? (
@@ -152,8 +166,14 @@ export default function CommercialPage({ prefilledCity }) {
                   {vendors.map(vendor => <VendorCard key={vendor.id} vendor={vendor} />)}
                 </StaggerContainer>
               ) : (
-                <motion.div key="empty" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-                  className="rounded-lg border border-dashed border-[var(--border)] bg-[rgba(255,255,255,0.01)] p-12 text-center w-full">
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 }}
+                  transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
+                  className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-inset)] p-12 text-center w-full"
+                >
                   <svg width="48" height="60" viewBox="0 0 48 60" fill="none" className="mx-auto mb-4 opacity-25">
                     <ellipse cx="24" cy="9" rx="18" ry="6" stroke="var(--accent)" strokeWidth="1.5" fill="none" />
                     <line x1="6" y1="9" x2="6" y2="47" stroke="var(--accent)" strokeWidth="1.5" />
@@ -169,7 +189,7 @@ export default function CommercialPage({ prefilledCity }) {
             </AnimatePresence>
 
             {vendors.length > 0 && (
-              <div className="mt-8 p-4 rounded-md bg-[rgba(255,255,255,0.02)] border border-[var(--divider)] flex gap-3 text-[12px] text-[var(--text-muted)]">
+              <div className="mt-8 p-4 rounded-md bg-[var(--bg-inset)] border border-[var(--divider)] flex gap-3 text-[12px] text-[var(--text-muted)]">
                 <FileText size={14} className="shrink-0 text-[var(--text-secondary)] mt-0.5" />
                 <p>CylinderCheck verifies business licenses but does not guarantee stock availability or set prices. Always confirm rates directly with the agency.</p>
               </div>

@@ -57,7 +57,6 @@ export function PriceTicker({ mapPrices = {} }) {
           ease: 'linear',
           repeatType: 'loop',
         }}
-        whileHover={{ animationPlayState: 'paused' }}
       >
         {doubled.map(({ city, price, color }, i) => (
           <span key={`${city}-${i}`}

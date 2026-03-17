@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Loader2, Lock, X } from 'lucide-react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { springs } from '../../lib/springs'
 
 export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
+  const shouldReduceMotion = useReducedMotion()
   const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
 
@@ -52,12 +53,12 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -10 }}
-            transition={springs.smooth}
+            transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
             className="relative w-full max-w-sm overflow-hidden
                        rounded-[var(--radius-xl)]
                        border border-[var(--border)]
                        bg-[var(--bg-raised)]
-                       shadow-[0_20px_50px_rgba(0,0,0,0.35)]"
+                       shadow-[0_20px_50px_var(--shadow-modal)]"
           >
             {/* Accent strip */}
             <div
@@ -86,8 +87,8 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
               <div
                 className={`w-14 h-14 rounded-full flex items-center justify-center mb-6 transition-colors duration-300 ${
                   error
-                    ? 'bg-[rgba(184,48,48,0.14)] text-[var(--status-severe)] border border-[rgba(184,48,48,0.25)]'
-                    : 'bg-[rgba(224,120,48,0.10)] text-[var(--accent)] border border-[rgba(224,120,48,0.18)] shadow-[0_0_22px_rgba(224,120,48,0.18)]'
+                    ? 'bg-[var(--status-severe-soft)] text-[var(--status-severe)] border border-[var(--status-severe-border)]'
+                    : 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-glow)] shadow-[0_0_22px_var(--accent-glow)]'
                 }`}
               >
                 <Lock size={24} className={error ? 'animate-pulse' : ''} />
@@ -144,7 +145,7 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
                       <Loader2 size={16} className="animate-spin" />
-                      Authenticatingâ€¦
+                      Authenticating...
                     </span>
                   ) : (
                     'Authenticate'

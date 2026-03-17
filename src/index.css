@@ -16,13 +16,20 @@ html {
 }
 
 body {
-  font-family: theme('fontFamily.body');
+  margin: 0;
+  font-family: var(--font-body);
   font-size: 15px;
   color: var(--text-primary);
   background-color: var(--bg-base);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: contain;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
 }
 
 /* Accessibility: Mobile Touch Resets */
@@ -73,7 +80,7 @@ body::before {
 .glass-btn {
   backdrop-filter: var(--fog-blur-button);
   background: var(--glass-whisper);
-  border: 1px solid rgba(224, 120, 48, 0.22);
+  border: 1px solid var(--accent-glow);
 }
 
 /* ============================================================
@@ -99,8 +106,8 @@ body::before {
   /* Liquid glass surface */
   backdrop-filter: blur(12px) saturate(160%);
   background: var(--glass-whisper);
-  border: 1px solid rgba(224, 120, 48, 0.22);
-  font-family: theme('fontFamily.body');
+  border: 1px solid var(--accent-glow);
+  font-family: var(--font-body);
   font-size: 15px;
   font-weight: 600;
   color: var(--accent-pop);
@@ -112,18 +119,14 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  transition: background-color 200ms ease, transform 200ms ease;
-}
-.btn-primary:hover {
-  background: rgba(224, 120, 48, 0.12); /* Slightly stronger whisper */
-  transform: translateY(-1px);
+  transition: background-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .btn-ghost {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  font-family: theme('fontFamily.body');
+  font-family: var(--font-body);
   font-size: 15px;
   font-weight: 600;
   min-height: 48px;
@@ -134,11 +137,22 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
 }
-.btn-ghost:hover {
-  background: var(--bg-inset);
-  color: var(--text-primary);
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    background: var(--accent-soft);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost:hover {
+    background: var(--bg-inset);
+    color: var(--text-primary);
+  }
 }
 
 @media (max-width: 768px) {
@@ -153,12 +167,14 @@ body::before {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   color: var(--text-primary);
-  font-family: theme('fontFamily.body');
+  font-family: var(--font-body);
   font-size: 15px;
   min-height: 48px;
   padding: 14px 16px;
   width: 100%;
-  transition: border-color 220ms ease, box-shadow 220ms ease;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
 }
 .input:focus, .input:focus-visible {
   border-color: var(--accent);
@@ -170,7 +186,7 @@ body::before {
 }
 
 .badge {
-  font-family: theme('fontFamily.data');
+  font-family: var(--font-data);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.08em;

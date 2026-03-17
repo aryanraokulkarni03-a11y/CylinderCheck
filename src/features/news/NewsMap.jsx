@@ -1,101 +1,134 @@
-import React, { useEffect, useRef } from 'react';
+// src/features/news/NewsMap.jsx
+// Leaflet map showing which cities currently have news signals.
 
-export const CITY_COORDS = {
-  "Delhi": [28.6139, 77.2090], "Mumbai": [19.0760, 72.8777],
-  "Bangalore": [12.9716, 77.5946], "Chennai": [13.0827, 80.2707],
-  "Kolkata": [22.5726, 88.3639], "Hyderabad": [17.3850, 78.4867],
-  "Pune": [18.5204, 73.8567], "Ahmedabad": [23.0225, 72.5714],
-  "Jaipur": [26.9124, 75.7873], "Lucknow": [26.8467, 80.9462],
-  "Kanpur": [26.4499, 80.3319], "Nagpur": [21.1458, 79.0882],
-  "Indore": [22.7196, 75.8577], "Bhopal": [23.2599, 77.4126],
-  "Vizag": [17.6868, 83.2185]
-};
+import { useEffect, useRef } from 'react'
+import { CITY_COORDS, CITY_NORMALISE } from '../../lib/utils'
+import { useLeaflet } from '../../lib/useLeaflet'
+import { useThemeMode } from '../../lib/useThemeMode'
 
-export const CITY_KEYS_LOWER = Object.keys(CITY_COORDS).map(c => c.toLowerCase());
+const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+
+const CITY_KEYS = Object.keys(CITY_COORDS)
+
+function tileUrlForMode(mode) {
+  return mode === 'light' ? TILE_LIGHT : TILE_DARK
+}
 
 export function getCity(title) {
-  const t = title.toLowerCase();
-  for (let c of CITY_KEYS_LOWER) {
-    if (t.includes(c)) return CITY_COORDS[Object.keys(CITY_COORDS).find(k => k.toLowerCase() === c) || c] ? c : null;
+  const t = String(title || '').toLowerCase()
+
+  // Prefer explicit normalisations first (vizag, bengaluru, etc.)
+  for (const [needle, canonical] of Object.entries(CITY_NORMALISE)) {
+    if (t.includes(needle)) return canonical
   }
-  return null;
+
+  // Fall back to direct city name substring matching.
+  for (const city of CITY_KEYS) {
+    if (t.includes(city.toLowerCase())) return city
+  }
+
+  return null
 }
 
-export default function NewsMap({ cityHasNews, selectedCity, onSelectCity, centerCoords }) {
-  const mapRef = useRef(null);
-  const mapInst = useRef(null);
-  const L_ref = useRef(null);
+export default function NewsMap({
+  cityHasNews = {},
+  selectedCity = null,
+  onSelectCity,
+  centerCoords,
+}) {
+  const mapElRef = useRef(null)
+  const mapInstRef = useRef(null)
+  const tileLayerRef = useRef(null)
+  const markersLayerRef = useRef(null)
+
+  const { L, loaded } = useLeaflet()
+  const themeMode = useThemeMode()
 
   useEffect(() => {
-    let unmounted = false;
-    const initMap = async () => {
-      if (!window.L) {
-        if (!document.querySelector('link[href*="leaflet@"]')) {
-          const lk = document.createElement("link");
-          lk.rel = "stylesheet";
-          lk.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-          document.head.appendChild(lk);
-        }
-        await new Promise(r => {
-          const sc = document.createElement("script");
-          sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-          sc.onload = r;
-          document.head.appendChild(sc);
-        });
+    if (!loaded || !L) return
+    if (!mapElRef.current || mapInstRef.current) return
+
+    const map = L.map(mapElRef.current, {
+      center: centerCoords || [22.5, 78.5],
+      zoom: 4,
+      zoomControl: false,
+      maxBounds: [
+        [6.5, 68],
+        [35.5, 97],
+      ],
+      attributionControl: false,
+    })
+    mapInstRef.current = map
+
+    tileLayerRef.current = L.tileLayer(tileUrlForMode(themeMode), {
+      attribution: 'OpenStreetMap / CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map)
+
+    markersLayerRef.current = L.layerGroup().addTo(map)
+
+    L.control.attribution({ position: 'bottomright', prefix: false }).addTo(map)
+    L.control.zoom({ position: 'bottomright' }).addTo(map)
+
+    return () => {
+      tileLayerRef.current = null
+      markersLayerRef.current = null
+      if (mapInstRef.current) {
+        mapInstRef.current.remove()
+        mapInstRef.current = null
       }
-      if (unmounted) return;
-      L_ref.current = window.L;
-      
-      if (!mapInst.current && mapRef.current) {
-        // Find if dark mode is active
-        const isDark = document.documentElement.getAttribute("data-theme") === "dark" || 
-                       (!document.documentElement.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
-                       
-        mapInst.current = L_ref.current.map(mapRef.current, {
-          center: centerCoords || [22.5, 78.5],
-          zoom: 4,
-          zoomControl: false,
-          maxBounds: [[6.5, 68], [35.5, 97]],
-        });
-        
-        const tileUrl = isDark
-          ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-          
-        L_ref.current.tileLayer(tileUrl, {
-          attribution: "© OpenStreetMap © CARTO", subdomains: "abcd", maxZoom: 19
-        }).addTo(mapInst.current);
-      }
-      drawMarkers();
-    };
+    }
+  }, [loaded, L, centerCoords, themeMode])
 
-    const drawMarkers = () => {
-      if (!mapInst.current || !L_ref.current) return;
-      
-      mapInst.current.eachLayer(l => { 
-        if (l instanceof L_ref.current.Marker) mapInst.current.removeLayer(l); 
-      });
-      
-      Object.entries(CITY_COORDS).forEach(([city, coords]) => {
-        const hasNews = !!cityHasNews[city.toLowerCase()];
-        const isSelected = selectedCity === city.toLowerCase();
-        
-        const iconHtml = `
-          <div class="news-map-marker flex items-center justify-center p-2 rounded-full cursor-pointer transition-transform ${isSelected ? 'scale-125' : 'hover:scale-110'}">
-            <div class="w-3 h-3 rounded-full bg-accent relative z-10 shadow-[0_0_10px_rgba(255,107,0,0.8)] border-2 border-bg-base"></div>
-            ${hasNews ? '<div class="absolute inset-0 rounded-full bg-accent/30 animate-ping"></div>' : ''}
-          </div>
-        `;
-        
-        const icon = L_ref.current.divIcon({ html: iconHtml, className: "", iconSize: [24, 24], iconAnchor: [12, 12] });
-        const marker = L_ref.current.marker(coords, { icon }).addTo(mapInst.current);
-        marker.on("click", () => onSelectCity(isSelected ? null : city.toLowerCase()));
-      });
-    };
+  useEffect(() => {
+    if (!loaded || !L) return
+    const map = mapInstRef.current
+    const tile = tileLayerRef.current
+    const markers = markersLayerRef.current
+    if (!map || !tile || !markers) return
 
-    initMap();
-    return () => { unmounted = true; };
-  }, [cityHasNews, selectedCity, onSelectCity, centerCoords]);
+    tile.setUrl(tileUrlForMode(themeMode))
 
-  return <div ref={mapRef} className="w-full h-full min-h-[400px] lg:min-h-full bg-bg-inset rounded-[var(--radius-lg)] overflow-hidden" />;
+    markers.clearLayers()
+    Object.entries(CITY_COORDS).forEach(([city, coords]) => {
+      const hasNews = !!cityHasNews[city]
+      const isSelected = selectedCity === city
+
+      const iconHtml = `
+        <div style="position:relative; width:28px; height:28px; display:flex; align-items:center; justify-content:center;">
+          <div style="
+            width:12px; height:12px;
+            border-radius:9999px;
+            background:var(--accent);
+            border:2px solid var(--bg-base);
+            box-shadow:0 0 12px var(--accent-glow);
+            transform:${isSelected ? 'scale(1.18)' : 'scale(1)'};
+            transition:transform var(--dur-fast) var(--ease-out);
+          "></div>
+          ${hasNews ? '<div style="position:absolute; inset:0; border-radius:9999px; box-shadow:0 0 0 1px var(--accent-glow), 0 0 22px var(--accent-glow); opacity:0.55;"></div>' : ''}
+        </div>
+      `
+
+      const icon = L.divIcon({
+        html: iconHtml,
+        className: '',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      })
+
+      const marker = L.marker([coords.lat, coords.lng], { icon })
+      marker.on('click', () => onSelectCity?.(city))
+      marker.addTo(markers)
+    })
+  }, [loaded, L, themeMode, cityHasNews, selectedCity, onSelectCity])
+
+  return (
+    <div
+      ref={mapElRef}
+      className="w-full h-full min-h-[400px] lg:min-h-full bg-bg-inset rounded-[var(--radius-lg)] overflow-hidden"
+    />
+  )
 }
+

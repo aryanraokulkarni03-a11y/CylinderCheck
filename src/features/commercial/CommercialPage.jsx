@@ -59,6 +59,7 @@ export default function CommercialPage({ prefilledCity }) {
           .from('vendors')
           .select('id')
           .eq('active', true)
+          .eq('verification_status', 'verified')
           .or(`listing_expires_at.is.null,listing_expires_at.gt.${nowIso}`)
           .limit(1)
 
@@ -92,6 +93,7 @@ export default function CommercialPage({ prefilledCity }) {
       .select('*')
       .in('city', cities)
       .eq('active', true)
+      .eq('verification_status', 'verified')
       .or(`listing_expires_at.is.null,listing_expires_at.gt.${new Date().toISOString()}`)
       .order('featured', { ascending: false })
       .order('created_at', { ascending: true })
@@ -253,7 +255,7 @@ export default function CommercialPage({ prefilledCity }) {
                     They'll be here faster than you think.
                   </p>
                   <p className="text-[12px] text-[var(--text-muted)] font-data uppercase tracking-widest">
-                    Listings for {activeState} are onboarding now.
+                    Verified listings for {activeState} are onboarding now.
                   </p>
                   <p className="text-[12px] text-[var(--text-secondary)] mt-4">
                     Drop your details on the right and we'll reach out as soon as agencies go live.

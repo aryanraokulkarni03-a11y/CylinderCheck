@@ -49,7 +49,7 @@ export default function CompanyPicker({ value, onChange, compact }) {
             onClick={() => onChange(value === co.id ? null : co.id)}
             aria-pressed={value === co.id}
           >
-            <span className="text-lg" aria-hidden="true">
+            <span className="text-[var(--fs-body-lg)]" aria-hidden="true">
               {co.emoji}
             </span>
             <span className="text-[var(--fs-xs)] font-medium tracking-wide">{compact ? co.short : co.label}</span>

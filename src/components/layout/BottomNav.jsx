@@ -39,7 +39,7 @@ export function BottomNav({ tabs, activeTab, onTabChange }) {
               layoutId="nav-pip"
               className="absolute top-0 w-7 h-[3px] rounded-b-sm
                          bg-[var(--accent)]"
-              transition={springs.smooth}
+              transition={shouldReduceMotion ? { duration: 0.01 } : springs.response}
             />
           )}
 

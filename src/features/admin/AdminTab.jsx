@@ -75,7 +75,7 @@ export default function AdminTab({ data, loading, onLock }) {
             <tbody className="divide-y divide-[var(--divider)]">
               {loading ? (
                 <tr>
-                   <td colSpan="4" className="px-5 py-8 text-center text-[13px] text-[var(--text-muted)] font-medium"><span className="animate-pulse">Loading directory...</span></td>
+                   <td colSpan="4" className="px-5 py-8 text-center text-[13px] text-[var(--text-muted)] font-medium"><span className="motion-safe:animate-pulse">Loading directory...</span></td>
                 </tr>
               ) : subscriptions.length === 0 ? (
                 <tr>

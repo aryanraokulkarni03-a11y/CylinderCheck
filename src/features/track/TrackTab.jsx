@@ -231,7 +231,7 @@ export function TrackTab({
                 {[55, 100, 80, 90].map((w, i) => (
                   <div
                     key={i}
-                    className="h-[14px] rounded bg-[var(--bg-inset)] animate-pulse mb-3"
+                    className="h-[14px] rounded bg-[var(--bg-inset)] motion-safe:animate-pulse mb-3"
                     style={{ width: `${w}%` }}
                   />
                 ))}

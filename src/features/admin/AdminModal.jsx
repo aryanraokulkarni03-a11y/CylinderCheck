@@ -91,7 +91,7 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
                     : 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-glow)] shadow-[0_0_22px_var(--accent-glow)]'
                 }`}
               >
-                <Lock size={24} className={error ? 'animate-pulse' : ''} />
+                <Lock size={24} className={error ? 'motion-safe:animate-pulse' : ''} />
               </div>
 
               <h2 className="text-[20px] font-bold font-display text-[var(--text-primary)] mb-2">
@@ -144,7 +144,7 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={16} className="motion-safe:animate-spin" />
                       Authenticating...
                     </span>
                   ) : (

@@ -12,16 +12,16 @@ export default function EmptyState({ title, description, actionText, onAction, i
           </svg>
         )}
       </div>
-      <h3 className="font-display text-[18px] font-bold text-[var(--text-primary)] mb-2">
+      <h3 className="font-display text-[var(--fs-body-lg)] font-bold text-[var(--text-primary)] mb-2">
         {title}
       </h3>
-      <p className="font-body text-[15px] text-[var(--text-secondary)] max-w-sm mx-auto mb-6">
+      <p className="font-body text-[var(--fs-sm)] text-[var(--text-secondary)] max-w-sm mx-auto mb-6">
         {description}
       </p>
       {actionText && onAction && (
         <button 
           onClick={onAction}
-          className="text-[14px] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+          className="text-[var(--fs-sm)] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
         >
           {actionText}
         </button>

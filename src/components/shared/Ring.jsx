@@ -45,13 +45,13 @@ export function Ring({ daysLeft }) {
         transform="rotate(-90 55 55)"
       />
       <text x="55" y="50" textAnchor="middle"
-        fill={color} fontSize="24" fontWeight="600"
+        fill={color} fontSize="var(--fs-h3)" fontWeight="600"
         fontFamily="var(--font-display)">
-        {daysLeft <= 0 ? '✓' : daysLeft}
+        {daysLeft <= 0 ? 'OK' : daysLeft}
       </text>
-      <text x="55" y="66" textAnchor="middle"
-        fill="var(--text-muted)" fontSize="9" fontWeight="500"
-        letterSpacing="1.2" fontFamily="var(--font-body)">
+      <text x="55" y="72" textAnchor="middle"
+        fill="var(--text-muted)" fontSize="var(--fs-xs)" fontWeight="500"
+        letterSpacing="var(--ls-widest)" fontFamily="var(--font-body)">
         {daysLeft <= 0 ? 'BOOK NOW' : 'DAYS LEFT'}
       </text>
     </svg>

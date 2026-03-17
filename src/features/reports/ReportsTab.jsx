@@ -207,13 +207,11 @@ export default function ReportsTab({ user, authLoading }) {
       <SectionMarker status="early" label="Community Reports" />
 
       <h1
-        className="font-display font-bold text-[clamp(24px,4vw,36px)]
-                   tracking-[-0.03em] text-[var(--text-primary)]
-                   mb-2 leading-[1.1]"
+        className="text-[var(--text-primary)] mb-2 leading-[1.1]"
       >
         Community Reports
       </h1>
-      <p className="text-[var(--text-secondary)] text-[15px] mb-6 max-w-[560px]">
+      <p className="text-[var(--text-secondary)] mb-6 max-w-[560px]">
         Flag delivery delays, shortages, and agency issues in your area. Real reports from real people.
       </p>
 
@@ -224,7 +222,7 @@ export default function ReportsTab({ user, authLoading }) {
               <div className="overline text-[var(--accent)]">
                 Submit a report
               </div>
-              <div className="text-[13px] text-[var(--text-muted)] mt-1 leading-relaxed">
+              <div className="text-[var(--fs-sm)] text-[var(--text-muted)] mt-1 leading-relaxed">
                 Keep it factual. If you can, add delivery days and your LPG provider.
               </div>
             </div>
@@ -241,10 +239,10 @@ export default function ReportsTab({ user, authLoading }) {
               <div className="overline text-[var(--text-muted)] mb-3">
                 Sign in required
               </div>
-              <h2 className="font-display font-bold text-[16px] text-[var(--text-primary)] mb-2 m-0">
+              <h2 className="font-display font-bold text-[var(--fs-body)] text-[var(--text-primary)] mb-2 m-0">
                 Sign in to submit
               </h2>
-              <p className="text-[13px] text-[var(--text-secondary)] mb-5 leading-relaxed">
+              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mb-5 leading-relaxed">
                 Reports require a Google account so the community stays spam-free and accountable.
               </p>
               <LiquidGlassBtn
@@ -268,7 +266,7 @@ export default function ReportsTab({ user, authLoading }) {
             <FadeIn delay={0.1}>
               <div className="space-y-4">
                 {submitError && (
-                  <div className="rounded-md border border-[var(--status-severe-border)] bg-[var(--status-severe-soft)] px-3 py-2 text-[13px] text-[var(--text-primary)]">
+                  <div className="rounded-md border border-[var(--status-severe-border)] bg-[var(--status-severe-soft)] px-3 py-2 text-[var(--fs-sm)] text-[var(--text-primary)]">
                     {submitError}
                   </div>
                 )}
@@ -380,20 +378,20 @@ export default function ReportsTab({ user, authLoading }) {
               <span className="overline text-[var(--text-muted)]">
                 Reports feed
               </span>
-              <span className="text-[var(--divider)] text-[11px]" aria-hidden="true">
+              <span className="text-[var(--divider)] text-[var(--fs-xs)]" aria-hidden="true">
                 {DOT}
               </span>
               <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
                 Top voted
               </span>
             </div>
-            <div className="text-[11px] text-[var(--text-muted)]">
+            <div className="text-[var(--fs-xs)] text-[var(--text-muted)]">
               {loading ? 'Loading\u2026' : `${reports.length} shown`}
             </div>
           </div>
 
           {fetchError && (
-            <div className="mb-4 rounded-md border border-[var(--status-active-border)] bg-[var(--status-active-soft)] px-3 py-2 text-[13px] text-[var(--text-primary)]">
+            <div className="mb-4 rounded-md border border-[var(--status-active-border)] bg-[var(--status-active-soft)] px-3 py-2 text-[var(--fs-sm)] text-[var(--text-primary)]">
               {fetchError}
             </div>
           )}
@@ -445,7 +443,7 @@ export default function ReportsTab({ user, authLoading }) {
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <span className="text-[11px] text-[var(--text-muted)] font-body font-medium">
+                          <span className="text-[var(--fs-xs)] text-[var(--text-muted)] font-body font-medium">
                             {fmtDate(r.created_at)}
                           </span>
 
@@ -478,7 +476,7 @@ export default function ReportsTab({ user, authLoading }) {
                       </div>
 
                       {area && (
-                        <div className="text-[15px] font-bold font-display text-[var(--text-primary)] mb-2 tracking-tight">
+                        <div className="text-[var(--fs-body)] font-bold font-display text-[var(--text-primary)] mb-2 tracking-tight">
                           {area}
                         </div>
                       )}
@@ -493,14 +491,14 @@ export default function ReportsTab({ user, authLoading }) {
                           />
                           <div className="flex gap-2">
                             <LiquidGlassBtn
-                              className="py-1.5 px-4 text-[12px]"
+                              className="py-1.5 px-4 text-[var(--fs-xs)]"
                               onClick={() => handleEditReport(r.id)}
                             >
                               Save
                             </LiquidGlassBtn>
                             <button
                               type="button"
-                              className="text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] px-4"
+                              className="text-[var(--fs-xs)] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] px-4"
                               onClick={() => setEditingReportId(null)}
                             >
                               Cancel
@@ -508,7 +506,7 @@ export default function ReportsTab({ user, authLoading }) {
                           </div>
                         </div>
                       ) : (
-                        <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
+                        <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
                           {r.issue}
                         </p>
                       )}
@@ -519,7 +517,7 @@ export default function ReportsTab({ user, authLoading }) {
                           whileTap={shouldReduceMotion ? undefined : { scale: 1.08 }}
                           transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
                           onClick={() => handleVote(r)}
-                          className={`inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] px-3 py-2 rounded-full transition-colors ${
+                          className={`inline-flex items-center gap-1.5 text-[var(--fs-xs)] font-medium uppercase tracking-[0.14em] px-3 py-2 rounded-full transition-colors ${
                             votes[r.id]
                               ? 'bg-[var(--accent)] text-[var(--text-on-accent)]'
                               : 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]'

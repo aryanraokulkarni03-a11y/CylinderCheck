@@ -52,7 +52,7 @@ export default function CompanyPicker({ value, onChange, compact }) {
             <span className="text-lg" aria-hidden="true">
               {co.emoji}
             </span>
-            <span className="text-[12px] font-medium tracking-wide">{compact ? co.short : co.label}</span>
+            <span className="text-[var(--fs-xs)] font-medium tracking-wide">{compact ? co.short : co.label}</span>
           </button>
         ))}
       </div>

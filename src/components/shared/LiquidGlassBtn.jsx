@@ -29,7 +29,7 @@ export default function LiquidGlassBtn({
   const tapEffect = !shouldReduceMotion ? { scale: 0.97, y: 1 } : undefined
 
   const commonProps = {
-    className: `glass-btn relative overflow-hidden flex items-center justify-center gap-2 min-h-[52px] px-7 rounded-md font-body tracking-[0.02em] text-[15px] font-medium text-[var(--accent-pop)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`,
+    className: `glass-btn relative overflow-hidden flex items-center justify-center gap-2 min-h-[52px] px-7 rounded-md font-body tracking-[0.02em] font-medium text-[var(--accent-pop)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`,
     whileHover: disabled ? undefined : hoverEffect,
     whileTap: disabled ? undefined : tapEffect,
     transition: shouldReduceMotion ? { duration: 0.01 } : springs.response,

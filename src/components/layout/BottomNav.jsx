@@ -25,7 +25,7 @@ export function BottomNav({ tabs, activeTab, onTabChange }) {
           transition={shouldReduceMotion ? { duration: 0.01 } : { duration: 0.08 }}
           className={`flex-1 flex flex-col items-center gap-[3px]
                       px-[2px] py-[5px] relative min-h-[50px]
-                      text-[11px] font-medium tracking-[0.02em]
+                      text-[var(--fs-xs)] font-medium tracking-[0.02em]
                       transition-colors duration-150
                       ${activeTab === tab.id
                         ? 'text-[var(--accent)]'

@@ -15,13 +15,13 @@ export function Footer({ onSupportOpen }) {
           <div className="overline text-[var(--text-muted)] mb-2">
             Disclaimer
           </div>
-          <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed m-0">
+          <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] leading-relaxed m-0">
             CylinderCheck is not affiliated with Indane (IndianOil), HP Gas, or Bharatgas. Intelligence is
             community-sourced and may be incomplete. Always verify availability and rates with your local agency.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)]">
+        <div className="flex items-center gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
           <span className="overline">
             {COPY} {year} CylinderCheck
           </span>
@@ -31,7 +31,7 @@ export function Footer({ onSupportOpen }) {
           <button
             type="button"
             onClick={onSupportOpen}
-            className="text-[11px] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
+            className="text-[var(--fs-xs)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
           >
             Support
           </button>

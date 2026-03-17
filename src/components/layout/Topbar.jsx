@@ -56,7 +56,7 @@ export function Topbar({
             title={logoClicks > 0 ? `${5 - logoClicks} more${ELLIPSIS}` : 'CylinderCheck'}
           >
             <FlameIcon size={22} />
-            <span className="font-display font-bold text-[18px] tracking-[-0.02em] text-[var(--text-primary)]">
+            <span className="font-display font-bold text-[var(--fs-body-lg)] tracking-[-0.02em] text-[var(--text-primary)]">
               CylinderCheck
               <span
                 className="w-[6px] h-[6px] rounded-full bg-[var(--accent)] inline-block ml-[6px]"
@@ -155,7 +155,7 @@ export function Topbar({
               <div className="flex items-center gap-2">
                 <div
                   className="hidden sm:flex w-8 h-8 rounded-full flex-shrink-0 bg-[var(--accent-soft)] border border-[var(--accent)]
-                             items-center justify-center text-[12px] font-medium text-[var(--accent)]"
+                             items-center justify-center text-[var(--fs-xs)] font-medium text-[var(--accent)]"
                   aria-label="Signed in"
                   title={user.email || 'Signed in'}
                 >

@@ -93,13 +93,11 @@ export function TrackTab({
       />
 
       <h1
-        className="font-display font-bold text-[clamp(24px,4vw,36px)]
-                   tracking-[-0.03em] text-[var(--text-primary)]
-                   mb-2 leading-[1.1]"
+        className="text-[var(--text-primary)] mb-2 leading-[1.1]"
       >
         Booking Tracker
       </h1>
-      <p className="text-[var(--text-secondary)] text-[15px] mb-6 max-w-[560px]">
+      <p className="text-[var(--text-secondary)] mb-6 max-w-[560px]">
         Know when to book. Know if there is a shortage. Real-time delivery intelligence by PIN code.
       </p>
 
@@ -186,18 +184,18 @@ export function TrackTab({
                                     : 'bg-[var(--bg-inset)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
                                 }`}
                   >
-                    <span className="text-[16px] leading-none">{emoji}</span>
-                    <span className="text-[10px] font-medium uppercase tracking-[0.08em] leading-none">
+                    <span className="text-[var(--fs-body)] leading-none">{emoji}</span>
+                    <span className="overline leading-none">
                       {label}
                     </span>
-                    <span className="text-[9px] text-[var(--text-muted)] leading-none">{hint}</span>
+                    <span className="caption text-[var(--text-muted)] leading-none">{hint}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {error && (
-              <p className="text-[12px] text-[var(--status-severe)] mb-3">
+              <p className="text-[var(--fs-xs)] text-[var(--status-severe)] mb-3">
                 {error}
               </p>
             )}
@@ -243,7 +241,7 @@ export function TrackTab({
                           {pinData.area || `PIN ${pinData.pin}`}
                         </span>
                       </div>
-                      <h2 className="font-display font-bold text-[24px] tracking-[-0.02em] text-[var(--text-primary)] m-0">
+                      <h2 className="text-[var(--text-primary)] m-0">
                         {pinData.city}
                       </h2>
                     </div>
@@ -259,31 +257,31 @@ export function TrackTab({
 
                   <div className="divide-y divide-[var(--divider)]">
                     <div className="flex justify-between items-start py-3">
-                      <span className="text-[13px] text-[var(--text-secondary)]">Avg Delivery</span>
+                      <span className="text-[var(--fs-sm)] text-[var(--text-secondary)]">Avg Delivery</span>
                       <span className="text-right">
                         {avgDays != null ? (
                           <span className="inline-flex items-baseline justify-end gap-2">
-                            <span className="stat-value text-[14px] text-[var(--text-data)]">
+                            <span className="stat-value text-[var(--fs-body)] text-[var(--text-data)]">
                               {avgDays}
                             </span>
                             <span className="label-text text-[var(--text-muted)]">days</span>
                           </span>
                         ) : (
-                          <span className="text-[13px] text-[var(--text-muted)]">No data yet</span>
+                          <span className="text-[var(--fs-sm)] text-[var(--text-muted)]">No data yet</span>
                         )}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-start py-3">
-                      <span className="text-[13px] text-[var(--text-secondary)]">Gas Agency</span>
-                      <span className="text-[13px] text-[var(--text-secondary)] font-medium text-right">
+                      <span className="text-[var(--fs-sm)] text-[var(--text-secondary)]">Gas Agency</span>
+                      <span className="text-[var(--fs-sm)] text-[var(--text-secondary)] font-medium text-right">
                         {COMPANY_LABELS?.[pinData.agency] || pinData.agency}
                       </span>
                     </div>
 
                     {shortage && (
                       <div className="flex justify-between items-start py-3">
-                        <span className="text-[13px] text-[var(--text-secondary)]">Shortage Status</span>
+                        <span className="text-[var(--fs-sm)] text-[var(--text-secondary)]">Shortage Status</span>
                         <span className="flex items-center justify-end gap-2">
                           <StatusDot status={shortage.status} size={7} />
                           <span className="label-text text-[var(--text-data)]">
@@ -324,11 +322,11 @@ export function TrackTab({
                         </p>
 
                         {bookingResult.daysLeft <= 0 ? (
-                          <p className="font-display font-bold text-[22px] tracking-[-0.02em] text-[var(--status-clear)]">
+                          <p className="font-display font-bold text-[var(--fs-h4)] tracking-[-0.02em] text-[var(--status-clear)]">
                             Book right now
                           </p>
                         ) : (
-                          <p className="stat text-[20px] text-[var(--text-data)]">
+                          <p className="stat text-[var(--fs-h4)] text-[var(--text-data)]">
                             {fmt(bookingResult.nextWindow)}
                           </p>
                         )}
@@ -383,7 +381,7 @@ export function TrackTab({
                       >
                         {pinData.reportCount >= 5 ? 'Severe shortage in your area' : 'Active shortage in your area'}
                       </div>
-                      <p className="text-[13px] text-[var(--text-secondary)]">
+                      <p className="text-[var(--fs-sm)] text-[var(--text-secondary)]">
                         Expect <span className="stat-value text-[var(--text-data)]">3-7</span> extra days on delivery.
                         Book as early as your window allows.
                       </p>
@@ -398,15 +396,15 @@ export function TrackTab({
                     transition={shouldReduceMotion ? { duration: 0.01 } : { ...springs.arrival, delay: 0.4 }}
                     className="p-4 rounded-lg border border-[var(--accent-glow)] bg-[var(--accent-fog)]"
                   >
-                    <p className="text-[13px] font-medium text-[var(--text-primary)] mb-1">
+                    <p className="text-[var(--fs-sm)] font-medium text-[var(--text-primary)] mb-1">
                       Running a restaurant or hotel?
                     </p>
-                    <p className="text-[12px] text-[var(--text-secondary)] mb-3">
+                    <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] mb-3">
                       Commercial gas cut across India. Find verified alternatives today.
                     </p>
                     <button
                       onClick={onCommercialClick}
-                      className="text-[12px] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)]
+                      className="text-[var(--fs-xs)] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)]
                                  transition-colors duration-150"
                     >
                       Find alternatives now {' \u2192'}
@@ -436,14 +434,14 @@ export function TrackTab({
                     y="40"
                     textAnchor="middle"
                     fontFamily="var(--font-body)"
-                    fontSize="10"
+                    fontSize="var(--fs-xs)"
                     fill="var(--text-muted)"
-                    letterSpacing="1"
+                    letterSpacing="var(--ls-widest)"
                   >
                     ?
                   </text>
                 </svg>
-                <p className="font-body text-[var(--text-muted)] text-[13px]">
+                <p className="font-body text-[var(--text-muted)] text-[var(--fs-sm)]">
                   Enter your PIN for live intelligence
                 </p>
               </motion.div>

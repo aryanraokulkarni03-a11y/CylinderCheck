@@ -137,13 +137,11 @@ export default function CommercialPage({ prefilledCity }) {
         <SectionMarker status="active" label="Commercial Alternatives" sublabel="Private suppliers" />
 
         <h2
-          className="font-display font-bold text-[clamp(24px,4vw,36px)]
-                     tracking-[-0.03em] text-[var(--text-primary)]
-                     mb-2 leading-[1.1]"
+          className="text-[var(--text-primary)] mb-2 leading-[1.1]"
         >
           Private suppliers
         </h2>
-        <p className="text-[var(--text-secondary)] text-[15px] mb-8 max-w-[640px]">
+        <p className="text-[var(--text-secondary)] mb-8 max-w-[640px]">
           Choose your state to see listings as they go live. If your state is empty today, join the list and we will
           notify you.
         </p>
@@ -154,7 +152,7 @@ export default function CommercialPage({ prefilledCity }) {
               key={st}
               type="button"
               onClick={() => setActiveState(st)}
-              className={`shrink-0 px-5 py-2 rounded-full text-[12px] font-medium tracking-[0.02em] whitespace-nowrap transition-colors border ${
+              className={`shrink-0 px-5 py-2 rounded-full text-[var(--fs-xs)] font-medium tracking-[0.02em] whitespace-nowrap transition-colors border ${
                 activeState === st
                   ? 'bg-[var(--text-primary)] text-[var(--bg-base)] border-[var(--text-primary)]'
                   : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'
@@ -169,7 +167,7 @@ export default function CommercialPage({ prefilledCity }) {
           <div className="lg:col-span-7 xl:col-span-8 w-full min-w-0">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
-                <div className="font-display font-bold text-[18px] text-[var(--text-primary)]">
+                <div className="font-display font-bold text-[var(--fs-body-lg)] text-[var(--text-primary)]">
                   Listings in {activeState}
                 </div>
                 <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
@@ -214,11 +212,11 @@ export default function CommercialPage({ prefilledCity }) {
                   transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                   className="rounded-lg border border-[var(--status-active-border)] bg-[var(--status-active-soft)] p-8 text-center"
                 >
-                  <p className="text-[14px] text-[var(--text-secondary)] mb-3">{vendorError}</p>
+                  <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mb-3">{vendorError}</p>
                   <button
                     type="button"
                     onClick={() => fetchVendors(activeState)}
-                    className="text-[13px] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+                    className="text-[var(--fs-sm)] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
                   >
                     Try again {ARROW}
                   </button>
@@ -251,13 +249,13 @@ export default function CommercialPage({ prefilledCity }) {
                     <ellipse cx="24" cy="47" rx="18" ry="6" stroke="var(--accent)" strokeWidth="1.5" fill="none" />
                     <ellipse cx="24" cy="47" rx="18" ry="6" fill="var(--accent)" opacity="0.10" />
                   </svg>
-                  <p className="text-[14px] text-[var(--text-secondary)] mb-2">
+                  <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mb-2">
                     They'll be here faster than you think.
                   </p>
                   <p className="overline text-[var(--text-muted)]">
                     Verified listings for {activeState} are onboarding now.
                   </p>
-                  <p className="text-[12px] text-[var(--text-secondary)] mt-4">
+                  <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] mt-4">
                     Drop your details on the right and we'll reach out as soon as agencies go live.
                   </p>
                 </motion.div>
@@ -265,7 +263,7 @@ export default function CommercialPage({ prefilledCity }) {
             </AnimatePresence>
 
             {vendors.length > 0 && (
-              <div className="mt-8 p-4 rounded-md bg-[var(--bg-inset)] border border-[var(--divider)] flex gap-3 text-[12px] text-[var(--text-muted)]">
+              <div className="mt-8 p-4 rounded-md bg-[var(--bg-inset)] border border-[var(--divider)] flex gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
                 <FileText size={14} className="shrink-0 text-[var(--text-secondary)] mt-0.5" />
                 <p className="m-0">
                   CylinderCheck does not guarantee stock availability or set prices. Always confirm rates directly with

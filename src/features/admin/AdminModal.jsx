@@ -94,10 +94,10 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
                 <Lock size={24} className={error ? 'motion-safe:animate-pulse' : ''} />
               </div>
 
-              <h2 className="text-[20px] font-bold font-display text-[var(--text-primary)] mb-2">
+              <h2 className="text-[var(--fs-h4)] font-bold font-display text-[var(--text-primary)] mb-2">
                 Restricted Area
               </h2>
-              <p className="text-[13px] text-[var(--text-secondary)] text-center max-w-[260px] mb-8 font-medium leading-relaxed">
+              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] text-center max-w-[260px] mb-8 font-medium leading-relaxed">
                 Enter clearance code to access system metrics.
               </p>
 

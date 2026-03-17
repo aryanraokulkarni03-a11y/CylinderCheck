@@ -84,7 +84,7 @@ export function UrgencyScore({ score }) {
             x="60" y="55"
             textAnchor="middle"
             fill={config.color}
-            fontSize="32"
+            fontSize="var(--fs-h2)"
             fontWeight="600"
             fontFamily="var(--font-display)"
           >
@@ -94,8 +94,8 @@ export function UrgencyScore({ score }) {
             x="60" y="73"
             textAnchor="middle"
             fill="var(--text-muted)"
-            fontSize="9"
-            letterSpacing="1.5"
+            fontSize="var(--fs-xs)"
+            letterSpacing="var(--ls-widest)"
             fontFamily="var(--font-body)"
           >
             OUT OF 10

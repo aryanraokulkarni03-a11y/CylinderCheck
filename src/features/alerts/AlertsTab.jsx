@@ -222,14 +222,12 @@ export default function AlertsTab() {
       <SectionMarker status="active" label="Alerts" sublabel="Signals and reminders" />
 
       <h1
-        className="font-display font-bold text-[clamp(24px,4vw,36px)]
-                   tracking-[-0.03em] text-[var(--text-primary)]
-                   mb-2 leading-[1.1] flex items-center gap-3"
+        className="text-[var(--text-primary)] mb-2 leading-[1.1] flex items-center gap-3"
       >
         <Bell size={28} className="text-[var(--accent)]" />
         Alerts
       </h1>
-      <p className="text-[var(--text-secondary)] text-[15px] mb-8 max-w-[64ch]">
+      <p className="text-[var(--text-secondary)] mb-8 max-w-[64ch]">
         Get a ping before your next booking window, and early warnings when supply tightens in your area.
       </p>
 
@@ -246,7 +244,7 @@ export default function AlertsTab() {
                     Booking window reminder
                   </span>
                 </div>
-                <h2 className="font-display font-bold text-[20px] tracking-[-0.02em] text-[var(--text-primary)] m-0">
+                <h2 className="font-display font-bold text-[var(--fs-h4)] tracking-[-0.02em] text-[var(--text-primary)] m-0">
                   Know when to book
                 </h2>
               </div>
@@ -254,13 +252,13 @@ export default function AlertsTab() {
               <button
                 type="button"
                 onClick={scrollToPlus}
-                className="text-[13px] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+                className="text-[var(--fs-sm)] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
               >
                 Plus details {ARROW}
               </button>
             </div>
 
-            <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed mt-4 mb-6 max-w-[70ch]">
+            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed mt-4 mb-6 max-w-[70ch]">
               Enter your last booking date and we will alert you 2 days before your next window opens. No app. No spam.
             </p>
 
@@ -321,13 +319,13 @@ export default function AlertsTab() {
             </div>
 
             {freeAlertError && (
-              <div className="text-[12px] text-[var(--status-severe)] font-medium bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)] mb-4">
+              <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)] mb-4">
                 {freeAlertError}
               </div>
             )}
 
             {alertSaved && (
-              <div className="text-[12px] text-[var(--status-clear)] font-medium bg-[var(--status-clear-soft)] px-3 py-2 rounded-md border border-[var(--status-clear-border)] mb-4 flex items-center gap-2">
+              <div className="text-[var(--fs-xs)] text-[var(--status-clear)] font-medium bg-[var(--status-clear-soft)] px-3 py-2 rounded-md border border-[var(--status-clear-border)] mb-4 flex items-center gap-2">
                 <Check size={14} />
                 Alert activated. We will message you 2 days before your window opens.
               </div>
@@ -351,7 +349,7 @@ export default function AlertsTab() {
               )}
             </button>
 
-            <p className="text-[11px] text-[var(--text-muted)] mt-4 mb-0">
+            <p className="text-[var(--fs-xs)] text-[var(--text-muted)] mt-4 mb-0">
               You can opt out anytime by replying STOP.
             </p>
           </div>
@@ -369,14 +367,14 @@ export default function AlertsTab() {
                     Early access
                   </span>
                 </div>
-                <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-[var(--text-primary)] m-0 flex items-center gap-2">
+                <h2 className="font-display font-bold text-[var(--fs-h3)] tracking-[-0.02em] text-[var(--text-primary)] m-0 flex items-center gap-2">
                   <BadgeCheck size={22} className="text-[var(--accent)]" />
                   CylinderCheck Plus
                 </h2>
               </div>
 
               <div className="text-right">
-                <div className="price text-[28px] tracking-[-0.02em] text-[var(--text-primary)] leading-none">
+                <div className="price text-[var(--fs-h2)] tracking-[-0.02em] text-[var(--text-primary)] leading-none">
                   {RUPEE}49
                 </div>
                 <div className="overline text-[var(--text-muted)]">
@@ -385,7 +383,7 @@ export default function AlertsTab() {
               </div>
             </div>
 
-            <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed mt-4 mb-6 max-w-[70ch]">
+            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed mt-4 mb-6 max-w-[70ch]">
               Shortage intelligence for households. Calm, precise, and pin-level when it matters.
             </p>
 
@@ -395,7 +393,7 @@ export default function AlertsTab() {
                   <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
                     {tag}
                   </span>
-                  <span className="text-[13px] text-[var(--text-primary)] leading-relaxed">
+                  <span className="text-[var(--fs-sm)] text-[var(--text-primary)] leading-relaxed">
                     {text}
                   </span>
                 </div>
@@ -408,7 +406,7 @@ export default function AlertsTab() {
                   <Check size={16} />
                   You are a Plus member.
                 </div>
-                <p className="text-[13px] text-[var(--text-secondary)] mt-2 mb-0">
+                <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mt-2 mb-0">
                   Alerts will be sent to <span className="font-medium">{payContact}</span>.
                 </p>
               </div>
@@ -453,7 +451,7 @@ export default function AlertsTab() {
                 </div>
 
                 {payError && (
-                  <div className="text-[12px] text-[var(--status-severe)] font-medium bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)]">
+                  <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)]">
                     {payError}
                   </div>
                 )}
@@ -476,7 +474,7 @@ export default function AlertsTab() {
                   )}
                 </LiquidGlassBtn>
 
-                <div className="flex items-center justify-center gap-3 text-[11px] text-[var(--text-muted)]">
+                <div className="flex items-center justify-center gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
                   <span className="inline-flex items-center gap-2">
                     <ShieldAlert size={12} />
                     Razorpay

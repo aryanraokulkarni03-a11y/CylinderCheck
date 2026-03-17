@@ -17,7 +17,7 @@ export function SectionMarker({ status = 'clear', label, sublabel }) {
 
         {label && (
           <>
-            <span className="text-[var(--divider)] text-[11px]" aria-hidden="true">
+            <span className="text-[var(--divider)] text-[var(--fs-xs)]" aria-hidden="true">
               {SEP}
             </span>
             <span
@@ -30,11 +30,11 @@ export function SectionMarker({ status = 'clear', label, sublabel }) {
 
         {sublabel && (
           <>
-            <span className="text-[var(--divider)] text-[11px]" aria-hidden="true">
+            <span className="text-[var(--divider)] text-[var(--fs-xs)]" aria-hidden="true">
               {SEP}
             </span>
             <span
-              className="text-[11px] tracking-[0.08em] text-[var(--text-muted)] opacity-60"
+              className="text-[var(--fs-xs)] tracking-[0.08em] text-[var(--text-muted)] opacity-60"
             >
               {sublabel}
             </span>

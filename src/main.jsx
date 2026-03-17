@@ -25,13 +25,13 @@ class ErrorBoundary extends React.Component {
         fontFamily: 'var(--font-body)',
         padding: 24,
       }}>
-        <div style={{ fontSize: 28, marginBottom: 16 }}>❌ App Error</div>
+        <div style={{ fontSize: 'var(--fs-h2)', marginBottom: 16 }}>App Error</div>
         <div style={{
           background: 'var(--bg-raised, #181520)',
           padding: 20, borderRadius: 12,
           maxWidth: 480, width: '100%',
           color: 'var(--text-secondary)',
-          fontSize: 13, lineHeight: 1.8,
+          fontSize: 'var(--fs-sm)', lineHeight: 1.8,
         }}>
           <strong style={{ color: 'var(--status-severe)' }}>
             {this.state.error.message}

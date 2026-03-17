@@ -67,7 +67,7 @@ export function PriceTicker({ mapPrices = {} }) {
             <span className="overline text-[var(--text-muted)]">
               {city}
             </span>
-            <span className="price text-[14px]" style={{ color }}>
+            <span className="price text-[var(--fs-sm)]" style={{ color }}>
               {RUPEE}
               {price}
             </span>

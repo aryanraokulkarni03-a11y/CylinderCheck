@@ -45,13 +45,12 @@ export default function CommercialHero({ hasAnyVendors = null }) {
           </div>
 
           <h1
-            className="font-display font-bold text-[clamp(32px,5vw,56px)]
-                       tracking-[-0.035em] leading-[1.02] text-[var(--text-primary)]"
+            className="hero-title text-[var(--text-primary)]"
           >
             {isWaitlist ? 'Private suppliers are onboarding.' : 'Commercial LPG, without chaos.'}
           </h1>
 
-          <p className="mt-4 text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[66ch]">
+          <p className="mt-4 text-[var(--text-secondary)] leading-relaxed max-w-[66ch]">
             {isWaitlist
               ? "They'll be here faster than you think. Leave your details and we'll reach out when listings go live in your state."
               : 'Find listed private agencies in your state with active inventory. License checks are rolling out. Always confirm rates and availability directly with the supplier.'}
@@ -71,7 +70,7 @@ export default function CommercialHero({ hasAnyVendors = null }) {
             </button>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-[var(--text-muted)]">
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
             <span className="inline-flex items-center gap-2">
               <ShieldCheck size={14} className="text-[var(--status-early)]" />
               License checks rolling out
@@ -93,7 +92,7 @@ export default function CommercialHero({ hasAnyVendors = null }) {
               How it works
             </div>
 
-            <div className="mt-4 space-y-4 text-[13px] text-[var(--text-secondary)] leading-relaxed">
+            <div className="mt-4 space-y-4 text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
               <div className="flex items-start gap-3">
                 <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
                   01
@@ -114,7 +113,7 @@ export default function CommercialHero({ hasAnyVendors = null }) {
               </div>
             </div>
 
-            <div className="mt-6 rounded-md bg-[var(--bg-inset)] border border-[var(--divider)] px-4 py-3 text-[12px] text-[var(--text-muted)]">
+            <div className="mt-6 rounded-md bg-[var(--bg-inset)] border border-[var(--divider)] px-4 py-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
               We do not set prices or guarantee availability. Always verify before paying.
             </div>
           </div>

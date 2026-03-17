@@ -44,7 +44,7 @@ export function SupportModal({ onClose }) {
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-4 pb-4 border-b border-[var(--border)]">
-          <span className="font-display font-bold text-[18px] text-[var(--text-primary)]">
+          <span className="font-display font-bold text-[var(--fs-body-lg)] text-[var(--text-primary)]">
             Support & FAQ
           </span>
           <button
@@ -64,11 +64,10 @@ export function SupportModal({ onClose }) {
 
           {/* Section: Wrong Price */}
           <section>
-            <h3 className="text-[11px] uppercase tracking-[0.14em]
-                           text-[var(--text-muted)] mb-3">
+            <h3 className="overline text-[var(--text-muted)] mb-3">
               Wrong Price Shown
             </h3>
-            <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
               LPG prices are revised on the 1st of every month. If the price looks
               wrong, the revision may not have been scraped yet. Prices usually
               update within 24 hours of the 1st.
@@ -79,11 +78,10 @@ export function SupportModal({ onClose }) {
 
           {/* Section: Billing */}
           <section>
-            <h3 className="text-[11px] uppercase tracking-[0.14em]
-                           text-[var(--text-muted)] mb-3">
+            <h3 className="overline text-[var(--text-muted)] mb-3">
               Billing & Alerts
             </h3>
-            <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
               For billing issues with paid alerts, email{' '}
               <a href="mailto:support@cylindercheck.in"
                  className="text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors">
@@ -97,11 +95,10 @@ export function SupportModal({ onClose }) {
 
           {/* Section: Feedback */}
           <section>
-            <h3 className="text-[11px] uppercase tracking-[0.14em]
-                           text-[var(--text-muted)] mb-3">
+            <h3 className="overline text-[var(--text-muted)] mb-3">
               Feedback
             </h3>
-            <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
               Report incorrect data, missing agencies, or suggest improvements at{' '}
               <a href="mailto:feedback@cylindercheck.in"
                  className="text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors">
@@ -114,8 +111,7 @@ export function SupportModal({ onClose }) {
 
           {/* Section: FAQ */}
           <section>
-            <h3 className="text-[11px] uppercase tracking-[0.14em]
-                           text-[var(--text-muted)] mb-3">
+            <h3 className="overline text-[var(--text-muted)] mb-3">
               FAQ
             </h3>
             <div className="space-y-3">
@@ -129,8 +125,8 @@ export function SupportModal({ onClose }) {
               ].map(([q, a]) => (
                 <div key={q} className="rounded-md bg-[var(--bg-inset)]
                                         border border-[var(--border)] p-4">
-                  <p className="font-medium text-[13px] text-[var(--text-primary)] mb-1">{q}</p>
-                  <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed">{a}</p>
+                  <p className="font-medium text-[var(--fs-sm)] text-[var(--text-primary)] mb-1">{q}</p>
+                  <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] leading-relaxed">{a}</p>
                 </div>
               ))}
             </div>

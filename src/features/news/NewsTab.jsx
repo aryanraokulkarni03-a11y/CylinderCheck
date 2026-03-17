@@ -170,13 +170,11 @@ export default function NewsTab() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
           <h1
-            className="font-display font-bold text-[clamp(24px,4vw,36px)]
-                       tracking-[-0.03em] text-[var(--text-primary)]
-                       mb-2 leading-[1.1]"
+            className="text-[var(--text-primary)] mb-2 leading-[1.1]"
           >
             LPG Intelligence
           </h1>
-          <p className="text-[var(--text-secondary)] text-[15px] max-w-[560px]">
+          <p className="text-[var(--text-secondary)] max-w-[560px]">
             Live tracking of shortages, price hikes, and policy shifts across India. City-tagged when
             possible.
           </p>
@@ -225,7 +223,7 @@ export default function NewsTab() {
           </div>
 
           {error && (
-            <div className="mt-3 rounded-md border border-[var(--status-active-border)] bg-[var(--status-active-soft)] px-3 py-2 text-[13px] text-[var(--text-primary)]">
+            <div className="mt-3 rounded-md border border-[var(--status-active-border)] bg-[var(--status-active-soft)] px-3 py-2 text-[var(--fs-sm)] text-[var(--text-primary)]">
               {error}
             </div>
           )}
@@ -249,10 +247,10 @@ export default function NewsTab() {
               <div className="overline text-[var(--text-muted)] mb-4">
                 No feed yet
               </div>
-              <h2 className="font-display font-bold text-[16px] text-[var(--text-primary)] mb-2 m-0">
+              <h2 className="font-display font-bold text-[var(--fs-body)] text-[var(--text-primary)] mb-2 m-0">
                 Scraper quiet
               </h2>
-              <p className="text-[14px] text-[var(--text-secondary)]">
+              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)]">
                 No recent intelligence found. Try syncing.
               </p>
             </div>
@@ -293,7 +291,7 @@ export default function NewsTab() {
                               </span>
                             </span>
                           )}
-                          <span className="text-[11px] text-[var(--text-muted)] font-body font-medium">
+                          <span className="text-[var(--fs-xs)] text-[var(--text-muted)] font-body font-medium">
                             {timeAgo(leadStory.pubDate)}
                           </span>
                         </div>
@@ -304,12 +302,12 @@ export default function NewsTab() {
                           rel="noopener noreferrer"
                           className="block"
                         >
-                          <h2 className="text-[18px] font-bold font-display text-[var(--text-primary)] leading-snug">
+                          <h2 className="text-[var(--fs-h3)] font-bold font-display text-[var(--text-primary)] leading-snug">
                             {leadStory.title}
                           </h2>
                         </a>
 
-                        <div className="mt-3 flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
+                        <div className="mt-3 flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
                           <span className="font-medium uppercase tracking-[0.14em]">
                             {leadStory.source}
                           </span>
@@ -380,7 +378,7 @@ export default function NewsTab() {
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap mb-2">
                                     <span className={`badge ${statusPill(status)}`}>{catHere}</span>
-                                    <span className="text-[11px] text-[var(--text-muted)] font-body font-medium">
+                                    <span className="text-[var(--fs-xs)] text-[var(--text-muted)] font-body font-medium">
                                       {timeAgo(item.pubDate)}
                                     </span>
                                   </div>
@@ -391,12 +389,12 @@ export default function NewsTab() {
                                     rel="noopener noreferrer"
                                     className="block"
                                   >
-                                    <h3 className="text-[15px] font-semibold font-display text-[var(--text-primary)] leading-snug">
+                                    <h3 className="text-[var(--fs-body)] font-semibold font-display text-[var(--text-primary)] leading-snug">
                                       {item.title}
                                     </h3>
                                   </a>
 
-                                  <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
+                                  <div className="mt-2 flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
                                     <span className="font-medium uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                                       {item.source}
                                     </span>

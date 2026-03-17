@@ -113,10 +113,10 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
             <div className="w-16 h-16 rounded-full bg-[var(--status-clear-soft)] flex items-center justify-center mb-6 border border-[var(--status-clear-border)]">
               <Check size={32} className="text-[var(--status-clear)]" />
             </div>
-            <h3 className="text-[22px] font-bold font-display text-[var(--status-clear)] mb-3">
+            <h3 className="text-[var(--fs-h3)] font-bold font-display text-[var(--status-clear)] mb-3">
               Request Received
             </h3>
-            <p className="text-[14px] text-[var(--text-secondary)] max-w-[280px]">
+            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] max-w-[280px]">
               {isWaitlist
                 ? `You're on the list for ${selectedState || 'your area'}. We'll reach out as soon as listings go live.`
                 : `We will connect you with listed agencies in ${selectedState || 'your area'}.`}
@@ -134,10 +134,10 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
             noValidate
           >
             <div className="mb-2">
-              <h3 className="text-[18px] font-bold font-display text-[var(--text-primary)] mb-1">
+              <h3 className="text-[var(--fs-body-lg)] font-bold font-display text-[var(--text-primary)] mb-1">
                 {isWaitlist ? 'Get Notified' : 'Get Custom Quotes'}
               </h3>
-              <p className="text-[13px] text-[var(--text-secondary)]">
+              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)]">
                 {isWaitlist
                   ? `Share your details and we'll reach out when agencies go live in ${selectedState || 'your area'}.`
                   : `Skip the calls. Get quotes from listed agencies in ${selectedState || 'your area'}.`}
@@ -156,7 +156,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                     type="button"
                     aria-pressed={businessType === value}
                     onClick={() => setBusinessType(value)}
-                    className={`py-2 px-2 rounded-md text-[12px] font-medium tracking-[0.02em] transition-colors border
+                    className={`py-2 px-2 rounded-md text-[var(--fs-xs)] font-medium tracking-[0.02em] transition-colors border
                       ${businessType === value
                         ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
                         : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'}`}
@@ -179,7 +179,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                     type="button"
                     aria-pressed={needType === value}
                     onClick={() => setNeedType(value)}
-                    className={`py-1.5 px-3 rounded-pill text-[12px] font-medium tracking-[0.02em] transition-colors border
+                    className={`py-1.5 px-3 rounded-pill text-[var(--fs-xs)] font-medium tracking-[0.02em] transition-colors border
                       ${needType === value
                         ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
                         : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'}`}
@@ -283,7 +283,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
-                className="text-[12px] text-[var(--status-severe)] font-medium
+                className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium
                            bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)]"
               >
                 {submitError}

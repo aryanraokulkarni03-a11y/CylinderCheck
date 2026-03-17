@@ -62,7 +62,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
           <StaggerItem key={label}>
             <div className="rounded-lg border border-[var(--border)]
                             bg-[var(--bg-raised)] p-4">
-              <div className="stat text-[22px]
+              <div className="stat text-[var(--fs-h3)]
                               text-[var(--text-data)] leading-none mb-1">
                 {value}
               </div>
@@ -89,7 +89,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
             <div className="overline text-[var(--status-active)] mb-1">
               Hotspot | {shortageSummary.hotspot}
             </div>
-            <p className="text-[13px] text-[var(--text-secondary)]">
+            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)]">
               <span className="stat-value text-[var(--text-data)]">
                 {shortageSummary.hotspotReports}
               </span>
@@ -103,7 +103,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
       )}
 
       {/* Instruction */}
-      <p className="text-[13px] text-[var(--text-muted)] mt-4 text-center">
+      <p className="text-[var(--fs-sm)] text-[var(--text-muted)] mt-4 text-center">
         Enter your PIN below for intelligence specific to your area
       </p>
     </motion.div>

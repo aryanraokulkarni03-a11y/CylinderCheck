@@ -220,13 +220,13 @@ export default function CommercialPage({ prefilledCity }) {
                     <ellipse cx="24" cy="47" rx="18" ry="6" fill="var(--accent)" opacity="0.10" />
                   </svg>
                   <p className="text-[14px] text-[var(--text-secondary)] mb-2">
-                    Coming to {activeState} soon.
+                    They'll be here faster than you think.
                   </p>
                   <p className="text-[12px] text-[var(--text-muted)] font-data uppercase tracking-widest">
-                    We are onboarding agencies daily.
+                    Listings for {activeState} are onboarding now.
                   </p>
                   <p className="text-[12px] text-[var(--text-secondary)] mt-4">
-                    Submit your details on the right and we will match you manually within 24 hours.
+                    Drop your details on the right and we'll reach out as soon as agencies go live.
                   </p>
                 </motion.div>
               )}

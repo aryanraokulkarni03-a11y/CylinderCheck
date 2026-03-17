@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
   Bell,
-  HelpCircle,
   MessageSquare,
   Newspaper,
   Store,
@@ -48,9 +47,6 @@ const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
 
 export default function App() {
   const shouldReduceMotion = useReducedMotion()
-  const isHoverDevice = typeof window !== 'undefined'
-    ? window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches
-    : false
   const [tab, setTab] = useState('track')
 
   // Track tab state
@@ -365,26 +361,6 @@ export default function App() {
         onUnlock={handleAdminUnlock}
         loading={adminLoading}
       />
-
-      {/* Floating support FAB (mobile) */}
-      <motion.button
-        onClick={() => setShowSupport(true)}
-        whileHover={(!shouldReduceMotion && isHoverDevice) ? { scale: 1.08 } : undefined}
-        whileTap={shouldReduceMotion ? undefined : { scale: 0.94 }}
-        aria-label="Support"
-        className="md:hidden fixed z-[190] w-[44px] h-[44px] rounded-full
-                   flex items-center justify-center
-                   bg-[var(--bg-raised)] border border-[var(--border)]
-                   text-[var(--text-secondary)]
-                   transition-colors duration-150"
-        style={{
-          bottom: 'calc(var(--bottomnav-height) + 14px + env(safe-area-inset-bottom))',
-          right: '14px',
-          boxShadow: '0 4px 16px var(--shadow-dark)',
-        }}
-      >
-        <HelpCircle size={16} strokeWidth={1.8} />
-      </motion.button>
     </>
   )
 }

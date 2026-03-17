@@ -246,7 +246,7 @@ export default function App() {
 
     setLoading(false)
     setTimeout(() => {
-      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      resultRef.current?.scrollIntoView({ behavior: shouldReduceMotion ? 'auto' : 'smooth', block: 'start' })
     }, 80)
   }, [pin, lastBooking, cylinderLevel])
 

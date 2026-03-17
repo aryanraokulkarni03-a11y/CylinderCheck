@@ -86,7 +86,7 @@ export function UrgencyScore({ score }) {
             fill={config.color}
             fontSize="32"
             fontWeight="700"
-            fontFamily="'Geist Mono', monospace"
+            fontFamily="var(--font-data)"
           >
             {rounded}
           </motion.text>
@@ -96,7 +96,7 @@ export function UrgencyScore({ score }) {
             fill="var(--text-muted)"
             fontSize="9"
             letterSpacing="1.5"
-            fontFamily="'Geist Mono', monospace"
+            fontFamily="var(--font-data)"
           >
             OUT OF 10
           </text>

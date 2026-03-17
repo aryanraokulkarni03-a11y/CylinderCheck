@@ -171,14 +171,8 @@ export default function PricesTab({ mapPrices = {}, lastUpdated }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: shouldReduceMotion ? 0 : 8, scale: shouldReduceMotion ? 1 : 0.97 }}
               transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
-              className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4
+              className="glass-mid absolute bottom-4 left-4 right-4 md:left-auto md:right-4
                          md:w-[280px] z-[1000] rounded-lg p-5"
-              style={{
-                backdropFilter: 'blur(24px) saturate(160%)',
-                WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-                background: 'var(--glass-deep)',
-                border: '1px solid var(--fog-border)',
-              }}
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="font-display font-bold text-[18px] text-[var(--text-primary)]">
@@ -254,7 +248,7 @@ export default function PricesTab({ mapPrices = {}, lastUpdated }) {
               className="font-data text-[11px] text-[var(--text-muted)]
                          uppercase tracking-[0.08em]"
             >
-              {range} · {label}
+              {range}{' \u00B7 '}{label}
             </span>
           </div>
         ))}
@@ -297,4 +291,3 @@ export default function PricesTab({ mapPrices = {}, lastUpdated }) {
     </div>
   )
 }
-

@@ -11,8 +11,9 @@ import { springs } from '../../lib/springs'
 const DOT = '\u00B7'
 const ARROW = '\u2192'
 
-export default function CommercialHero() {
+export default function CommercialHero({ hasAnyVendors = null }) {
   const shouldReduceMotion = useReducedMotion()
+  const isWaitlist = hasAnyVendors === false
 
   const scrollToVendors = useCallback(() => {
     document
@@ -47,24 +48,25 @@ export default function CommercialHero() {
             className="font-display font-extrabold text-[clamp(32px,5vw,56px)]
                        tracking-[-0.035em] leading-[1.02] text-[var(--text-primary)]"
           >
-            Commercial LPG, without chaos.
+            {isWaitlist ? 'Private suppliers are onboarding.' : 'Commercial LPG, without chaos.'}
           </h1>
 
           <p className="mt-4 text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[66ch]">
-            Find listed private agencies in your state with active inventory. License checks are rolling out. Always
-            confirm rates and availability directly with the supplier.
+            {isWaitlist
+              ? "They'll be here faster than you think. Leave your details and we'll reach out when listings go live in your state."
+              : 'Find listed private agencies in your state with active inventory. License checks are rolling out. Always confirm rates and availability directly with the supplier.'}
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
             <LiquidGlassBtn onClick={scrollToVendors} className="justify-center">
-              View listed agencies {ARROW}
+              {isWaitlist ? 'Join the list' : 'View listed agencies'} {ARROW}
             </LiquidGlassBtn>
             <button
               type="button"
               onClick={scrollToVendors}
               className="btn-ghost justify-center"
             >
-              Request quotes
+              {isWaitlist ? 'Leave details' : 'Request quotes'}
               <ArrowDownRight size={18} />
             </button>
           </div>
@@ -79,7 +81,7 @@ export default function CommercialHero() {
             </span>
             <span className="inline-flex items-center gap-2">
               <PhoneCall size={14} className="text-[var(--text-secondary)]" />
-              Call or WhatsApp directly
+              {isWaitlist ? 'Direct contact once listings go live' : 'Call or WhatsApp directly'}
             </span>
           </div>
         </div>
@@ -96,19 +98,19 @@ export default function CommercialHero() {
                 <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
                   01
                 </span>
-                <span>Pick your state and browse listed agencies.</span>
+                <span>{isWaitlist ? 'Pick your state and join the onboarding list.' : 'Pick your state and browse listed agencies.'}</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
                   02
                 </span>
-                <span>Contact suppliers directly to confirm rates and stock.</span>
+                <span>{isWaitlist ? 'We will reach out when listings go live in your area.' : 'Contact suppliers directly to confirm rates and stock.'}</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
                   03
                 </span>
-                <span>Request quotes if you need emergency matching.</span>
+                <span>{isWaitlist ? 'Then contact suppliers directly to confirm rates and stock.' : 'Request quotes if you need emergency matching.'}</span>
               </div>
             </div>
 
@@ -121,4 +123,3 @@ export default function CommercialHero() {
     </section>
   )
 }
-

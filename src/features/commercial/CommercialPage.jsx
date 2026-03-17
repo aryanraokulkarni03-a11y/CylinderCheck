@@ -42,11 +42,39 @@ export default function CommercialPage({ prefilledCity }) {
   const [vendors, setVendors] = useState([])
   const [vendorsLoading, setVendorsLoading] = useState(true)
   const [vendorError, setVendorError] = useState(null)
+  const [hasAnyVendors, setHasAnyVendors] = useState(null)
 
   useEffect(() => {
     const st = commercialStateForCity(prefilledCity)
     if (st && COMMERCIAL_STATES.includes(st)) setActiveState(st)
   }, [prefilledCity])
+
+  useEffect(() => {
+    let alive = true
+
+    async function checkAny() {
+      try {
+        const nowIso = new Date().toISOString()
+        const { data, error } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('active', true)
+          .or(`listing_expires_at.is.null,listing_expires_at.gt.${nowIso}`)
+          .limit(1)
+
+        if (!alive) return
+        if (error) return
+        setHasAnyVendors((Array.isArray(data) ? data : []).length > 0)
+      } catch {
+        // Non-blocking: keep as unknown.
+      }
+    }
+
+    checkAny()
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const fetchVendors = useCallback(async (stateName) => {
     setVendorsLoading(true)
@@ -77,6 +105,7 @@ export default function CommercialPage({ prefilledCity }) {
 
     const clean = (Array.isArray(data) ? data : []).filter((v) => !isTestVendor(v))
     setVendors(clean)
+    if (clean.length > 0) setHasAnyVendors(true)
     setVendorsLoading(false)
   }, [])
 
@@ -86,7 +115,7 @@ export default function CommercialPage({ prefilledCity }) {
 
   return (
     <div className="pb-24 w-full">
-      <CommercialHero />
+      <CommercialHero hasAnyVendors={hasAnyVendors} />
 
       <div id="commercial-vendors" className="mt-14 md:mt-20 w-full">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)] text-[12px] font-bold tracking-widest uppercase font-data text-[var(--text-muted)] w-full">

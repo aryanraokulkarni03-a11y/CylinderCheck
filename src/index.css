@@ -229,3 +229,207 @@ body::before {
 .input:focus-visible {
   outline: none; /* handled by box-shadow above */
 }
+
+/* ============================================================
+   Task 5 — "De-AI" UI Primitives
+   ============================================================ */
+
+/* Page headers: consistent hierarchy + calibrated width + action slot. */
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.page-header__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .page-header {
+    margin-bottom: var(--space-8);
+  }
+  .page-header__row {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-6);
+  }
+}
+
+.page-header__copy {
+  min-width: 0;
+}
+
+.page-header__title {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+.page-header__desc {
+  margin: 10px 0 0;
+  color: var(--text-secondary);
+  max-width: var(--prose-width);
+}
+
+.page-header__actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Form fields: label/hint/error + focus-within affordances. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field + .field {
+  margin-top: var(--space-4);
+}
+
+.field__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.field__label {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: var(--ls-wide);
+  color: var(--text-secondary);
+}
+
+.field__meta {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.35;
+  text-align: right;
+}
+
+.field__error {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--status-severe);
+  line-height: 1.35;
+}
+
+.field:focus-within .field__label {
+  color: var(--text-primary);
+}
+
+.field--error .input {
+  border-color: var(--status-severe-border);
+  box-shadow: 0 0 0 3px var(--status-severe-soft);
+}
+
+.field--error .input:focus,
+.field--error .input:focus-visible {
+  border-color: var(--status-severe);
+  box-shadow: 0 0 0 3px var(--status-severe-soft);
+}
+
+/* Pills/segmented controls: one visual language for filters and state pickers. */
+.pill-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding: 2px 8px 8px;
+  margin-inline: -8px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.pill-row::-webkit-scrollbar {
+  display: none;
+}
+
+.pill {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: var(--ls-wide);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.pill[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-glow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pill:hover {
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+  }
+  .pill[aria-pressed="true"]:hover {
+    border-color: var(--accent);
+  }
+}
+
+/* Chips: grid-friendly option buttons (same language as pills, different radius). */
+.chip {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: var(--ls-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-glow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+  }
+  .chip[aria-pressed="true"]:hover {
+    border-color: var(--accent);
+  }
+}

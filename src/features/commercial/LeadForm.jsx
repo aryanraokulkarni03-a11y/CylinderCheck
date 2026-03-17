@@ -5,6 +5,7 @@ import { Check, Loader2, Send } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { springs } from '../../lib/springs';
 import { COMMERCIAL_CITIES_BY_STATE } from '../../lib/utils';
+import { Field } from '../../components/ui/Field';
 
 // Aligned to actual commercial_leads DB schema:
 // business_name, business_type, city, pin, phone, need_type, cylinders_week, message
@@ -145,10 +146,10 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
             </div>
 
             {/* Business type */}
-            <div>
-              <p className="overline text-[var(--text-primary)] mb-3">
-                Business Type
-              </p>
+            <div className="field">
+              <div className="field__top">
+                <div className="field__label">Business type</div>
+              </div>
               <div className="grid grid-cols-3 gap-2" role="group" aria-label="Business type">
                 {BUSINESS_TYPES.map(({ value, label }) => (
                   <button
@@ -156,10 +157,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                     type="button"
                     aria-pressed={businessType === value}
                     onClick={() => setBusinessType(value)}
-                    className={`py-2 px-2 rounded-md text-[var(--fs-xs)] font-medium tracking-[0.02em] transition-colors border
-                      ${businessType === value
-                        ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
-                        : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'}`}
+                    className="chip"
                   >
                     {label}
                   </button>
@@ -168,10 +166,10 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
             </div>
 
             {/* Alternative needed */}
-            <div>
-              <p className="overline text-[var(--text-primary)] mb-3">
-                Alternative Needed
-              </p>
+            <div className="field">
+              <div className="field__top">
+                <div className="field__label">Alternative needed</div>
+              </div>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Need type">
                 {NEED_TYPES.map(({ value, label }) => (
                   <button
@@ -179,10 +177,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                     type="button"
                     aria-pressed={needType === value}
                     onClick={() => setNeedType(value)}
-                    className={`py-1.5 px-3 rounded-pill text-[var(--fs-xs)] font-medium tracking-[0.02em] transition-colors border
-                      ${needType === value
-                        ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
-                        : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'}`}
+                    className="pill"
                   >
                     {label}
                   </button>
@@ -191,51 +186,44 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
             </div>
 
             {/* Business name */}
-            <div>
-              <label htmlFor="lead-biz-name" className="block text-[var(--text-primary)] mb-2">
-                Business Name *
-              </label>
+            <Field
+              id="lead-biz-name"
+              label="Business name"
+              required
+              error={fieldError.businessName || null}
+            >
               <input
-                id="lead-biz-name"
                 type="text"
                 required
                 autoComplete="organization"
-                className={`input ${fieldError.businessName ? 'border-[var(--status-severe)]' : ''}`}
+                className="input"
                 placeholder="Restaurant / Hotel Name"
                 value={businessName}
                 onChange={e => { setBusinessName(e.target.value); setFieldError(p => ({ ...p, businessName: '' })); }}
               />
-              {fieldError.businessName && (
-                <p className="caption text-[var(--status-severe)] mt-1">{fieldError.businessName}</p>
-              )}
-            </div>
+            </Field>
 
             {/* Phone + PIN row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="lead-phone" className="block text-[var(--text-primary)] mb-2">
-                  Mobile Number *
-                </label>
+              <Field
+                id="lead-phone"
+                label="Mobile number"
+                required
+                error={fieldError.phone || null}
+              >
                 <input
-                  id="lead-phone"
                   type="tel"
                   required
                   inputMode="numeric"
-                  className={`input tracking-[0.14em] text-[var(--text-data)] ${fieldError.phone ? 'border-[var(--status-severe)]' : ''}`}
+                  className="input tracking-[0.14em] text-[var(--text-data)]"
                   placeholder="10-digit number"
                   value={phone}
                   onChange={e => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setFieldError(p => ({ ...p, phone: '' })); }}
                 />
-                {fieldError.phone && (
-                  <p className="caption text-[var(--status-severe)] mt-1">{fieldError.phone}</p>
-                )}
-              </div>
-              <div>
-                <label htmlFor="lead-pin" className="block text-[var(--text-primary)] mb-2">
-                  PIN Code <span className="caption text-[var(--text-muted)] normal-case tracking-normal">(optional)</span>
-                </label>
+              </Field>
+
+              <Field id="lead-pin" label="PIN code" meta="Optional">
                 <input
-                  id="lead-pin"
                   type="text"
                   inputMode="numeric"
                   maxLength={6}
@@ -244,16 +232,12 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                   value={pin}
                   onChange={e => setPin(e.target.value.replace(/\D/g, ''))}
                 />
-              </div>
+              </Field>
             </div>
 
             {/* Cylinders per week */}
-            <div>
-              <label htmlFor="lead-cylinders" className="block text-[var(--text-primary)] mb-2">
-                Cylinders per week <span className="caption text-[var(--text-muted)] normal-case tracking-normal">(optional)</span>
-              </label>
+            <Field id="lead-cylinders" label="Cylinders per week" meta="Optional">
               <input
-                id="lead-cylinders"
                 type="text"
                 inputMode="numeric"
                 maxLength={3}
@@ -262,21 +246,17 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                 value={cylindersWeek}
                 onChange={e => setCylindersWeek(e.target.value.replace(/\D/g, ''))}
               />
-            </div>
+            </Field>
 
             {/* Message */}
-            <div>
-              <label htmlFor="lead-message" className="block text-[var(--text-primary)] mb-2">
-                Additional context <span className="caption text-[var(--text-muted)] normal-case tracking-normal">(optional)</span>
-              </label>
+            <Field id="lead-message" label="Additional context" meta="Optional">
               <textarea
-                id="lead-message"
                 className="input resize-y min-h-[80px]"
                 placeholder="e.g. Need emergency supply by Friday, Ramzan catering..."
                 value={message}
                 onChange={e => setMessage(e.target.value)}
               />
-            </div>
+            </Field>
 
             {submitError && (
               <motion.div

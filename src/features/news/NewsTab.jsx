@@ -2,9 +2,10 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import NewsMap, { getCity } from './NewsMap'
-import { SectionMarker } from '../../components/shared/SectionMarker'
 import { FadeIn } from '../../components/motion/FadeIn'
 import { ExternalLink, Loader2, MapPin, MessageCircle, RefreshCw } from 'lucide-react'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { PillRow } from '../../components/ui/PillRow'
 
 const DOT = '\u00B7'
 const DOWN = '\u2193'
@@ -165,62 +166,36 @@ export default function NewsTab() {
 
   return (
     <div className="pb-12 w-full min-w-0">
-      <SectionMarker status={pageStatus} label="Intelligence Feed" />
-
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
-        <div>
-          <h1
-            className="text-[var(--text-primary)] mb-2 leading-[1.1]"
+      <PageHeader
+        markerStatus={pageStatus}
+        markerLabel="Intelligence Feed"
+        title="LPG Intelligence"
+        description="Live tracking of shortages, price hikes, and policy shifts across India. City-tagged when possible."
+        actions={
+          <button
+            type="button"
+            onClick={() => fetchNews(true)}
+            disabled={loading}
+            className="btn-ghost disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            LPG Intelligence
-          </h1>
-          <p className="text-[var(--text-secondary)] max-w-[560px]">
-            Live tracking of shortages, price hikes, and policy shifts across India. City-tagged when
-            possible.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => fetchNews(true)}
-          disabled={loading}
-          className="btn-ghost disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {loading ? <Loader2 size={18} className="motion-safe:animate-spin" /> : <RefreshCw size={18} />}
-          Sync feed
-        </button>
-      </div>
+            {loading ? <Loader2 size={18} className="motion-safe:animate-spin" /> : <RefreshCw size={18} />}
+            Sync feed
+          </button>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start min-w-0">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-2 px-2">
-            <button
-              type="button"
-              className={`overline shrink-0 px-4 py-2 rounded-full border transition-colors ${
-                !selectedCity
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-base)] border-[var(--text-primary)]'
-                  : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'
-              }`}
-              onClick={() => setSelectedCity(null)}
-            >
-              All India
-            </button>
-
-            {cities.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={`overline shrink-0 px-4 py-2 rounded-full border transition-colors ${
-                  selectedCity === c
-                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
-                    : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'
-                }`}
-                onClick={() => setSelectedCity((prev) => (prev === c ? null : c))}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
+          <PillRow
+            ariaLabel="Filter by city"
+            allowDeselect={true}
+            value={selectedCity}
+            onChange={(v) => setSelectedCity(v)}
+            items={[
+              { value: null, label: 'All India' },
+              ...cities.map((c) => ({ value: c, label: c })),
+            ]}
+          />
 
           {error && (
             <div className="mt-3 rounded-md border border-[var(--status-active-border)] bg-[var(--status-active-soft)] px-3 py-2 text-[var(--fs-sm)] text-[var(--text-primary)]">

@@ -6,10 +6,11 @@ import CompanyPicker, { COMPANY_PICKER_OPTS } from '../../components/shared/Comp
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import EmptyState from '../../components/shared/EmptyState'
 import { AlertCircle, ArrowUp, Edit2, Loader2, Send, Trash2 } from 'lucide-react'
-import { SectionMarker } from '../../components/shared/SectionMarker'
 import { motion, useReducedMotion } from 'motion/react'
 import { FadeIn } from '../../components/motion/FadeIn'
 import { springs } from '../../lib/springs'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Field } from '../../components/ui/Field'
 
 const ARROW = '\u2192'
 const DOT = '\u00B7'
@@ -204,16 +205,12 @@ export default function ReportsTab({ user, authLoading }) {
 
   return (
     <div className="w-full min-w-0">
-      <SectionMarker status="early" label="Community Reports" />
-
-      <h1
-        className="text-[var(--text-primary)] mb-2 leading-[1.1]"
-      >
-        Community Reports
-      </h1>
-      <p className="text-[var(--text-secondary)] mb-6 max-w-[560px]">
-        Flag delivery delays, shortages, and agency issues in your area. Real reports from real people.
-      </p>
+      <PageHeader
+        markerStatus="early"
+        markerLabel="Community Reports"
+        title="Community Reports"
+        description="Flag delivery delays, shortages, and agency issues in your area. Real reports from real people."
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start min-w-0">
         <div className="card lg:sticky lg:top-[calc(var(--topbar-height)+24px)]">
@@ -265,22 +262,15 @@ export default function ReportsTab({ user, authLoading }) {
             </div>
           ) : (
             <FadeIn delay={0.1}>
-              <div className="space-y-4">
+              <div>
                 {submitError && (
-                  <div className="rounded-md border border-[var(--status-severe-border)] bg-[var(--status-severe-soft)] px-3 py-2 text-[var(--fs-sm)] text-[var(--text-primary)]">
+                  <div className="rounded-md border border-[var(--status-severe-border)] bg-[var(--status-severe-soft)] px-3 py-2 text-[var(--fs-sm)] text-[var(--text-primary)] mb-4">
                     {submitError}
                   </div>
                 )}
 
-                <div>
-                  <label
-                    className="block text-[var(--text-secondary)] mb-2"
-                    htmlFor="report-pin"
-                  >
-                    PIN code <span className="text-[var(--text-muted)]">*</span>
-                  </label>
+                <Field id="report-pin" label="PIN code" meta="6 digits" required>
                   <input
-                    id="report-pin"
                     className="input tracking-[0.12em] text-[var(--text-data)]"
                     placeholder="6-digit PIN"
                     value={reportPin}
@@ -289,58 +279,37 @@ export default function ReportsTab({ user, authLoading }) {
                     pattern="[0-9]*"
                     onChange={(e) => setReportPin(e.target.value.replace(/\D/g, ''))}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label
-                    className="block text-[var(--text-secondary)] mb-2"
-                    htmlFor="report-area"
-                  >
-                    Area / colony{' '}
-                    <span className="caption text-[var(--text-muted)] tracking-normal normal-case">
-                      (optional)
-                    </span>
-                  </label>
+                <Field id="report-area" label="Area / colony" meta="Optional">
                   <input
-                    id="report-area"
                     className="input"
                     placeholder={`e.g. Vizag ${DOT} Gajuwaka`}
                     value={reportCity}
                     onChange={(e) => setReportCity(e.target.value)}
                   />
+                </Field>
+
+                <div className="field">
+                  <div className="field__top">
+                    <div className="field__label">LPG provider</div>
+                    <div className="field__meta">Optional</div>
+                  </div>
+                  <CompanyPicker value={reportCompany} onChange={setReportCompany} compact={true} />
                 </div>
 
-                <CompanyPicker value={reportCompany} onChange={setReportCompany} compact={true} />
-
-                <div>
-                  <label
-                    className="block text-[var(--text-secondary)] mb-2"
-                    htmlFor="report-issue"
-                  >
-                    What is happening? <span className="text-[var(--text-muted)]">*</span>
-                  </label>
+                <Field id="report-issue" label="What is happening?" required>
                   <textarea
-                    id="report-issue"
                     className="input resize-y"
                     style={{ minHeight: 110 }}
                     placeholder={`e.g. No delivery in 12 days, driver demanding \u20B9100 extra\u2026`}
                     value={reportText}
                     onChange={(e) => setReportText(e.target.value)}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label
-                    className="block text-[var(--text-secondary)] mb-2"
-                    htmlFor="report-days"
-                  >
-                    Delivery days{' '}
-                    <span className="caption text-[var(--text-muted)] tracking-normal normal-case">
-                      (optional)
-                    </span>
-                  </label>
+                <Field id="report-days" label="Delivery days" meta="Optional">
                   <input
-                    id="report-days"
                     className="input"
                     placeholder="e.g. 12"
                     value={reportDeliveryDays}
@@ -348,7 +317,7 @@ export default function ReportsTab({ user, authLoading }) {
                     pattern="[0-9]*"
                     onChange={(e) => setReportDeliveryDays(e.target.value.replace(/\D/g, ''))}
                   />
-                </div>
+                </Field>
 
                 <LiquidGlassBtn
                   className="w-full justify-center mt-2"

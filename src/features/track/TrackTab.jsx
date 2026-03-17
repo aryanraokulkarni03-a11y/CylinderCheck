@@ -3,7 +3,6 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { MapPin } from 'lucide-react'
-import { SectionMarker } from '../../components/shared/SectionMarker'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { UrgencyScore } from './UrgencyScore'
 import { Ring } from '../../components/shared/Ring'
@@ -14,6 +13,8 @@ import { KalamkariDivider } from '../../components/shared/KalamkariDivider'
 import { StatusDot } from '../../components/shared/StatusDot'
 import { springs } from '../../lib/springs'
 import { COMPANY_LABELS, addDays, fmt } from '../../lib/utils'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Field } from '../../components/ui/Field'
 
 const ARROW = '\u2192'
 
@@ -81,25 +82,18 @@ export function TrackTab({
 
   return (
     <div className="w-full min-w-0">
-      <SectionMarker
-        status={
+      <PageHeader
+        markerStatus={
           pinData?.reportCount >= 5
             ? 'severe'
             : pinData?.reportCount >= 2
               ? 'active'
               : 'clear'
         }
-        label="Track Your Area"
+        markerLabel="Track Your Area"
+        title="Booking Tracker"
+        description="Know when to book. Know if there is a shortage. Real-time delivery intelligence by PIN code."
       />
-
-      <h1
-        className="text-[var(--text-primary)] mb-2 leading-[1.1]"
-      >
-        Booking Tracker
-      </h1>
-      <p className="text-[var(--text-secondary)] mb-6 max-w-[560px]">
-        Know when to book. Know if there is a shortage. Real-time delivery intelligence by PIN code.
-      </p>
 
       <PriceTicker mapPrices={mapPrices} />
 
@@ -116,53 +110,38 @@ export function TrackTab({
               Delivery Prediction
             </div>
 
-            <div className="flex flex-col gap-2 mb-5">
-              <label
-                htmlFor="pin-input"
-                className="text-[var(--text-secondary)]"
-              >
-                Where are you?
-              </label>
-              <input
-                id="pin-input"
-                className="input min-h-[52px] tracking-[0.12em] text-[var(--text-data)]"
-                placeholder="Enter 6-digit PIN"
-                value={pin}
-                maxLength={6}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
-              />
+            <div className="mb-5">
+              <Field id="pin-input" label="Where are you?" required>
+                <input
+                  className="input min-h-[52px] tracking-[0.12em] text-[var(--text-data)]"
+                  placeholder="Enter 6-digit PIN"
+                  value={pin}
+                  maxLength={6}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
+                />
+              </Field>
+            </div>
+
+            <div className="mb-6">
+              <Field id="booking-date" label="Last booking date" meta="Optional">
+                <input
+                  type="date"
+                  className="input"
+                  value={lastBooking}
+                  onChange={(e) => setLastBooking(e.target.value)}
+                />
+              </Field>
             </div>
 
             <div className="flex flex-col gap-2 mb-6">
-              <label
-                htmlFor="booking-date"
-                className="text-[var(--text-secondary)]"
-              >
-                Last Booking Date{' '}
-                <span className="text-[var(--text-muted)] normal-case tracking-normal font-normal">
-                  (optional)
-                </span>
-              </label>
-              <input
-                id="booking-date"
-                type="date"
-                className="input"
-                value={lastBooking}
-                onChange={(e) => setLastBooking(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2 mb-6">
-              <p className="label-text text-[var(--text-secondary)]">
-                Current Cylinder Level{' '}
-                <span className="text-[var(--text-muted)] normal-case tracking-normal font-normal">
-                  (optional, unlocks urgency score)
-                </span>
-              </p>
+              <div className="field__top">
+                <div className="field__label">Current cylinder level</div>
+                <div className="field__meta">Optional (unlocks urgency score)</div>
+              </div>
               <div className="grid grid-cols-4 gap-2" role="group" aria-label="Current cylinder level">
                 {CYLINDER_LEVELS.map(({ value, label, emoji, hint }) => (
                   <button

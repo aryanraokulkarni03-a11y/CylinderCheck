@@ -6,9 +6,10 @@ import { useReducedMotion } from 'motion/react'
 import { BadgeCheck, Bell, Check, Loader2, ShieldAlert, Zap } from 'lucide-react'
 
 import { supabase } from '../../supabaseClient'
-import { SectionMarker } from '../../components/shared/SectionMarker'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { SlideUp } from '../../components/motion/SlideUp'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Field } from '../../components/ui/Field'
 
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || ''
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -219,17 +220,14 @@ export default function AlertsTab() {
 
   return (
     <div className="pb-16 w-full min-w-0">
-      <SectionMarker status="active" label="Alerts" sublabel="Signals and reminders" />
-
-      <h1
-        className="text-[var(--text-primary)] mb-2 leading-[1.1] flex items-center gap-3"
-      >
-        <Bell size={28} className="text-[var(--accent)]" />
-        Alerts
-      </h1>
-      <p className="text-[var(--text-secondary)] mb-8 max-w-[64ch]">
-        Get a ping before your next booking window, and early warnings when supply tightens in your area.
-      </p>
+      <PageHeader
+        markerStatus="active"
+        markerLabel="Alerts"
+        markerSublabel="Signals and reminders"
+        icon={Bell}
+        title="Alerts"
+        description="Get a ping before your next booking window, and early warnings when supply tightens in your area."
+      />
 
       <div className="grid lg:grid-cols-2 gap-6 items-start min-w-0">
         <SlideUp delay={0.02} className="w-full min-w-0">
@@ -263,16 +261,9 @@ export default function AlertsTab() {
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label
-                  htmlFor="free-pin"
-                  className="text-[var(--text-secondary)]"
-                >
-                  PIN (optional)
-                </label>
+              <Field id="free-pin" label="PIN" meta="Optional">
                 <input
-                  id="free-pin"
-                  className="input mt-2 tracking-[0.14em] text-[var(--text-data)]"
+                  className="input tracking-[0.14em] text-[var(--text-data)]"
                   placeholder="6-digit PIN"
                   value={alertPin}
                   maxLength={6}
@@ -280,42 +271,30 @@ export default function AlertsTab() {
                   pattern="[0-9]*"
                   onChange={(e) => setAlertPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 />
-              </div>
+              </Field>
 
-              <div>
-                <label
-                  htmlFor="free-date"
-                  className="text-[var(--text-secondary)]"
-                >
-                  Last booking (optional)
-                </label>
+              <Field id="free-date" label="Last booking" meta="Optional">
                 <input
-                  id="free-date"
                   type="date"
-                  className="input mt-2"
+                  className="input"
                   value={alertDate}
                   onChange={(e) => setAlertDate(e.target.value)}
                 />
-              </div>
+              </Field>
             </div>
 
             <div className="mb-4">
-              <label
-                htmlFor="free-contact"
-                className="text-[var(--text-secondary)]"
-              >
-                Mobile or email
-              </label>
-              <input
-                id="free-contact"
-                className="input mt-2"
-                placeholder="98xxxxxxxx or you@email.com"
-                value={contact}
-                onChange={(e) => {
-                  setContact(e.target.value)
-                  setFreeAlertError('')
-                }}
-              />
+              <Field id="free-contact" label="Mobile or email" required>
+                <input
+                  className="input"
+                  placeholder="98xxxxxxxx or you@email.com"
+                  value={contact}
+                  onChange={(e) => {
+                    setContact(e.target.value)
+                    setFreeAlertError('')
+                  }}
+                />
+              </Field>
             </div>
 
             {freeAlertError && (
@@ -411,17 +390,10 @@ export default function AlertsTab() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="plus-contact"
-                    className="text-[var(--text-secondary)]"
-                  >
-                    Mobile or email
-                  </label>
+              <div>
+                <Field id="plus-contact" label="Mobile or email" required>
                   <input
-                    id="plus-contact"
-                    className="input mt-2"
+                    className="input"
                     placeholder="98xxxxxxxx or you@email.com"
                     value={payContact}
                     onChange={(e) => {
@@ -429,18 +401,11 @@ export default function AlertsTab() {
                       setPayError('')
                     }}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label
-                    htmlFor="plus-pin"
-                    className="text-[var(--text-secondary)]"
-                  >
-                    PIN (optional)
-                  </label>
+                <Field id="plus-pin" label="PIN" meta="Optional">
                   <input
-                    id="plus-pin"
-                    className="input mt-2 tracking-[0.14em] text-[var(--text-data)]"
+                    className="input tracking-[0.14em] text-[var(--text-data)]"
                     placeholder="6-digit PIN"
                     value={payPin}
                     maxLength={6}
@@ -448,16 +413,16 @@ export default function AlertsTab() {
                     pattern="[0-9]*"
                     onChange={(e) => setPayPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   />
-                </div>
+                </Field>
 
                 {payError && (
-                  <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)]">
+                  <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)] mt-4">
                     {payError}
                   </div>
                 )}
 
                 <LiquidGlassBtn
-                  className="w-full justify-center"
+                  className="w-full justify-center mt-4"
                   onClick={handlePayment}
                   disabled={!canPay}
                 >

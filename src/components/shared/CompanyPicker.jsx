@@ -26,7 +26,7 @@ export const COMPANY_PICKER_OPTS = [
 
 export default function CompanyPicker({ value, onChange, compact }) {
   return (
-    <div className="mb-6" role="group" aria-label="LPG company">
+    <div role="group" aria-label="LPG company">
       {!compact && (
         <div className="overline text-[var(--text-primary)] mb-3 flex items-center justify-between">
           Your gas company
@@ -41,18 +41,16 @@ export default function CompanyPicker({ value, onChange, compact }) {
           <button
             key={co.id}
             type="button"
-            className={`flex items-center justify-center gap-2 py-3 px-2 rounded-[var(--radius-sm)] border transition-colors ${
-              value === co.id
-                ? 'bg-[var(--accent-soft)] border-[var(--accent)] text-[var(--accent)] ring-1 ring-[var(--accent-glow)]'
-                : 'bg-[var(--bg-inset)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
-            }`}
+            className="chip"
             onClick={() => onChange(value === co.id ? null : co.id)}
             aria-pressed={value === co.id}
           >
             <span className="text-[var(--fs-body-lg)]" aria-hidden="true">
               {co.emoji}
             </span>
-            <span className="text-[var(--fs-xs)] font-medium tracking-wide">{compact ? co.short : co.label}</span>
+            <span className="text-[var(--fs-xs)] font-medium tracking-wide">
+              {compact ? co.short : co.label}
+            </span>
           </button>
         ))}
       </div>

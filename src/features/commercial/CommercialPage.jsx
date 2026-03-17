@@ -5,7 +5,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { FileText, RefreshCw, ShieldCheck } from 'lucide-react'
 import { supabase } from '../../supabaseClient'
 import { StaggerContainer } from '../../components/motion/StaggerContainer'
-import { SectionMarker } from '../../components/shared/SectionMarker'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { PillRow } from '../../components/ui/PillRow'
 import {
   COMMERCIAL_CITIES_BY_STATE,
   COMMERCIAL_STATES,
@@ -134,34 +135,21 @@ export default function CommercialPage({ prefilledCity }) {
           </span>
         </div>
 
-        <SectionMarker status="active" label="Commercial Alternatives" sublabel="Private suppliers" />
+        <PageHeader
+          as="h2"
+          markerStatus="active"
+          markerLabel="Commercial Alternatives"
+          markerSublabel="Private suppliers"
+          title="Private suppliers"
+          description="Choose your state to see listings as they go live. If your state is empty today, join the list and we will notify you."
+        />
 
-        <h2
-          className="text-[var(--text-primary)] mb-2 leading-[1.1]"
-        >
-          Private suppliers
-        </h2>
-        <p className="text-[var(--text-secondary)] mb-8 max-w-[640px]">
-          Choose your state to see listings as they go live. If your state is empty today, join the list and we will
-          notify you.
-        </p>
-
-        <div className="flex items-center overflow-x-auto gap-2 pb-3 -mx-2 px-2">
-          {COMMERCIAL_STATES.map((st) => (
-            <button
-              key={st}
-              type="button"
-              onClick={() => setActiveState(st)}
-              className={`shrink-0 px-5 py-2 rounded-full text-[var(--fs-xs)] font-medium tracking-[0.02em] whitespace-nowrap transition-colors border ${
-                activeState === st
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-base)] border-[var(--text-primary)]'
-                  : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'
-              }`}
-            >
-              {st}
-            </button>
-          ))}
-        </div>
+        <PillRow
+          ariaLabel="Choose a state"
+          value={activeState}
+          onChange={setActiveState}
+          items={COMMERCIAL_STATES.map((st) => ({ value: st, label: st }))}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-14 items-start w-full mt-8 min-w-0">
           <div className="lg:col-span-7 xl:col-span-8 w-full min-w-0">

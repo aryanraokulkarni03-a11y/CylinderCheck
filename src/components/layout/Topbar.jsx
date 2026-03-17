@@ -6,7 +6,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { FlameIcon } from '../shared/FlameIcon'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { supabase } from '../../supabaseClient'
-import { HelpCircle, LogOut } from 'lucide-react'
+import { HelpCircle, LogIn, LogOut } from 'lucide-react'
 import { springs } from '../../lib/springs'
 
 const DOT = '\u00B7'
@@ -86,7 +86,7 @@ export function Topbar({
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Desktop support */}
+            {/* Support */}
             <button
               type="button"
               onClick={onSupportOpen}
@@ -96,6 +96,15 @@ export function Topbar({
               <span className="font-data text-[11px] uppercase tracking-[0.14em] font-semibold">
                 Support
               </span>
+            </button>
+            <button
+              type="button"
+              onClick={onSupportOpen}
+              className="inline-flex md:hidden items-center justify-center w-9 h-9 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
+              aria-label="Support"
+              title="Support"
+            >
+              <HelpCircle size={16} />
             </button>
 
             {!authLoading && !user && (
@@ -107,23 +116,26 @@ export function Topbar({
                     options: { redirectTo: window.location.origin },
                   })
                 }
-                className="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
+                aria-label="Sign in with Google"
+                title="Sign in with Google"
               >
-                <span className="font-data text-[11px] uppercase tracking-[0.14em] font-semibold">
+                <LogIn size={16} />
+                <span className="hidden sm:inline font-data text-[11px] uppercase tracking-[0.14em] font-semibold">
                   Sign in
                 </span>
-                <span className="text-[var(--divider)]" aria-hidden="true">
+                <span className="hidden sm:inline text-[var(--divider)]" aria-hidden="true">
                   {DOT}
                 </span>
-                <span className="text-[11px] text-[var(--text-muted)]">Google</span>
+                <span className="hidden sm:inline text-[11px] text-[var(--text-muted)]">Google</span>
               </button>
             )}
 
             {!authLoading && user && (
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <div
-                  className="w-8 h-8 rounded-full flex-shrink-0 bg-[var(--accent-soft)] border border-[var(--accent)]
-                             flex items-center justify-center text-[12px] font-bold text-[var(--accent)]"
+                  className="hidden sm:flex w-8 h-8 rounded-full flex-shrink-0 bg-[var(--accent-soft)] border border-[var(--accent)]
+                             items-center justify-center text-[12px] font-bold text-[var(--accent)]"
                   aria-label="Signed in"
                   title={user.email || 'Signed in'}
                 >
@@ -135,7 +147,7 @@ export function Topbar({
                   className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-[var(--border)] bg-[var(--bg-inset)]
                              hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
                   aria-label="Sign out"
-                  title="Sign out"
+                  title={user.email ? `Sign out (${user.email})` : 'Sign out'}
                 >
                   <LogOut size={16} />
                 </button>
@@ -151,4 +163,3 @@ export function Topbar({
 }
 
 export default Topbar
-

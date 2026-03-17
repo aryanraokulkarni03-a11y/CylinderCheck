@@ -13,7 +13,7 @@ import { SlideUp } from '../../components/motion/SlideUp'
 import { KalamkariDivider } from '../../components/shared/KalamkariDivider'
 import { StatusDot } from '../../components/shared/StatusDot'
 import { springs } from '../../lib/springs'
-import { addDays, fmt } from '../../lib/utils'
+import { COMPANY_LABELS, addDays, fmt } from '../../lib/utils'
 
 const ARROW = '\u2192'
 
@@ -284,7 +284,7 @@ export function TrackTab({
                     <div className="flex justify-between items-start py-3">
                       <span className="text-[13px] text-[var(--text-secondary)]">Gas Agency</span>
                       <span className="text-[13px] text-[var(--text-secondary)] font-semibold text-right">
-                        {pinData.agency}
+                        {COMPANY_LABELS?.[pinData.agency] || pinData.agency}
                       </span>
                     </div>
 
@@ -463,4 +463,3 @@ export function TrackTab({
 }
 
 export default TrackTab
-

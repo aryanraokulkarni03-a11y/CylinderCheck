@@ -121,11 +121,11 @@ export function SupportModal({ onClose }) {
             <div className="space-y-3">
               {[
                 ['How accurate is the delivery data?',
-                 'Delivery times are community-sourced averages. Actual delivery may vary by up to ±2 days.'],
+                 'Delivery times are community-sourced averages. Actual delivery may vary by up to 2 days.'],
                 ['What is the 25-day rule?',
                  'Government regulations allow rebooking an LPG cylinder 25 days after the last booking date.'],
                 ['Is CylinderCheck affiliated with any gas company?',
-                 'No. We are an independent community tool, not affiliated with IndianOil, HP Gas, or Bharat Gas.'],
+                 'No. We are an independent community tool, not affiliated with Indane (IndianOil), HP Gas, or Bharatgas.'],
               ].map(([q, a]) => (
                 <div key={q} className="rounded-md bg-[var(--bg-inset)]
                                         border border-[var(--border)] p-4">

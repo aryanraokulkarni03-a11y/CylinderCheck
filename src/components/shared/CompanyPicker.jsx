@@ -1,11 +1,27 @@
 // src/components/shared/CompanyPicker.jsx
 
 import React from 'react'
+import { COMPANY_EMOJI, COMPANY_LABELS } from '../../lib/utils'
 
 export const COMPANY_PICKER_OPTS = [
-  { id: 'IndianOil', label: 'IndianOil', short: 'IOC', emoji: '\u{1F535}' }, // blue circle
-  { id: 'HP Gas', label: 'HP Gas', short: 'HP', emoji: '\u{1F7E1}' }, // yellow circle
-  { id: 'Bharat Gas', label: 'Bharat Gas', short: 'BG', emoji: '\u{1F7E2}' }, // green circle
+  {
+    id: 'IndianOil',
+    label: COMPANY_LABELS?.IndianOil || 'IndianOil',
+    short: 'Indane',
+    emoji: COMPANY_EMOJI?.IndianOil || '\u{1F535}', // blue circle
+  },
+  {
+    id: 'HP Gas',
+    label: COMPANY_LABELS?.['HP Gas'] || 'HP Gas',
+    short: 'HP Gas',
+    emoji: COMPANY_EMOJI?.['HP Gas'] || '\u{1F7E1}', // yellow circle
+  },
+  {
+    id: 'Bharat Gas',
+    label: COMPANY_LABELS?.['Bharat Gas'] || 'Bharat Gas',
+    short: 'Bharatgas',
+    emoji: COMPANY_EMOJI?.['Bharat Gas'] || '\u{1F7E2}', // green circle
+  },
 ]
 
 export default function CompanyPicker({ value, onChange, compact }) {
@@ -43,4 +59,3 @@ export default function CompanyPicker({ value, onChange, compact }) {
     </div>
   )
 }
-

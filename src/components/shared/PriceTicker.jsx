@@ -1,9 +1,12 @@
 // src/components/shared/PriceTicker.jsx
-// Scrolling LPG price strip — motion marquee, pauses on hover
-// Task 21: motion.div animate x infinite, prefers-reduced-motion aware
+// Scrolling LPG price strip -- motion marquee.
+// Loops slowly under reduced motion (per motion rules).
 
 import { motion, useReducedMotion } from 'motion/react'
 import { COMPANIES } from '../../lib/utils'
+
+const DOT = '\u00B7'
+const RUPEE = '\u20B9'
 
 export function PriceTicker({ mapPrices = {} }) {
   const prefersReduced = useReducedMotion()
@@ -25,7 +28,7 @@ export function PriceTicker({ mapPrices = {} }) {
     return (
       <div className="w-full h-10 border border-[var(--border)] rounded-md
                       flex items-center px-4 bg-[var(--bg-inset)] mb-6">
-        <div className="h-3 w-full rounded bg-[var(--divider)] animate-pulse" />
+        <div className="h-3 w-full rounded bg-[var(--divider)] motion-safe:animate-pulse" />
       </div>
     )
   }
@@ -67,9 +70,12 @@ export function PriceTicker({ mapPrices = {} }) {
             </span>
             <span className="font-data text-[14px] font-bold"
                   style={{ color }}>
-              ₹{price}
+              {RUPEE}
+              {price}
             </span>
-            <span className="text-[var(--divider)]">·</span>
+            <span className="text-[var(--divider)]" aria-hidden="true">
+              {DOT}
+            </span>
           </span>
         ))}
       </motion.div>

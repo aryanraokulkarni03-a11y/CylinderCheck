@@ -65,7 +65,10 @@ function timeAgo(pubDate) {
 }
 
 function buildWhatsAppLink(item) {
-  return `https://wa.me/?text=${encodeURIComponent(`${item.title} ${item.link}`)}`
+  const title = item?.title ? String(item.title).trim() : 'CylinderCheck update'
+  const link = item?.link ? String(item.link).trim() : ''
+  const text = ['CylinderCheck intel:', title, link].filter(Boolean).join('\n')
+  return `https://wa.me/?text=${encodeURIComponent(text)}`
 }
 
 export default function NewsTab() {

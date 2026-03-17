@@ -30,6 +30,7 @@ export default function VendorCard({ vendor }) {
   const verification = String(vendor?.verification_status || 'unverified').toLowerCase()
   const isVerified = verification === 'verified'
   const category = CATEGORY_LABEL[vendor?.category] || 'Supplier'
+  const licenseNumber = vendor?.license_number ? String(vendor.license_number).trim() : ''
 
   const whatsappNumber = digitsOnly(vendor?.whatsapp || vendor?.phone)
   const phoneNumber = digitsOnly(vendor?.phone || vendor?.whatsapp)
@@ -95,6 +96,14 @@ export default function VendorCard({ vendor }) {
                 <p className="text-[13px] text-[var(--text-secondary)] mt-3 leading-relaxed">
                   {vendor.tagline}
                 </p>
+              )}
+              {isVerified && licenseNumber && (
+                <div className="mt-2 text-[11px] text-[var(--text-muted)] font-data uppercase tracking-[0.14em]">
+                  License <span className="text-[var(--divider)]" aria-hidden="true">{DOT}</span>{' '}
+                  <span className="text-[var(--text-data)] font-semibold tracking-[0.02em] normal-case font-body">
+                    {licenseNumber}
+                  </span>
+                </div>
               )}
             </div>
 

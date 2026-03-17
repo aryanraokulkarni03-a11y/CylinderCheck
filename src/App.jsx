@@ -384,10 +384,10 @@ export default function App() {
         <AnimatePresence mode="wait">
           <motion.div
             key={routerLocation.pathname}
-            initial={{ opacity: 0, x: 10 }}
+            initial={{ opacity: 0, x: 12 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
+            exit={{ opacity: 0, x: -12 }}
+            transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
           >
             <Routes location={routerLocation}>
               <Route path="/" element={<Navigate to={TAB_ROUTES.track} replace />} />

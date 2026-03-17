@@ -2,7 +2,7 @@
 // Task 31 — Bottom sheet on mobile, centered modal on desktop
 import { motion, useReducedMotion } from 'motion/react'
 import { X } from 'lucide-react'
-import { springs } from '../../lib/springs'
+import { springs, timing } from '../../lib/springs'
 
 export function SupportModal({ onClose }) {
   const shouldReduceMotion = useReducedMotion()
@@ -15,7 +15,7 @@ export function SupportModal({ onClose }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
+        transition={shouldReduceMotion ? { duration: 0.01 } : { duration: timing.fast }}
         className="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
@@ -26,7 +26,7 @@ export function SupportModal({ onClose }) {
         initial={{ opacity: 0, y: shouldReduceMotion ? 0 : '100%' }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: shouldReduceMotion ? 0 : '100%' }}
-        transition={shouldReduceMotion ? { duration: 0.15 } : springs.sheet}
+        transition={shouldReduceMotion ? { duration: 0.01 } : springs.sheet}
         className="fixed bottom-0 left-0 right-0 z-[301]
                    md:inset-auto md:top-1/2 md:left-1/2
                    md:-translate-x-1/2 md:-translate-y-1/2

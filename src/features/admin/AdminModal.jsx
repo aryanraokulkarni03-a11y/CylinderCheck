@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Loader2, Lock, X } from 'lucide-react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
-import { springs } from '../../lib/springs'
+import { springs, timing } from '../../lib/springs'
 
 export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
   const shouldReduceMotion = useReducedMotion()
@@ -43,7 +43,7 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            transition={shouldReduceMotion ? { duration: 0.01 } : { duration: timing.fast }}
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={onClose}
           />

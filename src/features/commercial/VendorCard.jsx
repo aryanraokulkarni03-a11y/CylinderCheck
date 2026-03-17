@@ -4,6 +4,7 @@ import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { motion, useReducedMotion } from 'motion/react'
 import { StaggerItem } from '../../components/motion/StaggerContainer'
 import { springs } from '../../lib/springs'
+import { useHoverCapable } from '../../lib/useHoverCapable'
 import { commercialStateForCity } from '../../lib/utils'
 
 const DOT = '\u00B7'
@@ -22,9 +23,7 @@ function digitsOnly(v) {
 
 export default function VendorCard({ vendor }) {
   const shouldReduceMotion = useReducedMotion()
-  const isHoverDevice = typeof window !== 'undefined'
-    ? window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches
-    : false
+  const canHover = useHoverCapable()
 
   const isFeatured = !!vendor?.featured
   const verification = String(vendor?.verification_status || 'unverified').toLowerCase()
@@ -57,7 +56,7 @@ export default function VendorCard({ vendor }) {
   return (
     <StaggerItem>
       <motion.div
-        whileHover={(!shouldReduceMotion && isHoverDevice) ? { y: -4 } : undefined}
+        whileHover={(!shouldReduceMotion && canHover) ? { y: -4 } : undefined}
         transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
         className={`relative overflow-hidden group rounded-lg border bg-[var(--bg-raised)] p-5 md:p-6 transition-colors duration-300 ${
           isFeatured

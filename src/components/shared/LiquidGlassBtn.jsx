@@ -1,6 +1,7 @@
-import React, { useEffect, useId, useMemo, useState } from 'react'
+import React, { useId, useMemo } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { springs, timing } from '../../lib/springs'
+import { useHoverCapable } from '../../lib/useHoverCapable'
 
 function toDomSafeId(id) {
   // React's useId() can include ":" which is valid in HTML, but annoying in url(#id).
@@ -16,16 +17,12 @@ export default function LiquidGlassBtn({
   ...props
 }) {
   const shouldReduceMotion = useReducedMotion()
-  const [isHoverDevice, setIsHoverDevice] = useState(true)
+  const canHover = useHoverCapable()
   const rid = useId()
   const liquidId = useMemo(() => `liquid-${toDomSafeId(rid)}`, [rid])
 
-  useEffect(() => {
-    setIsHoverDevice(window.matchMedia('(hover: hover) and (pointer: fine)').matches)
-  }, [])
-
   const hoverEffect =
-    isHoverDevice && !shouldReduceMotion ? { scale: 1.02 } : undefined
+    canHover && !shouldReduceMotion ? { scale: 1.02 } : undefined
   const tapEffect = !shouldReduceMotion ? { scale: 0.97, y: 1 } : undefined
 
   const commonProps = {
@@ -82,7 +79,7 @@ export default function LiquidGlassBtn({
         )}
 
         {/* Accent glow on hover */}
-        {isHoverDevice && !disabled && !shouldReduceMotion && (
+        {canHover && !disabled && !shouldReduceMotion && (
           <motion.span
             className="absolute inset-0 rounded-[inherit]"
             initial={{ opacity: 0 }}
@@ -139,7 +136,7 @@ export default function LiquidGlassBtn({
       )}
 
       {/* Accent glow on hover */}
-      {isHoverDevice && !disabled && !shouldReduceMotion && (
+      {canHover && !disabled && !shouldReduceMotion && (
         <motion.span
           className="absolute inset-0 rounded-[inherit]"
           initial={{ opacity: 0 }}

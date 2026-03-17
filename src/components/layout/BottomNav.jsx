@@ -4,6 +4,7 @@ import { springs } from '../../lib/springs'
 
 export function BottomNav({ tabs, activeTab, onTabChange }) {
   const shouldReduceMotion = useReducedMotion()
+  const tapScale = shouldReduceMotion ? 0.98 : 0.94
 
   return (
     <nav
@@ -21,8 +22,8 @@ export function BottomNav({ tabs, activeTab, onTabChange }) {
         <motion.button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}
-          transition={shouldReduceMotion ? { duration: 0.01 } : { duration: 0.08 }}
+          whileTap={{ scale: tapScale }}
+          transition={shouldReduceMotion ? { duration: 0.01 } : springs.response}
           className={`flex-1 flex flex-col items-center gap-[3px]
                       px-[2px] py-[5px] relative min-h-[50px]
                       text-[var(--fs-xs)] font-medium tracking-[0.02em]

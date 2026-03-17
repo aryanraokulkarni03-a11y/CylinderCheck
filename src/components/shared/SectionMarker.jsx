@@ -37,11 +37,6 @@ export function SectionMarker({ status = 'clear', label, sublabel }) {
         )}
       </div>
 
-      {/* Optional short rule to keep rhythm without shouting “underline” */}
-      <div
-        className="hidden sm:block h-px flex-1 max-w-[180px] bg-gradient-to-r from-[var(--divider)] to-transparent opacity-70"
-        aria-hidden="true"
-      />
     </div>
   )
 }

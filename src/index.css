@@ -2,6 +2,13 @@
 @config "../tailwind.config.js";
 @import "./lib/tokens.css";
 
+/* Tailwind defines `.overline` as text-decoration-line: overline.
+   We use `.overline` as a typography utility, so we must neutralize decoration. */
+.overline {
+  text-decoration: none;
+  text-decoration-line: none;
+}
+
 /* ============================================================
    Global Resets & Setup
    ============================================================ */

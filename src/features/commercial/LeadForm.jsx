@@ -28,8 +28,9 @@ const NEED_TYPES = [
   { value: 'not_sure',   label: 'Not Sure' },
 ];
 
-export default function LeadForm({ selectedState = '' }) {
+export default function LeadForm({ selectedState = '', vendorsCount = 0, vendorsLoading = false }) {
   const shouldReduceMotion = useReducedMotion();
+  const isWaitlist = !vendorsLoading && (Number(vendorsCount) || 0) <= 0;
   const [businessName, setBusinessName] = useState('');
   const [businessType, setBusinessType] = useState('restaurant');
   const [phone, setPhone] = useState('');
@@ -91,7 +92,7 @@ export default function LeadForm({ selectedState = '' }) {
       }, 5000);
 
     } catch (err) {
-      setSubmitError('Failed to submit. Please try calling vendors directly.');
+      setSubmitError(isWaitlist ? 'Failed to submit. Please try again in a moment.' : 'Failed to submit. Please try calling vendors directly.');
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,9 @@ export default function LeadForm({ selectedState = '' }) {
               Request Received
             </h3>
             <p className="text-[14px] text-[var(--text-secondary)] max-w-[280px]">
-              We will connect you with listed agencies in {selectedState || 'your area'}.
+              {isWaitlist
+                ? `You're on the list for ${selectedState || 'your area'}. We'll reach out as soon as listings go live.`
+                : `We will connect you with listed agencies in ${selectedState || 'your area'}.`}
             </p>
           </motion.div>
         ) : (
@@ -132,10 +135,12 @@ export default function LeadForm({ selectedState = '' }) {
           >
             <div className="mb-2">
               <h3 className="text-[18px] font-bold font-display text-[var(--text-primary)] mb-1">
-                Get Custom Quotes
+                {isWaitlist ? 'Get Notified' : 'Get Custom Quotes'}
               </h3>
               <p className="text-[13px] text-[var(--text-secondary)]">
-                Skip the calls. Get quotes from listed agencies in {selectedState || 'your area'}.
+                {isWaitlist
+                  ? `Share your details and we'll reach out when agencies go live in ${selectedState || 'your area'}.`
+                  : `Skip the calls. Get quotes from listed agencies in ${selectedState || 'your area'}.`}
               </p>
             </div>
 
@@ -312,7 +317,7 @@ export default function LeadForm({ selectedState = '' }) {
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  Request Quotes <Send size={16} />
+                  {isWaitlist ? 'Notify me' : 'Request Quotes'} <Send size={16} />
                 </span>
               )}
             </LiquidGlassBtn>

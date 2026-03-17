@@ -244,7 +244,7 @@ export default function CommercialPage({ prefilledCity }) {
           </div>
 
           <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--topbar-height)+32px)] w-full">
-            <LeadForm selectedState={activeState} />
+            <LeadForm selectedState={activeState} vendorsCount={vendors.length} vendorsLoading={vendorsLoading} />
           </div>
         </div>
       </div>

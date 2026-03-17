@@ -33,6 +33,14 @@ export function Topbar({
         background: 'var(--glass-deep)',
       }}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[999]
+                   focus:px-3 focus:py-2 focus:rounded-md focus:border focus:border-[var(--border)]
+                   focus:bg-[var(--bg-raised)] focus:text-[var(--text-primary)]"
+      >
+        Skip to content
+      </a>
       <div className="mx-auto w-full max-w-[var(--content-max)] px-4 sm:px-6 md:px-8">
         <div
           className="flex items-center gap-3"

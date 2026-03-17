@@ -42,7 +42,7 @@ export default function CommercialPage({ prefilledCity }) {
   const [vendors, setVendors] = useState([])
   const [vendorsLoading, setVendorsLoading] = useState(true)
   const [vendorError, setVendorError] = useState(null)
-  const [hasAnyVendors, setHasAnyVendors] = useState(null)
+  const [hasAnyVendors, setHasAnyVendors] = useState(false)
 
   useEffect(() => {
     const st = commercialStateForCity(prefilledCity)
@@ -128,7 +128,7 @@ export default function CommercialPage({ prefilledCity }) {
           </span>
           <span className="flex items-center gap-2">
             <FileText size={16} className="text-[var(--text-secondary)]" />
-            Contact agencies directly
+            No middlemen
           </span>
         </div>
 
@@ -142,7 +142,8 @@ export default function CommercialPage({ prefilledCity }) {
           Private suppliers
         </h1>
         <p className="text-[var(--text-secondary)] text-[15px] mb-8 max-w-[640px]">
-          Choose your state to view listed agencies with active inventory. Always confirm availability and rates.
+          Choose your state to see listings as they go live. If your state is empty today, join the list and we will
+          notify you.
         </p>
 
         <div className="flex items-center overflow-x-auto gap-2 pb-3 -mx-2 px-2">
@@ -167,10 +168,10 @@ export default function CommercialPage({ prefilledCity }) {
             <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="font-display font-bold text-[18px] text-[var(--text-primary)]">
-                  Agencies in {activeState}
+                  Listings in {activeState}
                 </div>
                 <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
-                  {vendorsLoading ? '\u2026' : `${vendors.length}`}
+                  {vendorsLoading ? '\u2026' : (vendors.length > 0 ? `${vendors.length}` : 'Soon')}
                 </span>
               </div>
 

@@ -249,7 +249,8 @@ export default function ReportsTab({ user, authLoading }) {
                 className="w-full justify-center"
                 onClick={() => {
                   try {
-                    sessionStorage.setItem('cc-post-auth-tab', 'community')
+                    const path = `${window.location.pathname || ''}${window.location.search || ''}`
+                    sessionStorage.setItem('cc-post-auth-path', path && path.startsWith('/') ? path : '/reports')
                   } catch {
                     // Private mode.
                   }

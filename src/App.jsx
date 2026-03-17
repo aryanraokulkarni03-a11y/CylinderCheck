@@ -1,6 +1,7 @@
 // src/App.jsx
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
   MessageSquare,
@@ -35,11 +36,22 @@ import AdminModal from './features/admin/AdminModal'
 
 const TABS = [
   { id: 'track', label: 'Track', icon: Target },
-  { id: 'community', label: 'Reports', icon: MessageSquare },
+  { id: 'reports', label: 'Reports', icon: MessageSquare },
   { id: 'news', label: 'News', icon: Newspaper },
   { id: 'alerts', label: 'Alerts', icon: Bell },
   { id: 'commercial', label: 'For Biz', icon: Store },
 ]
+
+const TAB_ROUTES = {
+  track: '/track',
+  reports: '/reports',
+  // Legacy id (pre-routing).
+  community: '/reports',
+  news: '/news',
+  alerts: '/alerts',
+  commercial: '/commercial',
+  admin: '/admin',
+}
 
 const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1`
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -47,7 +59,8 @@ const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
 
 export default function App() {
   const shouldReduceMotion = useReducedMotion()
-  const [tab, setTab] = useState('track')
+  const navigate = useNavigate()
+  const routerLocation = useLocation()
 
   // Track tab state
   const [pin, setPin] = useState('')
@@ -77,32 +90,51 @@ export default function App() {
   // UI
   const [showSupport, setShowSupport] = useState(false)
 
+  const restorePostAuthPath = useCallback(() => {
+    try {
+      const explicitPath = sessionStorage.getItem('cc-post-auth-path')
+      const legacyTab = sessionStorage.getItem('cc-post-auth-tab')
+
+      sessionStorage.removeItem('cc-post-auth-path')
+      sessionStorage.removeItem('cc-post-auth-tab')
+
+      const target =
+        explicitPath && explicitPath.startsWith('/')
+          ? explicitPath
+          : (legacyTab && TAB_ROUTES[legacyTab]) ? TAB_ROUTES[legacyTab] : null
+
+      if (target) navigate(target, { replace: true })
+    } catch {
+      // Private mode.
+    }
+  }, [navigate])
+
   // Auth effect
   useEffect(() => {
+    let alive = true
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!alive) return
       setUser(session?.user ?? null)
       setAuthLoading(false)
+      if (session?.user) restorePostAuthPath()
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!alive) return
       setUser(session?.user ?? null)
 
-      // After OAuth returns, restore the tab the user was on.
-      // This prevents the "Sign in" button from feeling like a no-op.
-      if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          const nextTab = sessionStorage.getItem('cc-post-auth-tab')
-          if (nextTab && TABS.some((t) => t.id === nextTab)) {
-            setTab(nextTab)
-          }
-          sessionStorage.removeItem('cc-post-auth-tab')
-        } catch {
-          // Private mode.
-        }
+      // After OAuth returns, restore the route the user was on.
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+        restorePostAuthPath()
       }
     })
-    return () => subscription.unsubscribe()
-  }, [])
+
+    return () => {
+      alive = false
+      subscription.unsubscribe()
+    }
+  }, [restorePostAuthPath])
 
   // Prices + shortage summary effect
   useEffect(() => {
@@ -268,7 +300,7 @@ export default function App() {
     if (password !== ADMIN_PASSWORD) return false
     setShowAdminPrompt(false)
     setAdminUnlocked(true)
-    setTab('admin')
+    navigate(TAB_ROUTES.admin)
     setAdminLoading(true)
     try {
       const res = await fetch(`${SUPABASE_FUNC_URL}/get-admin-stats`, {
@@ -286,7 +318,7 @@ export default function App() {
     }
     setAdminLoading(false)
     return true
-  }, [])
+  }, [navigate])
 
   const visibleTabs = adminUnlocked
     ? [...TABS, { id: 'admin', label: 'Admin', icon: Target }]
@@ -296,6 +328,22 @@ export default function App() {
   const normalizedCity = rawCity
     ? (CITY_NORMALISE[rawCity.toLowerCase()] || rawCity)
     : ''
+
+  const activeTab = (() => {
+    const p = routerLocation.pathname || '/'
+    if (p === '/' || p.startsWith('/track')) return 'track'
+    if (p.startsWith('/reports')) return 'reports'
+    if (p.startsWith('/news')) return 'news'
+    if (p.startsWith('/alerts')) return 'alerts'
+    if (p.startsWith('/commercial')) return 'commercial'
+    if (p.startsWith('/admin')) return 'admin'
+    return 'track'
+  })()
+
+  const handleTabChange = useCallback((nextTab) => {
+    const to = TAB_ROUTES[nextTab]
+    if (to) navigate(to)
+  }, [navigate])
 
   const trackProps = {
     pin,
@@ -312,25 +360,7 @@ export default function App() {
     resultRef,
     shortageSummary,
     mapPrices,
-    onCommercialClick: () => setTab('commercial'),
-  }
-
-  const activeTabContent = {
-    track: <TrackTab {...trackProps} />,
-    community: <ReportsTab user={user} authLoading={authLoading} />,
-    news: <NewsTab />,
-    alerts: <AlertsTab />,
-    commercial: <CommercialPage prefilledCity={normalizedCity} />,
-    admin: adminUnlocked ? (
-      <AdminTab
-        data={adminData}
-        loading={adminLoading}
-        onLock={() => {
-          setAdminUnlocked(false)
-          setTab('track')
-        }}
-      />
-    ) : null,
+    onCommercialClick: () => navigate(TAB_ROUTES.commercial),
   }
 
   return (
@@ -339,8 +369,8 @@ export default function App() {
         topbar={
           <Topbar
             tabs={visibleTabs}
-            activeTab={tab}
-            onTabChange={setTab}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
             user={user}
             authLoading={authLoading}
             logoClicks={logoClicks}
@@ -348,18 +378,43 @@ export default function App() {
             onSupportOpen={() => setShowSupport(true)}
           />
         }
-        bottomNav={<BottomNav tabs={visibleTabs} activeTab={tab} onTabChange={setTab} />}
+        bottomNav={<BottomNav tabs={visibleTabs} activeTab={activeTab} onTabChange={handleTabChange} />}
         footer={<Footer onSupportOpen={() => setShowSupport(true)} />}
       >
         <AnimatePresence mode="wait">
           <motion.div
-            key={tab}
+            key={routerLocation.pathname}
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
             transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
           >
-            {activeTabContent[tab]}
+            <Routes location={routerLocation}>
+              <Route path="/" element={<Navigate to={TAB_ROUTES.track} replace />} />
+              <Route path={TAB_ROUTES.track} element={<TrackTab {...trackProps} />} />
+              <Route path={TAB_ROUTES.reports} element={<ReportsTab user={user} authLoading={authLoading} />} />
+              <Route path={TAB_ROUTES.news} element={<NewsTab />} />
+              <Route path={TAB_ROUTES.alerts} element={<AlertsTab />} />
+              <Route path={TAB_ROUTES.commercial} element={<CommercialPage prefilledCity={normalizedCity} />} />
+              <Route
+                path={TAB_ROUTES.admin}
+                element={
+                  adminUnlocked ? (
+                    <AdminTab
+                      data={adminData}
+                      loading={adminLoading}
+                      onLock={() => {
+                        setAdminUnlocked(false)
+                        navigate(TAB_ROUTES.track, { replace: true })
+                      }}
+                    />
+                  ) : (
+                    <Navigate to={TAB_ROUTES.track} replace />
+                  )
+                }
+              />
+              <Route path="*" element={<Navigate to={TAB_ROUTES.track} replace />} />
+            </Routes>
           </motion.div>
         </AnimatePresence>
       </AppShell>

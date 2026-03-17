@@ -118,7 +118,8 @@ export function Topbar({
                 type="button"
                 onClick={async () => {
                   try {
-                    sessionStorage.setItem('cc-post-auth-tab', activeTab || 'track')
+                    const path = `${window.location.pathname || ''}${window.location.search || ''}`
+                    sessionStorage.setItem('cc-post-auth-path', path && path.startsWith('/') ? path : '/track')
                   } catch {
                     // Private mode.
                   }

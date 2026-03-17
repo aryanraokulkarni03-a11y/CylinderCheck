@@ -4,9 +4,12 @@ import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn';
 import { Check, Loader2, Send } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { springs } from '../../lib/springs';
+import { COMMERCIAL_CITIES_BY_STATE } from '../../lib/utils';
 
 // Aligned to actual commercial_leads DB schema:
 // business_name, business_type, city, pin, phone, need_type, cylinders_week, message
+// Note: Commercial UX selects a "state". We still store a primary city for now (for matching),
+// and include the state in the message payload for manual routing.
 
 const BUSINESS_TYPES = [
   { value: 'restaurant',     label: 'Restaurant' },
@@ -25,7 +28,7 @@ const NEED_TYPES = [
   { value: 'not_sure',   label: 'Not Sure' },
 ];
 
-export default function LeadForm({ selectedCity = '' }) {
+export default function LeadForm({ selectedState = '' }) {
   const shouldReduceMotion = useReducedMotion();
   const [businessName, setBusinessName] = useState('');
   const [businessType, setBusinessType] = useState('restaurant');
@@ -57,15 +60,23 @@ export default function LeadForm({ selectedCity = '' }) {
     setLoading(true);
 
     try {
+      const leadCity = selectedState ? (COMMERCIAL_CITIES_BY_STATE[selectedState] || [])[0] : null;
+      const userMessage = message.trim();
+      const metaLines = [];
+      if (selectedState) metaLines.push(`State: ${selectedState}`);
+      const finalMessage = [userMessage || null, metaLines.length ? metaLines.join('\n') : null]
+        .filter(Boolean)
+        .join('\n\n') || null;
+
       const { error: dbError } = await supabase.from('commercial_leads').insert([{
         business_name:  businessName.trim(),
         business_type:  businessType,
-        city:           selectedCity || null,
+        city:           leadCity || null,
         pin:            pin || null,
         phone:          phone.trim(),
         need_type:      needType,
         cylinders_week: cylindersWeek ? parseInt(cylindersWeek, 10) : null,
-        message:        message.trim() || null,
+        message:        finalMessage,
       }]);
 
       if (dbError) throw dbError;
@@ -105,7 +116,7 @@ export default function LeadForm({ selectedCity = '' }) {
               Request Received
             </h3>
             <p className="text-[14px] text-[var(--text-secondary)] max-w-[280px]">
-              Our verified commercial partners in {selectedCity || 'your city'} will contact you shortly with quotes.
+              We will connect you with listed agencies in {selectedState || 'your area'}.
             </p>
           </motion.div>
         ) : (
@@ -124,7 +135,7 @@ export default function LeadForm({ selectedCity = '' }) {
                 Get Custom Quotes
               </h3>
               <p className="text-[13px] text-[var(--text-secondary)]">
-                Skip the calls. Let verified agencies in {selectedCity || 'your city'} reach you.
+                Skip the calls. Get quotes from listed agencies in {selectedState || 'your area'}.
               </p>
             </div>
 
@@ -272,7 +283,7 @@ export default function LeadForm({ selectedCity = '' }) {
                 className="block w-full px-4 py-2.5 bg-[var(--bg-inset)] border border-[var(--border)] rounded-md
                            focus:border-[var(--accent)] focus:outline-none text-[15px] text-[var(--text-primary)]
                            placeholder:text-[var(--text-muted)] resize-y min-h-[80px]"
-                placeholder="e.g. Need emergency supply by Friday, Ramzan catering…"
+                placeholder="e.g. Need emergency supply by Friday, Ramzan catering..."
                 value={message}
                 onChange={e => setMessage(e.target.value)}
               />
@@ -297,7 +308,7 @@ export default function LeadForm({ selectedCity = '' }) {
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 size={16} className="animate-spin" /> Submitting...
+                  <Loader2 size={16} className="motion-safe:animate-spin" /> Submitting...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">

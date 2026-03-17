@@ -1,9 +1,12 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { ExternalLink, MapPin, Phone, ShieldCheck } from 'lucide-react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { motion, useReducedMotion } from 'motion/react'
 import { StaggerItem } from '../../components/motion/StaggerContainer'
 import { springs } from '../../lib/springs'
+import { commercialStateForCity } from '../../lib/utils'
+
+const DOT = '\u00B7'
 
 const CATEGORY_LABEL = {
   induction: 'Induction',
@@ -24,15 +27,28 @@ export default function VendorCard({ vendor }) {
     : false
 
   const isFeatured = !!vendor?.featured
+  const verification = String(vendor?.verification_status || 'unverified').toLowerCase()
+  const isVerified = verification === 'verified'
   const category = CATEGORY_LABEL[vendor?.category] || 'Supplier'
 
   const whatsappNumber = digitsOnly(vendor?.whatsapp || vendor?.phone)
   const phoneNumber = digitsOnly(vendor?.phone || vendor?.whatsapp)
 
+  const stateLabel = useMemo(() => commercialStateForCity(vendor?.city), [vendor?.city])
+
+  const waText = useMemo(() => {
+    const lines = [
+      'Hi, I found your listing on CylinderCheck.',
+      'I need commercial LPG cylinders.',
+      vendor?.city ? `Location: ${vendor.city}${stateLabel ? `, ${stateLabel}` : ''}` : null,
+      "Please share today's availability, per-cylinder rate, and delivery timeline.",
+    ].filter(Boolean)
+
+    return lines.join('\n')
+  }, [vendor?.city, stateLabel])
+
   const waHref = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-        'Hi, I found you on CylinderCheck. I need commercial LPG cylinders.'
-      )}`
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(waText)}`
     : null
 
   const telHref = phoneNumber ? `tel:${phoneNumber}` : null
@@ -49,7 +65,7 @@ export default function VendorCard({ vendor }) {
         }`}
       >
         {isFeatured && (
-          <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-[var(--accent)] opacity-10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none animate-pulse" />
+          <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-[var(--accent)] opacity-10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none motion-safe:animate-pulse" />
         )}
 
         <div className="relative z-10 flex flex-col h-full">
@@ -59,16 +75,20 @@ export default function VendorCard({ vendor }) {
                 <h3 className="text-[18px] font-bold font-display text-[var(--text-primary)] leading-tight group-hover:text-[var(--accent)] transition-colors truncate">
                   {vendor?.name || 'Supplier'}
                 </h3>
-                <ShieldCheck
-                  size={16}
-                  className="text-[var(--status-clear)] flex-shrink-0"
-                  aria-label="Verified supplier"
-                />
+                {isVerified && (
+                  <ShieldCheck
+                    size={16}
+                    className="text-[var(--status-clear)] flex-shrink-0"
+                    aria-label="Verified license"
+                    title="Verified license"
+                  />
+                )}
               </div>
               <div className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-widest font-data text-[var(--text-muted)]">
                 <MapPin size={12} className="text-[var(--accent)]" />
                 <span className="truncate">
                   {vendor?.city || 'India'}
+                  {stateLabel ? ` ${DOT} ${stateLabel}` : ''}
                 </span>
               </div>
               {vendor?.tagline && (
@@ -82,6 +102,11 @@ export default function VendorCard({ vendor }) {
               <span className="bg-[var(--bg-inset)] text-[var(--text-secondary)] border border-[var(--border)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
                 {category}
               </span>
+              {!isVerified && (
+                <span className="bg-[var(--status-early-soft)] text-[var(--status-early)] border border-[var(--status-early-border)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
+                  Listed
+                </span>
+              )}
               {isFeatured && (
                 <span className="bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-glow)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
                   Featured

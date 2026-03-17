@@ -67,6 +67,41 @@ export const COMMERCIAL_CITIES = [
   'Chennai', 'Delhi', 'Kolkata', 'Vizag'
 ]
 
+// Commercial UX shows "states" but vendors are still stored by city (see vendors.city).
+export const COMMERCIAL_STATE_BY_CITY = {
+  Mumbai: 'Maharashtra',
+  Bangalore: 'Karnataka',
+  Hyderabad: 'Telangana',
+  Chennai: 'Tamil Nadu',
+  Delhi: 'Delhi',
+  Kolkata: 'West Bengal',
+  Vizag: 'Andhra Pradesh',
+}
+
+export const COMMERCIAL_STATES = [
+  'Maharashtra',
+  'Karnataka',
+  'Telangana',
+  'Tamil Nadu',
+  'Delhi',
+  'West Bengal',
+  'Andhra Pradesh',
+]
+
+export const COMMERCIAL_CITIES_BY_STATE = {
+  Maharashtra: ['Mumbai'],
+  Karnataka: ['Bangalore'],
+  Telangana: ['Hyderabad'],
+  'Tamil Nadu': ['Chennai'],
+  Delhi: ['Delhi'],
+  'West Bengal': ['Kolkata'],
+  'Andhra Pradesh': ['Vizag'],
+}
+
+export function commercialStateForCity(city) {
+  return COMMERCIAL_STATE_BY_CITY[String(city || '').trim()] || null
+}
+
 export const CITY_NORMALISE = {
   'visakhapatnam': 'Vizag', 'vizag': 'Vizag',
   'bengaluru': 'Bangalore', 'bangalore': 'Bangalore',
@@ -80,6 +115,14 @@ export const COMPANIES = ['IndianOil', 'HP Gas', 'Bharat Gas']
 export const COMPANY_EMOJI = {
   IndianOil: '🔵', 'HP Gas': '🟡', 'Bharat Gas': '🟢'
 }
+
+export const COMPANY_LABELS = {
+  IndianOil: 'Indane',
+  'HP Gas': 'HP Gas',
+  'Bharat Gas': 'Bharatgas',
+}
+
+export const COMPANY_DISCLAIMER = 'Indane (IndianOil), HP Gas, Bharatgas'
 
 export function computeUrgency({ cylinderLevel, daysLeft, reportCount, avgDays }) {
   let score = 0

@@ -118,12 +118,28 @@ export function Topbar({
             {!authLoading && !user && (
               <button
                 type="button"
-                onClick={() =>
-                  supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: { redirectTo: window.location.origin },
-                  })
-                }
+                onClick={async () => {
+                  try {
+                    sessionStorage.setItem('cc-post-auth-tab', activeTab || 'track')
+                  } catch {
+                    // Private mode.
+                  }
+
+                  try {
+                    const { error } = await supabase.auth.signInWithOAuth({
+                      provider: 'google',
+                      options: { redirectTo: window.location.origin },
+                    })
+                    if (error) {
+                      // Most common cause: Google provider not enabled in Supabase.
+                      console.error('Supabase OAuth error:', error)
+                      alert('Sign in is not available right now. Please try again later.')
+                    }
+                  } catch (e) {
+                    console.error('Sign in failed:', e)
+                    alert('Sign in is not available right now. Please try again later.')
+                  }
+                }}
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
                 aria-label="Sign in with Google"
                 title="Sign in with Google"

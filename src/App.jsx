@@ -83,8 +83,23 @@ export default function App() {
       setUser(session?.user ?? null)
       setAuthLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+
+      // After OAuth returns, restore the tab the user was on.
+      // This prevents the "Sign in" button from feeling like a no-op.
+      if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          const nextTab = sessionStorage.getItem('cc-post-auth-tab')
+          if (nextTab && TABS.some((t) => t.id === nextTab)) {
+            setTab(nextTab)
+          }
+          sessionStorage.removeItem('cc-post-auth-tab')
+        } catch {
+          // Private mode.
+        }
+      }
     })
     return () => subscription.unsubscribe()
   }, [])

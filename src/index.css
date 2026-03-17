@@ -32,6 +32,22 @@ body {
   z-index: 1;
 }
 
+/* Shared max-width + gutters (single source of truth for horizontal rhythm). */
+.content-frame {
+  --gutter: 16px;
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-left: calc(var(--gutter) + env(safe-area-inset-left));
+  padding-right: calc(var(--gutter) + env(safe-area-inset-right));
+}
+@media (min-width: 640px) {
+  .content-frame { --gutter: 24px; }
+}
+@media (min-width: 768px) {
+  .content-frame { --gutter: 32px; }
+}
+
 /* Accessibility: Mobile Touch Resets */
 button, 
 [role="button"],

@@ -80,7 +80,7 @@ export function TrackTab({
   const shortage = pinData ? shortageMeta(pinData.reportCount || 0) : null
 
   return (
-    <div>
+    <div className="w-full min-w-0">
       <SectionMarker
         status={
           pinData?.reportCount >= 5
@@ -105,8 +105,8 @@ export function TrackTab({
 
       <PriceTicker mapPrices={mapPrices} />
 
-      <div className="grid md:grid-cols-[420px_1fr] gap-6 items-start">
-        <div className="space-y-4">
+      <div className="grid md:grid-cols-[420px_1fr] gap-6 items-start min-w-0">
+        <div className="space-y-4 min-w-0">
           <AnimatePresence>
             {!pinData && !loading && (
               <SignalRoom shortageSummary={shortageSummary} mapPrices={mapPrices} />
@@ -217,7 +217,10 @@ export function TrackTab({
           </div>
         </div>
 
-        <div ref={resultRef} className="scroll-mt-[calc(var(--topbar-height)+8px)]">
+        <div
+          ref={resultRef}
+          className="scroll-mt-[calc(var(--topbar-height)+8px)] min-w-0"
+        >
           <AnimatePresence mode="wait">
             {loading && (
               <motion.div

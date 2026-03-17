@@ -116,7 +116,7 @@ export default function CommercialPage({ prefilledCity }) {
   }, [activeState, fetchVendors])
 
   return (
-    <div className="pb-24 w-full">
+    <div className="pb-24 w-full min-w-0">
       <CommercialHero hasAnyVendors={hasAnyVendors} />
 
       <div id="commercial-vendors" className="mt-14 md:mt-20 w-full">
@@ -165,8 +165,8 @@ export default function CommercialPage({ prefilledCity }) {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-14 items-start w-full mt-8">
-          <div className="lg:col-span-7 xl:col-span-8 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-14 items-start w-full mt-8 min-w-0">
+          <div className="lg:col-span-7 xl:col-span-8 w-full min-w-0">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="font-display font-bold text-[18px] text-[var(--text-primary)]">
@@ -275,7 +275,7 @@ export default function CommercialPage({ prefilledCity }) {
             )}
           </div>
 
-          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--topbar-height)+32px)] w-full">
+          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--topbar-height)+32px)] w-full min-w-0">
             <LeadForm selectedState={activeState} vendorsCount={vendors.length} vendorsLoading={vendorsLoading} />
           </div>
         </div>

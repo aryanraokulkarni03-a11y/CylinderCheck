@@ -218,7 +218,7 @@ export default function AlertsTab() {
   }, [payContact, payPin])
 
   return (
-    <div className="pb-16 w-full">
+    <div className="pb-16 w-full min-w-0">
       <SectionMarker status="active" label="Alerts" sublabel="Signals and reminders" />
 
       <h1
@@ -233,8 +233,8 @@ export default function AlertsTab() {
         Get a ping before your next booking window, and early warnings when supply tightens in your area.
       </p>
 
-      <div className="grid lg:grid-cols-2 gap-6 items-start">
-        <SlideUp delay={0.02} className="w-full">
+      <div className="grid lg:grid-cols-2 gap-6 items-start min-w-0">
+        <SlideUp delay={0.02} className="w-full min-w-0">
           <div className="card">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -357,7 +357,7 @@ export default function AlertsTab() {
           </div>
         </SlideUp>
 
-        <SlideUp delay={0.06} className="w-full">
+        <SlideUp delay={0.06} className="w-full min-w-0">
           <div id="plus-card" className="card card-featured">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -494,4 +494,3 @@ export default function AlertsTab() {
     </div>
   )
 }
-

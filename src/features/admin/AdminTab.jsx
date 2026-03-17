@@ -7,7 +7,7 @@ export default function AdminTab({ data, loading, onLock }) {
   const { subscriptions = [], reportCount = 0, alertCount = 0 } = data || {};
 
   return (
-    <div className="space-y-8 pb-12 w-full">
+    <div className="space-y-8 pb-12 w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 mt-4 border-b border-[var(--border)] pb-6">
         <div>

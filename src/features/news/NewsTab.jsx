@@ -164,7 +164,7 @@ export default function NewsTab() {
             : 'clear'
 
   return (
-    <div className="pb-12">
+    <div className="pb-12 w-full min-w-0">
       <SectionMarker status={pageStatus} label="Intelligence Feed" />
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
@@ -193,8 +193,8 @@ export default function NewsTab() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start min-w-0">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-2 px-2">
             <button
               type="button"
@@ -436,7 +436,7 @@ export default function NewsTab() {
           )}
         </div>
 
-        <div className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)]">
+        <div className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)] min-w-0">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="font-data text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
               Signals map

@@ -203,7 +203,7 @@ export default function ReportsTab({ user, authLoading }) {
   )
 
   return (
-    <div>
+    <div className="w-full min-w-0">
       <SectionMarker status="early" label="Community Reports" />
 
       <h1
@@ -217,7 +217,7 @@ export default function ReportsTab({ user, authLoading }) {
         Flag delivery delays, shortages, and agency issues in your area. Real reports from real people.
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start min-w-0">
         <div className="card lg:sticky lg:top-[calc(var(--topbar-height)+24px)]">
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
@@ -374,7 +374,7 @@ export default function ReportsTab({ user, authLoading }) {
           )}
         </div>
 
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2">
               <AlertCircle size={14} className="text-[var(--accent)]" />

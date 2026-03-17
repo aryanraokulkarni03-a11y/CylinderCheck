@@ -41,7 +41,7 @@ export function Topbar({
       >
         Skip to content
       </a>
-      <div className="mx-auto w-full max-w-[var(--content-max)] px-4 sm:px-6 md:px-8">
+      <div className="content-frame">
         <div
           className="flex items-center gap-3"
           style={{

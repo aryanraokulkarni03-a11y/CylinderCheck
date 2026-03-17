@@ -14,7 +14,7 @@ export default function AppShell({ sidebar, topbar, bottomNav, footer, children 
           id="main-content"
           className="flex-1 w-full pb-[calc(var(--bottomnav-height)+16px+env(safe-area-inset-bottom))] md:pb-10"
         >
-          <div className="mx-auto w-full max-w-[var(--content-max)] px-4 sm:px-6 md:px-8 py-6">
+          <div className="content-frame py-6">
             {children}
             {footer}
           </div>

@@ -34,8 +34,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
       {/* National status header */}
       <div className="flex items-center gap-3 mb-5">
         <StatusDot status={overallStatus} size={8} />
-        <span className="font-data text-[11px] uppercase tracking-[0.14em]
-                         text-[var(--text-muted)]">
+        <span className="overline text-[var(--text-muted)]">
           National LPG Intelligence | Live
         </span>
       </div>
@@ -63,12 +62,11 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
           <StaggerItem key={label}>
             <div className="rounded-lg border border-[var(--border)]
                             bg-[var(--bg-raised)] p-4">
-              <div className="font-data text-[22px] font-bold
+              <div className="stat text-[22px]
                               text-[var(--text-data)] leading-none mb-1">
                 {value}
               </div>
-              <div className="font-data text-[10px] uppercase
-                              tracking-[0.08em] text-[var(--text-muted)]">
+              <div className="label-text text-[var(--text-muted)]">
                 {label}
               </div>
             </div>
@@ -88,17 +86,15 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
         >
           <StatusDot status="active" size={7} />
           <div>
-            <div className="font-data text-[11px] uppercase tracking-[0.12em]
-                            text-[var(--status-active)] mb-1">
+            <div className="overline text-[var(--status-active)] mb-1">
               Hotspot | {shortageSummary.hotspot}
             </div>
             <p className="text-[13px] text-[var(--text-secondary)]">
-              <span className="font-data text-[var(--text-data)]">
+              <span className="stat-value text-[var(--text-data)]">
                 {shortageSummary.hotspotReports}
               </span>
               {' '}reports in the last 30 days.{' '}
-              <span className="font-data text-[11px]
-                               text-[var(--status-active)] uppercase tracking-[0.08em]">
+              <span className="overline text-[var(--status-active)]">
                 {shortageSummary.activePinCount} PIN{shortageSummary.activePinCount > 1 ? 's' : ''} affected.
               </span>
             </p>

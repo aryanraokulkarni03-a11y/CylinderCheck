@@ -79,14 +79,14 @@ export function UrgencyScore({ score }) {
             style={{ strokeDashoffset }}
             transform="rotate(-90 60 60)"
           />
-          {/* Score number — Geist Mono */}
+          {/* Score number */}
           <motion.text
             x="60" y="55"
             textAnchor="middle"
             fill={config.color}
             fontSize="32"
-            fontWeight="700"
-            fontFamily="var(--font-data)"
+            fontWeight="600"
+            fontFamily="var(--font-display)"
           >
             {rounded}
           </motion.text>
@@ -96,7 +96,7 @@ export function UrgencyScore({ score }) {
             fill="var(--text-muted)"
             fontSize="9"
             letterSpacing="1.5"
-            fontFamily="var(--font-data)"
+            fontFamily="var(--font-body)"
           >
             OUT OF 10
           </text>
@@ -111,7 +111,7 @@ export function UrgencyScore({ score }) {
         transition={shouldReduceMotion ? { duration: 0.01 } : { ...springs.arrival, delay: 0.8 }}
       >
         <div
-          className="text-sm font-semibold uppercase tracking-widest font-data"
+          className="overline"
           style={{ color: config.color }}
         >
           {config.label}

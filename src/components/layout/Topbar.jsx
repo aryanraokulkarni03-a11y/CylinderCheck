@@ -56,7 +56,7 @@ export function Topbar({
             title={logoClicks > 0 ? `${5 - logoClicks} more${ELLIPSIS}` : 'CylinderCheck'}
           >
             <FlameIcon size={22} />
-            <span className="font-display font-extrabold text-[18px] tracking-[-0.02em] text-[var(--text-primary)]">
+            <span className="font-display font-bold text-[18px] tracking-[-0.02em] text-[var(--text-primary)]">
               CylinderCheck
               <span
                 className="w-[6px] h-[6px] rounded-full bg-[var(--accent)] inline-block ml-[6px]"
@@ -74,7 +74,7 @@ export function Topbar({
                   key={t.id}
                   type="button"
                   onClick={() => onTabChange?.(t.id)}
-                  className={`relative px-3 py-2 rounded-md font-data text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors ${
+                  className={`relative px-3 py-2 rounded-md font-medium transition-colors ${
                     active
                       ? 'text-[var(--text-primary)]'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -101,14 +101,12 @@ export function Topbar({
               className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
             >
               <HelpCircle size={16} />
-              <span className="font-data text-[11px] uppercase tracking-[0.14em] font-semibold">
-                Support
-              </span>
+              <span className="font-medium">Support</span>
             </button>
             <button
               type="button"
               onClick={onSupportOpen}
-              className="inline-flex md:hidden items-center justify-center w-9 h-9 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
+              className="inline-flex md:hidden items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
               aria-label="Support"
               title="Support"
             >
@@ -145,13 +143,11 @@ export function Topbar({
                 title="Sign in with Google"
               >
                 <LogIn size={16} />
-                <span className="hidden sm:inline font-data text-[11px] uppercase tracking-[0.14em] font-semibold">
-                  Sign in
-                </span>
+                <span className="hidden sm:inline font-medium">Sign in</span>
                 <span className="hidden sm:inline text-[var(--divider)]" aria-hidden="true">
                   {DOT}
                 </span>
-                <span className="hidden sm:inline text-[11px] text-[var(--text-muted)]">Google</span>
+                <span className="hidden sm:inline text-[var(--text-muted)]">Google</span>
               </button>
             )}
 
@@ -159,7 +155,7 @@ export function Topbar({
               <div className="flex items-center gap-2">
                 <div
                   className="hidden sm:flex w-8 h-8 rounded-full flex-shrink-0 bg-[var(--accent-soft)] border border-[var(--accent)]
-                             items-center justify-center text-[12px] font-bold text-[var(--accent)]"
+                             items-center justify-center text-[12px] font-medium text-[var(--accent)]"
                   aria-label="Signed in"
                   title={user.email || 'Signed in'}
                 >
@@ -168,7 +164,7 @@ export function Topbar({
                 <button
                   type="button"
                   onClick={() => supabase.auth.signOut()}
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-[var(--border)] bg-[var(--bg-inset)]
+                  className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)]
                              hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
                   aria-label="Sign out"
                   title={user.email ? `Sign out (${user.email})` : 'Sign out'}

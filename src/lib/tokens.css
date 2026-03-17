@@ -67,11 +67,6 @@
   --shadow-glow:  rgba(224, 120, 48, 0.08);
   --shadow-modal: rgba(0, 0, 0, 0.35);
 
-  /* Typography */
-  --font-display: 'Bricolage Grotesque', sans-serif;
-  --font-body:    'Instrument Sans', sans-serif;
-  --font-data:    'Geist Mono', 'Fira Code', monospace;
-
   /* Spacing */
   --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
   --space-4: 16px;  --space-5: 20px;  --space-6: 24px;

@@ -28,9 +28,9 @@ export default function CompanyPicker({ value, onChange, compact }) {
   return (
     <div className="mb-6" role="group" aria-label="LPG company">
       {!compact && (
-        <div className="text-[12px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data mb-3 flex items-center justify-between">
+        <div className="overline text-[var(--text-primary)] mb-3 flex items-center justify-between">
           Your gas company
-          <span className="text-[var(--text-muted)] text-[10px] tracking-normal normal-case font-body font-normal">
+          <span className="caption text-[var(--text-muted)] tracking-normal normal-case">
             (optional)
           </span>
         </div>
@@ -52,7 +52,7 @@ export default function CompanyPicker({ value, onChange, compact }) {
             <span className="text-lg" aria-hidden="true">
               {co.emoji}
             </span>
-            <span className="text-[12px] font-bold tracking-wide">{compact ? co.short : co.label}</span>
+            <span className="text-[12px] font-medium tracking-wide">{compact ? co.short : co.label}</span>
           </button>
         ))}
       </div>

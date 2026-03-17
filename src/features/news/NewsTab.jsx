@@ -170,7 +170,7 @@ export default function NewsTab() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
           <h1
-            className="font-display font-extrabold text-[clamp(24px,4vw,36px)]
+            className="font-display font-bold text-[clamp(24px,4vw,36px)]
                        tracking-[-0.03em] text-[var(--text-primary)]
                        mb-2 leading-[1.1]"
           >
@@ -198,7 +198,7 @@ export default function NewsTab() {
           <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-2 px-2">
             <button
               type="button"
-              className={`shrink-0 px-4 py-2 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-colors ${
+              className={`overline shrink-0 px-4 py-2 rounded-full border transition-colors ${
                 !selectedCity
                   ? 'bg-[var(--text-primary)] text-[var(--bg-base)] border-[var(--text-primary)]'
                   : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'
@@ -212,7 +212,7 @@ export default function NewsTab() {
               <button
                 key={c}
                 type="button"
-                className={`shrink-0 px-4 py-2 rounded-full text-[12px] font-bold font-data tracking-widest uppercase border transition-colors ${
+                className={`overline shrink-0 px-4 py-2 rounded-full border transition-colors ${
                   selectedCity === c
                     ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
                     : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'
@@ -246,12 +246,12 @@ export default function NewsTab() {
             </div>
           ) : !validNews.length ? (
             <div className="mt-4 rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-raised)] text-center py-12 px-6">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] font-data text-[var(--text-muted)] mb-4">
+              <div className="overline text-[var(--text-muted)] mb-4">
                 No feed yet
               </div>
-              <div className="text-[16px] font-bold font-display text-[var(--text-primary)] mb-2">
+              <h2 className="font-display font-bold text-[16px] text-[var(--text-primary)] mb-2 m-0">
                 Scraper quiet
-              </div>
+              </h2>
               <p className="text-[14px] text-[var(--text-secondary)]">
                 No recent intelligence found. Try syncing.
               </p>
@@ -310,7 +310,7 @@ export default function NewsTab() {
                         </a>
 
                         <div className="mt-3 flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
-                          <span className="font-data font-semibold uppercase tracking-[0.14em]">
+                          <span className="font-medium uppercase tracking-[0.14em]">
                             {leadStory.source}
                           </span>
                           <span className="text-[var(--divider)]" aria-hidden="true">
@@ -325,7 +325,7 @@ export default function NewsTab() {
                           href={leadStory.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center w-10 h-10 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                          className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
                           aria-label="Open article"
                           title="Open"
                         >
@@ -335,7 +335,7 @@ export default function NewsTab() {
                           href={buildWhatsAppLink(leadStory)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center w-10 h-10 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)]"
+                          className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)]"
                           aria-label="Share to WhatsApp"
                           title="Share"
                         >
@@ -355,7 +355,7 @@ export default function NewsTab() {
                       <button
                         key={cat}
                         type="button"
-                        className="w-full rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-colors py-4 font-data text-[12px] uppercase tracking-widest font-bold"
+                        className="w-full rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-colors py-4 overline"
                         onClick={() => setShowGeneral(true)}
                       >
                         Show {items.length} general items {DOWN}
@@ -391,13 +391,13 @@ export default function NewsTab() {
                                     rel="noopener noreferrer"
                                     className="block"
                                   >
-                                    <h3 className="text-[15px] font-bold font-body text-[var(--text-primary)] leading-snug">
+                                    <h3 className="text-[15px] font-semibold font-display text-[var(--text-primary)] leading-snug">
                                       {item.title}
                                     </h3>
                                   </a>
 
                                   <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
-                                    <span className="font-data font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                                    <span className="font-medium uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                                       {item.source}
                                     </span>
                                     {item.city && (
@@ -417,7 +417,7 @@ export default function NewsTab() {
                                   href={buildWhatsAppLink(item)}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center justify-center w-10 h-10 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)] shrink-0"
+                                  className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)] shrink-0"
                                   aria-label="Share to WhatsApp"
                                   title="Share"
                                 >
@@ -438,7 +438,7 @@ export default function NewsTab() {
 
         <div className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)] min-w-0">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="font-data text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+            <div className="overline text-[var(--text-muted)]">
               Signals map
             </div>
             <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
@@ -455,7 +455,7 @@ export default function NewsTab() {
               />
 
               <div className="absolute bottom-4 right-4 z-[400] rounded-full border border-[var(--border)] bg-[var(--bg-raised)] px-3 py-1 pointer-events-none">
-                <div className="flex items-center gap-2 font-data text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                <div className="flex items-center gap-2 overline text-[var(--text-muted)]">
                   <span className="w-2 h-2 rounded-full bg-[var(--accent)]" aria-hidden="true" />
                   Live signals
                 </div>

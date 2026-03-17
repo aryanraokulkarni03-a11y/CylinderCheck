@@ -40,12 +40,12 @@ export default function CommercialHero({ hasAnyVendors = null }) {
       >
         {/* Left: copy */}
         <div className="md:col-span-7">
-          <div className="font-data text-[10px] uppercase tracking-[0.18em] text-[var(--accent)] mb-4">
+          <div className="overline text-[var(--accent)] mb-4">
             For Business
           </div>
 
           <h1
-            className="font-display font-extrabold text-[clamp(32px,5vw,56px)]
+            className="font-display font-bold text-[clamp(32px,5vw,56px)]
                        tracking-[-0.035em] leading-[1.02] text-[var(--text-primary)]"
           >
             {isWaitlist ? 'Private suppliers are onboarding.' : 'Commercial LPG, without chaos.'}
@@ -89,7 +89,7 @@ export default function CommercialHero({ hasAnyVendors = null }) {
         {/* Right: the one allowed glass hero surface */}
         <div className="md:col-span-5">
           <div className="glass-mid rounded-[var(--radius-lg)] p-6 md:p-7">
-            <div className="font-data text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+            <div className="overline text-[var(--text-muted)]">
               How it works
             </div>
 

@@ -222,7 +222,7 @@ export default function AlertsTab() {
       <SectionMarker status="active" label="Alerts" sublabel="Signals and reminders" />
 
       <h1
-        className="font-display font-extrabold text-[clamp(24px,4vw,36px)]
+        className="font-display font-bold text-[clamp(24px,4vw,36px)]
                    tracking-[-0.03em] text-[var(--text-primary)]
                    mb-2 leading-[1.1] flex items-center gap-3"
       >
@@ -242,7 +242,7 @@ export default function AlertsTab() {
                   <span className="badge text-[var(--status-clear)] bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)]">
                     Free
                   </span>
-                  <span className="font-data text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                  <span className="overline text-[var(--text-muted)]">
                     Booking window reminder
                   </span>
                 </div>
@@ -254,7 +254,7 @@ export default function AlertsTab() {
               <button
                 type="button"
                 onClick={scrollToPlus}
-                className="text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+                className="text-[13px] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
               >
                 Plus details {ARROW}
               </button>
@@ -268,13 +268,13 @@ export default function AlertsTab() {
               <div>
                 <label
                   htmlFor="free-pin"
-                  className="font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold"
+                  className="text-[var(--text-secondary)]"
                 >
                   PIN (optional)
                 </label>
                 <input
                   id="free-pin"
-                  className="input font-data text-[18px] tracking-[0.14em] text-[var(--text-data)] mt-2"
+                  className="input mt-2 tracking-[0.14em] text-[var(--text-data)]"
                   placeholder="6-digit PIN"
                   value={alertPin}
                   maxLength={6}
@@ -287,7 +287,7 @@ export default function AlertsTab() {
               <div>
                 <label
                   htmlFor="free-date"
-                  className="font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold"
+                  className="text-[var(--text-secondary)]"
                 >
                   Last booking (optional)
                 </label>
@@ -304,7 +304,7 @@ export default function AlertsTab() {
             <div className="mb-4">
               <label
                 htmlFor="free-contact"
-                className="font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold"
+                className="text-[var(--text-secondary)]"
               >
                 Mobile or email
               </label>
@@ -365,7 +365,7 @@ export default function AlertsTab() {
                   <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
                     Plus
                   </span>
-                  <span className="font-data text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                  <span className="overline text-[var(--text-muted)]">
                     Early access
                   </span>
                 </div>
@@ -376,10 +376,10 @@ export default function AlertsTab() {
               </div>
 
               <div className="text-right">
-                <div className="font-display font-extrabold text-[28px] tracking-[-0.02em] text-[var(--text-primary)] leading-none">
+                <div className="price text-[28px] tracking-[-0.02em] text-[var(--text-primary)] leading-none">
                   {RUPEE}49
                 </div>
-                <div className="font-data text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                <div className="overline text-[var(--text-muted)]">
                   per month
                 </div>
               </div>
@@ -404,12 +404,12 @@ export default function AlertsTab() {
 
             {paySuccess ? (
               <div className="rounded-md bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)] p-5">
-                <div className="flex items-center gap-2 text-[var(--status-clear)] font-semibold">
+                <div className="flex items-center gap-2 text-[var(--status-clear)] font-medium">
                   <Check size={16} />
                   You are a Plus member.
                 </div>
                 <p className="text-[13px] text-[var(--text-secondary)] mt-2 mb-0">
-                  Alerts will be sent to <span className="font-semibold">{payContact}</span>.
+                  Alerts will be sent to <span className="font-medium">{payContact}</span>.
                 </p>
               </div>
             ) : (
@@ -417,7 +417,7 @@ export default function AlertsTab() {
                 <div>
                   <label
                     htmlFor="plus-contact"
-                    className="font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold"
+                    className="text-[var(--text-secondary)]"
                   >
                     Mobile or email
                   </label>
@@ -436,13 +436,13 @@ export default function AlertsTab() {
                 <div>
                   <label
                     htmlFor="plus-pin"
-                    className="font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold"
+                    className="text-[var(--text-secondary)]"
                   >
                     PIN (optional)
                   </label>
                   <input
                     id="plus-pin"
-                    className="input font-data text-[18px] tracking-[0.14em] text-[var(--text-data)] mt-2"
+                    className="input mt-2 tracking-[0.14em] text-[var(--text-data)]"
                     placeholder="6-digit PIN"
                     value={payPin}
                     maxLength={6}

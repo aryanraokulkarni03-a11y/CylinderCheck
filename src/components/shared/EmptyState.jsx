@@ -21,7 +21,7 @@ export default function EmptyState({ title, description, actionText, onAction, i
       {actionText && onAction && (
         <button 
           onClick={onAction}
-          className="text-[14px] font-bold text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+          className="text-[14px] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
         >
           {actionText}
         </button>

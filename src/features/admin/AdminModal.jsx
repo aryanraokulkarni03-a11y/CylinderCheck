@@ -73,7 +73,7 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="absolute top-4 right-4 w-9 h-9 rounded-full
+              className="absolute top-4 right-4 w-11 h-11 rounded-full
                          flex items-center justify-center
                          text-[var(--text-muted)]
                          hover:text-[var(--text-primary)]
@@ -105,7 +105,7 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
                 <div>
                   <label
                     htmlFor="admin-password"
-                    className="block text-[11px] font-bold tracking-widest uppercase font-data text-[var(--text-muted)] mb-2"
+                    className="label-text text-[var(--text-muted)] mb-2 block"
                   >
                     Clearance code
                   </label>
@@ -120,18 +120,12 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
                     placeholder="Password"
                     autoFocus
                     aria-invalid={error || undefined}
-                    className={`w-full bg-[var(--bg-inset)] border rounded-[var(--radius-sm)]
-                                px-4 py-3 text-[16px] text-[var(--text-primary)]
-                                font-data tracking-[0.2em] text-center
-                                focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-fog)]
-                                transition-colors ${
-                                  error
-                                    ? 'border-[var(--status-severe)]'
-                                    : 'border-[var(--border)] focus:border-[var(--accent)]'
-                                }`}
+                    className={`input rounded-[var(--radius-sm)] tracking-[0.2em] text-center ${
+                      error ? 'border-[var(--status-severe)]' : ''
+                    }`}
                   />
                   {error && (
-                    <p className="text-[11px] font-bold tracking-widest uppercase font-data text-[var(--status-severe)] text-center mt-2">
+                    <p className="overline text-[var(--status-severe)] text-center mt-2">
                       Access denied
                     </p>
                   )}

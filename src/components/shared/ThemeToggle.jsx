@@ -19,14 +19,14 @@ export function ThemeToggle() {
       whileTap={shouldReduceMotion ? undefined : { scale: 0.94 }}
       transition={shouldReduceMotion ? { duration: 0.01 } : springs.response}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="flex items-center justify-center w-9 h-9 rounded-pill
+      className="flex items-center justify-center w-11 h-11 rounded-pill
                  bg-[var(--bg-inset)] border border-[var(--border)]
                  text-[var(--text-secondary)] hover:text-[var(--text-primary)]
                  transition-colors duration-150 flex-shrink-0"
     >
       {isDark
-        ? <Sun size={15} strokeWidth={1.8} />
-        : <Moon size={15} strokeWidth={1.8} />
+        ? <Sun size={18} strokeWidth={1.8} />
+        : <Moon size={18} strokeWidth={1.8} />
       }
     </motion.button>
   )

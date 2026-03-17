@@ -120,7 +120,7 @@ export default function CommercialPage({ prefilledCity }) {
       <CommercialHero hasAnyVendors={hasAnyVendors} />
 
       <div id="commercial-vendors" className="mt-14 md:mt-20 w-full">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)] text-[12px] font-bold tracking-widest uppercase font-data text-[var(--text-muted)] w-full">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)] overline text-[var(--text-muted)] w-full">
           <span className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-[var(--status-early)]" />
             License checks rolling out
@@ -136,13 +136,13 @@ export default function CommercialPage({ prefilledCity }) {
 
         <SectionMarker status="active" label="Commercial Alternatives" sublabel="Private suppliers" />
 
-        <h1
-          className="font-display font-extrabold text-[clamp(24px,4vw,36px)]
+        <h2
+          className="font-display font-bold text-[clamp(24px,4vw,36px)]
                      tracking-[-0.03em] text-[var(--text-primary)]
                      mb-2 leading-[1.1]"
         >
           Private suppliers
-        </h1>
+        </h2>
         <p className="text-[var(--text-secondary)] text-[15px] mb-8 max-w-[640px]">
           Choose your state to see listings as they go live. If your state is empty today, join the list and we will
           notify you.
@@ -154,7 +154,7 @@ export default function CommercialPage({ prefilledCity }) {
               key={st}
               type="button"
               onClick={() => setActiveState(st)}
-              className={`shrink-0 px-5 py-2 rounded-full text-[12px] font-bold whitespace-nowrap transition-colors border ${
+              className={`shrink-0 px-5 py-2 rounded-full text-[12px] font-medium tracking-[0.02em] whitespace-nowrap transition-colors border ${
                 activeState === st
                   ? 'bg-[var(--text-primary)] text-[var(--bg-base)] border-[var(--text-primary)]'
                   : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'
@@ -218,7 +218,7 @@ export default function CommercialPage({ prefilledCity }) {
                   <button
                     type="button"
                     onClick={() => fetchVendors(activeState)}
-                    className="text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+                    className="text-[13px] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
                   >
                     Try again {ARROW}
                   </button>
@@ -254,7 +254,7 @@ export default function CommercialPage({ prefilledCity }) {
                   <p className="text-[14px] text-[var(--text-secondary)] mb-2">
                     They'll be here faster than you think.
                   </p>
-                  <p className="text-[12px] text-[var(--text-muted)] font-data uppercase tracking-widest">
+                  <p className="overline text-[var(--text-muted)]">
                     Verified listings for {activeState} are onboarding now.
                   </p>
                   <p className="text-[12px] text-[var(--text-secondary)] mt-4">

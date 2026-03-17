@@ -146,7 +146,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
 
             {/* Business type */}
             <div>
-              <p className="block text-[12px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data mb-3">
+              <p className="overline text-[var(--text-primary)] mb-3">
                 Business Type
               </p>
               <div className="grid grid-cols-3 gap-2" role="group" aria-label="Business type">
@@ -156,7 +156,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                     type="button"
                     aria-pressed={businessType === value}
                     onClick={() => setBusinessType(value)}
-                    className={`py-2 px-2 rounded-md text-[12px] font-bold transition-colors border
+                    className={`py-2 px-2 rounded-md text-[12px] font-medium tracking-[0.02em] transition-colors border
                       ${businessType === value
                         ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
                         : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'}`}
@@ -169,7 +169,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
 
             {/* Alternative needed */}
             <div>
-              <p className="block text-[12px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data mb-3">
+              <p className="overline text-[var(--text-primary)] mb-3">
                 Alternative Needed
               </p>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Need type">
@@ -179,7 +179,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                     type="button"
                     aria-pressed={needType === value}
                     onClick={() => setNeedType(value)}
-                    className={`py-1.5 px-3 rounded-pill text-[12px] font-bold transition-colors border
+                    className={`py-1.5 px-3 rounded-pill text-[12px] font-medium tracking-[0.02em] transition-colors border
                       ${needType === value
                         ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]'
                         : 'bg-[var(--bg-inset)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]'}`}
@@ -192,7 +192,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
 
             {/* Business name */}
             <div>
-              <label htmlFor="lead-biz-name" className="block text-[12px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data mb-2">
+              <label htmlFor="lead-biz-name" className="block text-[var(--text-primary)] mb-2">
                 Business Name *
               </label>
               <input
@@ -200,23 +200,20 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                 type="text"
                 required
                 autoComplete="organization"
-                className={`block w-full px-4 py-2.5 bg-[var(--bg-inset)] border rounded-md
-                           focus:border-[var(--accent)] focus:outline-none text-[15px]
-                           text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
-                           ${fieldError.businessName ? 'border-[var(--status-severe)]' : 'border-[var(--border)]'}`}
+                className={`input ${fieldError.businessName ? 'border-[var(--status-severe)]' : ''}`}
                 placeholder="Restaurant / Hotel Name"
                 value={businessName}
                 onChange={e => { setBusinessName(e.target.value); setFieldError(p => ({ ...p, businessName: '' })); }}
               />
               {fieldError.businessName && (
-                <p className="text-[11px] text-[var(--status-severe)] mt-1">{fieldError.businessName}</p>
+                <p className="caption text-[var(--status-severe)] mt-1">{fieldError.businessName}</p>
               )}
             </div>
 
             {/* Phone + PIN row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="lead-phone" className="block text-[12px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data mb-2">
+                <label htmlFor="lead-phone" className="block text-[var(--text-primary)] mb-2">
                   Mobile Number *
                 </label>
                 <input
@@ -224,33 +221,25 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                   type="tel"
                   required
                   inputMode="numeric"
-                  className={`block w-full px-4 py-2.5 bg-[var(--bg-inset)] border rounded-md
-                             font-data tracking-widest text-[16px] text-[var(--text-data)]
-                             focus:border-[var(--accent)] focus:outline-none
-                             placeholder:tracking-normal placeholder:font-body
-                             placeholder:text-[15px] placeholder:text-[var(--text-muted)]
-                             ${fieldError.phone ? 'border-[var(--status-severe)]' : 'border-[var(--border)]'}`}
+                  className={`input tracking-[0.14em] text-[var(--text-data)] ${fieldError.phone ? 'border-[var(--status-severe)]' : ''}`}
                   placeholder="10-digit number"
                   value={phone}
                   onChange={e => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setFieldError(p => ({ ...p, phone: '' })); }}
                 />
                 {fieldError.phone && (
-                  <p className="text-[11px] text-[var(--status-severe)] mt-1">{fieldError.phone}</p>
+                  <p className="caption text-[var(--status-severe)] mt-1">{fieldError.phone}</p>
                 )}
               </div>
               <div>
-                <label htmlFor="lead-pin" className="block text-[12px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data mb-2">
-                  PIN Code <span className="text-[var(--text-muted)] text-[10px] normal-case tracking-normal font-body font-normal">(optional)</span>
+                <label htmlFor="lead-pin" className="block text-[var(--text-primary)] mb-2">
+                  PIN Code <span className="caption text-[var(--text-muted)] normal-case tracking-normal">(optional)</span>
                 </label>
                 <input
                   id="lead-pin"
                   type="text"
                   inputMode="numeric"
                   maxLength={6}
-                  className="block w-full px-4 py-2.5 bg-[var(--bg-inset)] border border-[var(--border)] rounded-md
-                             font-data tracking-widest text-[16px] text-[var(--text-data)]
-                             focus:border-[var(--accent)] focus:outline-none
-                             placeholder:tracking-normal placeholder:font-body placeholder:text-[15px] placeholder:text-[var(--text-muted)]"
+                  className="input tracking-[0.14em] text-[var(--text-data)]"
                   placeholder="6-digit PIN"
                   value={pin}
                   onChange={e => setPin(e.target.value.replace(/\D/g, ''))}
@@ -260,18 +249,15 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
 
             {/* Cylinders per week */}
             <div>
-              <label htmlFor="lead-cylinders" className="block text-[12px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data mb-2">
-                Cylinders per week <span className="text-[var(--text-muted)] text-[10px] normal-case tracking-normal font-body font-normal">(optional)</span>
+              <label htmlFor="lead-cylinders" className="block text-[var(--text-primary)] mb-2">
+                Cylinders per week <span className="caption text-[var(--text-muted)] normal-case tracking-normal">(optional)</span>
               </label>
               <input
                 id="lead-cylinders"
                 type="text"
                 inputMode="numeric"
                 maxLength={3}
-                className="block w-full px-4 py-2.5 bg-[var(--bg-inset)] border border-[var(--border)] rounded-md
-                           font-data text-[16px] text-[var(--text-data)]
-                           focus:border-[var(--accent)] focus:outline-none
-                           placeholder:font-body placeholder:text-[15px] placeholder:text-[var(--text-muted)]"
+                className="input tracking-[0.14em] text-[var(--text-data)]"
                 placeholder="e.g. 4"
                 value={cylindersWeek}
                 onChange={e => setCylindersWeek(e.target.value.replace(/\D/g, ''))}
@@ -280,14 +266,12 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
 
             {/* Message */}
             <div>
-              <label htmlFor="lead-message" className="block text-[12px] font-bold text-[var(--text-primary)] uppercase tracking-widest font-data mb-2">
-                Additional context <span className="text-[var(--text-muted)] text-[10px] normal-case tracking-normal font-body font-normal">(optional)</span>
+              <label htmlFor="lead-message" className="block text-[var(--text-primary)] mb-2">
+                Additional context <span className="caption text-[var(--text-muted)] normal-case tracking-normal">(optional)</span>
               </label>
               <textarea
                 id="lead-message"
-                className="block w-full px-4 py-2.5 bg-[var(--bg-inset)] border border-[var(--border)] rounded-md
-                           focus:border-[var(--accent)] focus:outline-none text-[15px] text-[var(--text-primary)]
-                           placeholder:text-[var(--text-muted)] resize-y min-h-[80px]"
+                className="input resize-y min-h-[80px]"
                 placeholder="e.g. Need emergency supply by Friday, Ramzan catering..."
                 value={message}
                 onChange={e => setMessage(e.target.value)}

@@ -1,0 +1,250 @@
+/* ─── TYPOGRAPHY SYSTEM — Single Source of Truth ─── */
+
+:root {
+  /* Font families */
+  --font-display: 'Satoshi', system-ui, -apple-system, sans-serif;
+  --font-body:    'General Sans', system-ui, -apple-system, sans-serif;
+
+  /* Modular type scale */
+  --fs-hero:    clamp(40px, 6vw, 64px);
+  --fs-h1:      clamp(28px, 4vw, 48px);
+  --fs-h2:      clamp(22px, 3vw, 32px);
+  --fs-h3:      clamp(18px, 2.5vw, 24px);
+  --fs-h4:      20px;
+  --fs-body-lg: 18px;
+  --fs-body:    16px;
+  --fs-sm:      14px;
+  --fs-xs:      12px;
+
+  /* Line heights */
+  --lh-tight:   1.1;
+  --lh-heading: 1.25;
+  --lh-body:    1.65;
+  --lh-relaxed: 1.8;
+
+  /* Letter spacing */
+  --ls-tight:   -0.02em;
+  --ls-snug:    -0.01em;
+  --ls-normal:  0em;
+  --ls-wide:    0.02em;
+  --ls-widest:  0.08em;
+
+  /* Paragraph width constraint */
+  --prose-width: 65ch;
+}
+
+/* ─── RESET & BASE ─── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ─── HEADINGS ─── */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--ls-tight);
+  margin-top: 0;
+  margin-bottom: 0.5em;
+}
+
+h1 { font-size: var(--fs-h1); font-weight: 700; }
+h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: var(--ls-snug); }
+h3 { font-size: var(--fs-h3); font-weight: 600; letter-spacing: var(--ls-snug); }
+h4 { font-size: var(--fs-h4); font-weight: 500; letter-spacing: var(--ls-normal); }
+h5 { font-size: var(--fs-body-lg); font-weight: 500; font-family: var(--font-body); }
+h6 { font-size: var(--fs-body); font-weight: 500; font-family: var(--font-body); }
+
+/* ─── BODY COPY ─── */
+
+p {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  max-width: var(--prose-width);
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+/* ─── INTERACTIVE ELEMENTS ─── */
+
+button,
+[role="button"] {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: var(--ls-wide);
+  line-height: 1;
+}
+
+input,
+textarea,
+select {
+  font-family: var(--font-body);
+  font-size: 16px; /* Prevents iOS zoom on focus */
+  font-weight: 400;
+  line-height: var(--lh-body);
+}
+
+label {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: var(--ls-wide);
+}
+
+/* ─── NAVIGATION ─── */
+
+nav,
+nav a,
+nav button,
+nav li {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: var(--ls-wide);
+}
+
+/* ─── LINKS ─── */
+
+a {
+  font-family: inherit;
+  font-weight: inherit;
+}
+
+/* ─── LISTS ─── */
+
+ul, ol, li {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+/* ─── TABLE ─── */
+
+table, th, td {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+}
+
+th {
+  font-weight: 500;
+  letter-spacing: var(--ls-wide);
+}
+
+/* ─── CODE / MONO ─── */
+
+code, pre, kbd, samp {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: var(--fs-xs);
+}
+
+/* ─── STATS / NUMBERS / METRICS ─── */
+
+.stat,
+.stat-value,
+.metric,
+.price,
+.hero-number,
+.count,
+.badge-number {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── HERO / DISPLAY TEXT ─── */
+
+.hero-title,
+.display-text,
+.page-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-hero);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+/* ─── SMALL / UTILITY ─── */
+
+small,
+.text-sm,
+.caption,
+.helper-text,
+.footnote {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  line-height: var(--lh-body);
+}
+
+.text-lg {
+  font-size: var(--fs-body-lg);
+}
+
+.overline,
+.label-text,
+.section-label {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+/* ─── MOBILE OVERRIDES ─── */
+
+@media (max-width: 768px) {
+  :root {
+    --fs-body-lg: 17px;
+    --fs-body:    15px;
+    --fs-sm:      13px;
+    --lh-body:    1.7;
+  }
+
+  h1 { letter-spacing: -0.015em; }
+  h2 { letter-spacing: -0.008em; }
+
+  p { max-width: 100%; }
+
+  button,
+  [role="button"] {
+    font-size: var(--fs-body);
+    min-height: 44px;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --fs-body: 15px;
+    --fs-sm:   13px;
+  }
+}

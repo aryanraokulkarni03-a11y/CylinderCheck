@@ -207,7 +207,7 @@ export default function ReportsTab({ user, authLoading }) {
       <SectionMarker status="early" label="Community Reports" />
 
       <h1
-        className="font-display font-extrabold text-[clamp(24px,4vw,36px)]
+        className="font-display font-bold text-[clamp(24px,4vw,36px)]
                    tracking-[-0.03em] text-[var(--text-primary)]
                    mb-2 leading-[1.1]"
       >
@@ -221,7 +221,7 @@ export default function ReportsTab({ user, authLoading }) {
         <div className="card lg:sticky lg:top-[calc(var(--topbar-height)+24px)]">
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
-              <div className="font-data text-[10px] uppercase tracking-[0.18em] text-[var(--accent)]">
+              <div className="overline text-[var(--accent)]">
                 Submit a report
               </div>
               <div className="text-[13px] text-[var(--text-muted)] mt-1 leading-relaxed">
@@ -238,12 +238,12 @@ export default function ReportsTab({ user, authLoading }) {
 
           {!authLoading && !user ? (
             <div className="text-center py-6">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] font-data text-[var(--text-muted)] mb-3">
+              <div className="overline text-[var(--text-muted)] mb-3">
                 Sign in required
               </div>
-              <div className="text-[16px] font-bold text-[var(--text-primary)] mb-2 font-display">
+              <h2 className="font-display font-bold text-[16px] text-[var(--text-primary)] mb-2 m-0">
                 Sign in to submit
-              </div>
+              </h2>
               <p className="text-[13px] text-[var(--text-secondary)] mb-5 leading-relaxed">
                 Reports require a Google account so the community stays spam-free and accountable.
               </p>
@@ -275,15 +275,14 @@ export default function ReportsTab({ user, authLoading }) {
 
                 <div>
                   <label
-                    className="block font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold mb-2"
+                    className="block text-[var(--text-secondary)] mb-2"
                     htmlFor="report-pin"
                   >
                     PIN code <span className="text-[var(--text-muted)]">*</span>
                   </label>
                   <input
                     id="report-pin"
-                    className="input font-data text-[20px] tracking-[0.12em] text-[var(--text-data)]
-                               placeholder:tracking-normal placeholder:font-body placeholder:text-[15px] placeholder:text-[var(--text-muted)]"
+                    className="input tracking-[0.12em] text-[var(--text-data)]"
                     placeholder="6-digit PIN"
                     value={reportPin}
                     maxLength={6}
@@ -295,11 +294,11 @@ export default function ReportsTab({ user, authLoading }) {
 
                 <div>
                   <label
-                    className="block font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold mb-2"
+                    className="block text-[var(--text-secondary)] mb-2"
                     htmlFor="report-area"
                   >
                     Area / colony{' '}
-                    <span className="text-[var(--text-muted)] text-[10px] normal-case tracking-normal font-body font-normal">
+                    <span className="caption text-[var(--text-muted)] tracking-normal normal-case">
                       (optional)
                     </span>
                   </label>
@@ -316,7 +315,7 @@ export default function ReportsTab({ user, authLoading }) {
 
                 <div>
                   <label
-                    className="block font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold mb-2"
+                    className="block text-[var(--text-secondary)] mb-2"
                     htmlFor="report-issue"
                   >
                     What is happening? <span className="text-[var(--text-muted)]">*</span>
@@ -333,11 +332,11 @@ export default function ReportsTab({ user, authLoading }) {
 
                 <div>
                   <label
-                    className="block font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold mb-2"
+                    className="block text-[var(--text-secondary)] mb-2"
                     htmlFor="report-days"
                   >
                     Delivery days{' '}
-                    <span className="text-[var(--text-muted)] text-[10px] normal-case tracking-normal font-body font-normal">
+                    <span className="caption text-[var(--text-muted)] tracking-normal normal-case">
                       (optional)
                     </span>
                   </label>
@@ -378,10 +377,10 @@ export default function ReportsTab({ user, authLoading }) {
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2">
               <AlertCircle size={14} className="text-[var(--accent)]" />
-              <span className="font-data text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              <span className="overline text-[var(--text-muted)]">
                 Reports feed
               </span>
-              <span className="text-[var(--divider)] font-data text-[11px]" aria-hidden="true">
+              <span className="text-[var(--divider)] text-[11px]" aria-hidden="true">
                 {DOT}
               </span>
               <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
@@ -501,7 +500,7 @@ export default function ReportsTab({ user, authLoading }) {
                             </LiquidGlassBtn>
                             <button
                               type="button"
-                              className="text-[12px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] px-4"
+                              className="text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] px-4"
                               onClick={() => setEditingReportId(null)}
                             >
                               Cancel
@@ -520,7 +519,7 @@ export default function ReportsTab({ user, authLoading }) {
                           whileTap={shouldReduceMotion ? undefined : { scale: 1.08 }}
                           transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
                           onClick={() => handleVote(r)}
-                          className={`inline-flex items-center gap-1.5 font-data text-[11px] font-semibold tracking-[0.14em] px-3 py-2 rounded-full transition-colors ${
+                          className={`inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] px-3 py-2 rounded-full transition-colors ${
                             votes[r.id]
                               ? 'bg-[var(--accent)] text-[var(--text-on-accent)]'
                               : 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]'

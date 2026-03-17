@@ -85,7 +85,7 @@ export default function VendorCard({ vendor }) {
                   />
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-widest font-data text-[var(--text-muted)]">
+              <div className="flex items-center gap-1.5 overline text-[var(--text-muted)]">
                 <MapPin size={12} className="text-[var(--accent)]" />
                 <span className="truncate">
                   {vendor?.city || 'India'}
@@ -98,9 +98,9 @@ export default function VendorCard({ vendor }) {
                 </p>
               )}
               {isVerified && licenseNumber && (
-                <div className="mt-2 text-[11px] text-[var(--text-muted)] font-data uppercase tracking-[0.14em]">
+                <div className="mt-2 overline text-[var(--text-muted)]">
                   License <span className="text-[var(--divider)]" aria-hidden="true">{DOT}</span>{' '}
-                  <span className="text-[var(--text-data)] font-semibold tracking-[0.02em] normal-case font-body">
+                  <span className="stat-value text-[var(--text-data)] tracking-[0.02em] normal-case">
                     {licenseNumber}
                   </span>
                 </div>
@@ -108,16 +108,16 @@ export default function VendorCard({ vendor }) {
             </div>
 
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
-              <span className="bg-[var(--bg-inset)] text-[var(--text-secondary)] border border-[var(--border)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
+              <span className="badge bg-[var(--bg-inset)] text-[var(--text-secondary)] border border-[var(--border)]">
                 {category}
               </span>
               {!isVerified && (
-                <span className="bg-[var(--status-early-soft)] text-[var(--status-early)] border border-[var(--status-early-border)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
+                <span className="badge bg-[var(--status-early-soft)] text-[var(--status-early)] border border-[var(--status-early-border)]">
                   Listed
                 </span>
               )}
               {isFeatured && (
-                <span className="bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-glow)] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[var(--radius-xs)] font-data">
+                <span className="badge bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-glow)]">
                   Featured
                 </span>
               )}
@@ -155,7 +155,7 @@ export default function VendorCard({ vendor }) {
             <a
               href={telHref || undefined}
               aria-disabled={!telHref || undefined}
-              className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-primary)] transition-colors text-[13px] font-bold ${
+              className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-primary)] transition-colors text-[13px] font-medium ${
                 telHref ? '' : 'opacity-50 pointer-events-none'
               }`}
             >

@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
-@import "./lib/fonts.css";
 @import "./lib/tokens.css";
 
 /* ============================================================
@@ -17,11 +16,8 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--font-body);
-  font-size: 15px;
   color: var(--text-primary);
   background-color: var(--bg-base);
-  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: contain;
@@ -124,8 +120,8 @@ body::before {
   background: var(--glass-whisper);
   border: 1px solid var(--accent-glow);
   font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--fs-body);
+  font-weight: 500;
   color: var(--accent-pop);
   min-height: 52px;
   padding: 0 28px;
@@ -143,8 +139,8 @@ body::before {
   border: 1px solid var(--border);
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: 500;
   min-height: 48px;
   padding: 0 20px;
   border-radius: var(--radius-md);
@@ -174,7 +170,7 @@ body::before {
 @media (max-width: 768px) {
   .btn-primary, .btn-ghost {
     min-height: 56px;
-    font-size: 16px; /* Prevents iOS Safari auto-zoom */
+    font-size: var(--fs-body);
   }
 }
 
@@ -184,7 +180,7 @@ body::before {
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px; /* Prevents iOS zoom on focus */
   min-height: 48px;
   padding: 14px 16px;
   width: 100%;
@@ -197,15 +193,21 @@ body::before {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-fog);
 }
+.input::placeholder {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  opacity: 0.5;
+}
 @media (max-width: 768px) {
   .input { font-size: 16px; min-height: 52px; }
 }
 
 .badge {
-  font-family: var(--font-data);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: var(--ls-widest);
   text-transform: uppercase;
   padding: 3px 10px;
   border-radius: var(--radius-pill);

@@ -4,9 +4,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Bricolage Grotesque', 'sans-serif'],
-        body:    ['Instrument Sans', 'sans-serif'],
-        data:    ['Geist Mono', 'Fira Code', 'monospace'],
+        display: ['var(--font-display)'],
+        body:    ['var(--font-body)'],
+        data:    ['var(--font-body)'],
       },
       colors: {
         accent: 'var(--accent)',

@@ -1,4 +1,6 @@
 // src/main.jsx
+import './styles/fonts.css'
+import './styles/typography.css'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
@@ -20,7 +22,7 @@ class ErrorBoundary extends React.Component {
         minHeight: '100vh',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'var(--font-data)',
+        fontFamily: 'var(--font-body)',
         padding: 24,
       }}>
         <div style={{ fontSize: 28, marginBottom: 16 }}>❌ App Error</div>

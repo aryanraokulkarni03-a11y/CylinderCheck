@@ -10,20 +10,18 @@ export function SectionMarker({ status = 'clear', label, sublabel }) {
 
       <div className="flex items-center gap-2">
         <span
-          className="font-data text-[11px] font-semibold uppercase tracking-[0.14em]
-                     text-[var(--text-muted)]"
+          className="overline text-[var(--text-muted)]"
         >
           LIVE
         </span>
 
         {label && (
           <>
-            <span className="text-[var(--divider)] font-data text-[11px]" aria-hidden="true">
+            <span className="text-[var(--divider)] text-[11px]" aria-hidden="true">
               {SEP}
             </span>
             <span
-              className="font-data text-[11px] font-semibold uppercase tracking-[0.14em]
-                         text-[var(--text-muted)]"
+              className="overline text-[var(--text-muted)]"
             >
               {label}
             </span>
@@ -32,12 +30,11 @@ export function SectionMarker({ status = 'clear', label, sublabel }) {
 
         {sublabel && (
           <>
-            <span className="text-[var(--divider)] font-data text-[11px]" aria-hidden="true">
+            <span className="text-[var(--divider)] text-[11px]" aria-hidden="true">
               {SEP}
             </span>
             <span
-              className="font-data text-[11px] tracking-[0.08em]
-                         text-[var(--text-muted)] opacity-60"
+              className="text-[11px] tracking-[0.08em] text-[var(--text-muted)] opacity-60"
             >
               {sublabel}
             </span>
@@ -51,4 +48,3 @@ export function SectionMarker({ status = 'clear', label, sublabel }) {
 }
 
 export default SectionMarker
-

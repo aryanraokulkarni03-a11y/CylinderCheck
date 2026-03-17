@@ -64,12 +64,10 @@ export function PriceTicker({ mapPrices = {} }) {
         {doubled.map(({ city, price, color }, i) => (
           <span key={`${city}-${i}`}
             className="inline-flex items-center gap-2 mx-5">
-            <span className="font-body text-[11px] uppercase
-                             tracking-[0.1em] text-[var(--text-muted)]">
+            <span className="overline text-[var(--text-muted)]">
               {city}
             </span>
-            <span className="font-data text-[14px] font-bold"
-                  style={{ color }}>
+            <span className="price text-[14px]" style={{ color }}>
               {RUPEE}
               {price}
             </span>

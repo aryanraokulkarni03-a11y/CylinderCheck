@@ -93,7 +93,7 @@ export function TrackTab({
       />
 
       <h1
-        className="font-display font-extrabold text-[clamp(24px,4vw,36px)]
+        className="font-display font-bold text-[clamp(24px,4vw,36px)]
                    tracking-[-0.03em] text-[var(--text-primary)]
                    mb-2 leading-[1.1]"
       >
@@ -114,25 +114,20 @@ export function TrackTab({
           </AnimatePresence>
 
           <div className="card">
-            <div className="font-data text-[10px] uppercase tracking-[0.18em] text-[var(--accent)] mb-4">
+            <div className="overline text-[var(--accent)] mb-4">
               Delivery Prediction
             </div>
 
             <div className="flex flex-col gap-2 mb-5">
               <label
                 htmlFor="pin-input"
-                className="font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold"
+                className="text-[var(--text-secondary)]"
               >
                 Where are you?
               </label>
               <input
                 id="pin-input"
-                className="block w-full min-h-[52px] px-4 py-3
-                           font-data text-[20px] tracking-[0.12em]
-                           text-[var(--text-data)]
-                           bg-[var(--bg-inset)] border border-[var(--border)]
-                           rounded-md focus:border-[var(--accent)]
-                           focus:outline-none transition-colors duration-150"
+                className="input min-h-[52px] tracking-[0.12em] text-[var(--text-data)]"
                 placeholder="Enter 6-digit PIN"
                 value={pin}
                 maxLength={6}
@@ -147,7 +142,7 @@ export function TrackTab({
             <div className="flex flex-col gap-2 mb-6">
               <label
                 htmlFor="booking-date"
-                className="font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold"
+                className="text-[var(--text-secondary)]"
               >
                 Last Booking Date{' '}
                 <span className="text-[var(--text-muted)] normal-case tracking-normal font-normal">
@@ -157,18 +152,14 @@ export function TrackTab({
               <input
                 id="booking-date"
                 type="date"
-                className="block w-full min-h-[48px] px-4 py-3
-                           font-body text-[15px] text-[var(--text-primary)]
-                           bg-[var(--bg-inset)] border border-[var(--border)]
-                           rounded-md focus:border-[var(--accent)]
-                           focus:outline-none transition-colors duration-150"
+                className="input"
                 value={lastBooking}
                 onChange={(e) => setLastBooking(e.target.value)}
               />
             </div>
 
             <div className="flex flex-col gap-2 mb-6">
-              <p className="font-data text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold">
+              <p className="label-text text-[var(--text-secondary)]">
                 Current Cylinder Level{' '}
                 <span className="text-[var(--text-muted)] normal-case tracking-normal font-normal">
                   (optional, unlocks urgency score)
@@ -196,10 +187,10 @@ export function TrackTab({
                                 }`}
                   >
                     <span className="text-[16px] leading-none">{emoji}</span>
-                    <span className="font-data text-[10px] font-bold uppercase tracking-[0.08em] leading-none">
+                    <span className="text-[10px] font-medium uppercase tracking-[0.08em] leading-none">
                       {label}
                     </span>
-                    <span className="font-data text-[9px] text-[var(--text-muted)] leading-none">{hint}</span>
+                    <span className="text-[9px] text-[var(--text-muted)] leading-none">{hint}</span>
                   </button>
                 ))}
               </div>
@@ -248,19 +239,18 @@ export function TrackTab({
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <MapPin size={12} style={{ color: 'var(--accent)' }} />
-                        <span className="font-data text-[11px] text-[var(--accent)] uppercase tracking-[0.10em]">
+                        <span className="overline text-[var(--accent)]">
                           {pinData.area || `PIN ${pinData.pin}`}
                         </span>
                       </div>
-                      <div className="font-display font-bold text-[24px] tracking-[-0.02em] text-[var(--text-primary)]">
+                      <h2 className="font-display font-bold text-[24px] tracking-[-0.02em] text-[var(--text-primary)] m-0">
                         {pinData.city}
-                      </div>
+                      </h2>
                     </div>
 
                     {trend && (
                       <span
-                        className={`font-data text-[10px] uppercase tracking-[0.10em]
-                                    px-2 py-1 rounded-pill ${trend.className}`}
+                        className={`badge ${trend.className}`}
                       >
                         {trend.label}
                       </span>
@@ -273,10 +263,10 @@ export function TrackTab({
                       <span className="text-right">
                         {avgDays != null ? (
                           <span className="inline-flex items-baseline justify-end gap-2">
-                            <span className="font-data text-[14px] font-bold text-[var(--text-data)]">
+                            <span className="stat-value text-[14px] text-[var(--text-data)]">
                               {avgDays}
                             </span>
-                            <span className="text-[12px] text-[var(--text-muted)]">days</span>
+                            <span className="label-text text-[var(--text-muted)]">days</span>
                           </span>
                         ) : (
                           <span className="text-[13px] text-[var(--text-muted)]">No data yet</span>
@@ -286,7 +276,7 @@ export function TrackTab({
 
                     <div className="flex justify-between items-start py-3">
                       <span className="text-[13px] text-[var(--text-secondary)]">Gas Agency</span>
-                      <span className="text-[13px] text-[var(--text-secondary)] font-semibold text-right">
+                      <span className="text-[13px] text-[var(--text-secondary)] font-medium text-right">
                         {COMPANY_LABELS?.[pinData.agency] || pinData.agency}
                       </span>
                     </div>
@@ -296,7 +286,7 @@ export function TrackTab({
                         <span className="text-[13px] text-[var(--text-secondary)]">Shortage Status</span>
                         <span className="flex items-center justify-end gap-2">
                           <StatusDot status={shortage.status} size={7} />
-                          <span className="font-data text-[12px] uppercase tracking-[0.08em] text-[var(--text-data)]">
+                          <span className="label-text text-[var(--text-data)]">
                             {shortage.label}
                           </span>
                         </span>
@@ -307,7 +297,7 @@ export function TrackTab({
 
                 {pinData.urgencyScore !== undefined && (
                   <div className="card mb-4 text-center">
-                    <div className="font-data text-[10px] uppercase tracking-[0.18em] text-[var(--accent)] mb-4">
+                    <div className="overline text-[var(--accent)] mb-4">
                       Urgency Score
                     </div>
                     <UrgencyScore score={pinData.urgencyScore} />
@@ -322,14 +312,14 @@ export function TrackTab({
                         : 'border-[var(--border)] bg-[var(--bg-raised)]'
                     }`}
                   >
-                    <div className="font-data text-[10px] uppercase tracking-[0.18em] text-[var(--accent)] mb-4">
+                    <div className="overline text-[var(--accent)] mb-4">
                       Your Booking Window
                     </div>
 
                     <div className="flex items-center gap-5">
                       <Ring daysLeft={bookingResult.daysLeft} />
                       <div>
-                        <p className="font-data text-[11px] uppercase tracking-[0.08em] text-[var(--text-muted)] mb-1">
+                        <p className="overline text-[var(--text-muted)] mb-1">
                           {bookingResult.daysLeft <= 0 ? 'Window is open now' : 'Next window opens'}
                         </p>
 
@@ -338,24 +328,24 @@ export function TrackTab({
                             Book right now
                           </p>
                         ) : (
-                          <p className="font-data font-bold text-[20px] tracking-[-0.01em] text-[var(--text-data)]">
+                          <p className="stat text-[20px] text-[var(--text-data)]">
                             {fmt(bookingResult.nextWindow)}
                           </p>
                         )}
 
                         {bookingResult.daysLeft > 0 && avgDays != null && (
-                          <p className="font-data text-[11px] text-[var(--text-muted)] mt-2">
+                          <p className="caption text-[var(--text-muted)] mt-2">
                             Est. delivery by {fmt(addDays(bookingResult.nextWindow, Math.round(avgDays)))}
                           </p>
                         )}
 
                         <KalamkariDivider />
-                        <p className="font-data text-[10px] text-[var(--text-muted)]">
+                        <p className="caption text-[var(--text-muted)]">
                           Based on{' '}
-                          <span className="font-data text-[var(--text-data)]">25</span>-day rule
+                          <span className="stat-value text-[var(--text-data)]">25</span>-day rule
                           {avgDays != null ? (
                             <>
-                              {' '}+ <span className="font-data text-[var(--text-data)]">{avgDays}</span>-day local delivery lag
+                              {' '}+ <span className="stat-value text-[var(--text-data)]">{avgDays}</span>-day local delivery lag
                             </>
                           ) : (
                             <> + local delivery lag</>
@@ -386,7 +376,7 @@ export function TrackTab({
                     <StatusDot status={pinData.reportCount >= 5 ? 'severe' : 'active'} size={7} />
                     <div>
                       <div
-                        className="font-data text-[12px] uppercase tracking-[0.10em] mb-1"
+                        className="overline mb-1"
                         style={{
                           color: pinData.reportCount >= 5 ? 'var(--status-severe)' : 'var(--status-active)',
                         }}
@@ -394,7 +384,7 @@ export function TrackTab({
                         {pinData.reportCount >= 5 ? 'Severe shortage in your area' : 'Active shortage in your area'}
                       </div>
                       <p className="text-[13px] text-[var(--text-secondary)]">
-                        Expect <span className="font-data text-[var(--text-data)]">3-7</span> extra days on delivery.
+                        Expect <span className="stat-value text-[var(--text-data)]">3-7</span> extra days on delivery.
                         Book as early as your window allows.
                       </p>
                     </div>
@@ -408,7 +398,7 @@ export function TrackTab({
                     transition={shouldReduceMotion ? { duration: 0.01 } : { ...springs.arrival, delay: 0.4 }}
                     className="p-4 rounded-lg border border-[var(--accent-glow)] bg-[var(--accent-fog)]"
                   >
-                    <p className="text-[13px] font-semibold text-[var(--text-primary)] mb-1">
+                    <p className="text-[13px] font-medium text-[var(--text-primary)] mb-1">
                       Running a restaurant or hotel?
                     </p>
                     <p className="text-[12px] text-[var(--text-secondary)] mb-3">
@@ -416,7 +406,7 @@ export function TrackTab({
                     </p>
                     <button
                       onClick={onCommercialClick}
-                      className="text-[12px] font-semibold text-[var(--accent)] hover:text-[var(--accent-pop)]
+                      className="text-[12px] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)]
                                  transition-colors duration-150"
                     >
                       Find alternatives now {' \u2192'}
@@ -445,7 +435,7 @@ export function TrackTab({
                     x="32"
                     y="40"
                     textAnchor="middle"
-                    fontFamily="var(--font-data)"
+                    fontFamily="var(--font-body)"
                     fontSize="10"
                     fill="var(--text-muted)"
                     letterSpacing="1"

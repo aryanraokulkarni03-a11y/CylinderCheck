@@ -32,15 +32,16 @@ export function getCity(title) {
 }
 
 export default function NewsMap({
-  cityHasNews = {},
-  selectedCity = null,
+  leadCity = null,
+  leadSignalKey = '',
   onSelectCity,
-  centerCoords,
 }) {
   const mapElRef = useRef(null)
   const mapInstRef = useRef(null)
   const tileLayerRef = useRef(null)
   const markersLayerRef = useRef(null)
+  const pulseResetRef = useRef(null)
+  const prevLeadSignalRef = useRef('')
 
   const { L, loaded } = useLeaflet()
   const themeMode = useThemeMode()
@@ -50,7 +51,7 @@ export default function NewsMap({
     if (!mapElRef.current || mapInstRef.current) return
 
     const map = L.map(mapElRef.current, {
-      center: centerCoords || [22.5, 78.5],
+      center: [22.5, 78.5],
       zoom: 4,
       zoomControl: false,
       maxBounds: [
@@ -80,7 +81,7 @@ export default function NewsMap({
         mapInstRef.current = null
       }
     }
-  }, [loaded, L, centerCoords, themeMode])
+  }, [loaded, L, themeMode])
 
   useEffect(() => {
     if (!loaded || !L) return
@@ -92,37 +93,89 @@ export default function NewsMap({
     tile.setUrl(tileUrlForMode(themeMode))
 
     markers.clearLayers()
-    Object.entries(CITY_COORDS).forEach(([city, coords]) => {
-      const hasNews = !!cityHasNews[city]
-      const isSelected = selectedCity === city
+    const city = leadCity && CITY_COORDS[leadCity] ? leadCity : null
 
-      const iconHtml = `
-        <div style="position:relative; width:28px; height:28px; display:flex; align-items:center; justify-content:center;">
-          <div style="
-            width:12px; height:12px;
-            border-radius:9999px;
-            background:var(--accent);
-            border:2px solid var(--bg-base);
-            box-shadow:0 0 12px var(--accent-glow);
-            transform:${isSelected ? 'scale(1.18)' : 'scale(1)'};
-            transition:transform var(--dur-fast) var(--ease-out);
-          "></div>
-          ${hasNews ? '<div style="position:absolute; inset:0; border-radius:9999px; box-shadow:0 0 0 1px var(--accent-glow), 0 0 22px var(--accent-glow); opacity:0.55;"></div>' : ''}
-        </div>
-      `
-
-      const icon = L.divIcon({
-        html: iconHtml,
-        className: '',
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+    if (!city) {
+      map.flyTo([22.5, 78.5], 4, {
+        animate: true,
+        duration: 0.9,
       })
+      return
+    }
 
-      const marker = L.marker([coords.lat, coords.lng], { icon })
-      marker.on('click', () => onSelectCity?.(city))
-      marker.addTo(markers)
+    const coords = CITY_COORDS[city]
+    const didLeadChange = leadSignalKey && prevLeadSignalRef.current && prevLeadSignalRef.current !== leadSignalKey
+    const shouldPulse = !prevLeadSignalRef.current || didLeadChange
+    prevLeadSignalRef.current = leadSignalKey || city
+
+    if (pulseResetRef.current) {
+      clearTimeout(pulseResetRef.current)
+      pulseResetRef.current = null
+    }
+
+    const iconHtml = `
+      <div style="position:relative; width:48px; height:48px; display:flex; align-items:center; justify-content:center;">
+        <div style="
+          position:absolute;
+          inset:8px;
+          border-radius:9999px;
+          background:color-mix(in srgb, var(--accent-glow) 42%, transparent);
+          box-shadow:0 0 0 1px color-mix(in srgb, var(--accent-glow) 28%, transparent), 0 0 18px var(--accent-glow);
+          opacity:0.72;
+        "></div>
+        <div style="
+          position:absolute;
+          inset:0;
+          border-radius:9999px;
+          border:1px solid color-mix(in srgb, var(--accent-glow) 45%, transparent);
+          box-shadow:0 0 20px color-mix(in srgb, var(--accent-glow) 68%, transparent);
+          opacity:${shouldPulse ? '0.9' : '0.45'};
+          transform:${shouldPulse ? 'scale(0.72)' : 'scale(1)'};
+          animation:${shouldPulse ? 'newsLeadPulse 1.35s ease-out 1' : 'none'};
+        "></div>
+        <div style="
+          width:14px;
+          height:14px;
+          border-radius:9999px;
+          background:var(--accent);
+          border:2px solid var(--bg-base);
+          box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent), 0 0 16px var(--accent-glow);
+          position:relative;
+          z-index:1;
+        "></div>
+      </div>
+    `
+
+    const icon = L.divIcon({
+      html: iconHtml,
+      className: '',
+      iconSize: [48, 48],
+      iconAnchor: [24, 24],
     })
-  }, [loaded, L, themeMode, cityHasNews, selectedCity, onSelectCity])
+
+    const marker = L.marker([coords.lat, coords.lng], { icon })
+    marker.on('click', () => onSelectCity?.(city))
+    marker.addTo(markers)
+
+    map.flyTo([coords.lat, coords.lng], 6, {
+      animate: true,
+      duration: 1,
+    })
+
+    if (shouldPulse) {
+      pulseResetRef.current = setTimeout(() => {
+        pulseResetRef.current = null
+      }, 1400)
+    }
+  }, [loaded, L, themeMode, leadCity, leadSignalKey, onSelectCity])
+
+  useEffect(() => {
+    return () => {
+      if (pulseResetRef.current) {
+        clearTimeout(pulseResetRef.current)
+      }
+    }
+  }, [])
 
   return (
     <div
@@ -131,4 +184,3 @@ export default function NewsMap({
     />
   )
 }
-

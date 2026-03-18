@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import NewsMap, { getCity } from './NewsMap'
 import { FadeIn } from '../../components/motion/FadeIn'
-import { ExternalLink, Loader2, MapPin, MessageCircle, Newspaper, RefreshCw } from 'lucide-react'
+import { Loader2, MapPin, MessageCircle, Newspaper, RefreshCw } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { PillRow } from '../../components/ui/PillRow'
 import { Card } from '../../components/ui/Card'
@@ -170,6 +170,11 @@ export default function NewsTab() {
   }, [filteredNews])
 
   const leadStory = filteredNews[0] || null
+  const leadCity = leadStory?.city || null
+  const leadSignalKey = leadStory
+    ? `${leadStory.title}:${leadStory.pubDate instanceof Date ? leadStory.pubDate.toISOString() : ''}:${leadStory.city || ''}`
+    : ''
+  const mapLabel = leadCity || selectedCity || 'All India'
   const order = ['SHORTAGE SIGNALS', 'PRICE & RATES', 'POLICY', 'GENERAL']
 
   const pageStatus =
@@ -273,16 +278,6 @@ export default function NewsTab() {
                       meta={timeAgo(leadStory.pubDate)}
                       actions={
                         <div className="flex items-center gap-2">
-                          <a
-                            href={leadStory.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="icon-btn"
-                            aria-label="Open article"
-                            title="Open"
-                          >
-                            <ExternalLink size={16} />
-                          </a>
                           <a
                             href={buildWhatsAppLink(leadStory)}
                             target="_blank"
@@ -434,7 +429,7 @@ export default function NewsTab() {
               Signals map
             </div>
             <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
-              {selectedCity || 'All India'}
+              {mapLabel}
             </span>
           </div>
 
@@ -445,8 +440,8 @@ export default function NewsTab() {
             >
               <div className="relative h-full p-1 sm:p-2">
                 <NewsMap
-                  cityHasNews={cityHasNews}
-                  selectedCity={selectedCity}
+                  leadCity={leadCity}
+                  leadSignalKey={leadSignalKey}
                   onSelectCity={(c) => setSelectedCity((prev) => (prev === c ? null : c))}
                 />
 

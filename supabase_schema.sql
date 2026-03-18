@@ -117,6 +117,29 @@ CREATE TABLE IF NOT EXISTS commercial_leads (
 ALTER TABLE commercial_leads ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public can insert commercial leads" ON commercial_leads FOR INSERT WITH CHECK (true);
 
+-- 7. First-sign-in notification log
+--    Used by the auth welcome email flow to avoid resending on normal session restores.
+CREATE TABLE IF NOT EXISTS auth_notification_log (
+  id                BIGSERIAL PRIMARY KEY,
+  user_id           UUID NOT NULL,
+  email             TEXT NOT NULL,
+  notification_type TEXT NOT NULL,
+  provider          TEXT NOT NULL DEFAULT 'resend',
+  status            TEXT NOT NULL DEFAULT 'pending',
+  last_error        TEXT,
+  metadata          JSONB NOT NULL DEFAULT '{}'::jsonb,
+  sent_at           TIMESTAMPTZ,
+  created_at        TIMESTAMPTZ DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, notification_type)
+);
+
+CREATE INDEX IF NOT EXISTS auth_notification_log_email_idx
+  ON auth_notification_log (email);
+
+CREATE INDEX IF NOT EXISTS auth_notification_log_status_idx
+  ON auth_notification_log (status);
+
 -- Live DB note (verified 2026-03-18):
 -- The production project also contains auxiliary tables:
 --   feedback, price_corrections, report_votes

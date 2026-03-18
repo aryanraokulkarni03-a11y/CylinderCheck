@@ -12,15 +12,15 @@ const sections = [
     content: (
       <>
         <p>
-          We collect the information needed to run CylinderCheck reliably. That can include Google sign-in
-          profile details such as your email address, contact details you submit for alerts or support,
-          booking and delivery information you enter, PIN codes, shortage reports, pricing corrections,
-          commercial lead details, and feedback you choose to send us.
+          We collect the information needed to run CylinderCheck reliably. That can include:
         </p>
-        <p>
-          We also receive basic technical and operational data such as browser type, device signals, request
-          logs, and product analytics that help us secure the service, understand usage, and improve performance.
-        </p>
+        <ul className="reading-list">
+          <li>Google sign-in profile details such as your email address.</li>
+          <li>Contact details you submit for alerts, support, or commercial enquiries.</li>
+          <li>Booking and delivery information, PIN codes, shortage reports, and pricing corrections you submit.</li>
+          <li>Feedback and other product communication you choose to send us.</li>
+          <li>Basic technical data such as browser type, device signals, request logs, and product analytics.</li>
+        </ul>
       </>
     ),
   },
@@ -48,6 +48,10 @@ const sections = [
           card details. We may store billing references, subscription status, contact details, and fulfillment
           records needed to confirm service delivery, handle support, and prevent fraud.
         </p>
+        <ul className="reading-list reading-list--dense">
+          <li>Payment card details are handled by the payment processor, not stored by us in full.</li>
+          <li>We may retain order references, contact data, and subscription state to fulfill the paid service.</li>
+        </ul>
       </>
     ),
   },
@@ -77,6 +81,10 @@ const sections = [
           records, resolve disputes, and comply with legal obligations. Some operational and payment records may be
           retained longer than general usage data.
         </p>
+        <ul className="reading-list reading-list--dense">
+          <li>You can contact us to request help with account-linked information or alert removal.</li>
+          <li>Deletion requests may be reviewed against legal, billing, fraud-prevention, and operational obligations.</li>
+        </ul>
         <p>
           You can contact us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> if you want to request account
           help, alert removal, or deletion review.
@@ -95,6 +103,10 @@ const sections = [
           can promise absolute security. CylinderCheck is not intended for children, and we do not knowingly design
           the service for use by minors.
         </p>
+        <ul className="reading-list reading-list--dense">
+          <li>We continuously improve safeguards, but no system can guarantee absolute protection.</li>
+          <li>If you believe information has been mishandled, contact us directly at {CONTACT_EMAIL}.</li>
+        </ul>
       </>
     ),
   },

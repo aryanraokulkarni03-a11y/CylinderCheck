@@ -1,5 +1,5 @@
-import React from 'react'
-import { Mail, Receipt, ShieldCheck, Store, TriangleAlert } from 'lucide-react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { Check, Copy, Mail, Receipt, ShieldCheck, Store, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card } from '../../components/ui/Card'
@@ -7,6 +7,26 @@ import { CardBody, CardHeader } from '../../components/ui/CardParts'
 
 const CONTACT_EMAIL = 'xisch.co@gmail.com'
 const EFFECTIVE_DATE = 'March 18, 2026'
+const GMAIL_COMPOSE_URL = 'https://mail.google.com/mail/?view=cm&fs=1'
+
+function buildMailto(subject, body) {
+  const params = new URLSearchParams({
+    subject,
+    body,
+  })
+
+  return `mailto:${CONTACT_EMAIL}?${params.toString()}`
+}
+
+function buildGmailCompose(subject, body) {
+  const params = new URLSearchParams({
+    to: CONTACT_EMAIL,
+    su: subject,
+    body,
+  })
+
+  return `${GMAIL_COMPOSE_URL}&${params.toString()}`
+}
 
 const SUPPORT_STREAMS = [
   {
@@ -15,6 +35,7 @@ const SUPPORT_STREAMS = [
     title: 'Paid alerts and payments',
     copy: 'Use this lane for payment verification, duplicate charges, missing activation, or billing clarification on paid alert workflows.',
     subject: 'CylinderCheck billing support',
+    note: 'Best for subscriptions, payment references, and alert activation issues.',
   },
   {
     icon: TriangleAlert,
@@ -22,6 +43,7 @@ const SUPPORT_STREAMS = [
     title: 'Wrong data or broken signals',
     copy: 'Flag incorrect pricing, missing agency context, bad shortage signals, or pages that are not behaving correctly on mobile or desktop.',
     subject: 'CylinderCheck data correction',
+    note: 'Best for accuracy issues, pricing mismatches, and reports that look unreliable.',
   },
   {
     icon: Store,
@@ -29,6 +51,7 @@ const SUPPORT_STREAMS = [
     title: 'Vendor listings and business leads',
     copy: 'Use this for vendor verification, listing edits, lead quality issues, or onboarding questions about business use of CylinderCheck.',
     subject: 'CylinderCheck commercial support',
+    note: 'Best for commercial listings, vendor updates, and lead-routing issues.',
   },
   {
     icon: ShieldCheck,
@@ -36,6 +59,7 @@ const SUPPORT_STREAMS = [
     title: 'Google sign-in and access',
     copy: 'Reach out here if sign-in fails, your access flow is stuck, or you need help understanding how account-linked features behave.',
     subject: 'CylinderCheck account support',
+    note: 'Best for authentication, account-linked features, and access restoration.',
   },
 ]
 
@@ -59,6 +83,47 @@ const FAQ_ITEMS = [
 ]
 
 export function SupportPage() {
+  const [copyFeedback, setCopyFeedback] = useState({ key: '', status: '' })
+  const feedbackTimerRef = useRef(null)
+  const generalSupportBody = useMemo(
+    () => [
+      'Hello Xisch.Co team,',
+      '',
+      'I need help with CylinderCheck.',
+      '',
+      'Issue category:',
+      'Route/page:',
+      'Reference details:',
+      'What happened:',
+      '',
+      'Thanks,',
+    ].join('\n'),
+    [],
+  )
+
+  useEffect(() => () => {
+    if (feedbackTimerRef.current) {
+      window.clearTimeout(feedbackTimerRef.current)
+    }
+  }, [])
+
+  const handleCopyEmail = async (label = 'support') => {
+    if (feedbackTimerRef.current) {
+      window.clearTimeout(feedbackTimerRef.current)
+    }
+
+    try {
+      await navigator.clipboard.writeText(CONTACT_EMAIL)
+      setCopyFeedback({ key: label, status: 'copied' })
+    } catch {
+      setCopyFeedback({ key: label, status: 'failed' })
+    }
+
+    feedbackTimerRef.current = window.setTimeout(() => {
+      setCopyFeedback({ key: '', status: '' })
+    }, 2400)
+  }
+
   return (
     <div className="support-page">
       <PageHeader
@@ -66,7 +131,7 @@ export function SupportPage() {
         markerLabel="Support"
         markerSublabel="Xisch.Co"
         title="Support Center"
-        description="Help for alerts, billing, reports, vendor listings, and account access. Built to be clear on mobile first, without dead-end support loops."
+        description="One editorial support inbox for billing, corrections, commercial issues, and access questions. Built mobile first, with clean follow-through instead of dead-end links."
         actions={(
           <Link to="/track" className="btn-ghost">
             Return to Track
@@ -78,26 +143,53 @@ export function SupportPage() {
         <Card variant="featured">
           <CardHeader
             kicker="Contact"
-            title="Email support"
+            title="Write to Xisch.Co support"
             meta={<span className="reading-meta">Effective {EFFECTIVE_DATE}</span>}
           />
           <CardBody className="support-contact-card">
             <p className="m-0">
-              CylinderCheck support is handled by Xisch.Co via email only. If you need help, write to{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+              CylinderCheck support runs through a single editorial inbox: <a href={buildMailto('CylinderCheck support', generalSupportBody)}>{CONTACT_EMAIL}</a>.
+              Choose the issue lane below if you want the subject line pre-filled for billing, trust, commercial, or account help.
             </p>
 
             <div className="support-contact-card__cta">
-              <a href={`mailto:${CONTACT_EMAIL}`} className="btn-ghost">
+              <a
+                href={buildGmailCompose('CylinderCheck support', generalSupportBody)}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-ghost support-contact-card__cta--primary"
+              >
                 <Mail size={16} />
-                <span>Email support</span>
+                <span>Open Gmail</span>
               </a>
+              <a href={buildMailto('CylinderCheck support', generalSupportBody)} className="btn-ghost">
+                <Mail size={16} />
+                <span>Email app</span>
+              </a>
+              <button type="button" className="btn-ghost" onClick={() => handleCopyEmail('support')}>
+                {copyFeedback.key === 'support' && copyFeedback.status === 'copied' ? <Check size={16} /> : <Copy size={16} />}
+                <span>{copyFeedback.key === 'support' && copyFeedback.status === 'copied' ? 'Copied' : 'Copy email'}</span>
+              </button>
             </div>
+
+            {copyFeedback.key === 'support' ? (
+              <p className="support-feedback-note m-0" role="status" aria-live="polite">
+                {copyFeedback.status === 'failed'
+                  ? 'Copy did not complete. Use Gmail compose or select the address manually.'
+                  : 'Email address copied to clipboard.'}
+              </p>
+            ) : null}
+
+            <ul className="reading-list reading-list--dense support-contact-card__notes">
+              <li>Open Gmail is the most reliable option if you do not have a default mail app configured.</li>
+              <li>If your device mail app does not open, use Gmail compose or copy the address directly.</li>
+              <li>Replies are handled from the same Xisch.Co inbox, with the subject line routing the context.</li>
+            </ul>
           </CardBody>
         </Card>
 
         <Card variant="inset">
-          <CardHeader kicker="Before you write" title="What helps us resolve things faster" />
+          <CardHeader kicker="Before you write" title="What helps us resolve things faster" meta={<span className="reading-meta">Include these details</span>} />
           <CardBody>
             <ul className="reading-list">
               <li>Tell us which page or workflow you were using.</li>
@@ -110,10 +202,24 @@ export function SupportPage() {
       </div>
 
       <div className="support-grid">
-        {SUPPORT_STREAMS.map(({ icon: Icon, kicker, title, copy, subject }) => (
+        {SUPPORT_STREAMS.map(({ icon: Icon, kicker, title, copy, subject, note }) => {
+          const body = [
+            'Hello Xisch.Co team,',
+            '',
+            `I need help with: ${title}`,
+            '',
+            'Route/page:',
+            'Reference details:',
+            'What happened:',
+            '',
+            'Thanks,',
+          ].join('\n')
+
+          return (
           <Card key={title} variant="raised">
             <CardHeader
               kicker={kicker}
+              meta={<span className="reading-meta">Shared inbox, dedicated subject</span>}
               title={
                 <span className="support-card__title">
                   <Icon size={18} className="text-[var(--accent)]" aria-hidden="true" />
@@ -123,17 +229,44 @@ export function SupportPage() {
             />
             <CardBody>
               <p className="m-0">{copy}</p>
+              <ul className="reading-list reading-list--dense support-stream__notes">
+                <li>{note}</li>
+                <li>All replies still come from {CONTACT_EMAIL}, but the subject line keeps the issue context intact.</li>
+              </ul>
               <div className="support-stream__actions">
                 <a
-                  href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`}
+                  href={buildGmailCompose(subject, body)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="footer-ledger__link support-stream__link support-stream__link--primary"
+                >
+                  Open Gmail
+                </a>
+                <a
+                  href={buildMailto(subject, body)}
                   className="footer-ledger__link support-stream__link"
                 >
-                  Email this team
+                  Email app
                 </a>
+                <button
+                  type="button"
+                  className="footer-ledger__link support-stream__link"
+                  onClick={() => handleCopyEmail(subject)}
+                >
+                  {copyFeedback.key === subject && copyFeedback.status === 'copied' ? 'Copied' : 'Copy email'}
+                </button>
               </div>
+              {copyFeedback.key === subject ? (
+                <p className="support-feedback-note m-0" role="status" aria-live="polite">
+                  {copyFeedback.status === 'failed'
+                    ? 'Copy did not complete. Open Gmail or select the address manually.'
+                    : 'Email address copied to clipboard.'}
+                </p>
+              ) : null}
             </CardBody>
           </Card>
-        ))}
+          )
+        })}
       </div>
 
       <Card variant="raised">
@@ -145,33 +278,12 @@ export function SupportPage() {
         <CardBody className="support-faq">
           {FAQ_ITEMS.map(({ question, answer }) => (
             <Card key={question} variant="inset" size="compact">
-              <CardHeader titleAs="h3" title={question} />
+              <CardHeader kicker="Question" titleAs="h3" title={question} />
               <CardBody>
                 <p className="m-0">{answer}</p>
               </CardBody>
             </Card>
           ))}
-        </CardBody>
-      </Card>
-
-      <Card variant="inset">
-        <CardHeader
-          kicker="Related"
-          title="Legal and trust"
-          meta={<span className="reading-meta">Independent product</span>}
-        />
-        <CardBody>
-          <p>
-            For details on how data is handled and how the product should be used, visit the pages below.
-          </p>
-          <div className="support-related-links">
-            <Link to="/privacy" className="btn-ghost">
-              Privacy
-            </Link>
-            <Link to="/terms" className="btn-ghost">
-              Terms
-            </Link>
-          </div>
         </CardBody>
       </Card>
     </div>

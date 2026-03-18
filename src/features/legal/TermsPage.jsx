@@ -21,11 +21,16 @@ const sections = [
     kicker: 'Service scope',
     title: 'What CylinderCheck provides',
     content: (
-      <p>
-        CylinderCheck provides LPG delivery intelligence, booking guidance, community report signals, alert workflows,
-        and commercial enquiry tools. The service is informational and operational in nature. It is not an official
-        government, distributor, or agency platform.
-      </p>
+      <>
+        <p>
+          CylinderCheck provides LPG delivery intelligence, booking guidance, community report signals, alert workflows,
+          and commercial enquiry tools. The service is informational and operational in nature.
+        </p>
+        <ul className="reading-list reading-list--dense">
+          <li>It is not an official government, distributor, or agency platform.</li>
+          <li>It is designed to help users make faster, better-informed supply decisions.</li>
+        </ul>
+      </>
     ),
   },
   {
@@ -51,11 +56,16 @@ const sections = [
     kicker: 'Account access',
     title: 'Accounts and Google sign-in',
     content: (
-      <p>
-        Some features may require sign-in. You are responsible for the accuracy of the account information you provide
-        and for activity that takes place through your account. We may restrict or suspend access if we detect misuse,
-        fraud, automation abuse, or behavior that threatens the service.
-      </p>
+      <>
+        <p>
+          Some features may require sign-in. You are responsible for the accuracy of the account information you provide
+          and for activity that takes place through your account.
+        </p>
+        <ul className="reading-list reading-list--dense">
+          <li>We may restrict or suspend access if we detect misuse, fraud, or automation abuse.</li>
+          <li>You should not share account access in ways that compromise the integrity of the service.</li>
+        </ul>
+      </>
     ),
   },
   {
@@ -82,10 +92,11 @@ const sections = [
           Paid alerts and related premium services are processed through third-party payment providers such as Razorpay.
           Availability of any paid feature may depend on successful payment verification and operational readiness.
         </p>
-        <p>
-          We may refuse, pause, or refund a service where payment cannot be verified, the feature cannot be fulfilled,
-          or misuse is detected.
-        </p>
+        <ul className="reading-list">
+          <li>We may refuse, pause, or refund a service where payment cannot be verified.</li>
+          <li>We may pause or cancel access if the feature cannot be fulfilled operationally.</li>
+          <li>We may intervene where misuse, fraud, or abuse is detected.</li>
+        </ul>
       </>
     ),
   },
@@ -94,11 +105,16 @@ const sections = [
     kicker: 'Business use',
     title: 'Commercial listings and enquiries',
     content: (
-      <p>
-        Commercial listings are provided for discovery and enquiry. Xisch.Co does not guarantee the quality,
-        availability, licensing, pricing, or performance of any listed vendor. You are responsible for independent
-        verification before placing reliance on a supplier.
-      </p>
+      <>
+        <p>
+          Commercial listings are provided for discovery and enquiry. Xisch.Co does not guarantee the quality,
+          availability, licensing, pricing, or performance of any listed vendor.
+        </p>
+        <ul className="reading-list reading-list--dense">
+          <li>You are responsible for independent verification before relying on a supplier.</li>
+          <li>Listings can be updated, removed, or corrected as the product evolves.</li>
+        </ul>
+      </>
     ),
   },
   {
@@ -124,10 +140,10 @@ const sections = [
           CylinderCheck is provided on an as-is and as-available basis. To the maximum extent permitted by law, Xisch.Co
           is not liable for indirect, incidental, consequential, or business losses arising from use of the service.
         </p>
-        <p>
-          We may change, suspend, or discontinue any part of the product at any time. If you have questions about these
-          terms, contact <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
-        </p>
+        <ul className="reading-list reading-list--dense">
+          <li>We may change, suspend, or discontinue any part of the product at any time.</li>
+          <li>If you have questions about these terms, contact <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</li>
+        </ul>
       </>
     ),
   },

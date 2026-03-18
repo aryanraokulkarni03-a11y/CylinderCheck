@@ -16,6 +16,7 @@ import { List } from '../../components/ui/List'
 import { ListRow } from '../../components/ui/ListRow'
 import { Card } from '../../components/ui/Card'
 import { CardHeader } from '../../components/ui/CardParts'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 
 const ARROW = '\u2192'
 const DOT = '\u00B7'
@@ -247,12 +248,12 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
               <p className="type-card-copy mb-5">
                 Reports require a Google account so the community stays spam-free and accountable.
               </p>
-              <LiquidGlassBtn
+              <GoogleSignInButton
                 className="w-full justify-center"
                 onClick={() => onGoogleSignIn?.('/reports')}
               >
-                Sign in with Google {ARROW}
-              </LiquidGlassBtn>
+                Sign in with Google
+              </GoogleSignInButton>
             </div>
           ) : (
             <FadeIn delay={0.1}>

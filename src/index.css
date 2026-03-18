@@ -702,6 +702,23 @@ body::before {
   }
 }
 
+.google-signin-btn {
+  gap: 10px;
+}
+
+.google-signin-btn svg {
+  flex-shrink: 0;
+}
+
+.google-signin-btn--compact {
+  padding-inline: 14px;
+}
+
+.google-signin-btn--full {
+  width: 100%;
+  justify-content: center;
+}
+
 .icon-btn {
   width: 44px;
   min-height: 44px;

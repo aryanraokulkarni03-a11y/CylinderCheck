@@ -6,9 +6,10 @@ import { motion, useReducedMotion } from 'motion/react'
 import { FlameIcon } from '../shared/FlameIcon'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { supabase } from '../../supabaseClient'
-import { LogIn, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { springs } from '../../lib/springs'
 import { Callout } from '../ui/Callout'
+import GoogleSignInButton from '../auth/GoogleSignInButton'
 
 const DOT = '\u00B7'
 const ELLIPSIS = '\u2026'
@@ -98,20 +99,14 @@ export function Topbar({
 
           <div className="ml-auto flex items-center gap-2">
             {!authLoading && !user && (
-              <button
-                type="button"
-                onClick={() => onGoogleSignIn?.('/track')}
-                className="btn-ghost"
-                aria-label="Sign in with Google"
-                title="Sign in with Google"
+              <GoogleSignInButton
+                onClick={() => onGoogleSignIn?.()}
+                compact={true}
+                className="min-h-[44px] px-3 sm:px-4"
               >
-                <LogIn size={16} />
-                <span className="hidden sm:inline font-medium">Sign in</span>
-                <span className="hidden sm:inline text-[var(--divider)]" aria-hidden="true">
-                  {DOT}
-                </span>
-                <span className="hidden sm:inline text-[var(--text-muted)]">Google</span>
-              </button>
+                <span className="hidden sm:inline">Sign in with Google</span>
+                <span className="sm:hidden">Google</span>
+              </GoogleSignInButton>
             )}
 
             {!authLoading && user && (

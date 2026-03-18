@@ -1,0 +1,30 @@
+<svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="360" rx="72" fill="#F5EFE4"/>
+  <rect x="1.5" y="1.5" width="1197" height="357" rx="70.5" stroke="#E7D9BF" stroke-width="3"/>
+  <g transform="translate(58 32)">
+    <rect width="296" height="296" rx="76" fill="#0F0D14"/>
+    <rect x="1.5" y="1.5" width="293" height="293" rx="74.5" stroke="#2B2634" stroke-width="3"/>
+    <path
+      d="M148 49C148 49 217 118 217 187C217 238.75 186.813 269 148 269C109.188 269 79 238.75 79 187C79 118 148 49 148 49Z"
+      fill="#FF6B00"
+      fill-opacity="0.94"
+    />
+    <path
+      d="M148 118C148 118 182.5 161.125 182.5 195.625C182.5 221.5 169.563 234.438 148 234.438C126.438 234.438 113.5 221.5 113.5 195.625C113.5 161.125 148 118 148 118Z"
+      fill="#FFD57A"
+    />
+    <rect x="105" y="269" width="86" height="30" rx="6" fill="#8B7765" fill-opacity="0.78"/>
+    <ellipse cx="148" cy="299" rx="57" ry="15" fill="#2B2634"/>
+  </g>
+  <g transform="translate(404 88)">
+    <text fill="#171319" xml:space="preserve" style="white-space: pre" font-family="'General Sans', Arial, sans-serif" font-size="42" font-weight="500" letter-spacing="0.22em">
+      <tspan x="0" y="42.44">LPG INTELLIGENCE</tspan>
+    </text>
+    <text fill="#171319" xml:space="preserve" style="white-space: pre" font-family="'Satoshi', Arial, sans-serif" font-size="122" font-weight="700" letter-spacing="-0.04em">
+      <tspan x="0" y="155.702">CylinderCheck</tspan>
+    </text>
+    <text fill="#6F6254" xml:space="preserve" style="white-space: pre" font-family="'General Sans', Arial, sans-serif" font-size="34" font-weight="400">
+      <tspan x="0" y="226.516">Track booking windows, shortage signals, and supply confidence across India.</tspan>
+    </text>
+  </g>
+</svg>

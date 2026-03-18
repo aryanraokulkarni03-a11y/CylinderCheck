@@ -35,6 +35,7 @@ import AdminModal from './features/admin/AdminModal'
 import SupportPage from './features/support/SupportPage'
 import PrivacyPage from './features/legal/PrivacyPage'
 import TermsPage from './features/legal/TermsPage'
+import AuthCallbackPage from './features/auth/AuthCallbackPage'
 
 const TABS = [
   { id: 'track', label: 'Track', icon: Target },
@@ -56,6 +57,7 @@ const TAB_ROUTES = {
   support: '/support',
   privacy: '/privacy',
   terms: '/terms',
+  authCallback: '/auth/callback',
 }
 
 const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1`
@@ -95,42 +97,30 @@ export default function App() {
   // UI
   const [authError, setAuthError] = useState('')
 
-  const restorePostAuthPath = useCallback(() => {
-    try {
-      const explicitPath = sessionStorage.getItem('cc-post-auth-path')
-      const legacyTab = sessionStorage.getItem('cc-post-auth-tab')
-
-      sessionStorage.removeItem('cc-post-auth-path')
-      sessionStorage.removeItem('cc-post-auth-tab')
-
-      const target =
-        explicitPath && explicitPath.startsWith('/')
-          ? explicitPath
-          : (legacyTab && TAB_ROUTES[legacyTab]) ? TAB_ROUTES[legacyTab] : null
-
-      if (target) navigate(target, { replace: true })
-    } catch {
-      // Private mode.
-    }
-  }, [navigate])
-
-  const handleGoogleSignIn = useCallback(async (fallbackPath = TAB_ROUTES.track) => {
+  const handleGoogleSignIn = useCallback(async (fallbackPath) => {
     setAuthError('')
 
+    const currentPath = `${routerLocation.pathname || ''}${routerLocation.search || ''}`
+    const requestedPath =
+      typeof fallbackPath === 'string' && fallbackPath.startsWith('/')
+        ? fallbackPath
+        : currentPath && currentPath.startsWith('/')
+          ? currentPath
+          : TAB_ROUTES.track
+
     try {
-      const path = `${window.location.pathname || ''}${window.location.search || ''}`
-      sessionStorage.setItem(
-        'cc-post-auth-path',
-        path && path.startsWith('/') ? path : fallbackPath,
-      )
+      localStorage.setItem('cc-post-auth-path', requestedPath)
     } catch {
       // Private mode.
     }
 
     try {
+      const callbackUrl = new URL(TAB_ROUTES.authCallback, window.location.origin)
+      callbackUrl.searchParams.set('next', requestedPath)
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin },
+        options: { redirectTo: callbackUrl.toString() },
       })
 
       if (error) {
@@ -149,7 +139,7 @@ export default function App() {
       )
       return false
     }
-  }, [])
+  }, [routerLocation.pathname, routerLocation.search])
 
   // Auth effect
   useEffect(() => {
@@ -160,25 +150,19 @@ export default function App() {
       setUser(session?.user ?? null)
       setAuthLoading(false)
       if (session?.user) setAuthError('')
-      if (session?.user) restorePostAuthPath()
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!alive) return
       setUser(session?.user ?? null)
       if (session?.user) setAuthError('')
-
-      // After OAuth returns, restore the route the user was on.
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
-        restorePostAuthPath()
-      }
     })
 
     return () => {
       alive = false
       subscription.unsubscribe()
     }
-  }, [restorePostAuthPath])
+  }, [])
 
   // Prices + shortage summary effect
   useEffect(() => {
@@ -454,6 +438,7 @@ export default function App() {
               <Route path={TAB_ROUTES.support} element={<SupportPage />} />
               <Route path={TAB_ROUTES.privacy} element={<PrivacyPage />} />
               <Route path={TAB_ROUTES.terms} element={<TermsPage />} />
+              <Route path={TAB_ROUTES.authCallback} element={<AuthCallbackPage />} />
               <Route
                 path={TAB_ROUTES.admin}
                 element={

@@ -5,6 +5,21 @@ import { X } from 'lucide-react'
 import { springs, timing } from '../../lib/springs'
 import { Card } from '../ui/Card'
 
+const FAQ_ITEMS = [
+  {
+    question: 'How accurate is the delivery data?',
+    answer: 'Delivery times are community-sourced averages. Actual delivery may vary by up to 2 days.',
+  },
+  {
+    question: 'What is the 25-day rule?',
+    answer: 'Government regulations allow rebooking an LPG cylinder 25 days after the last booking date.',
+  },
+  {
+    question: 'Is CylinderCheck affiliated with any gas company?',
+    answer: 'No. We are an independent community tool, not affiliated with Indane (IndianOil), HP Gas, or Bharatgas.',
+  },
+]
+
 export function SupportModal({ onClose }) {
   const shouldReduceMotion = useReducedMotion()
   
@@ -45,9 +60,12 @@ export function SupportModal({ onClose }) {
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-4 pb-4 border-b border-[var(--border)]">
-          <span className="font-display font-bold text-[var(--fs-body-lg)] text-[var(--text-primary)]">
-            Support & FAQ
-          </span>
+          <div className="min-w-0">
+            <div className="kicker mb-1">Help desk</div>
+            <h2 className="font-display font-bold text-[var(--fs-body-lg)] text-[var(--text-primary)] m-0">
+              Support and FAQ
+            </h2>
+          </div>
           <button
             onClick={onClose}
             aria-label="Close support"
@@ -62,10 +80,13 @@ export function SupportModal({ onClose }) {
         {/* Content */}
         <div className="overflow-y-auto px-6 py-5 space-y-5"
              style={{ maxHeight: 'calc(90dvh - 80px)' }}>
+          <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed m-0">
+            Quick answers for pricing, alerts, and feedback so support never feels like a dead end.
+          </p>
 
           {/* Section: Wrong Price */}
           <section>
-            <h3 className="kicker kicker--caps mb-3">
+            <h3 className="font-display text-[var(--fs-body)] font-semibold text-[var(--text-primary)] mb-2">
               Wrong Price Shown
             </h3>
             <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
@@ -79,7 +100,7 @@ export function SupportModal({ onClose }) {
 
           {/* Section: Billing */}
           <section>
-            <h3 className="kicker kicker--caps mb-3">
+            <h3 className="font-display text-[var(--fs-body)] font-semibold text-[var(--text-primary)] mb-2">
               Billing & Alerts
             </h3>
             <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
@@ -96,7 +117,7 @@ export function SupportModal({ onClose }) {
 
           {/* Section: Feedback */}
           <section>
-            <h3 className="kicker kicker--caps mb-3">
+            <h3 className="font-display text-[var(--fs-body)] font-semibold text-[var(--text-primary)] mb-2">
               Feedback
             </h3>
             <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
@@ -112,21 +133,14 @@ export function SupportModal({ onClose }) {
 
           {/* Section: FAQ */}
           <section>
-            <h3 className="kicker kicker--caps mb-3">
+            <h3 className="font-display text-[var(--fs-body)] font-semibold text-[var(--text-primary)] mb-3">
               FAQ
             </h3>
             <div className="space-y-3">
-              {[
-                ['How accurate is the delivery data?',
-                 'Delivery times are community-sourced averages. Actual delivery may vary by up to 2 days.'],
-                ['What is the 25-day rule?',
-                 'Government regulations allow rebooking an LPG cylinder 25 days after the last booking date.'],
-                ['Is CylinderCheck affiliated with any gas company?',
-                 'No. We are an independent community tool, not affiliated with Indane (IndianOil), HP Gas, or Bharatgas.'],
-              ].map(([q, a]) => (
-                <Card key={q} variant="inset" size="compact" className="p-4">
-                  <p className="font-medium text-[var(--fs-sm)] text-[var(--text-primary)] mb-1">{q}</p>
-                  <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] leading-relaxed">{a}</p>
+              {FAQ_ITEMS.map(({ question, answer }) => (
+                <Card key={question} variant="inset" size="compact" className="p-4">
+                  <p className="font-medium text-[var(--fs-sm)] text-[var(--text-primary)] mb-1">{question}</p>
+                  <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] leading-relaxed mb-0">{answer}</p>
                 </Card>
               ))}
             </div>

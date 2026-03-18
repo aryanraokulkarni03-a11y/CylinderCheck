@@ -3,6 +3,7 @@ import { Shield, Users, Bell, AlertTriangle, ArrowLeft } from 'lucide-react'
 import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerContainer'
 import { FadeIn } from '../../components/motion/FadeIn'
 import { Card } from '../../components/ui/Card'
+import { CardBody, CardHeader } from '../../components/ui/CardParts'
 
 const RUPEE = '\u20B9'
 const EM_DASH = '\u2014'
@@ -33,46 +34,67 @@ export default function AdminTab({ data, loading, onLock }) {
 
       <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StaggerItem>
-          <Card variant="inset" className="p-5">
-            <div className="flex items-center gap-2 kicker kicker--caps mb-4">
-              <AlertTriangle size={14} className="text-[var(--accent)]" /> Total Reports
-            </div>
-            <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">
-              {loading ? EM_DASH : reportCount}
-            </div>
-            <div className="caption text-[var(--text-secondary)] mt-2">Community issues flagged</div>
+          <Card variant="inset" edge status="active" className="h-full">
+            <CardHeader
+              kicker="Operations"
+              title="Total reports"
+              titleAs="h3"
+              meta={<AlertTriangle size={14} className="text-[var(--accent)]" aria-hidden="true" />}
+            />
+            <CardBody>
+              <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">
+                {loading ? EM_DASH : reportCount}
+              </div>
+              <div className="caption text-[var(--text-secondary)] mt-2">Community issues flagged</div>
+            </CardBody>
           </Card>
         </StaggerItem>
 
         <StaggerItem>
-          <Card variant="inset" className="p-5">
-            <div className="flex items-center gap-2 kicker kicker--caps mb-4">
-              <Bell size={14} className="text-[var(--status-clear)]" /> Active Alerts
-            </div>
-            <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">
-              {loading ? EM_DASH : alertCount}
-            </div>
-            <div className="caption text-[var(--text-secondary)] mt-2">PINs being monitored</div>
+          <Card variant="inset" edge status="clear" className="h-full">
+            <CardHeader
+              kicker="Monitoring"
+              title="Active alerts"
+              titleAs="h3"
+              meta={<Bell size={14} className="text-[var(--status-clear)]" aria-hidden="true" />}
+            />
+            <CardBody>
+              <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">
+                {loading ? EM_DASH : alertCount}
+              </div>
+              <div className="caption text-[var(--text-secondary)] mt-2">PINs being monitored</div>
+            </CardBody>
           </Card>
         </StaggerItem>
 
         <StaggerItem>
-          <Card variant="inset" className="p-5">
-            <div className="flex items-center gap-2 kicker kicker--caps mb-4">
-              <Users size={14} className="text-[var(--status-severe)]" /> Plus Subscriptions
-            </div>
-            <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">
-              {loading ? EM_DASH : subscriptions.length}
-            </div>
-            <div className="caption text-[var(--text-secondary)] mt-2">Active paid users</div>
+          <Card variant="inset" edge status="early" className="h-full">
+            <CardHeader
+              kicker="Revenue"
+              title="Plus subscriptions"
+              titleAs="h3"
+              meta={<Users size={14} className="text-[var(--status-early)]" aria-hidden="true" />}
+            />
+            <CardBody>
+              <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">
+                {loading ? EM_DASH : subscriptions.length}
+              </div>
+              <div className="caption text-[var(--text-secondary)] mt-2">Active paid users</div>
+            </CardBody>
           </Card>
         </StaggerItem>
       </StaggerContainer>
 
       <FadeIn delay={0.4} className="mt-8">
-        <h2 className="text-[var(--fs-sm)] font-semibold font-display text-[var(--text-primary)] uppercase tracking-widest mb-4">
-          Subscribers Directory
-        </h2>
+        <div className="mb-4">
+          <div className="kicker mb-1">Access ledger</div>
+          <h2 className="text-[var(--fs-body-lg)] font-semibold font-display text-[var(--text-primary)] m-0">
+            Subscribers directory
+          </h2>
+          <p className="caption text-[var(--text-secondary)] mt-2 mb-0">
+            Live payment records synced from the Plus subscriber table.
+          </p>
+        </div>
         <Card variant="inset" className="card--flush overflow-x-auto">
           <table className="w-full text-left relative min-w-[600px]">
             <thead className="border-b border-[var(--border)] bg-[var(--bg-raised)]">

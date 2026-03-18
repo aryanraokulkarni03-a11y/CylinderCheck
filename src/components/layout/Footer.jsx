@@ -12,8 +12,8 @@ export function Footer({ onSupportOpen }) {
     <footer className="mt-16 pt-10 border-t border-[var(--divider)]">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-[64ch]">
-          <div className="kicker kicker--caps mb-2">
-            Disclaimer
+          <div className="kicker mb-2">
+            Independent data notice
           </div>
           <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] leading-relaxed m-0">
             CylinderCheck is not affiliated with Indane (IndianOil), HP Gas, or Bharatgas. Intelligence is
@@ -22,7 +22,7 @@ export function Footer({ onSupportOpen }) {
         </div>
 
         <div className="flex items-center gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
-          <span className="kicker kicker--caps text-[var(--text-muted)]">
+          <span className="kicker text-[var(--text-muted)]">
             {COPY} {year} CylinderCheck
           </span>
           <span className="text-[var(--divider)]" aria-hidden="true">

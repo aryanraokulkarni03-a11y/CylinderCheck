@@ -125,7 +125,7 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
                     }`}
                   />
                   {error && (
-                    <p className="kicker kicker--caps text-[var(--status-severe)] text-center mt-2">
+                    <p className="field__error text-center mt-2">
                       Access denied
                     </p>
                   )}

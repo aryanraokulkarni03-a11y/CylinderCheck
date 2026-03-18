@@ -116,11 +116,13 @@ export default function App() {
 
     try {
       const callbackUrl = new URL(TAB_ROUTES.authCallback, window.location.origin)
-      callbackUrl.searchParams.set('next', requestedPath)
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: callbackUrl.toString() },
+        options: {
+          redirectTo: callbackUrl.toString(),
+          skipBrowserRedirect: true,
+        },
       })
 
       if (error) {
@@ -131,6 +133,14 @@ export default function App() {
         return false
       }
 
+      if (!data?.url) {
+        setAuthError(
+          'Google sign-in is not available right now. Check the provider setup and try again shortly.',
+        )
+        return false
+      }
+
+      window.location.assign(data.url)
       return true
     } catch (error) {
       console.error('Sign in failed:', error)

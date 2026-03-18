@@ -20,6 +20,18 @@ function getStoredNextPath() {
   }
 }
 
+function readAuthError(location) {
+  const queryParams = new URLSearchParams(location.search)
+  const hashParams = new URLSearchParams((location.hash || '').replace(/^#/, ''))
+  return (
+    hashParams.get('error_description') ||
+    hashParams.get('error') ||
+    queryParams.get('error_description') ||
+    queryParams.get('error') ||
+    ''
+  )
+}
+
 export function AuthCallbackPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -31,10 +43,32 @@ export function AuthCallbackPage() {
     return isSafeNextPath(next) ? next : null
   }, [location.search])
 
+  const authCode = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('code') || ''
+  }, [location.search])
+
   useEffect(() => {
     let cancelled = false
 
     async function finalizeAuth() {
+      const authError = readAuthError(location)
+      if (authError) {
+        setError(authError)
+        return
+      }
+
+      if (authCode) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode)
+
+        if (cancelled) return
+
+        if (exchangeError) {
+          setError('We could not complete sign-in. Please try again.')
+          return
+        }
+      }
+
       const { data, error: sessionError } = await supabase.auth.getSession()
 
       if (cancelled) return
@@ -58,7 +92,7 @@ export function AuthCallbackPage() {
     return () => {
       cancelled = true
     }
-  }, [navigate, requestedNext])
+  }, [authCode, location, navigate, requestedNext])
 
   return (
     <div className="reading-page">

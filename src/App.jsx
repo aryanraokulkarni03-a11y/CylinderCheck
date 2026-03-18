@@ -65,6 +65,8 @@ const TAB_ROUTES = {
 const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1`
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
+const NOTIFY_TIMEOUT_MS = 4000
+const SIGN_IN_EMAIL_FLAG = 'cc-pending-first-sign-in-email'
 
 export default function App() {
   const shouldReduceMotion = useReducedMotion()
@@ -98,6 +100,7 @@ export default function App() {
 
   // UI
   const [authError, setAuthError] = useState('')
+  const pendingFirstSignInEmailRef = useRef(false)
 
   const handleGoogleSignIn = useCallback(async (fallbackPath) => {
     setAuthError('')
@@ -184,6 +187,63 @@ export default function App() {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (authLoading || !user?.id) return
+
+    let hasPendingFlag = false
+
+    try {
+      hasPendingFlag = localStorage.getItem(SIGN_IN_EMAIL_FLAG) === '1'
+    } catch {
+      hasPendingFlag = false
+    }
+
+    if (!hasPendingFlag || pendingFirstSignInEmailRef.current) return
+
+    pendingFirstSignInEmailRef.current = true
+
+    let cancelled = false
+
+    async function sendFirstSignInEmail() {
+      try {
+        const { data } = await supabase.auth.getSession()
+        const accessToken = data.session?.access_token
+
+        if (!accessToken || cancelled) return
+
+        const controller = new AbortController()
+        const timeout = window.setTimeout(() => controller.abort(), NOTIFY_TIMEOUT_MS)
+
+        try {
+          await fetch(`${SUPABASE_FUNC_URL}/notify-sign-in`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ source: 'google-oauth' }),
+            signal: controller.signal,
+          }).catch(() => undefined)
+        } finally {
+          window.clearTimeout(timeout)
+        }
+      } finally {
+        try {
+          localStorage.removeItem(SIGN_IN_EMAIL_FLAG)
+        } catch {
+          // Ignore storage failures in private mode.
+        }
+        pendingFirstSignInEmailRef.current = false
+      }
+    }
+
+    sendFirstSignInEmail()
+
+    return () => {
+      cancelled = true
+    }
+  }, [authLoading, user?.id])
 
   // Prices + shortage summary effect
   useEffect(() => {

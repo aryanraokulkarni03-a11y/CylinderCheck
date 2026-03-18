@@ -5,27 +5,7 @@ import { supabase } from '../../supabaseClient'
 import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
 
-const NOTIFY_TIMEOUT_MS = 4000
-
-function triggerFirstSignInEmail(accessToken) {
-  const notifyUrl = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1/notify-sign-in`
-  const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), NOTIFY_TIMEOUT_MS)
-
-  void fetch(notifyUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ source: 'google-oauth' }),
-    signal: controller.signal,
-  })
-    .catch(() => undefined)
-    .finally(() => {
-      window.clearTimeout(timeout)
-    })
-}
+const SIGN_IN_EMAIL_FLAG = 'cc-pending-first-sign-in-email'
 
 function redirectAfterAuth(target, navigate) {
   try {
@@ -68,7 +48,6 @@ export function AuthCallbackPage({ user }) {
   const location = useLocation()
   const [error, setError] = useState('')
   const hasCompletedRef = useRef(false)
-  const hasNotifiedRef = useRef(false)
 
   const requestedNext = useMemo(() => {
     const params = new URLSearchParams(location.search)
@@ -130,10 +109,12 @@ export function AuthCallbackPage({ user }) {
         return
       }
 
-      if (!hasNotifiedRef.current && session?.access_token) {
-        hasNotifiedRef.current = true
-        // Keep sign-in instant. Email delivery happens in the background.
-        triggerFirstSignInEmail(session.access_token)
+      if (session?.access_token) {
+        try {
+          localStorage.setItem(SIGN_IN_EMAIL_FLAG, '1')
+        } catch {
+          // Ignore storage failures in private mode.
+        }
       }
 
       hasCompletedRef.current = true

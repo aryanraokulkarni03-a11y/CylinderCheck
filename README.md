@@ -25,7 +25,7 @@ CylinderCheck is a web app for LPG booking-window tracking and community shortag
 3. Run: `npm run dev`
 
 ## Notes
-- Canonical UI/UX spec: `CONTEXT_0-4_*.md` + `BRIEF_IMPLEMENTATION.md`
+- Canonical UI/UX spec: `docs/CONTEXT_0-4_*.md` + `docs/BRIEF_IMPLEMENTATION.md`
 - Commercial vendor verification helper: `supabase/sql/2026-03-17_vendor-verification.sql`
 
 ## Disclaimer

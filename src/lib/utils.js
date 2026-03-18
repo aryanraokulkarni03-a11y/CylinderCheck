@@ -53,6 +53,7 @@ export const CITY_COORDS = {
   Bangalore: { lat: 12.9716, lng: 77.5946 },
   Hyderabad: { lat: 17.3850, lng: 78.4867 },
   Chennai:   { lat: 13.0827, lng: 80.2707 },
+  Kochi:     { lat: 9.9312, lng: 76.2673 },
   Pune:      { lat: 18.5204, lng: 73.8567 },
   Kolkata:   { lat: 22.5726, lng: 88.3639 },
   Ahmedabad: { lat: 23.0225, lng: 72.5714 },
@@ -109,6 +110,7 @@ export const CITY_NORMALISE = {
   'new delhi': 'Delhi', 'delhi': 'Delhi',
   'calcutta': 'Kolkata', 'kolkata': 'Kolkata',
   'madras': 'Chennai', 'chennai': 'Chennai',
+  'kochi': 'Kochi', 'cochin': 'Kochi',
   'bombay': 'Mumbai', 'mumbai': 'Mumbai',
   'ranchi': 'Ranchi',
   'karnataka': 'Bangalore',
@@ -122,6 +124,7 @@ export const CITY_NORMALISE = {
   'uttar pradesh': 'Lucknow',
   'gujarat': 'Ahmedabad',
   'tamil nadu': 'Chennai',
+  'kerala': 'Kochi',
 }
 
 export const COMPANIES = ['IndianOil', 'HP Gas', 'Bharat Gas']

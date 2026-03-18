@@ -17,6 +17,7 @@ const CITY_COORDS = {
   Bangalore: true,
   Hyderabad: true,
   Chennai: true,
+  Kochi: true,
   Pune: true,
   Kolkata: true,
   Ahmedabad: true,
@@ -38,6 +39,8 @@ const CITY_NORMALISE: Record<string, string> = {
   kolkata: "Kolkata",
   madras: "Chennai",
   chennai: "Chennai",
+  kochi: "Kochi",
+  cochin: "Kochi",
   bombay: "Mumbai",
   mumbai: "Mumbai",
   ranchi: "Ranchi",
@@ -52,6 +55,7 @@ const CITY_NORMALISE: Record<string, string> = {
   "uttar pradesh": "Lucknow",
   gujarat: "Ahmedabad",
   "tamil nadu": "Chennai",
+  kerala: "Kochi",
 };
 
 const CITY_KEYS = Object.keys(CITY_COORDS);

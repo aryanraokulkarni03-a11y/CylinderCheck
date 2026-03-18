@@ -216,7 +216,15 @@ export default function NewsTab() {
   const leadSignalKey = mapStory
     ? `${mapStory.title}:${mapStory.pubDate instanceof Date ? mapStory.pubDate.toISOString() : ''}:${mapStory.city || ''}`
     : ''
-  const mapLabel = leadCity || 'All India'
+  const mapLabel = leadCity || 'No mapped city'
+  const mapHeading = mapStory ? 'Latest mapped signal' : 'Signals map'
+  const mapNote = !mapStory
+    ? 'Latest stories are statewide or unmapped right now. The map will lock onto the next city-tagged signal as soon as it lands.'
+    : leadStory && mapStory.link !== leadStory.link
+      ? `Lead story is broader than a city pin. The map is following the newest city-tagged signal from ${mapStory.city}.`
+      : leadCity
+        ? `Map is tracking the latest city-tagged signal from ${leadCity}.`
+        : ''
   const order = ['SHORTAGE SIGNALS', 'PRICE & RATES', 'POLICY', 'GENERAL']
 
   const pageStatus =
@@ -479,12 +487,22 @@ export default function NewsTab() {
         <div className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)] min-w-0">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="kicker">
-              Signals map
+              {mapHeading}
             </div>
             <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
               {mapLabel}
             </span>
           </div>
+
+          {mapNote ? (
+            <div className="mb-3">
+              <Callout tone={mapStory ? 'accent' : 'early'} edge={false}>
+                <div className="type-note text-[var(--text-secondary)]">
+                  {mapNote}
+                </div>
+              </Callout>
+            </div>
+          ) : null}
 
           <FadeIn delay={0.12}>
             <Card
@@ -497,6 +515,19 @@ export default function NewsTab() {
                   leadSignalKey={leadSignalKey}
                   onSelectCity={(c) => setSelectedCity((prev) => (prev === c ? null : c))}
                 />
+
+                {!mapStory ? (
+                  <div className="absolute inset-4 z-[350] flex items-center justify-center pointer-events-none">
+                    <div className="max-w-[18rem] rounded-[var(--radius-lg)] border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-raised)_88%,transparent)] px-4 py-3 text-center shadow-[var(--shadow-soft)] backdrop-blur-sm">
+                      <div className="kicker text-[var(--text-secondary)] mb-2">
+                        Waiting for a city signal
+                      </div>
+                      <p className="type-note m-0 text-[var(--text-muted)]">
+                        The latest feed is broader than a single city right now. We will zoom in automatically when the next mapped article arrives.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="absolute bottom-4 right-4 z-[400] rounded-full border border-[var(--border)] bg-[var(--bg-raised)] px-3 py-1 pointer-events-none">
                   <div className="flex items-center gap-2 kicker">

@@ -89,6 +89,7 @@ export default function App() {
 
   // Auth
   const [user, setUser] = useState(null)
+  const [authSession, setAuthSession] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
 
   // Admin (logo Easter egg)
@@ -171,6 +172,7 @@ export default function App() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!alive) return
+      setAuthSession(session ?? null)
       setUser(session?.user ?? null)
       setAuthLoading(false)
       if (session?.user) setAuthError('')
@@ -178,6 +180,7 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!alive) return
+      setAuthSession(session ?? null)
       setUser(session?.user ?? null)
       if (session?.user) setAuthError('')
     })
@@ -207,8 +210,7 @@ export default function App() {
 
     async function sendFirstSignInEmail() {
       try {
-        const { data } = await supabase.auth.getSession()
-        const accessToken = data.session?.access_token
+        const accessToken = authSession?.access_token
 
         if (!accessToken || cancelled) return
 
@@ -229,10 +231,12 @@ export default function App() {
           window.clearTimeout(timeout)
         }
       } finally {
-        try {
-          localStorage.removeItem(SIGN_IN_EMAIL_FLAG)
-        } catch {
-          // Ignore storage failures in private mode.
+        if (!cancelled && authSession?.access_token) {
+          try {
+            localStorage.removeItem(SIGN_IN_EMAIL_FLAG)
+          } catch {
+            // Ignore storage failures in private mode.
+          }
         }
         pendingFirstSignInEmailRef.current = false
       }
@@ -243,7 +247,7 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [authLoading, user?.id])
+  }, [authLoading, authSession?.access_token, user?.id])
 
   // Prices + shortage summary effect
   useEffect(() => {

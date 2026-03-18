@@ -85,6 +85,7 @@ export default function App() {
   // Prices + national summary (used on Track tab)
   const [mapPrices, setMapPrices] = useState({})
   const [shortageSummary, setShortageSummary] = useState(null)
+  const [pricesUpdatedAt, setPricesUpdatedAt] = useState(null)
 
   // Auth
   const [user, setUser] = useState(null)
@@ -259,8 +260,10 @@ export default function App() {
               }
             }
             setMapPrices(grouped)
+            setPricesUpdatedAt(prices[0]?.recorded_at || null)
           } else {
             setMapPrices({})
+            setPricesUpdatedAt(null)
           }
         }
 
@@ -461,6 +464,7 @@ export default function App() {
     resultRef,
     shortageSummary,
     mapPrices,
+    pricesUpdatedAt,
     onCommercialClick: () => navigate(TAB_ROUTES.commercial),
   }
 

@@ -22,6 +22,7 @@ const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/
 
 let cachedNews = []
 let lastFetchedAt = 0
+let cachedNewsUpdatedAt = null
 
 const RE_SHORTAGE = /shortage|delay|disruption|supply|scarcity|crisis|queue|queues|shut(?:ter|ting)?|sealed|switch to power|electric cooktop|electric cooktops|alternative/i
 const RE_PRICE = /price|rate|hike|revision|subsidy|cost|expensive/i
@@ -72,6 +73,30 @@ function timeAgo(pubDate) {
   }
 }
 
+function formatLastUpdated(value) {
+  try {
+    const date = value instanceof Date ? value : new Date(value)
+    const time = date.getTime()
+    if (!Number.isFinite(time)) return ''
+
+    const diff = Date.now() - time
+    const mins = Math.max(0, Math.round(diff / 60000))
+    if (mins < 60) return `Updated ${mins}m ago`
+
+    const hrs = Math.round(mins / 60)
+    if (hrs < 24) return `Updated ${hrs}h ago`
+
+    return `Updated ${date.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`
+  } catch {
+    return ''
+  }
+}
+
 function buildWhatsAppLink(item) {
   const title = item?.title ? String(item.title).trim() : 'CylinderCheck update'
   const source = item?.source ? String(item.source).trim() : ''
@@ -95,11 +120,13 @@ export default function NewsTab() {
   const [error, setError] = useState(null)
   const [selectedCity, setSelectedCity] = useState(null)
   const [showGeneral, setShowGeneral] = useState(false)
+  const [newsUpdatedAt, setNewsUpdatedAt] = useState(cachedNewsUpdatedAt)
 
   const fetchNews = useCallback((force = false) => {
     const STALE_MS = 5 * 60 * 1000
     if (!force && Date.now() - lastFetchedAt < STALE_MS) {
       setNews(cachedNews)
+      setNewsUpdatedAt(cachedNewsUpdatedAt)
       setLoading(false)
       return
     }
@@ -129,8 +156,10 @@ export default function NewsTab() {
             city: a.city || getCity(a.title, a.link),
           }))
           cachedNews = parsed
+          cachedNewsUpdatedAt = d.updatedAt || null
           lastFetchedAt = Date.now()
           setNews(parsed)
+          setNewsUpdatedAt(d.updatedAt || null)
         } else {
           setError('No recent items returned right now.')
         }
@@ -179,11 +208,15 @@ export default function NewsTab() {
   }, [filteredNews])
 
   const leadStory = filteredNews[0] || null
-  const leadCity = leadStory?.city || null
-  const leadSignalKey = leadStory
-    ? `${leadStory.title}:${leadStory.pubDate instanceof Date ? leadStory.pubDate.toISOString() : ''}:${leadStory.city || ''}`
+  const mapStory = useMemo(
+    () => filteredNews.find((item) => item?.city) || null,
+    [filteredNews],
+  )
+  const leadCity = selectedCity || mapStory?.city || null
+  const leadSignalKey = mapStory
+    ? `${mapStory.title}:${mapStory.pubDate instanceof Date ? mapStory.pubDate.toISOString() : ''}:${mapStory.city || ''}`
     : ''
-  const mapLabel = leadCity || selectedCity || 'All India'
+  const mapLabel = leadCity || 'All India'
   const order = ['SHORTAGE SIGNALS', 'PRICE & RATES', 'POLICY', 'GENERAL']
 
   const pageStatus =
@@ -230,6 +263,17 @@ export default function NewsTab() {
               ...cities.map((c) => ({ value: c, label: c })),
             ]}
           />
+
+          {newsUpdatedAt ? (
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className="type-note text-[var(--text-muted)]">
+                {formatLastUpdated(newsUpdatedAt)}
+              </span>
+              <span className="type-note text-[var(--text-muted)]">
+                Latest-first feed
+              </span>
+            </div>
+          ) : null}
 
           {error && (
             <Callout tone="active" className="mt-3">

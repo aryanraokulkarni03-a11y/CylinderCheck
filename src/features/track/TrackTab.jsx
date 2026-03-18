@@ -58,6 +58,30 @@ function shortageMeta(reportCount) {
   return { status: 'severe', label: `Severe shortage (${reportCount} reports)` }
 }
 
+function formatLastUpdated(value) {
+  try {
+    const date = value instanceof Date ? value : new Date(value)
+    const time = date.getTime()
+    if (!Number.isFinite(time)) return ''
+
+    const diff = Date.now() - time
+    const mins = Math.max(0, Math.round(diff / 60000))
+    if (mins < 60) return `Prices updated ${mins}m ago`
+
+    const hrs = Math.round(mins / 60)
+    if (hrs < 24) return `Prices updated ${hrs}h ago`
+
+    return `Prices updated ${date.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`
+  } catch {
+    return ''
+  }
+}
+
 export function TrackTab({
   pin,
   setPin,
@@ -73,6 +97,7 @@ export function TrackTab({
   resultRef,
   shortageSummary,
   mapPrices,
+  pricesUpdatedAt,
   onCommercialClick,
 }) {
   const shouldReduceMotion = useReducedMotion()
@@ -101,6 +126,13 @@ export function TrackTab({
       />
 
       <PriceTicker mapPrices={mapPrices} />
+      {pricesUpdatedAt ? (
+        <div className="mb-6 mt-[-1rem] flex justify-end">
+          <span className="type-note text-[var(--text-muted)]">
+            {formatLastUpdated(pricesUpdatedAt)}
+          </span>
+        </div>
+      ) : null}
 
       <div className="grid md:grid-cols-[420px_1fr] gap-6 items-start min-w-0">
         <div className="space-y-4 min-w-0">

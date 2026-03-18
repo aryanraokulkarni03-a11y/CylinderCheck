@@ -17,6 +17,7 @@ type StoredArticleRow = {
   category: string;
   city: string | null;
   published_at: string;
+  scraped_at: string;
 };
 
 function createServiceClient() {
@@ -36,6 +37,7 @@ function toResponseArticle(article: StoredArticleRow) {
     category: article.category,
     city: article.city,
     pubDate: article.published_at,
+    scrapedAt: article.scraped_at,
   };
 }
 
@@ -43,7 +45,7 @@ async function readStoredNews() {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("news_articles")
-    .select("title, source, link, google_link, source_url, category, city, published_at")
+    .select("title, source, link, google_link, source_url, category, city, published_at, scraped_at")
     .order("published_at", { ascending: false })
     .limit(NEWS_LIMIT);
 
@@ -77,6 +79,7 @@ async function seedNewsCache() {
     category: article.category,
     city: article.city,
     pubDate: article.published_at,
+    scrapedAt: article.scraped_at,
   }));
 }
 
@@ -90,9 +93,10 @@ serve(async (req) => {
     const articles = stored.length
       ? stored.map(toResponseArticle)
       : await seedNewsCache();
+    const updatedAt = articles[0]?.scrapedAt || null;
 
     return new Response(
-      JSON.stringify({ ok: true, articles }),
+      JSON.stringify({ ok: true, articles, updatedAt }),
       { headers: CORS },
     );
   } catch (err) {

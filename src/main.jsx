@@ -18,18 +18,18 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.error) return (
       <div style={{
-        background: 'var(--bg-base, #0F0D14)',
-        color: 'var(--status-severe, #B83030)',
+        background: 'var(--bg-base)',
+        color: 'var(--status-severe)',
         minHeight: '100vh',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         fontFamily: 'var(--font-body)',
-        padding: 24,
+        padding: 'var(--space-6)',
       }}>
-        <div style={{ fontSize: 'var(--fs-h2)', marginBottom: 16 }}>App Error</div>
+        <div style={{ fontSize: 'var(--fs-h2)', marginBottom: 'var(--space-4)' }}>App Error</div>
         <div style={{
-          background: 'var(--bg-raised, #181520)',
-          padding: 20, borderRadius: 12,
+          background: 'var(--bg-raised)',
+          padding: 'var(--space-5)', borderRadius: 'var(--radius-lg)',
           maxWidth: 480, width: '100%',
           color: 'var(--text-secondary)',
           fontSize: 'var(--fs-sm)', lineHeight: 1.8,

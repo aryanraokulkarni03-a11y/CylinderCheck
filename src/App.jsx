@@ -422,7 +422,13 @@ export default function App() {
           />
         }
         bottomNav={<BottomNav tabs={visibleTabs} activeTab={activeTab} onTabChange={handleTabChange} />}
-        footer={<Footer onSupportOpen={() => setShowSupport(true)} />}
+        footer={
+          <Footer
+            onSupportOpen={() => setShowSupport(true)}
+            onPrivacyOpen={() => setShowSupport(true)}
+            onTermsOpen={() => setShowSupport(true)}
+          />
+        }
       >
         {authError && (
           <Callout tone="active" className="mb-6" edge={false}>

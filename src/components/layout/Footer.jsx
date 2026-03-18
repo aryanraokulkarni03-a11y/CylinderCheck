@@ -5,35 +5,55 @@ import React from 'react'
 const DOT = '\u00B7'
 const COPY = '\u00A9'
 
-export function Footer({ onSupportOpen }) {
+export function Footer({ onSupportOpen, onPrivacyOpen, onTermsOpen }) {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="mt-16 pt-10 border-t border-[var(--divider)]">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="max-w-[64ch]">
-          <div className="kicker mb-2">
-            Independent data notice
-          </div>
-          <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] leading-relaxed m-0">
-            CylinderCheck is not affiliated with Indane (IndianOil), HP Gas, or Bharatgas. Intelligence is
-            community-sourced and may be incomplete. Always verify availability and rates with your local agency.
-          </p>
+    <footer className="footer-ledger">
+      <div className="footer-ledger__notice">
+        <div className="kicker footer-ledger__label">
+          Independent data notice
         </div>
+        <p className="footer-ledger__copy">
+          CylinderCheck is not affiliated with Indane (IndianOil), HP Gas, or Bharatgas. Intelligence is
+          community-sourced and may be incomplete. Always verify availability and rates with your local agency.
+        </p>
+      </div>
 
-        <div className="flex items-center gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
+      <div className="footer-ledger__meta">
+        <div className="footer-ledger__brand">
           <span className="kicker text-[var(--text-muted)]">
             {COPY} {year} CylinderCheck
           </span>
-          <span className="text-[var(--divider)]" aria-hidden="true">
+        </div>
+
+        <div className="footer-ledger__links" aria-label="Footer links">
+          <button
+            type="button"
+            onClick={onSupportOpen}
+            className="footer-ledger__link"
+          >
+            Support
+          </button>
+          <span className="footer-ledger__dot" aria-hidden="true">
             {DOT}
           </span>
           <button
             type="button"
-            onClick={onSupportOpen}
-            className="text-[var(--fs-xs)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
+            onClick={onPrivacyOpen || onSupportOpen}
+            className="footer-ledger__link"
           >
-            Support
+            Privacy
+          </button>
+          <span className="footer-ledger__dot" aria-hidden="true">
+            {DOT}
+          </span>
+          <button
+            type="button"
+            onClick={onTermsOpen || onSupportOpen}
+            className="footer-ledger__link"
+          >
+            Terms
           </button>
         </div>
       </div>

@@ -724,6 +724,110 @@ body::before {
   padding-inline: 12px;
 }
 
+.topbar-shell {
+  top: 0;
+  padding-top: calc(8px + env(safe-area-inset-top));
+  padding-bottom: 4px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-base) 88%, transparent), transparent 92%);
+}
+
+.topbar-float {
+  position: relative;
+}
+
+.topbar-float__inner {
+  min-height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-inline: 10px;
+  border: 1px solid color-mix(in srgb, var(--fog-border) 94%, transparent);
+  border-radius: calc(var(--radius-xl) + 4px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 130%, transparent), transparent 52%),
+    linear-gradient(120deg, color-mix(in srgb, var(--accent-soft) 22%, transparent), transparent 40%),
+    var(--glass-deep);
+  backdrop-filter: blur(30px) saturate(145%);
+  -webkit-backdrop-filter: blur(30px) saturate(145%);
+  box-shadow:
+    0 20px 40px color-mix(in srgb, var(--shadow-modal) 72%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--fog-highlight) 55%, transparent) inset;
+}
+
+.topbar-floating-callout .callout {
+  border-radius: calc(var(--radius-lg) + 2px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 88%, transparent), transparent 58%),
+    color-mix(in srgb, var(--status-active-soft) 76%, var(--bg-raised));
+  border-color: color-mix(in srgb, var(--status-active-border) 92%, transparent);
+  box-shadow: 0 16px 28px color-mix(in srgb, var(--shadow-modal) 34%, transparent);
+}
+
+.topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 4px;
+  color: var(--text-primary);
+}
+
+.topbar-brand__mark {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent-soft) 52%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-glow) 72%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-glow) 30%, transparent);
+}
+
+.topbar-nav {
+  margin-left: 16px;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-inset) 82%, transparent);
+  border: 1px solid var(--border);
+}
+
+.topbar-tab {
+  position: relative;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.topbar-tab__glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 90%, transparent), color-mix(in srgb, var(--bg-raised) 55%, transparent));
+  border: 1px solid color-mix(in srgb, var(--accent-glow) 82%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent-glow) 26%, transparent) inset,
+    0 10px 18px color-mix(in srgb, var(--shadow-glow) 20%, transparent);
+}
+
+.topbar-tab--active {
+  color: var(--text-primary);
+}
+
+.topbar-quiet-btn {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-inset) 76%, transparent);
+  border-color: color-mix(in srgb, var(--border) 88%, transparent);
+}
+
 .topbar-account-btn__avatar {
   width: 28px;
   height: 28px;
@@ -749,6 +853,44 @@ body::before {
 @media (min-width: 640px) {
   .topbar-account-btn__label {
     display: inline;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .topbar-tab:hover {
+    color: var(--text-primary);
+    transform: translateY(-1px);
+  }
+
+  .topbar-brand:hover .topbar-brand__mark {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-glow) 44%, transparent);
+  }
+}
+
+@media (max-width: 767px) {
+  .topbar-shell {
+    padding-top: calc(6px + env(safe-area-inset-top));
+    padding-bottom: 6px;
+  }
+
+  .topbar-float__inner {
+    padding-inline: 8px;
+    gap: 8px;
+    border-radius: calc(var(--radius-xl) + 2px);
+  }
+
+  .topbar-brand {
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .topbar-brand .type-brand {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

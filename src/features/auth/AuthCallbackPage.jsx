@@ -7,6 +7,26 @@ import { CardBody, CardHeader } from '../../components/ui/CardParts'
 
 const NOTIFY_TIMEOUT_MS = 4000
 
+function triggerFirstSignInEmail(accessToken) {
+  const notifyUrl = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1/notify-sign-in`
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), NOTIFY_TIMEOUT_MS)
+
+  void fetch(notifyUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ source: 'google-oauth' }),
+    signal: controller.signal,
+  })
+    .catch(() => undefined)
+    .finally(() => {
+      window.clearTimeout(timeout)
+    })
+}
+
 function isSafeNextPath(nextPath) {
   return typeof nextPath === 'string' && nextPath.startsWith('/') && !nextPath.startsWith('//')
 }
@@ -89,33 +109,14 @@ export function AuthCallbackPage() {
         return
       }
 
-      if (authCode && data.session.access_token) {
-        try {
-          const notifyUrl = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1/notify-sign-in`
-          const controller = new AbortController()
-          const timeout = window.setTimeout(() => controller.abort(), NOTIFY_TIMEOUT_MS)
-
-          try {
-            await fetch(notifyUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${data.session.access_token}`,
-              },
-              body: JSON.stringify({ source: 'google-oauth' }),
-              signal: controller.signal,
-            }).catch(() => undefined)
-          } finally {
-            window.clearTimeout(timeout)
-          }
-        } catch {
-          // Email is best-effort. Auth flow should not fail if the notification provider is unavailable.
-        }
-      }
-
       const fallbackNext = getStoredNextPath()
       const target = requestedNext || (isSafeNextPath(fallbackNext) ? fallbackNext : null) || '/track'
       navigate(target, { replace: true })
+
+      if (authCode && data.session.access_token) {
+        // Keep sign-in instant. Email delivery happens in the background.
+        triggerFirstSignInEmail(data.session.access_token)
+      }
     }
 
     finalizeAuth()

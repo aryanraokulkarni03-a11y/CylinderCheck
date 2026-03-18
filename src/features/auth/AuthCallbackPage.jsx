@@ -5,8 +5,6 @@ import { supabase } from '../../supabaseClient'
 import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
 
-const SIGN_IN_EMAIL_FLAG = 'cc-pending-first-sign-in-email'
-
 function redirectAfterAuth(target, navigate) {
   try {
     window.location.replace(target)
@@ -107,14 +105,6 @@ export function AuthCallbackPage({ user }) {
 
       if (!activeUser) {
         return
-      }
-
-      if (activeUser) {
-        try {
-          localStorage.setItem(SIGN_IN_EMAIL_FLAG, '1')
-        } catch {
-          // Ignore storage failures in private mode.
-        }
       }
 
       hasCompletedRef.current = true

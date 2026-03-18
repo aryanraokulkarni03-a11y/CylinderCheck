@@ -60,6 +60,7 @@ export const CITY_COORDS = {
   Jaipur:    { lat: 26.9124, lng: 75.7873 },
   Lucknow:   { lat: 26.8467, lng: 80.9462 },
   Patna:     { lat: 25.5941, lng: 85.1376 },
+  Ranchi:    { lat: 23.3441, lng: 85.3096 },
 }
 
 export const COMMERCIAL_CITIES = [
@@ -109,6 +110,18 @@ export const CITY_NORMALISE = {
   'calcutta': 'Kolkata', 'kolkata': 'Kolkata',
   'madras': 'Chennai', 'chennai': 'Chennai',
   'bombay': 'Mumbai', 'mumbai': 'Mumbai',
+  'ranchi': 'Ranchi',
+  'karnataka': 'Bangalore',
+  'bihar': 'Patna',
+  'jharkhand': 'Ranchi',
+  'west bengal': 'Kolkata',
+  'maharashtra': 'Mumbai',
+  'telangana': 'Hyderabad',
+  'andhra pradesh': 'Vizag',
+  'rajasthan': 'Jaipur',
+  'uttar pradesh': 'Lucknow',
+  'gujarat': 'Ahmedabad',
+  'tamil nadu': 'Chennai',
 }
 
 export const COMPANIES = ['IndianOil', 'HP Gas', 'Bharat Gas']

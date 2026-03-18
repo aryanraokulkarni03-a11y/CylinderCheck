@@ -23,9 +23,9 @@ const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/
 let cachedNews = []
 let lastFetchedAt = 0
 
-const RE_SHORTAGE = /shortage|delay|disruption|supply|scarcity|crisis/i
+const RE_SHORTAGE = /shortage|delay|disruption|supply|scarcity|crisis|queue|queues|shut(?:ter|ting)?|sealed|switch to power|electric cooktop|electric cooktops|alternative/i
 const RE_PRICE = /price|rate|hike|revision|subsidy|cost|expensive/i
-const RE_POLICY = /ministry|government|policy|rule|regulation|announce/i
+const RE_POLICY = /ministry|government|policy|rule|regulation|announce|minister|customer data|oil cos seek/i
 
 function getCategory(title) {
   if (RE_SHORTAGE.test(title)) return 'SHORTAGE SIGNALS'
@@ -75,7 +75,7 @@ function timeAgo(pubDate) {
 function buildWhatsAppLink(item) {
   const title = item?.title ? String(item.title).trim() : 'CylinderCheck update'
   const source = item?.source ? String(item.source).trim() : ''
-  const category = getCategory(title)
+  const category = item?.category || getCategory(title)
   const city = item?.city ? String(item.city).trim() : ''
   const link = item?.link ? String(item.link).trim() : ''
   const signal = city || (category !== 'GENERAL' ? category : '')
@@ -125,7 +125,8 @@ export default function NewsTab() {
             googleLink: a.googleLink,
             sourceUrl: a.sourceUrl,
             pubDate: new Date(a.pubDate),
-            city: getCity(a.title, a.link),
+            category: a.category || getCategory(a.title),
+            city: a.city || getCity(a.title, a.link),
           }))
           cachedNews = parsed
           lastFetchedAt = Date.now()
@@ -144,7 +145,15 @@ export default function NewsTab() {
     fetchNews()
   }, [fetchNews])
 
-  const validNews = Array.isArray(news) ? news : []
+  const validNews = useMemo(() => {
+    if (!Array.isArray(news)) return []
+
+    return [...news].sort((a, b) => {
+      const aTime = a?.pubDate instanceof Date ? a.pubDate.getTime() : 0
+      const bTime = b?.pubDate instanceof Date ? b.pubDate.getTime() : 0
+      return bTime - aTime
+    })
+  }, [news])
 
   const cityHasNews = useMemo(() => {
     const out = {}
@@ -162,7 +171,7 @@ export default function NewsTab() {
 
   const grouped = useMemo(() => {
     return filteredNews.reduce((acc, item) => {
-      const cat = getCategory(item.title)
+      const cat = item.category || getCategory(item.title)
       if (!acc[cat]) acc[cat] = []
       acc[cat].push(item)
       return acc
@@ -294,7 +303,7 @@ export default function NewsTab() {
                     >
                       <div className="flex items-center gap-2 flex-wrap mt-3">
                         {(() => {
-                          const cat = getCategory(leadStory.title)
+                          const cat = leadStory.category || getCategory(leadStory.title)
                           const status = CAT_STATUS[cat] || 'clear'
                           return (
                             <span className={`badge ${statusPill(status)}`}>
@@ -360,7 +369,7 @@ export default function NewsTab() {
                         {items.map((item, i) => {
                           if (leadStory && item.link === leadStory.link) return null
 
-                          const catHere = getCategory(item.title)
+                          const catHere = item.category || getCategory(item.title)
                           const status = CAT_STATUS[catHere] || 'clear'
 
                           return (

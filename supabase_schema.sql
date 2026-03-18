@@ -148,6 +148,36 @@ CREATE POLICY "Anyone can read pin data" ON pin_data FOR SELECT USING (true);
 
 ALTER TABLE auth_notification_log ENABLE ROW LEVEL SECURITY;
 
+-- 8. Normalized news storage
+--    Populated by the scheduled scrape-news edge function and read by lpg-news.
+CREATE TABLE IF NOT EXISTS news_articles (
+  id           BIGSERIAL PRIMARY KEY,
+  article_key  TEXT NOT NULL UNIQUE,
+  title        TEXT NOT NULL,
+  source       TEXT NOT NULL,
+  link         TEXT NOT NULL,
+  google_link  TEXT NOT NULL,
+  source_url   TEXT,
+  category     TEXT NOT NULL,
+  city         TEXT,
+  published_at TIMESTAMPTZ NOT NULL,
+  scraped_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS news_articles_published_at_idx
+  ON news_articles (published_at DESC);
+
+CREATE INDEX IF NOT EXISTS news_articles_scraped_at_idx
+  ON news_articles (scraped_at DESC);
+
+CREATE INDEX IF NOT EXISTS news_articles_city_idx
+  ON news_articles (city);
+
+ALTER TABLE news_articles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read news articles" ON news_articles FOR SELECT USING (true);
+
 -- Live DB note (verified 2026-03-18):
 -- The production project also contains auxiliary tables:
 --   feedback, price_corrections, report_votes

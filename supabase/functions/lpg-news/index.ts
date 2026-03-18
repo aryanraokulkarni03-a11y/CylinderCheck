@@ -1,219 +1,83 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { NEWS_LIMIT, scrapeLatestNews } from "../_shared/news.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info",
   "Content-Type": "application/json",
 };
 
-type Article = {
+type StoredArticleRow = {
   title: string;
-  link: string;
-  googleLink: string;
-  pubDate: string;
   source: string;
-  sourceUrl: string;
+  link: string;
+  google_link: string;
+  source_url: string | null;
+  category: string;
+  city: string | null;
+  published_at: string;
 };
 
-const MAX_ARTICLES = 8;
-const DECODE_TIMEOUT_MS = 1800;
-
-function decodeXmlEntities(value: string) {
-  return value
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .trim();
-}
-
-function normalizeLink(link: string) {
-  try {
-    const url = new URL(link.trim());
-    url.hash = "";
-    return url.toString();
-  } catch {
-    return link.trim();
-  }
-}
-
-function extractGoogleArticleId(link: string) {
-  try {
-    const url = new URL(link);
-    if (url.hostname !== "news.google.com") return "";
-
-    const parts = url.pathname.split("/").filter(Boolean);
-    if (!parts.length) return "";
-
-    const kindIndex = parts.findIndex((part) => part === "articles" || part === "read");
-    if (kindIndex === -1 || !parts[kindIndex + 1]) return "";
-
-    return parts[kindIndex + 1];
-  } catch {
-    return "";
-  }
-}
-
-async function getDecodingParams(articleId: string) {
-  const targets = [
-    `https://news.google.com/articles/${articleId}`,
-    `https://news.google.com/rss/articles/${articleId}`,
-  ];
-
-  for (const target of targets) {
-    try {
-      const response = await fetch(target, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; CylinderCheck/1.0)",
-        },
-      });
-
-      if (!response.ok) continue;
-
-      const html = await response.text();
-      const signature = html.match(/data-n-a-sg="([^"]+)"/)?.[1] || "";
-      const timestamp = html.match(/data-n-a-ts="([^"]+)"/)?.[1] || "";
-
-      if (signature && timestamp) {
-        return { signature, timestamp };
-      }
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-}
-
-async function decodeGoogleNewsUrl(googleLink: string) {
-  const articleId = extractGoogleArticleId(googleLink);
-  if (!articleId) return "";
-
-  const params = await getDecodingParams(articleId);
-  if (!params) return "";
-
-  const payload = [[[
-    "Fbv4je",
-    `["garturlreq",[["X","X",["X","X"],null,null,1,1,"IN:en",null,1,null,null,null,null,null,0,1],"X","X",1,[1,1,1],1,1,null,0,0,null,0],"${articleId}",${params.timestamp},"${params.signature}"]`,
-    null,
-    "generic",
-  ]]];
-
-  try {
-    const response = await fetch("https://news.google.com/_/DotsSplashUi/data/batchexecute", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-        "User-Agent": "Mozilla/5.0 (compatible; CylinderCheck/1.0)",
-      },
-      body: `f.req=${encodeURIComponent(JSON.stringify(payload))}`,
-    });
-
-    if (!response.ok) return "";
-
-    const text = await response.text();
-    const parts = text.split("\n\n");
-    if (parts.length < 2) return "";
-
-    const data = JSON.parse(parts[1]);
-    const decoded = JSON.parse(data[0][2])?.[1] || "";
-    return typeof decoded === "string" ? normalizeLink(decoded) : "";
-  } catch {
-    return "";
-  }
-}
-
-async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T) {
-  let timeoutId: number | undefined;
-
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((resolve) => {
-        timeoutId = setTimeout(() => resolve(fallback), ms);
-      }),
-    ]);
-  } finally {
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId);
-    }
-  }
-}
-
-async function pickResolvedLink(googleLink: string, sourceUrl: string) {
-  if (!googleLink.includes("news.google.com/")) {
-    return normalizeLink(googleLink);
-  }
-
-  const decodedLink = await withTimeout(
-    decodeGoogleNewsUrl(googleLink),
-    DECODE_TIMEOUT_MS,
-    "",
+function createServiceClient() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
-  if (decodedLink) {
-    return decodedLink;
-  }
-
-  if (sourceUrl) {
-    return normalizeLink(sourceUrl);
-  }
-
-  return normalizeLink(googleLink);
 }
 
-function parseRSS(xml: string) {
-  const items: Article[] = [];
-  const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
+function toResponseArticle(article: StoredArticleRow) {
+  return {
+    title: article.title,
+    source: article.source,
+    link: article.link,
+    googleLink: article.google_link,
+    sourceUrl: article.source_url ?? "",
+    category: article.category,
+    city: article.city,
+    pubDate: article.published_at,
+  };
+}
 
-  for (const match of itemMatches) {
-    const item = match[1];
+async function readStoredNews() {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("news_articles")
+    .select("title, source, link, google_link, source_url, category, city, published_at")
+    .order("published_at", { ascending: false })
+    .limit(NEWS_LIMIT);
 
-    const title = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1]
-      || item.match(/<title>(.*?)<\/title>/)?.[1]
-      || "";
+  if (error) {
+    throw error;
+  }
 
-    const googleLink = item.match(/<link>(.*?)<\/link>/)?.[1]
-      || item.match(/<guid[^>]*>(.*?)<\/guid>/)?.[1]
-      || "";
+  return (data ?? []) as StoredArticleRow[];
+}
 
-    const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || "";
+async function seedNewsCache() {
+  const supabase = createServiceClient();
+  const scraped = await scrapeLatestNews();
 
-    const source = item.match(/<source[^>]*>(.*?)<\/source>/)?.[1]
-      || item.match(/<dc:creator><!\[CDATA\[(.*?)\]\]><\/dc:creator>/)?.[1]
-      || "News";
+  if (scraped.length) {
+    const { error } = await supabase
+      .from("news_articles")
+      .upsert(scraped, { onConflict: "article_key" });
 
-    const sourceUrl = item.match(/<source[^>]*url="(.*?)"[^>]*>/)?.[1] || "";
-
-    const cleanTitle = title
-      .replace(/\s*-\s*[^-]+$/, "")
-      .replace(/\s*\|\s*[^|]+$/, "")
-      .trim();
-
-    const normalizedGoogleLink = decodeXmlEntities(googleLink);
-    const normalizedSourceUrl = decodeXmlEntities(sourceUrl);
-    if (cleanTitle && normalizedGoogleLink) {
-      items.push({
-        title: cleanTitle,
-        link: normalizedSourceUrl ? normalizeLink(normalizedSourceUrl) : normalizeLink(normalizedGoogleLink),
-        googleLink: normalizedGoogleLink,
-        pubDate,
-        source,
-        sourceUrl: normalizedSourceUrl,
-      });
+    if (error) {
+      throw error;
     }
   }
 
-  return items.slice(0, 10);
-}
-
-async function resolveArticleLinks(articles: Article[]) {
-  return await Promise.all(
-    articles.map(async (article) => ({
-      ...article,
-      link: await pickResolvedLink(article.googleLink, article.sourceUrl),
-    })),
-  );
+  return scraped.map((article) => ({
+    title: article.title,
+    source: article.source,
+    link: article.link,
+    googleLink: article.google_link,
+    sourceUrl: article.source_url,
+    category: article.category,
+    city: article.city,
+    pubDate: article.published_at,
+  }));
 }
 
 serve(async (req) => {
@@ -222,45 +86,13 @@ serve(async (req) => {
   }
 
   try {
-    const queries = [
-      "LPG cylinder shortage India",
-      "gas cylinder price India 2025",
-      "LPG booking India",
-    ];
-
-    let articles: Article[] = [];
-
-    for (const query of queries) {
-      if (articles.length >= MAX_ARTICLES) break;
-
-      const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-IN&gl=IN&ceid=IN:en`;
-
-      try {
-        const res = await fetch(url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; CylinderCheck/1.0)",
-          },
-        });
-
-        if (!res.ok) continue;
-
-        const xml = await res.text();
-        const parsed = parseRSS(xml);
-
-        for (const item of parsed) {
-          if (!articles.find((article) => article.title === item.title)) {
-            articles.push(item);
-          }
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    const finalArticles = await resolveArticleLinks(articles.slice(0, MAX_ARTICLES));
+    const stored = await readStoredNews();
+    const articles = stored.length
+      ? stored.map(toResponseArticle)
+      : await seedNewsCache();
 
     return new Response(
-      JSON.stringify({ ok: true, articles: finalArticles }),
+      JSON.stringify({ ok: true, articles }),
       { headers: CORS },
     );
   } catch (err) {

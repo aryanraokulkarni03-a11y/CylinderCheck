@@ -74,8 +74,18 @@ function timeAgo(pubDate) {
 
 function buildWhatsAppLink(item) {
   const title = item?.title ? String(item.title).trim() : 'CylinderCheck update'
+  const source = item?.source ? String(item.source).trim() : ''
+  const category = getCategory(title)
+  const city = item?.city ? String(item.city).trim() : ''
   const link = item?.link ? String(item.link).trim() : ''
-  const text = ['CylinderCheck intel:', title, link].filter(Boolean).join('\n')
+  const signal = city || (category !== 'GENERAL' ? category : '')
+  const text = [
+    'CylinderCheck LPG intel',
+    title,
+    signal ? `Signal: ${signal}` : '',
+    source ? `Source: ${source}` : '',
+    link,
+  ].filter(Boolean).join('\n')
   return `https://wa.me/?text=${encodeURIComponent(text)}`
 }
 
@@ -112,6 +122,8 @@ export default function NewsTab() {
             title: a.title,
             source: a.source,
             link: a.link,
+            googleLink: a.googleLink,
+            sourceUrl: a.sourceUrl,
             pubDate: new Date(a.pubDate),
             city: getCity(a.title),
           }))

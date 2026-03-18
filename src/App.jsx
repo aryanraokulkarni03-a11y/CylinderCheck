@@ -66,7 +66,6 @@ const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
 const NOTIFY_TIMEOUT_MS = 4000
-const SIGN_IN_EMAIL_FLAG = 'cc-pending-first-sign-in-email'
 
 export default function App() {
   const shouldReduceMotion = useReducedMotion()
@@ -133,11 +132,6 @@ export default function App() {
         window.clearTimeout(timeout)
       }
 
-      try {
-        localStorage.removeItem(SIGN_IN_EMAIL_FLAG)
-      } catch {
-        // Ignore storage failures in private mode.
-      }
     } finally {
       pendingFirstSignInEmailRef.current = false
     }
@@ -156,7 +150,6 @@ export default function App() {
 
     try {
       localStorage.setItem('cc-post-auth-path', requestedPath)
-      localStorage.setItem(SIGN_IN_EMAIL_FLAG, '1')
     } catch {
       // Private mode.
     }
@@ -238,16 +231,6 @@ export default function App() {
 
   useEffect(() => {
     if (authLoading || !authSession?.access_token || !user?.id) return
-
-    let hasPendingFlag = false
-
-    try {
-      hasPendingFlag = localStorage.getItem(SIGN_IN_EMAIL_FLAG) === '1'
-    } catch {
-      hasPendingFlag = false
-    }
-
-    if (!hasPendingFlag) return
     void notifyFirstSignIn(authSession)
   }, [authLoading, authSession, notifyFirstSignIn, user?.id])
 

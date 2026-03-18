@@ -6,6 +6,8 @@ import { motion, useReducedMotion } from 'motion/react'
 import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerContainer'
 import { StatusDot } from '../../components/shared/StatusDot'
 import { springs } from '../../lib/springs'
+import { StatCard } from '../../components/ui/StatCard'
+import { Callout } from '../../components/ui/Callout'
 
 export function SignalRoom({ shortageSummary, mapPrices }) {
   const shouldReduceMotion = useReducedMotion()
@@ -60,29 +62,20 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
           },
         ].map(({ value, label, status }) => (
           <StaggerItem key={label}>
-            <div className="rounded-lg border border-[var(--border)]
-                            bg-[var(--bg-raised)] p-4">
-              <div className="stat text-[var(--fs-h3)]
-                              text-[var(--text-data)] leading-none mb-1">
-                {value}
-              </div>
-              <div className="label-text text-[var(--text-muted)]">
-                {label}
-              </div>
-            </div>
+            <StatCard value={value} label={label} status={status} />
           </StaggerItem>
         ))}
       </StaggerContainer>
 
       {/* Hotspot alert if active */}
       {shortageSummary && (
-        <motion.div
+        <Callout
+          as={motion.div}
+          tone="active"
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
-          className="flex items-start gap-3 p-4 rounded-lg
-                     border border-[var(--status-active-glow)]"
-          style={{ background: 'var(--status-active-soft)' }}
+          className="flex items-start gap-3"
         >
           <StatusDot status="active" size={7} />
           <div>
@@ -99,7 +92,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
               </span>
             </p>
           </div>
-        </motion.div>
+        </Callout>
       )}
 
       {/* Instruction */}

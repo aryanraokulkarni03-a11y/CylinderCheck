@@ -100,7 +100,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
   };
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-raised)] p-6 md:p-8">
+    <div className="card card--roomy relative overflow-hidden">
       <AnimatePresence mode="wait">
         {success ? (
           <motion.div

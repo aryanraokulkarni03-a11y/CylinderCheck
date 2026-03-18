@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { X } from 'lucide-react'
 import { springs, timing } from '../../lib/springs'
+import { Card } from '../ui/Card'
 
 export function SupportModal({ onClose }) {
   const shouldReduceMotion = useReducedMotion()
@@ -123,11 +124,10 @@ export function SupportModal({ onClose }) {
                 ['Is CylinderCheck affiliated with any gas company?',
                  'No. We are an independent community tool, not affiliated with Indane (IndianOil), HP Gas, or Bharatgas.'],
               ].map(([q, a]) => (
-                <div key={q} className="rounded-md bg-[var(--bg-inset)]
-                                        border border-[var(--border)] p-4">
+                <Card key={q} variant="inset" size="compact" className="p-4">
                   <p className="font-medium text-[var(--fs-sm)] text-[var(--text-primary)] mb-1">{q}</p>
                   <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] leading-relaxed">{a}</p>
-                </div>
+                </Card>
               ))}
             </div>
           </section>

@@ -16,6 +16,8 @@ import { springs } from '../../lib/springs'
 import CommercialHero from './CommercialHero'
 import VendorCard from './VendorCard'
 import LeadForm from './LeadForm'
+import { Card } from '../../components/ui/Card'
+import { Callout } from '../../components/ui/Callout'
 
 const ARROW = '\u2192'
 const DOT = '\u00B7'
@@ -188,17 +190,20 @@ export default function CommercialPage({ prefilledCity }) {
                   {[1, 2].map((i) => (
                     <div
                       key={i}
-                      className="h-44 rounded-lg border border-[var(--border)] bg-[var(--bg-raised)] motion-safe:animate-pulse opacity-60"
+                      className="card card--flush h-44 motion-safe:animate-pulse opacity-60"
                     />
                   ))}
                 </motion.div>
               ) : vendorError ? (
-                <motion.div
+                <Callout
+                  as={motion.div}
+                  tone="active"
                   key="error"
                   initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
-                  className="rounded-lg border border-[var(--status-active-border)] bg-[var(--status-active-soft)] p-8 text-center"
+                  className="callout--roomy text-center"
+                  edge={false}
                 >
                   <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mb-3">{vendorError}</p>
                   <button
@@ -208,7 +213,7 @@ export default function CommercialPage({ prefilledCity }) {
                   >
                     Try again {ARROW}
                   </button>
-                </motion.div>
+                </Callout>
               ) : vendors.length > 0 ? (
                 <StaggerContainer key={activeState} className="flex flex-col gap-6 w-full">
                   {vendors.map((vendor) => (
@@ -216,13 +221,15 @@ export default function CommercialPage({ prefilledCity }) {
                   ))}
                 </StaggerContainer>
               ) : (
-                <motion.div
+                <Card
+                  as={motion.div}
+                  variant="inset"
                   key="empty"
                   initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.98 }}
                   transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
-                  className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-inset)] p-12 text-center w-full"
+                  className="card--dashed card--spacious text-center w-full"
                 >
                   <svg
                     width="48"
@@ -246,18 +253,18 @@ export default function CommercialPage({ prefilledCity }) {
                   <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] mt-4">
                     Drop your details on the right and we'll reach out as soon as agencies go live.
                   </p>
-                </motion.div>
+                </Card>
               )}
             </AnimatePresence>
 
             {vendors.length > 0 && (
-              <div className="mt-8 p-4 rounded-md bg-[var(--bg-inset)] border border-[var(--divider)] flex gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
+              <Card variant="inset" size="compact" className="mt-8 flex gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
                 <FileText size={14} className="shrink-0 text-[var(--text-secondary)] mt-0.5" />
                 <p className="m-0">
                   CylinderCheck does not guarantee stock availability or set prices. Always confirm rates directly with
                   the agency.
                 </p>
-              </div>
+              </Card>
             )}
           </div>
 

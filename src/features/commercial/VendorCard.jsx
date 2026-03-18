@@ -58,10 +58,10 @@ export default function VendorCard({ vendor }) {
       <motion.div
         whileHover={(!shouldReduceMotion && canHover) ? { y: -4 } : undefined}
         transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
-        className={`relative overflow-hidden group rounded-lg border bg-[var(--bg-raised)] p-5 md:p-6 transition-colors duration-300 ${
+        className={`card relative overflow-hidden group transition-colors duration-300 ${
           isFeatured
-            ? 'border-[var(--accent)] shadow-[0_8px_30px_var(--shadow-glow)]'
-            : 'border-[var(--border)] hover:border-[var(--accent-glow)] hover:shadow-[0_8px_30px_var(--shadow-glow)]'
+            ? 'card-featured'
+            : 'hover:border-[var(--accent-glow)] hover:shadow-[0_8px_30px_var(--shadow-glow)]'
         }`}
       >
         {isFeatured && (

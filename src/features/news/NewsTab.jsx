@@ -6,6 +6,8 @@ import { FadeIn } from '../../components/motion/FadeIn'
 import { ExternalLink, Loader2, MapPin, MessageCircle, RefreshCw } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { PillRow } from '../../components/ui/PillRow'
+import { Card } from '../../components/ui/Card'
+import { Callout } from '../../components/ui/Callout'
 
 const DOT = '\u00B7'
 const DOWN = '\u2193'
@@ -198,9 +200,9 @@ export default function NewsTab() {
           />
 
           {error && (
-            <div className="mt-3 rounded-md border border-[var(--status-active-border)] bg-[var(--status-active-soft)] px-3 py-2 text-[var(--fs-sm)] text-[var(--text-primary)]">
-              {error}
-            </div>
+            <Callout tone="active" className="mt-3">
+              <div className="text-[var(--fs-sm)] text-[var(--text-primary)]">{error}</div>
+            </Callout>
           )}
 
           {loading && !validNews.length ? (
@@ -218,7 +220,7 @@ export default function NewsTab() {
               ))}
             </div>
           ) : !validNews.length ? (
-            <div className="mt-4 rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-raised)] text-center py-12 px-6">
+            <Card variant="raised" className="mt-4 card--dashed card--spacious text-center">
               <div className="overline text-[var(--text-muted)] mb-4">
                 No feed yet
               </div>
@@ -228,7 +230,7 @@ export default function NewsTab() {
               <p className="text-[var(--fs-sm)] text-[var(--text-secondary)]">
                 No recent intelligence found. Try syncing.
               </p>
-            </div>
+            </Card>
           ) : (
             <FadeIn delay={0.08}>
               <div className="mt-6 space-y-10">
@@ -420,20 +422,25 @@ export default function NewsTab() {
           </div>
 
           <FadeIn delay={0.12}>
-            <div className="relative rounded-lg border border-[var(--border)] bg-[var(--bg-raised)] p-1 sm:p-2 overflow-hidden h-[420px] lg:h-[calc(100vh-var(--topbar-height)-120px)]">
-              <NewsMap
-                cityHasNews={cityHasNews}
-                selectedCity={selectedCity}
-                onSelectCity={(c) => setSelectedCity((prev) => (prev === c ? null : c))}
-              />
+            <Card
+              variant="raised"
+              className="card--flush overflow-hidden h-[420px] lg:h-[calc(100vh-var(--topbar-height)-120px)]"
+            >
+              <div className="relative h-full p-1 sm:p-2">
+                <NewsMap
+                  cityHasNews={cityHasNews}
+                  selectedCity={selectedCity}
+                  onSelectCity={(c) => setSelectedCity((prev) => (prev === c ? null : c))}
+                />
 
-              <div className="absolute bottom-4 right-4 z-[400] rounded-full border border-[var(--border)] bg-[var(--bg-raised)] px-3 py-1 pointer-events-none">
-                <div className="flex items-center gap-2 overline text-[var(--text-muted)]">
-                  <span className="w-2 h-2 rounded-full bg-[var(--accent)]" aria-hidden="true" />
-                  Live signals
+                <div className="absolute bottom-4 right-4 z-[400] rounded-full border border-[var(--border)] bg-[var(--bg-raised)] px-3 py-1 pointer-events-none">
+                  <div className="flex items-center gap-2 overline text-[var(--text-muted)]">
+                    <span className="w-2 h-2 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+                    Live signals
+                  </div>
                 </div>
               </div>
-            </div>
+            </Card>
           </FadeIn>
         </div>
       </div>

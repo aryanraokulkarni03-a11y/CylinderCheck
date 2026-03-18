@@ -2,6 +2,7 @@ import React from 'react';
 import { Shield, Users, Bell, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerContainer';
 import { FadeIn } from '../../components/motion/FadeIn';
+import { Card } from '../../components/ui/Card';
 
 export default function AdminTab({ data, loading, onLock }) {
   const { subscriptions = [], reportCount = 0, alertCount = 0 } = data || {};
@@ -30,39 +31,39 @@ export default function AdminTab({ data, loading, onLock }) {
 
       <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StaggerItem>
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-inset)] p-5">
+          <Card variant="inset" className="p-5">
             <div className="flex items-center gap-2 overline text-[var(--text-muted)] mb-4">
               <AlertTriangle size={14} className="text-[var(--accent)]" /> Total Reports
             </div>
             <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">{loading ? '—' : reportCount}</div>
             <div className="caption text-[var(--text-secondary)] mt-2">Community issues flagged</div>
-          </div>
+          </Card>
         </StaggerItem>
 
         <StaggerItem>
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-inset)] p-5">
+          <Card variant="inset" className="p-5">
             <div className="flex items-center gap-2 overline text-[var(--text-muted)] mb-4">
               <Bell size={14} className="text-[var(--status-clear)]" /> Active Alerts
             </div>
             <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">{loading ? '—' : alertCount}</div>
             <div className="caption text-[var(--text-secondary)] mt-2">PINs being monitored</div>
-          </div>
+          </Card>
         </StaggerItem>
 
         <StaggerItem>
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-inset)] p-5">
+          <Card variant="inset" className="p-5">
             <div className="flex items-center gap-2 overline text-[var(--text-muted)] mb-4">
               <Users size={14} className="text-[var(--status-severe)]" /> Plus Subscriptions
             </div>
             <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">{loading ? '—' : subscriptions.length}</div>
             <div className="caption text-[var(--text-secondary)] mt-2">Active paid users</div>
-          </div>
+          </Card>
         </StaggerItem>
       </StaggerContainer>
 
       <FadeIn delay={0.4} className="mt-8">
         <h2 className="text-[var(--fs-sm)] font-semibold font-display text-[var(--text-primary)] uppercase tracking-widest mb-4">Subscribers Directory</h2>
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-inset)] overflow-x-auto">
+        <Card variant="inset" className="card--flush overflow-x-auto">
           <table className="w-full text-left relative min-w-[600px]">
             <thead className="border-b border-[var(--border)] bg-[var(--bg-raised)]">
               <tr>
@@ -100,7 +101,7 @@ export default function AdminTab({ data, loading, onLock }) {
               )}
             </tbody>
           </table>
-        </div>
+        </Card>
       </FadeIn>
     </div>
   );

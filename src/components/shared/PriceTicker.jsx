@@ -26,8 +26,7 @@ export function PriceTicker({ mapPrices = {} }) {
 
   if (!items.length) {
     return (
-      <div className="w-full h-10 border border-[var(--border)] rounded-md
-                      flex items-center px-4 bg-[var(--bg-inset)] mb-6">
+      <div className="card card--inset card--compact card-strip w-full h-10 flex items-center mb-6">
         <div className="h-3 w-full rounded bg-[var(--divider)] motion-safe:animate-pulse" />
       </div>
     )
@@ -38,9 +37,7 @@ export function PriceTicker({ mapPrices = {} }) {
 
   return (
     <div
-      className="w-full bg-[var(--bg-inset)] border border-[var(--border)]
-                 rounded-md overflow-hidden mb-6 h-11 flex items-center
-                 relative select-none"
+      className="card card--inset card--compact card-strip w-full overflow-hidden mb-6 h-11 flex items-center relative select-none"
       aria-label="LPG prices ticker"
     >
       {/* Edge fade masks */}

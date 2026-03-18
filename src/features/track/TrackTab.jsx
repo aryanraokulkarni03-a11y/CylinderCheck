@@ -15,6 +15,7 @@ import { springs } from '../../lib/springs'
 import { COMPANY_LABELS, addDays, fmt } from '../../lib/utils'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
+import { Callout } from '../../components/ui/Callout'
 
 const ARROW = '\u2192'
 
@@ -334,21 +335,13 @@ export function TrackTab({
                 )}
 
                 {pinData.reportCount >= 2 && (
-                  <motion.div
+                  <Callout
+                    as={motion.div}
+                    tone={pinData.reportCount >= 5 ? 'severe' : 'active'}
                     initial={{ opacity: 0, scale: 0.97 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={shouldReduceMotion ? { duration: 0.01 } : springs.urgent}
-                    className="flex items-start gap-3 p-4 rounded-lg border mb-4"
-                    style={{
-                      borderColor:
-                        pinData.reportCount >= 5
-                          ? 'var(--status-severe-border)'
-                          : 'var(--status-active-border)',
-                      background:
-                        pinData.reportCount >= 5
-                          ? 'var(--status-severe-soft)'
-                          : 'var(--status-active-soft)',
-                    }}
+                    className="flex items-start gap-3 mb-4"
                   >
                     <StatusDot status={pinData.reportCount >= 5 ? 'severe' : 'active'} size={7} />
                     <div>
@@ -365,15 +358,18 @@ export function TrackTab({
                         Book as early as your window allows.
                       </p>
                     </div>
-                  </motion.div>
+                  </Callout>
                 )}
 
                 {pinData.reportCount >= 2 && (
-                  <motion.div
+                  <Callout
+                    as={motion.div}
+                    tone="accent"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={shouldReduceMotion ? { duration: 0.01 } : { ...springs.arrival, delay: 0.4 }}
-                    className="p-4 rounded-lg border border-[var(--accent-glow)] bg-[var(--accent-fog)]"
+                    className="mb-4"
+                    edge={false}
                   >
                     <p className="text-[var(--fs-sm)] font-medium text-[var(--text-primary)] mb-1">
                       Running a restaurant or hotel?
@@ -388,7 +384,7 @@ export function TrackTab({
                     >
                       Find alternatives now {' \u2192'}
                     </button>
-                  </motion.div>
+                  </Callout>
                 )}
               </SlideUp>
             )}

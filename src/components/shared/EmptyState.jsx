@@ -1,8 +1,12 @@
-import React from 'react';
+import React from 'react'
+import { Card } from '../ui/Card'
 
 export default function EmptyState({ title, description, actionText, onAction, iconSlot }) {
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center min-h-[300px] border border-[var(--border)] rounded-lg bg-[var(--bg-inset)] w-full">
+    <Card
+      variant="inset"
+      className="card--dashed card--spacious flex flex-col items-center justify-center text-center min-h-[300px] w-full"
+    >
       <div className="mb-6 opacity-80 text-[var(--text-muted)]">
         {iconSlot || (
           <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-60 text-current">
@@ -26,6 +30,6 @@ export default function EmptyState({ title, description, actionText, onAction, i
           {actionText}
         </button>
       )}
-    </div>
-  );
+    </Card>
+  )
 }

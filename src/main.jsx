@@ -5,11 +5,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
-import { inject } from '@vercel/analytics'
 import './index.css'
 import { getTheme, setTheme } from './theme.js'
 
-inject()
 setTheme(getTheme())
 
 class ErrorBoundary extends React.Component {

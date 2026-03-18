@@ -11,6 +11,7 @@ import { PriceTicker } from '../../components/shared/PriceTicker'
 import { SlideUp } from '../../components/motion/SlideUp'
 import { KalamkariDivider } from '../../components/shared/KalamkariDivider'
 import { StatusDot } from '../../components/shared/StatusDot'
+import BookingDatePicker from './BookingDatePicker'
 import { springs } from '../../lib/springs'
 import { COMPANY_LABELS, addDays, fmt } from '../../lib/utils'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -172,11 +173,10 @@ export function TrackTab({
 
             <div className="mb-6">
               <Field id="booking-date" label="Last booking date" meta="Optional">
-                <input
-                  type="date"
-                  className="input"
+                <BookingDatePicker
+                  id="booking-date"
                   value={lastBooking}
-                  onChange={(e) => setLastBooking(e.target.value)}
+                  onChange={setLastBooking}
                 />
               </Field>
             </div>

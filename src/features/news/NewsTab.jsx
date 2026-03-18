@@ -213,15 +213,17 @@ export default function NewsTab() {
           {loading && !validNews.length ? (
             <div className="mt-4 space-y-4">
               {[1, 2, 3].map((i) => (
-                <div
+                <Card
                   key={i}
-                  className="card opacity-60 motion-safe:animate-pulse"
+                  variant="inset"
+                  className="opacity-60 motion-safe:animate-pulse"
                   aria-hidden="true"
                 >
+                  <div className="kicker mb-3">Loading feed item</div>
                   <div className="h-4 w-32 rounded bg-[var(--bg-inset)] mb-3" />
                   <div className="h-3 w-4/5 rounded bg-[var(--bg-inset)] mb-2" />
                   <div className="h-3 w-2/3 rounded bg-[var(--bg-inset)]" />
-                </div>
+                </Card>
               ))}
             </div>
           ) : !validNews.length ? (

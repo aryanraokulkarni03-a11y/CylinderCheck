@@ -4,6 +4,7 @@
 
 import { motion, useReducedMotion } from 'motion/react'
 import { COMPANIES } from '../../lib/utils'
+import { Card } from '../ui/Card'
 
 const DOT = '\u00B7'
 const RUPEE = '\u20B9'
@@ -26,9 +27,9 @@ export function PriceTicker({ mapPrices = {} }) {
 
   if (!items.length) {
     return (
-      <div className="card card--inset card--compact card-strip w-full h-10 flex items-center mb-6">
+      <Card variant="inset" size="compact" className="card-strip w-full h-10 flex items-center mb-6">
         <div className="h-3 w-full rounded bg-[var(--divider)] motion-safe:animate-pulse" />
-      </div>
+      </Card>
     )
   }
 
@@ -36,8 +37,10 @@ export function PriceTicker({ mapPrices = {} }) {
   const doubled = [...items, ...items]
 
   return (
-    <div
-      className="card card--inset card--compact card-strip w-full overflow-hidden mb-6 h-11 flex items-center relative select-none"
+    <Card
+      variant="inset"
+      size="compact"
+      className="card-strip w-full overflow-hidden mb-6 h-11 flex items-center relative select-none"
       aria-label="LPG prices ticker"
     >
       {/* Edge fade masks */}
@@ -74,7 +77,7 @@ export function PriceTicker({ mapPrices = {} }) {
           </span>
         ))}
       </motion.div>
-    </div>
+    </Card>
   )
 }
 

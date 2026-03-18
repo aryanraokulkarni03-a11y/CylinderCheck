@@ -189,10 +189,20 @@ export default function CommercialPage({ prefilledCity }) {
                   className="space-y-4"
                 >
                   {[1, 2].map((i) => (
-                    <div
+                    <Card
                       key={i}
-                      className="card card--flush h-44 motion-safe:animate-pulse opacity-60"
-                    />
+                      variant="inset"
+                      className="h-44 motion-safe:animate-pulse opacity-60"
+                    >
+                      <div className="kicker mb-3">Loading supplier</div>
+                      <div className="h-5 w-2/5 rounded bg-[var(--bg-raised)] mb-4" />
+                      <div className="h-3 w-4/5 rounded bg-[var(--bg-raised)] mb-2" />
+                      <div className="h-3 w-3/5 rounded bg-[var(--bg-raised)] mb-6" />
+                      <div className="flex gap-3 mt-auto">
+                        <div className="h-11 flex-1 rounded-[var(--radius-md)] bg-[var(--bg-raised)]" />
+                        <div className="h-11 w-24 rounded-[var(--radius-md)] bg-[var(--bg-raised)]" />
+                      </div>
+                    </Card>
                   ))}
                 </motion.div>
               ) : vendorError ? (

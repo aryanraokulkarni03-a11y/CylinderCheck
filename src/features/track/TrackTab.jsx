@@ -203,14 +203,17 @@ export function TrackTab({
         >
           <AnimatePresence mode="wait">
             {loading && (
-              <motion.div
+              <Card
+                as={motion.div}
                 key="skeleton"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
-                className="card"
+                variant="inset"
+                className="status-edge status-edge--early"
               >
+                <div className="kicker mb-4">Reading local signal</div>
                 {[55, 100, 80, 90].map((w, i) => (
                   <div
                     key={i}
@@ -218,7 +221,7 @@ export function TrackTab({
                     style={{ width: `${w}%` }}
                   />
                 ))}
-              </motion.div>
+              </Card>
             )}
 
             {pinData && !loading && (

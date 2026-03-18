@@ -109,7 +109,7 @@ export function AuthCallbackPage({ user }) {
         return
       }
 
-      if (session?.access_token) {
+      if (activeUser) {
         try {
           localStorage.setItem(SIGN_IN_EMAIL_FLAG, '1')
         } catch {

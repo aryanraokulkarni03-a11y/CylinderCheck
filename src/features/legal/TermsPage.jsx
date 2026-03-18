@@ -1,4 +1,5 @@
 import React from 'react'
+import { FileText } from 'lucide-react'
 import LegalPageLayout from './LegalPageLayout'
 
 const CONTACT_EMAIL = 'xisch.co@gmail.com'
@@ -153,6 +154,7 @@ export function TermsPage() {
   return (
     <LegalPageLayout
       markerLabel="Terms"
+      icon={FileText}
       title="Terms of Use"
       description="The core rules, limitations, and responsibilities for using CylinderCheck and its paid features."
       effectiveDate={EFFECTIVE_DATE}

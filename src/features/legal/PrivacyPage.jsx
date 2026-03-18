@@ -1,4 +1,5 @@
 import React from 'react'
+import { ShieldCheck } from 'lucide-react'
 import LegalPageLayout from './LegalPageLayout'
 
 const CONTACT_EMAIL = 'xisch.co@gmail.com'
@@ -129,6 +130,7 @@ export function PrivacyPage() {
   return (
     <LegalPageLayout
       markerLabel="Privacy"
+      icon={ShieldCheck}
       title="Privacy Policy"
       description="How Xisch.Co collects, uses, and protects information when you use CylinderCheck."
       effectiveDate={EFFECTIVE_DATE}

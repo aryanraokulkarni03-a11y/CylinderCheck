@@ -4,6 +4,7 @@ import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerCo
 import { FadeIn } from '../../components/motion/FadeIn'
 import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
+import { PageHeader } from '../../components/ui/PageHeader'
 
 const RUPEE = '\u20B9'
 const EM_DASH = '\u2014'
@@ -13,23 +14,25 @@ export default function AdminTab({ data, loading, onLock }) {
 
   return (
     <div className="space-y-8 pb-12 w-full min-w-0">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 mt-4 border-b border-[var(--border)] pb-6">
-        <div>
-          <button
-            onClick={onLock}
-            className="flex items-center gap-1.5 kicker hover:text-[var(--text-primary)] mb-4 transition-colors p-1 -ml-1"
-          >
-            <ArrowLeft size={14} /> Exit restricted mode
-          </button>
-
-          <h1 className="type-page-title text-[var(--status-early)] mb-2 flex items-center gap-3">
-            <Shield size={28} className="text-[var(--status-early)]" />
-            System Control
-          </h1>
-          <p className="type-page-desc text-[var(--status-early)] opacity-80 font-medium">
-            Administrative overview. Authorized access only.
-          </p>
-        </div>
+      <div className="border-b border-[var(--border)] pb-6">
+        <PageHeader
+          markerStatus="early"
+          markerLabel="Admin"
+          markerSublabel="Restricted mode"
+          icon={Shield}
+          title="System Control"
+          description="Administrative overview for alerts, community activity, and paid subscribers. Authorized access only."
+          actions={(
+            <button
+              type="button"
+              onClick={onLock}
+              className="btn-ghost"
+            >
+              <ArrowLeft size={16} />
+              <span>Exit restricted mode</span>
+            </button>
+          )}
+        />
       </div>
 
       <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

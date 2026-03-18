@@ -3,7 +3,7 @@
 
 import { useCallback } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { ArrowDownRight, ShieldCheck, PhoneCall } from 'lucide-react'
+import { ArrowDownRight, ShieldCheck, PhoneCall, Store } from 'lucide-react'
 
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { springs } from '../../lib/springs'
@@ -45,7 +45,10 @@ export default function CommercialHero({ hasAnyVendors = null }) {
           </div>
 
           <h1 className="hero-title text-[var(--text-primary)]">
-            {isWaitlist ? 'Private suppliers are onboarding.' : 'Commercial LPG, without chaos.'}
+            <span className="page-header__title-row">
+              <Store size={30} className="text-[var(--accent)]" aria-hidden="true" />
+              <span>{isWaitlist ? 'Private suppliers are onboarding.' : 'Commercial LPG, without chaos.'}</span>
+            </span>
           </h1>
 
           <p className="type-page-desc mt-4 max-w-[66ch]">

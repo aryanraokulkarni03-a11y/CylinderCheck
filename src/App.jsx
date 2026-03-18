@@ -36,6 +36,7 @@ import SupportPage from './features/support/SupportPage'
 import PrivacyPage from './features/legal/PrivacyPage'
 import TermsPage from './features/legal/TermsPage'
 import AuthCallbackPage from './features/auth/AuthCallbackPage'
+import AccountPage from './features/account/AccountPage'
 
 const TABS = [
   { id: 'track', label: 'Track', icon: Target },
@@ -57,6 +58,7 @@ const TAB_ROUTES = {
   support: '/support',
   privacy: '/privacy',
   terms: '/terms',
+  account: '/account',
   authCallback: '/auth/callback',
 }
 
@@ -150,6 +152,15 @@ export default function App() {
       return false
     }
   }, [routerLocation.pathname, routerLocation.search])
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await supabase.auth.signOut()
+    } finally {
+      setAuthError('')
+      navigate(TAB_ROUTES.track, { replace: true })
+    }
+  }, [navigate])
 
   // Auth effect
   useEffect(() => {
@@ -416,6 +427,8 @@ export default function App() {
             onLogoClick={handleLogoClick}
             onDismissAuthError={() => setAuthError('')}
             onGoogleSignIn={handleGoogleSignIn}
+            onAccountClick={() => navigate(TAB_ROUTES.account)}
+            userEmail={user?.email || ''}
           />
         }
         bottomNav={<BottomNav tabs={visibleTabs} activeTab={activeTab} onTabChange={handleTabChange} />}
@@ -448,6 +461,17 @@ export default function App() {
               <Route path={TAB_ROUTES.support} element={<SupportPage />} />
               <Route path={TAB_ROUTES.privacy} element={<PrivacyPage />} />
               <Route path={TAB_ROUTES.terms} element={<TermsPage />} />
+              <Route
+                path={TAB_ROUTES.account}
+                element={
+                  <AccountPage
+                    user={user}
+                    authLoading={authLoading}
+                    onGoogleSignIn={handleGoogleSignIn}
+                    onSignOut={handleSignOut}
+                  />
+                }
+              />
               <Route path={TAB_ROUTES.authCallback} element={<AuthCallbackPage />} />
               <Route
                 path={TAB_ROUTES.admin}

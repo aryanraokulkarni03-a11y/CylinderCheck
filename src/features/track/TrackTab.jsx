@@ -2,7 +2,7 @@
 // Booking tracker + shortage intelligence by PIN.
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { MapPin } from 'lucide-react'
+import { MapPin, Target } from 'lucide-react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { UrgencyScore } from './UrgencyScore'
 import { Ring } from '../../components/shared/Ring'
@@ -95,6 +95,7 @@ export function TrackTab({
               : 'clear'
         }
         markerLabel="Track Your Area"
+        icon={Target}
         title="Booking Tracker"
         description="Know when to book. Know if there is a shortage. Real-time delivery intelligence by PIN code."
       />

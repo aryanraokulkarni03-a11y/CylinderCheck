@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { FileText, RefreshCw, ShieldCheck } from 'lucide-react'
+import { FileText, RefreshCw, ShieldCheck, Store } from 'lucide-react'
 import { supabase } from '../../supabaseClient'
 import { StaggerContainer } from '../../components/motion/StaggerContainer'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -143,6 +143,7 @@ export default function CommercialPage({ prefilledCity }) {
           markerStatus="active"
           markerLabel="Commercial Alternatives"
           markerSublabel="Private suppliers"
+          icon={Store}
           title="Private suppliers"
           description="Choose your state to see listings as they go live. If your state is empty today, join the list and we will notify you."
         />

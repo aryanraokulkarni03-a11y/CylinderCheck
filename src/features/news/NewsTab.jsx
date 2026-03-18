@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import NewsMap, { getCity } from './NewsMap'
 import { FadeIn } from '../../components/motion/FadeIn'
-import { ExternalLink, Loader2, MapPin, MessageCircle, RefreshCw } from 'lucide-react'
+import { ExternalLink, Loader2, MapPin, MessageCircle, Newspaper, RefreshCw } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { PillRow } from '../../components/ui/PillRow'
 import { Card } from '../../components/ui/Card'
@@ -176,6 +176,7 @@ export default function NewsTab() {
       <PageHeader
         markerStatus={pageStatus}
         markerLabel="Intelligence Feed"
+        icon={Newspaper}
         title="LPG Intelligence"
         description="Live tracking of shortages, price hikes, and policy shifts across India. City-tagged when possible."
         actions={

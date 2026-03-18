@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, Copy, Mail, Receipt, ShieldCheck, Store, TriangleAlert } from 'lucide-react'
+import { Check, Copy, LifeBuoy, Mail, Receipt, ShieldCheck, Store, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card } from '../../components/ui/Card'
@@ -130,6 +130,7 @@ export function SupportPage() {
         markerStatus="clear"
         markerLabel="Support"
         markerSublabel="Xisch.Co"
+        icon={LifeBuoy}
         title="Support Center"
         description="One editorial support inbox for billing, corrections, commercial issues, and access questions. Built mobile first, with clean follow-through instead of dead-end links."
         actions={(

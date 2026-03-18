@@ -13,6 +13,7 @@ export function LegalPageLayout({
   effectiveDate,
   intro,
   sections,
+  icon,
 }) {
   const shouldReduceMotion = useReducedMotion()
   const sectionIds = useMemo(() => sections.map((section) => section.id), [sections])
@@ -64,6 +65,7 @@ export function LegalPageLayout({
         markerStatus="clear"
         markerLabel={markerLabel}
         markerSublabel="Xisch.Co"
+        icon={icon}
         title={title}
         description={description}
         actions={(

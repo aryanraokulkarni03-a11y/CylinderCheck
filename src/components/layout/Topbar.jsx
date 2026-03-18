@@ -3,15 +3,12 @@
 
 import React from 'react'
 import { motion, useReducedMotion } from 'motion/react'
+import { CircleUserRound } from 'lucide-react'
 import { FlameIcon } from '../shared/FlameIcon'
-import { ThemeToggle } from '../shared/ThemeToggle'
-import { supabase } from '../../supabaseClient'
-import { LogOut } from 'lucide-react'
 import { springs } from '../../lib/springs'
 import { Callout } from '../ui/Callout'
 import GoogleSignInButton from '../auth/GoogleSignInButton'
 
-const DOT = '\u00B7'
 const ELLIPSIS = '\u2026'
 
 export function Topbar({
@@ -25,8 +22,11 @@ export function Topbar({
   onLogoClick,
   onDismissAuthError,
   onGoogleSignIn,
+  onAccountClick,
+  userEmail = '',
 }) {
   const shouldReduceMotion = useReducedMotion()
+  const userInitial = userEmail?.[0]?.toUpperCase() || 'A'
 
   return (
     <header
@@ -109,29 +109,22 @@ export function Topbar({
               </GoogleSignInButton>
             )}
 
-            {!authLoading && user && (
-              <div className="flex items-center gap-2">
-                <div
-                  className="hidden sm:flex w-8 h-8 rounded-full flex-shrink-0 bg-[var(--accent-soft)] border border-[var(--accent)]
-                             items-center justify-center type-data-label text-[var(--accent)]"
-                  aria-label="Signed in"
-                  title={user.email || 'Signed in'}
-                >
-                  {user.email?.[0]?.toUpperCase() || 'U'}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => supabase.auth.signOut()}
-                  className="btn-ghost w-11 px-0"
-                  aria-label="Sign out"
-                  title={user.email ? `Sign out (${user.email})` : 'Sign out'}
-                >
-                  <LogOut size={16} />
-                </button>
-              </div>
-            )}
-
-            <ThemeToggle />
+            <button
+              type="button"
+              onClick={onAccountClick}
+              className="btn-ghost topbar-account-btn"
+              aria-label={user ? 'Open account and essentials' : 'Open account, sign-in, and essentials'}
+              title={user ? (user.email || 'Account') : 'Account'}
+            >
+              {user ? (
+                <span className="topbar-account-btn__avatar" aria-hidden="true">
+                  {userInitial}
+                </span>
+              ) : (
+                <CircleUserRound size={18} aria-hidden="true" />
+              )}
+              <span className="topbar-account-btn__label">Account</span>
+            </button>
           </div>
         </div>
         {authError ? (

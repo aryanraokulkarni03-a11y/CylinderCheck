@@ -27,6 +27,15 @@ function triggerFirstSignInEmail(accessToken) {
     })
 }
 
+function redirectAfterAuth(target, navigate) {
+  try {
+    window.location.replace(target)
+    return
+  } catch {
+    navigate(target, { replace: true })
+  }
+}
+
 function isSafeNextPath(nextPath) {
   return typeof nextPath === 'string' && nextPath.startsWith('/') && !nextPath.startsWith('//')
 }
@@ -130,7 +139,7 @@ export function AuthCallbackPage({ user }) {
       hasCompletedRef.current = true
       const fallbackNext = getStoredNextPath()
       const target = requestedNext || (isSafeNextPath(fallbackNext) ? fallbackNext : null) || '/track'
-      navigate(target, { replace: true })
+      redirectAfterAuth(target, navigate)
     }
 
     finalizeAuth()

@@ -45,7 +45,7 @@ function displayArea(r) {
   return city
 }
 
-export default function ReportsTab({ user, authLoading }) {
+export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
   const shouldReduceMotion = useReducedMotion()
 
   const [reports, setReports] = useState([])
@@ -247,18 +247,7 @@ export default function ReportsTab({ user, authLoading }) {
               </p>
               <LiquidGlassBtn
                 className="w-full justify-center"
-                onClick={() => {
-                  try {
-                    const path = `${window.location.pathname || ''}${window.location.search || ''}`
-                    sessionStorage.setItem('cc-post-auth-path', path && path.startsWith('/') ? path : '/reports')
-                  } catch {
-                    // Private mode.
-                  }
-                  supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: { redirectTo: window.location.origin },
-                  })
-                }}
+                onClick={() => onGoogleSignIn?.('/reports')}
               >
                 Sign in with Google {ARROW}
               </LiquidGlassBtn>

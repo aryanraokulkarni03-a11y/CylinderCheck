@@ -4,12 +4,12 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('⚠️ Supabase env vars missing! Check .env.local in project root.')
+  console.error('Supabase env vars missing. Check .env.local in project root.')
 }
 
 export const supabase = createClient(
   supabaseUrl ?? '',
-  supabaseAnonKey ?? ''
+  supabaseAnonKey ?? '',
 )
 
 export const hasSupabase = !!(supabaseUrl && supabaseAnonKey)

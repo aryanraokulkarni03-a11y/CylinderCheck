@@ -25,6 +25,7 @@ import { Topbar } from './components/layout/Topbar'
 import { BottomNav } from './components/layout/BottomNav'
 import { SupportModal } from './components/modals/SupportModal'
 import { Footer } from './components/layout/Footer'
+import { Callout } from './components/ui/Callout'
 
 import TrackTab from './features/track/TrackTab'
 import ReportsTab from './features/reports/ReportsTab'
@@ -89,6 +90,7 @@ export default function App() {
 
   // UI
   const [showSupport, setShowSupport] = useState(false)
+  const [authError, setAuthError] = useState('')
 
   const restorePostAuthPath = useCallback(() => {
     try {
@@ -109,6 +111,43 @@ export default function App() {
     }
   }, [navigate])
 
+  const handleGoogleSignIn = useCallback(async (fallbackPath = TAB_ROUTES.track) => {
+    setAuthError('')
+
+    try {
+      const path = `${window.location.pathname || ''}${window.location.search || ''}`
+      sessionStorage.setItem(
+        'cc-post-auth-path',
+        path && path.startsWith('/') ? path : fallbackPath,
+      )
+    } catch {
+      // Private mode.
+    }
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      })
+
+      if (error) {
+        console.error('Supabase OAuth error:', error)
+        setAuthError(
+          'Google sign-in is not available right now. Check the provider setup and try again shortly.',
+        )
+        return false
+      }
+
+      return true
+    } catch (error) {
+      console.error('Sign in failed:', error)
+      setAuthError(
+        'Google sign-in is not available right now. Check the provider setup and try again shortly.',
+      )
+      return false
+    }
+  }, [])
+
   // Auth effect
   useEffect(() => {
     let alive = true
@@ -117,12 +156,14 @@ export default function App() {
       if (!alive) return
       setUser(session?.user ?? null)
       setAuthLoading(false)
+      if (session?.user) setAuthError('')
       if (session?.user) restorePostAuthPath()
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!alive) return
       setUser(session?.user ?? null)
+      if (session?.user) setAuthError('')
 
       // After OAuth returns, restore the route the user was on.
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
@@ -373,14 +414,33 @@ export default function App() {
             onTabChange={handleTabChange}
             user={user}
             authLoading={authLoading}
+            authError={authError}
             logoClicks={logoClicks}
             onLogoClick={handleLogoClick}
             onSupportOpen={() => setShowSupport(true)}
+            onGoogleSignIn={handleGoogleSignIn}
           />
         }
         bottomNav={<BottomNav tabs={visibleTabs} activeTab={activeTab} onTabChange={handleTabChange} />}
         footer={<Footer onSupportOpen={() => setShowSupport(true)} />}
       >
+        {authError && (
+          <Callout tone="active" className="mb-6" edge={false}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="kicker kicker--caps text-[var(--accent)] mb-2">Sign-in status</div>
+                <p className="text-[var(--fs-sm)] text-[var(--text-primary)] m-0">{authError}</p>
+              </div>
+              <button
+                type="button"
+                className="btn-ghost min-h-[44px] px-4"
+                onClick={() => setAuthError('')}
+              >
+                Dismiss
+              </button>
+            </div>
+          </Callout>
+        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={routerLocation.pathname}
@@ -392,7 +452,16 @@ export default function App() {
             <Routes location={routerLocation}>
               <Route path="/" element={<Navigate to={TAB_ROUTES.track} replace />} />
               <Route path={TAB_ROUTES.track} element={<TrackTab {...trackProps} />} />
-              <Route path={TAB_ROUTES.reports} element={<ReportsTab user={user} authLoading={authLoading} />} />
+              <Route
+                path={TAB_ROUTES.reports}
+                element={
+                  <ReportsTab
+                    user={user}
+                    authLoading={authLoading}
+                    onGoogleSignIn={handleGoogleSignIn}
+                  />
+                }
+              />
               <Route path={TAB_ROUTES.news} element={<NewsTab />} />
               <Route path={TAB_ROUTES.alerts} element={<AlertsTab />} />
               <Route path={TAB_ROUTES.commercial} element={<CommercialPage prefilledCity={normalizedCity} />} />

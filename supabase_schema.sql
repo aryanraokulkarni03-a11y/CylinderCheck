@@ -83,6 +83,46 @@ INSERT INTO lpg_prices (company, price) VALUES
   ('HP Gas',    906.00),
   ('Bharat Gas',901.00);
 
+-- 5. Paid subscriptions
+--    Written by verify-payment edge function, read by admin stats.
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id                   BIGSERIAL PRIMARY KEY,
+  contact              TEXT,
+  pin                  TEXT,
+  razorpay_order_id    TEXT NOT NULL UNIQUE,
+  razorpay_payment_id  TEXT NOT NULL UNIQUE,
+  razorpay_signature   TEXT NOT NULL,
+  status               TEXT NOT NULL DEFAULT 'active',
+  amount               INT NOT NULL DEFAULT 4900,
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- 6. Commercial lead capture
+--    Written by the commercial lead form when no direct vendor fit is available.
+CREATE TABLE IF NOT EXISTS commercial_leads (
+  id              BIGSERIAL PRIMARY KEY,
+  business_name   TEXT NOT NULL,
+  business_type   TEXT NOT NULL,
+  city            TEXT,
+  pin             TEXT,
+  phone           TEXT NOT NULL,
+  need_type       TEXT NOT NULL,
+  cylinders_week  INT,
+  message         TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE commercial_leads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public can insert commercial leads" ON commercial_leads FOR INSERT WITH CHECK (true);
+
+-- Live DB note (verified 2026-03-18):
+-- The production project also contains auxiliary tables:
+--   feedback, price_corrections, report_votes
+-- They are not yet represented in this bootstrap schema because the
+-- current frontend repo does not depend on their column contract directly.
+
 -- ============================================
 -- DONE. Now copy your Project URL + anon key
 -- into .env.local

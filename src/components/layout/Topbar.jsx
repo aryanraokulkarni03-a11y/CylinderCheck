@@ -18,9 +18,11 @@ export function Topbar({
   onTabChange,
   user,
   authLoading,
+  authError,
   logoClicks = 0,
   onLogoClick,
   onSupportOpen,
+  onGoogleSignIn,
 }) {
   const shouldReduceMotion = useReducedMotion()
 
@@ -116,29 +118,7 @@ export function Topbar({
             {!authLoading && !user && (
               <button
                 type="button"
-                onClick={async () => {
-                  try {
-                    const path = `${window.location.pathname || ''}${window.location.search || ''}`
-                    sessionStorage.setItem('cc-post-auth-path', path && path.startsWith('/') ? path : '/track')
-                  } catch {
-                    // Private mode.
-                  }
-
-                  try {
-                    const { error } = await supabase.auth.signInWithOAuth({
-                      provider: 'google',
-                      options: { redirectTo: window.location.origin },
-                    })
-                    if (error) {
-                      // Most common cause: Google provider not enabled in Supabase.
-                      console.error('Supabase OAuth error:', error)
-                      alert('Sign in is not available right now. Please try again later.')
-                    }
-                  } catch (e) {
-                    console.error('Sign in failed:', e)
-                    alert('Sign in is not available right now. Please try again later.')
-                  }
-                }}
+                onClick={() => onGoogleSignIn?.('/track')}
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
                 aria-label="Sign in with Google"
                 title="Sign in with Google"
@@ -178,6 +158,7 @@ export function Topbar({
             <ThemeToggle />
           </div>
         </div>
+        {authError ? <div className="sr-only" aria-live="polite">{authError}</div> : null}
       </div>
     </header>
   )

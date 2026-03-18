@@ -66,6 +66,7 @@ const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
 const NOTIFY_TIMEOUT_MS = 4000
+const SIGN_IN_EMAIL_FLAG = 'cc-pending-first-sign-in-email'
 
 export default function App() {
   const shouldReduceMotion = useReducedMotion()
@@ -113,21 +114,31 @@ export default function App() {
     pendingFirstSignInEmailRef.current = true
     lastNotifiedUserRef.current = userId
 
-    const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), NOTIFY_TIMEOUT_MS)
-
     try {
-      await fetch(`${SUPABASE_FUNC_URL}/notify-sign-in`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ source: 'google-oauth' }),
-        signal: controller.signal,
-      }).catch(() => undefined)
+      const timeout = window.setTimeout(() => {
+        pendingFirstSignInEmailRef.current = false
+      }, NOTIFY_TIMEOUT_MS)
+
+      try {
+        const { error } = await supabase.functions.invoke('notify-sign-in', {
+          body: { source: 'google-oauth' },
+        })
+
+        if (error) {
+          console.error('notify-sign-in invoke failed:', error)
+          lastNotifiedUserRef.current = ''
+          return
+        }
+      } finally {
+        window.clearTimeout(timeout)
+      }
+
+      try {
+        localStorage.removeItem(SIGN_IN_EMAIL_FLAG)
+      } catch {
+        // Ignore storage failures in private mode.
+      }
     } finally {
-      window.clearTimeout(timeout)
       pendingFirstSignInEmailRef.current = false
     }
   }, [])
@@ -145,6 +156,7 @@ export default function App() {
 
     try {
       localStorage.setItem('cc-post-auth-path', requestedPath)
+      localStorage.setItem(SIGN_IN_EMAIL_FLAG, '1')
     } catch {
       // Private mode.
     }
@@ -190,6 +202,7 @@ export default function App() {
     try {
       await supabase.auth.signOut()
     } finally {
+      lastNotifiedUserRef.current = ''
       setAuthError('')
       navigate(TAB_ROUTES.track, { replace: true })
     }
@@ -221,7 +234,22 @@ export default function App() {
       alive = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [notifyFirstSignIn])
+
+  useEffect(() => {
+    if (authLoading || !authSession?.access_token || !user?.id) return
+
+    let hasPendingFlag = false
+
+    try {
+      hasPendingFlag = localStorage.getItem(SIGN_IN_EMAIL_FLAG) === '1'
+    } catch {
+      hasPendingFlag = false
+    }
+
+    if (!hasPendingFlag) return
+    void notifyFirstSignIn(authSession)
+  }, [authLoading, authSession, notifyFirstSignIn, user?.id])
 
   // Prices + shortage summary effect
   useEffect(() => {

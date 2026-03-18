@@ -15,6 +15,9 @@ type Article = {
   sourceUrl: string;
 };
 
+const MAX_ARTICLES = 8;
+const DECODE_TIMEOUT_MS = 1800;
+
 function decodeXmlEntities(value: string) {
   return value
     .replace(/&amp;/g, "&")
@@ -121,12 +124,33 @@ async function decodeGoogleNewsUrl(googleLink: string) {
   }
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T) {
+  let timeoutId: number | undefined;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timeoutId = setTimeout(() => resolve(fallback), ms);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
 async function pickResolvedLink(googleLink: string, sourceUrl: string) {
   if (!googleLink.includes("news.google.com/")) {
     return normalizeLink(googleLink);
   }
 
-  const decodedLink = await decodeGoogleNewsUrl(googleLink);
+  const decodedLink = await withTimeout(
+    decodeGoogleNewsUrl(googleLink),
+    DECODE_TIMEOUT_MS,
+    "",
+  );
   if (decodedLink) {
     return decodedLink;
   }
@@ -138,7 +162,7 @@ async function pickResolvedLink(googleLink: string, sourceUrl: string) {
   return normalizeLink(googleLink);
 }
 
-async function parseRSS(xml: string) {
+function parseRSS(xml: string) {
   const items: Article[] = [];
   const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
 
@@ -168,12 +192,10 @@ async function parseRSS(xml: string) {
 
     const normalizedGoogleLink = decodeXmlEntities(googleLink);
     const normalizedSourceUrl = decodeXmlEntities(sourceUrl);
-    const resolvedLink = await pickResolvedLink(normalizedGoogleLink, normalizedSourceUrl);
-
     if (cleanTitle && normalizedGoogleLink) {
       items.push({
         title: cleanTitle,
-        link: resolvedLink,
+        link: normalizedSourceUrl ? normalizeLink(normalizedSourceUrl) : normalizeLink(normalizedGoogleLink),
         googleLink: normalizedGoogleLink,
         pubDate,
         source,
@@ -183,6 +205,15 @@ async function parseRSS(xml: string) {
   }
 
   return items.slice(0, 10);
+}
+
+async function resolveArticleLinks(articles: Article[]) {
+  return await Promise.all(
+    articles.map(async (article) => ({
+      ...article,
+      link: await pickResolvedLink(article.googleLink, article.sourceUrl),
+    })),
+  );
 }
 
 serve(async (req) => {
@@ -200,7 +231,7 @@ serve(async (req) => {
     let articles: Article[] = [];
 
     for (const query of queries) {
-      if (articles.length >= 8) break;
+      if (articles.length >= MAX_ARTICLES) break;
 
       const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-IN&gl=IN&ceid=IN:en`;
 
@@ -214,7 +245,7 @@ serve(async (req) => {
         if (!res.ok) continue;
 
         const xml = await res.text();
-        const parsed = await parseRSS(xml);
+        const parsed = parseRSS(xml);
 
         for (const item of parsed) {
           if (!articles.find((article) => article.title === item.title)) {
@@ -226,8 +257,10 @@ serve(async (req) => {
       }
     }
 
+    const finalArticles = await resolveArticleLinks(articles.slice(0, MAX_ARTICLES));
+
     return new Response(
-      JSON.stringify({ ok: true, articles }),
+      JSON.stringify({ ok: true, articles: finalArticles }),
       { headers: CORS },
     );
   } catch (err) {

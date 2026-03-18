@@ -34,12 +34,12 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
       className="mb-8"
     >
       {/* National status header */}
-      <div className="flex items-center gap-3 mb-5">
-        <StatusDot status={overallStatus} size={8} />
-        <span className="kicker kicker--caps">
-          National LPG Intelligence | Live
-        </span>
-      </div>
+        <div className="flex items-center gap-3 mb-5">
+          <StatusDot status={overallStatus} size={8} />
+          <span className="kicker">
+            National LPG Intelligence | Live
+          </span>
+        </div>
 
       {/* Live stats */}
       <StaggerContainer staggerVal={0.14}
@@ -79,7 +79,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
         >
           <StatusDot status="active" size={7} />
           <div>
-            <div className="kicker kicker--caps text-[var(--status-active)] mb-1">
+            <div className="kicker text-[var(--status-active)] mb-1">
               Hotspot | {shortageSummary.hotspot}
             </div>
             <p className="text-[var(--fs-sm)] text-[var(--text-secondary)]">
@@ -87,7 +87,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
                 {shortageSummary.hotspotReports}
               </span>
               {' '}reports in the last 30 days.{' '}
-              <span className="kicker kicker--caps text-[var(--status-active)] inline">
+              <span className="kicker text-[var(--status-active)] inline">
                 {shortageSummary.activePinCount} PIN{shortageSummary.activePinCount > 1 ? 's' : ''} affected.
               </span>
             </p>

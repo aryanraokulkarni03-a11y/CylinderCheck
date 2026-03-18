@@ -11,6 +11,8 @@ import { SlideUp } from '../../components/motion/SlideUp'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
 import { Callout } from '../../components/ui/Callout'
+import { Card } from '../../components/ui/Card'
+import { CardBody, CardHeader } from '../../components/ui/CardParts'
 
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || ''
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -232,34 +234,32 @@ export default function AlertsTab() {
 
       <div className="grid lg:grid-cols-2 gap-6 items-start min-w-0">
         <SlideUp delay={0.02} className="w-full min-w-0">
-          <div className="card">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="badge text-[var(--status-clear)] bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)]">
-                    Free
-                  </span>
-                  <span className="kicker kicker--caps">
-                    Booking window reminder
-                  </span>
-                </div>
-                <h2 className="font-display font-bold text-[var(--fs-h4)] tracking-[-0.02em] text-[var(--text-primary)] m-0">
-                  Know when to book
-                </h2>
+          <Card>
+            <CardHeader
+              kicker="Booking window reminder"
+              title="Know when to book"
+              titleAs="h2"
+              actions={
+                <button
+                  type="button"
+                  onClick={scrollToPlus}
+                  className="text-[var(--fs-sm)] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+                >
+                  Plus details {ARROW}
+                </button>
+              }
+            >
+              <div className="mt-3">
+                <span className="badge text-[var(--status-clear)] bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)]">
+                  Free
+                </span>
               </div>
+              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed mt-4 mb-0 max-w-[70ch]">
+                Enter your last booking date and we will alert you 2 days before your next window opens. No app. No spam.
+              </p>
+            </CardHeader>
 
-              <button
-                type="button"
-                onClick={scrollToPlus}
-                className="text-[var(--fs-sm)] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
-              >
-                Plus details {ARROW}
-              </button>
-            </div>
-
-            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed mt-4 mb-6 max-w-[70ch]">
-              Enter your last booking date and we will alert you 2 days before your next window opens. No app. No spam.
-            </p>
+            <CardBody>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <Field id="free-pin" label="PIN" meta="Optional">
@@ -334,40 +334,41 @@ export default function AlertsTab() {
             <p className="text-[var(--fs-xs)] text-[var(--text-muted)] mt-4 mb-0">
               You can opt out anytime by replying STOP.
             </p>
-          </div>
+            </CardBody>
+          </Card>
         </SlideUp>
 
         <SlideUp delay={0.06} className="w-full min-w-0">
-          <div id="plus-card" className="card card-featured">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
-                    Plus
-                  </span>
-                  <span className="kicker kicker--caps">
-                    Early access
-                  </span>
-                </div>
-                <h2 className="font-display font-bold text-[var(--fs-h3)] tracking-[-0.02em] text-[var(--text-primary)] m-0 flex items-center gap-2">
+          <Card id="plus-card" variant="featured">
+            <CardHeader
+              kicker="Early access"
+              title={
+                <span className="inline-flex items-center gap-2">
                   <BadgeCheck size={22} className="text-[var(--accent)]" />
                   CylinderCheck Plus
-                </h2>
-              </div>
-
-              <div className="text-right">
-                <div className="price text-[var(--fs-h2)] tracking-[-0.02em] text-[var(--text-primary)] leading-none">
-                  {RUPEE}49
+                </span>
+              }
+              titleAs="h2"
+              actions={
+                <div className="text-right">
+                  <div className="price text-[var(--fs-h2)] tracking-[-0.02em] text-[var(--text-primary)] leading-none">
+                    {RUPEE}49
+                  </div>
+                  <div className="kicker mt-1">per month</div>
                 </div>
-                <div className="kicker kicker--caps mt-1">
-                  per month
-                </div>
+              }
+            >
+              <div className="mt-3">
+                <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
+                  Plus
+                </span>
               </div>
-            </div>
+              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed mt-4 mb-0 max-w-[70ch]">
+                Shortage intelligence for households. Calm, precise, and pin-level when it matters.
+              </p>
+            </CardHeader>
 
-            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed mt-4 mb-6 max-w-[70ch]">
-              Shortage intelligence for households. Calm, precise, and pin-level when it matters.
-            </p>
+            <CardBody>
 
             <div className="space-y-3 pb-6 border-b border-[var(--divider)] mb-6">
               {PLUS_FEATURES.map(([tag, text]) => (
@@ -454,7 +455,8 @@ export default function AlertsTab() {
                 </div>
               </div>
             )}
-          </div>
+            </CardBody>
+          </Card>
         </SlideUp>
       </div>
     </div>

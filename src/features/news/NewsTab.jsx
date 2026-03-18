@@ -12,6 +12,7 @@ import { List } from '../../components/ui/List'
 import { ListRow } from '../../components/ui/ListRow'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
 import { SectionMarker } from '../../components/shared/SectionMarker'
+import EmptyState from '../../components/shared/EmptyState'
 
 const DOT = '\u00B7'
 const DOWN = '\u2193'
@@ -224,17 +225,14 @@ export default function NewsTab() {
               ))}
             </div>
           ) : !validNews.length ? (
-            <Card variant="raised" className="mt-4 card--dashed card--spacious text-center">
-              <div className="kicker kicker--caps mb-4">
-                No feed yet
-              </div>
-              <h2 className="font-display font-bold text-[var(--fs-body)] text-[var(--text-primary)] mb-2 m-0">
-                Scraper quiet
-              </h2>
-              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)]">
-                No recent intelligence found. Try syncing.
-              </p>
-            </Card>
+            <div className="mt-4">
+              <EmptyState
+                title="Scraper quiet"
+                description="No recent intelligence found right now. Sync the feed and we will check again."
+                actionText="Sync feed"
+                onAction={() => fetchNews(true)}
+              />
+            </div>
           ) : (
             <FadeIn delay={0.08}>
               <div className="mt-6 space-y-10">
@@ -306,7 +304,7 @@ export default function NewsTab() {
 
                     <CardBody className="pl-3">
                       <div className="flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
-                        <span className="kicker kicker--caps text-[var(--text-secondary)]">
+                        <span className="kicker text-[var(--text-secondary)]">
                           {leadStory.source}
                         </span>
                         <span className="text-[var(--divider)]" aria-hidden="true">
@@ -337,7 +335,7 @@ export default function NewsTab() {
                         className="w-full card card--inset card--dashed card--compact row--interactive text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         onClick={() => setShowGeneral(true)}
                       >
-                        <span className="kicker kicker--caps">
+                        <span className="kicker">
                           Show {items.length} general items {DOWN}
                         </span>
                       </button>
@@ -389,7 +387,7 @@ export default function NewsTab() {
                               }
                             >
                               <div className="flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
-                                <span className="kicker kicker--caps text-[var(--text-secondary)]">
+                                <span className="kicker text-[var(--text-secondary)]">
                                   {item.source}
                                 </span>
                                 {item.city ? (
@@ -417,7 +415,7 @@ export default function NewsTab() {
 
         <div className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)] min-w-0">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="kicker kicker--caps">
+            <div className="kicker">
               Signals map
             </div>
             <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
@@ -438,7 +436,7 @@ export default function NewsTab() {
                 />
 
                 <div className="absolute bottom-4 right-4 z-[400] rounded-full border border-[var(--border)] bg-[var(--bg-raised)] px-3 py-1 pointer-events-none">
-                  <div className="flex items-center gap-2 kicker kicker--caps">
+                  <div className="flex items-center gap-2 kicker">
                     <span className="w-2 h-2 rounded-full bg-[var(--accent)]" aria-hidden="true" />
                     Live signals
                   </div>

@@ -58,10 +58,10 @@ export default function VendorCard({ vendor }) {
       <motion.div
         whileHover={(!shouldReduceMotion && canHover) ? { y: -4 } : undefined}
         transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
-        className={`card relative overflow-hidden group transition-colors duration-300 ${
+        className={`card card--interactive relative overflow-hidden group transition-colors duration-300 ${
           isFeatured
             ? 'card-featured'
-            : 'hover:border-[var(--accent-glow)] hover:shadow-[0_8px_30px_var(--shadow-glow)]'
+            : ''
         }`}
       >
         {isFeatured && (
@@ -84,7 +84,7 @@ export default function VendorCard({ vendor }) {
                   />
                 )}
               </div>
-              <div className="flex items-center gap-1.5 kicker kicker--caps">
+              <div className="flex items-center gap-1.5 kicker">
                 <MapPin size={12} className="text-[var(--accent)]" />
                 <span className="truncate">
                   {vendor?.city || 'India'}
@@ -97,7 +97,7 @@ export default function VendorCard({ vendor }) {
                 </p>
               )}
               {isVerified && licenseNumber && (
-                <div className="mt-2 kicker kicker--caps">
+                <div className="mt-2 kicker">
                   License <span className="text-[var(--divider)]" aria-hidden="true">{DOT}</span>{' '}
                   <span className="stat-value text-[var(--text-data)] tracking-[0.02em] normal-case">
                     {licenseNumber}

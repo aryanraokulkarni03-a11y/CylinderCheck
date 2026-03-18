@@ -14,6 +14,8 @@ import { Field } from '../../components/ui/Field'
 import { Callout } from '../../components/ui/Callout'
 import { List } from '../../components/ui/List'
 import { ListRow } from '../../components/ui/ListRow'
+import { Card } from '../../components/ui/Card'
+import { CardHeader } from '../../components/ui/CardParts'
 
 const ARROW = '\u2192'
 const DOT = '\u00B7'
@@ -216,29 +218,29 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start min-w-0">
-        <div className="card lg:sticky lg:top-[calc(var(--topbar-height)+24px)]">
-          <div className="flex items-start justify-between gap-4 mb-5">
-            <div>
-              <div className="kicker kicker--caps text-[var(--accent)]">
-                Submit a report
-              </div>
-              <div className="text-[var(--fs-sm)] text-[var(--text-muted)] mt-1 leading-relaxed">
-                Keep it factual. If you can, add delivery days and your LPG provider.
-              </div>
-            </div>
-
-            {user && (
-              <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
-                Signed in
-              </span>
-            )}
-          </div>
+        <Card className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)]">
+          <CardHeader
+            kicker="Submit a report"
+            title="Share what is happening in your area"
+            titleAs="h2"
+            actions={
+              user ? (
+                <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
+                  Signed in
+                </span>
+              ) : null
+            }
+          >
+            <p className="caption text-[var(--text-secondary)] mt-3 mb-0">
+              Keep it factual. If you can, add delivery days and your LPG provider.
+            </p>
+          </CardHeader>
 
           {!authLoading && !user ? (
             <div className="text-center py-6">
-              <div className="kicker kicker--caps text-[var(--text-muted)] mb-3">
-                Sign in required
-              </div>
+                <div className="kicker text-[var(--text-muted)] mb-3">
+                  Sign in required
+                </div>
               <h2 className="font-display font-bold text-[var(--fs-body)] text-[var(--text-primary)] mb-2 m-0">
                 Sign in to submit
               </h2>
@@ -331,15 +333,15 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
               </div>
             </FadeIn>
           )}
-        </div>
+        </Card>
 
         <div className="min-w-0">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2">
               <AlertCircle size={14} className="text-[var(--accent)]" />
-              <span className="kicker kicker--caps">
-                Reports feed
-              </span>
+                <span className="kicker">
+                  Reports feed
+                </span>
               <span className="text-[var(--divider)] text-[var(--fs-xs)]" aria-hidden="true">
                 {DOT}
               </span>

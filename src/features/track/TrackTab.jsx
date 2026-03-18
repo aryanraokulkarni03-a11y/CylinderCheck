@@ -16,6 +16,9 @@ import { COMPANY_LABELS, addDays, fmt } from '../../lib/utils'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
 import { Callout } from '../../components/ui/Callout'
+import { Card } from '../../components/ui/Card'
+import { CardBody, CardHeader } from '../../components/ui/CardParts'
+import EmptyState from '../../components/shared/EmptyState'
 
 const ARROW = '\u2192'
 
@@ -106,11 +109,18 @@ export function TrackTab({
             )}
           </AnimatePresence>
 
-          <div className="card">
-            <div className="kicker kicker--caps text-[var(--accent)] mb-4">
-              Delivery Prediction
-            </div>
+          <Card>
+            <CardHeader
+              kicker="Delivery prediction"
+              title="Check your local booking window"
+              titleAs="h2"
+            >
+              <p className="caption text-[var(--text-secondary)] mt-3 mb-0">
+                Enter your PIN, optional booking date, and current cylinder level for a calm read on what to do next.
+              </p>
+            </CardHeader>
 
+            <CardBody>
             <div className="mb-5">
               <Field id="pin-input" label="Where are you?" required>
                 <input
@@ -165,7 +175,7 @@ export function TrackTab({
                                 }`}
                   >
                     <span className="text-[var(--fs-body)] leading-none">{emoji}</span>
-                    <span className="kicker kicker--caps leading-none text-[inherit]">
+                    <span className="kicker leading-none text-[inherit]">
                       {label}
                     </span>
                     <span className="caption text-[var(--text-muted)] leading-none">{hint}</span>
@@ -183,7 +193,8 @@ export function TrackTab({
             <LiquidGlassBtn onClick={handleTrack} disabled={loading} className="w-full justify-center">
               {loading ? 'Looking up...' : `See what's happening ${ARROW}`}
             </LiquidGlassBtn>
-          </div>
+            </CardBody>
+          </Card>
         </div>
 
         <div
@@ -212,30 +223,26 @@ export function TrackTab({
 
             {pinData && !loading && (
               <SlideUp key="result">
-                <div className="card mb-4">
-                  <div className="flex justify-between items-start gap-4 mb-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <MapPin size={12} style={{ color: 'var(--accent)' }} />
-                        <span className="kicker kicker--caps text-[var(--accent)]">
-                          {pinData.area || `PIN ${pinData.pin}`}
+                <Card className="mb-4">
+                  <CardHeader
+                    kicker={pinData.area || `PIN ${pinData.pin}`}
+                    title={pinData.city}
+                    titleAs="h2"
+                    actions={
+                      trend ? (
+                        <span className={`badge ${trend.className}`}>
+                          {trend.label}
                         </span>
-                      </div>
-                      <h2 className="text-[var(--text-primary)] m-0">
-                        {pinData.city}
-                      </h2>
+                      ) : null
+                    }
+                  >
+                    <div className="flex items-center gap-2 mt-3 text-[var(--accent)]">
+                      <MapPin size={12} />
+                      <span className="kicker text-[inherit]">Delivery intelligence</span>
                     </div>
+                  </CardHeader>
 
-                    {trend && (
-                      <span
-                        className={`badge ${trend.className}`}
-                      >
-                        {trend.label}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="divide-y divide-[var(--divider)]">
+                  <CardBody className="divide-y divide-[var(--divider)]">
                     <div className="flex justify-between items-start py-3">
                       <span className="text-[var(--fs-sm)] text-[var(--text-secondary)]">Avg Delivery</span>
                       <span className="text-right">
@@ -270,37 +277,39 @@ export function TrackTab({
                         </span>
                       </div>
                     )}
-                  </div>
-                </div>
+                  </CardBody>
+                </Card>
 
                 {pinData.urgencyScore !== undefined && (
-                  <div className="card mb-4 text-center">
-                    <div className="kicker kicker--caps text-[var(--accent)] mb-4">
-                      Urgency Score
-                    </div>
-                    <UrgencyScore score={pinData.urgencyScore} />
-                  </div>
+                  <Card className="mb-4 text-center">
+                    <CardHeader
+                      kicker="Personal readout"
+                      title="Urgency score"
+                      titleAs="h2"
+                    />
+                    <CardBody>
+                      <UrgencyScore score={pinData.urgencyScore} />
+                    </CardBody>
+                  </Card>
                 )}
 
                 {bookingResult && (
-                  <div
+                  <Card
                     className={`rounded-[var(--radius-lg)] border p-6 mb-4 ${
                       bookingResult.daysLeft <= 0
                         ? 'border-[var(--status-clear-border)] bg-[var(--status-clear-soft)]'
                         : 'border-[var(--border)] bg-[var(--bg-raised)]'
                     }`}
                   >
-                    <div className="kicker kicker--caps text-[var(--accent)] mb-4">
-                      Your Booking Window
-                    </div>
+                    <CardHeader
+                      kicker="Booking window"
+                      title={bookingResult.daysLeft <= 0 ? 'Window is open now' : 'Next booking window'}
+                      titleAs="h2"
+                    />
 
                     <div className="flex items-center gap-5">
                       <Ring daysLeft={bookingResult.daysLeft} />
                       <div>
-                        <p className="kicker kicker--caps mb-1">
-                          {bookingResult.daysLeft <= 0 ? 'Window is open now' : 'Next window opens'}
-                        </p>
-
                         {bookingResult.daysLeft <= 0 ? (
                           <p className="font-display font-bold text-[var(--fs-h4)] tracking-[-0.02em] text-[var(--status-clear)]">
                             Book right now
@@ -331,7 +340,7 @@ export function TrackTab({
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 )}
 
                 {pinData.reportCount >= 2 && (
@@ -346,7 +355,7 @@ export function TrackTab({
                     <StatusDot status={pinData.reportCount >= 5 ? 'severe' : 'active'} size={7} />
                     <div>
                       <div
-                        className="kicker kicker--caps mb-1"
+                        className="kicker mb-1"
                         style={{
                           color: pinData.reportCount >= 5 ? 'var(--status-severe)' : 'var(--status-active)',
                         }}
@@ -395,30 +404,12 @@ export function TrackTab({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
-                className="hidden md:flex flex-col items-center justify-center py-12 text-center"
+                className="hidden md:block"
               >
-                <svg width="64" height="80" viewBox="0 0 64 80" fill="none" className="mb-4 opacity-30">
-                  <ellipse cx="32" cy="12" rx="24" ry="8" stroke="var(--accent)" strokeWidth="1.5" fill="none" />
-                  <line x1="8" y1="12" x2="8" y2="62" stroke="var(--accent)" strokeWidth="1.5" />
-                  <line x1="56" y1="12" x2="56" y2="62" stroke="var(--accent)" strokeWidth="1.5" />
-                  <ellipse cx="32" cy="62" rx="24" ry="8" stroke="var(--accent)" strokeWidth="1.5" fill="none" />
-                  <ellipse cx="32" cy="62" rx="24" ry="8" fill="var(--accent)" opacity="0.15" />
-                  <circle cx="32" cy="10" r="3" fill="var(--accent)" opacity="0.6" />
-                  <text
-                    x="32"
-                    y="40"
-                    textAnchor="middle"
-                    fontFamily="var(--font-body)"
-                    fontSize="var(--fs-xs)"
-                    fill="var(--text-muted)"
-                    letterSpacing="var(--ls-widest)"
-                  >
-                    ?
-                  </text>
-                </svg>
-                <p className="font-body text-[var(--text-muted)] text-[var(--fs-sm)]">
-                  Enter your PIN for live intelligence
-                </p>
+                <EmptyState
+                  title="Enter your PIN for live intelligence"
+                  description="Your delivery pattern, shortage status, and booking timing will appear here once we know which area to inspect."
+                />
               </motion.div>
             )}
           </AnimatePresence>

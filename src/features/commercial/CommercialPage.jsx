@@ -18,6 +18,7 @@ import VendorCard from './VendorCard'
 import LeadForm from './LeadForm'
 import { Card } from '../../components/ui/Card'
 import { Callout } from '../../components/ui/Callout'
+import EmptyState from '../../components/shared/EmptyState'
 
 const ARROW = '\u2192'
 const DOT = '\u00B7'
@@ -123,7 +124,7 @@ export default function CommercialPage({ prefilledCity }) {
       <CommercialHero hasAnyVendors={hasAnyVendors} />
 
       <div id="commercial-vendors" className="mt-14 md:mt-20 w-full">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)] kicker kicker--caps w-full">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)] kicker w-full">
           <span className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-[var(--status-early)]" />
             License checks rolling out
@@ -221,39 +222,18 @@ export default function CommercialPage({ prefilledCity }) {
                   ))}
                 </StaggerContainer>
               ) : (
-                <Card
-                  as={motion.div}
-                  variant="inset"
+                <motion.div
                   key="empty"
                   initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.98 }}
                   transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
-                  className="card--dashed card--spacious text-center w-full"
                 >
-                  <svg
-                    width="48"
-                    height="60"
-                    viewBox="0 0 48 60"
-                    fill="none"
-                    className="mx-auto mb-4 opacity-25"
-                  >
-                    <ellipse cx="24" cy="9" rx="18" ry="6" stroke="var(--accent)" strokeWidth="1.5" fill="none" />
-                    <line x1="6" y1="9" x2="6" y2="47" stroke="var(--accent)" strokeWidth="1.5" />
-                    <line x1="42" y1="9" x2="42" y2="47" stroke="var(--accent)" strokeWidth="1.5" />
-                    <ellipse cx="24" cy="47" rx="18" ry="6" stroke="var(--accent)" strokeWidth="1.5" fill="none" />
-                    <ellipse cx="24" cy="47" rx="18" ry="6" fill="var(--accent)" opacity="0.10" />
-                  </svg>
-                  <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mb-2">
-                    They'll be here faster than you think.
-                  </p>
-                  <p className="kicker kicker--caps">
-                    Verified listings for {activeState} are onboarding now.
-                  </p>
-                  <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] mt-4">
-                    Drop your details on the right and we'll reach out as soon as agencies go live.
-                  </p>
-                </Card>
+                  <EmptyState
+                    title="They'll be here faster than you think."
+                    description={`Verified listings for ${activeState} are onboarding now. Drop your details on the right and we will reach out as soon as agencies go live.`}
+                  />
+                </motion.div>
               )}
             </AnimatePresence>
 

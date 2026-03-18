@@ -6,7 +6,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { FlameIcon } from '../shared/FlameIcon'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { supabase } from '../../supabaseClient'
-import { HelpCircle, LogIn, LogOut } from 'lucide-react'
+import { LogIn, LogOut } from 'lucide-react'
 import { springs } from '../../lib/springs'
 import { Callout } from '../ui/Callout'
 
@@ -22,7 +22,7 @@ export function Topbar({
   authError,
   logoClicks = 0,
   onLogoClick,
-  onSupportOpen,
+  onDismissAuthError,
   onGoogleSignIn,
 }) {
   const shouldReduceMotion = useReducedMotion()
@@ -97,25 +97,6 @@ export function Topbar({
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Support */}
-            <button
-              type="button"
-              onClick={onSupportOpen}
-              className="btn-ghost hidden md:inline-flex"
-            >
-              <HelpCircle size={16} />
-              <span className="font-medium">Support</span>
-            </button>
-            <button
-              type="button"
-              onClick={onSupportOpen}
-              className="btn-ghost inline-flex md:hidden w-11 px-0"
-              aria-label="Support"
-              title="Support"
-            >
-              <HelpCircle size={16} />
-            </button>
-
             {!authLoading && !user && (
               <button
                 type="button"
@@ -166,13 +147,15 @@ export function Topbar({
                   <div className="kicker mb-1">Sign-in status</div>
                   <p className="text-[var(--fs-xs)] text-[var(--text-primary)] m-0">{authError}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={onSupportOpen}
-                  className="btn-ghost shrink-0 min-h-[40px] px-3 text-[var(--fs-xs)]"
-                >
-                  Support
-                </button>
+                {onDismissAuthError ? (
+                  <button
+                    type="button"
+                    onClick={onDismissAuthError}
+                    className="btn-ghost shrink-0 min-h-[40px] px-3 text-[var(--fs-xs)]"
+                  >
+                    Dismiss
+                  </button>
+                ) : null}
               </div>
             </Callout>
           </div>

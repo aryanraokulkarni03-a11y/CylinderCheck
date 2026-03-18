@@ -1,12 +1,15 @@
 // src/components/layout/Footer.jsx
 
 import React from 'react'
+import { NavLink } from 'react-router-dom'
 
 const DOT = '\u00B7'
 const COPY = '\u00A9'
 
-export function Footer({ onSupportOpen, onPrivacyOpen, onTermsOpen }) {
+export function Footer() {
   const year = new Date().getFullYear()
+  const linkClassName = ({ isActive }) =>
+    `footer-ledger__link${isActive ? ' footer-ledger__link--active' : ''}`
 
   return (
     <footer className="footer-ledger">
@@ -28,33 +31,21 @@ export function Footer({ onSupportOpen, onPrivacyOpen, onTermsOpen }) {
         </div>
 
         <div className="footer-ledger__links" aria-label="Footer links">
-          <button
-            type="button"
-            onClick={onSupportOpen}
-            className="footer-ledger__link"
-          >
+          <NavLink to="/support" className={linkClassName}>
             Support
-          </button>
+          </NavLink>
           <span className="footer-ledger__dot" aria-hidden="true">
             {DOT}
           </span>
-          <button
-            type="button"
-            onClick={onPrivacyOpen || onSupportOpen}
-            className="footer-ledger__link"
-          >
+          <NavLink to="/privacy" className={linkClassName}>
             Privacy
-          </button>
+          </NavLink>
           <span className="footer-ledger__dot" aria-hidden="true">
             {DOT}
           </span>
-          <button
-            type="button"
-            onClick={onTermsOpen || onSupportOpen}
-            className="footer-ledger__link"
-          >
+          <NavLink to="/terms" className={linkClassName}>
             Terms
-          </button>
+          </NavLink>
         </div>
       </div>
     </footer>

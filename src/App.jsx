@@ -23,9 +23,7 @@ import {
 import AppShell from './components/layout/AppShell'
 import { Topbar } from './components/layout/Topbar'
 import { BottomNav } from './components/layout/BottomNav'
-import { SupportModal } from './components/modals/SupportModal'
 import { Footer } from './components/layout/Footer'
-import { Callout } from './components/ui/Callout'
 
 import TrackTab from './features/track/TrackTab'
 import ReportsTab from './features/reports/ReportsTab'
@@ -34,6 +32,9 @@ import AlertsTab from './features/alerts/AlertsTab'
 import CommercialPage from './features/commercial/CommercialPage'
 import AdminTab from './features/admin/AdminTab'
 import AdminModal from './features/admin/AdminModal'
+import SupportPage from './features/support/SupportPage'
+import PrivacyPage from './features/legal/PrivacyPage'
+import TermsPage from './features/legal/TermsPage'
 
 const TABS = [
   { id: 'track', label: 'Track', icon: Target },
@@ -52,6 +53,9 @@ const TAB_ROUTES = {
   alerts: '/alerts',
   commercial: '/commercial',
   admin: '/admin',
+  support: '/support',
+  privacy: '/privacy',
+  terms: '/terms',
 }
 
 const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1`
@@ -89,7 +93,6 @@ export default function App() {
   const [adminLoading, setAdminLoading] = useState(false)
 
   // UI
-  const [showSupport, setShowSupport] = useState(false)
   const [authError, setAuthError] = useState('')
 
   const restorePostAuthPath = useCallback(() => {
@@ -378,7 +381,7 @@ export default function App() {
     if (p.startsWith('/alerts')) return 'alerts'
     if (p.startsWith('/commercial')) return 'commercial'
     if (p.startsWith('/admin')) return 'admin'
-    return 'track'
+    return null
   })()
 
   const handleTabChange = useCallback((nextTab) => {
@@ -417,36 +420,13 @@ export default function App() {
             authError={authError}
             logoClicks={logoClicks}
             onLogoClick={handleLogoClick}
-            onSupportOpen={() => setShowSupport(true)}
+            onDismissAuthError={() => setAuthError('')}
             onGoogleSignIn={handleGoogleSignIn}
           />
         }
         bottomNav={<BottomNav tabs={visibleTabs} activeTab={activeTab} onTabChange={handleTabChange} />}
-        footer={
-          <Footer
-            onSupportOpen={() => setShowSupport(true)}
-            onPrivacyOpen={() => setShowSupport(true)}
-            onTermsOpen={() => setShowSupport(true)}
-          />
-        }
+        footer={<Footer />}
       >
-        {authError && (
-          <Callout tone="active" className="mb-6" edge={false}>
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="kicker text-[var(--accent)] mb-2">Sign-in status</div>
-                  <p className="text-[var(--fs-sm)] text-[var(--text-primary)] m-0">{authError}</p>
-                </div>
-              <button
-                type="button"
-                className="btn-ghost min-h-[44px] px-4"
-                onClick={() => setAuthError('')}
-              >
-                Dismiss
-              </button>
-            </div>
-          </Callout>
-        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={routerLocation.pathname}
@@ -471,6 +451,9 @@ export default function App() {
               <Route path={TAB_ROUTES.news} element={<NewsTab />} />
               <Route path={TAB_ROUTES.alerts} element={<AlertsTab />} />
               <Route path={TAB_ROUTES.commercial} element={<CommercialPage prefilledCity={normalizedCity} />} />
+              <Route path={TAB_ROUTES.support} element={<SupportPage />} />
+              <Route path={TAB_ROUTES.privacy} element={<PrivacyPage />} />
+              <Route path={TAB_ROUTES.terms} element={<TermsPage />} />
               <Route
                 path={TAB_ROUTES.admin}
                 element={
@@ -493,11 +476,6 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
       </AppShell>
-
-      {/* Support modal */}
-      <AnimatePresence>
-        {showSupport && <SupportModal onClose={() => setShowSupport(false)} />}
-      </AnimatePresence>
 
       {/* Admin unlock modal (Easter egg) */}
       <AdminModal

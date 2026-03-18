@@ -8,6 +8,7 @@ import { ThemeToggle } from '../shared/ThemeToggle'
 import { supabase } from '../../supabaseClient'
 import { HelpCircle, LogIn, LogOut } from 'lucide-react'
 import { springs } from '../../lib/springs'
+import { Callout } from '../ui/Callout'
 
 const DOT = '\u00B7'
 const ELLIPSIS = '\u2026'
@@ -100,7 +101,7 @@ export function Topbar({
             <button
               type="button"
               onClick={onSupportOpen}
-              className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
+              className="btn-ghost hidden md:inline-flex"
             >
               <HelpCircle size={16} />
               <span className="font-medium">Support</span>
@@ -108,7 +109,7 @@ export function Topbar({
             <button
               type="button"
               onClick={onSupportOpen}
-              className="inline-flex md:hidden items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
+              className="btn-ghost inline-flex md:hidden w-11 px-0"
               aria-label="Support"
               title="Support"
             >
@@ -119,7 +120,7 @@ export function Topbar({
               <button
                 type="button"
                 onClick={() => onGoogleSignIn?.('/track')}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
+                className="btn-ghost"
                 aria-label="Sign in with Google"
                 title="Sign in with Google"
               >
@@ -145,8 +146,7 @@ export function Topbar({
                 <button
                   type="button"
                   onClick={() => supabase.auth.signOut()}
-                  className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)]
-                             hover:bg-[var(--bg-raised)] text-[var(--text-secondary)] transition-colors"
+                  className="btn-ghost w-11 px-0"
                   aria-label="Sign out"
                   title={user.email ? `Sign out (${user.email})` : 'Sign out'}
                 >
@@ -158,7 +158,25 @@ export function Topbar({
             <ThemeToggle />
           </div>
         </div>
-        {authError ? <div className="sr-only" aria-live="polite">{authError}</div> : null}
+        {authError ? (
+          <div className="pb-3" aria-live="polite">
+            <Callout tone="active" className="py-3" edge={false}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="kicker mb-1">Sign-in status</div>
+                  <p className="text-[var(--fs-xs)] text-[var(--text-primary)] m-0">{authError}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onSupportOpen}
+                  className="btn-ghost shrink-0 min-h-[40px] px-3 text-[var(--fs-xs)]"
+                >
+                  Support
+                </button>
+              </div>
+            </Callout>
+          </div>
+        ) : null}
       </div>
     </header>
   )

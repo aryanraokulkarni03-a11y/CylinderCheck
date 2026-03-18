@@ -17,9 +17,9 @@ export default function AdminTab({ data, loading, onLock }) {
         <div>
           <button
             onClick={onLock}
-            className="flex items-center gap-1.5 kicker kicker--caps hover:text-[var(--text-primary)] mb-4 transition-colors p-1 -ml-1"
+            className="flex items-center gap-1.5 kicker hover:text-[var(--text-primary)] mb-4 transition-colors p-1 -ml-1"
           >
-            <ArrowLeft size={14} /> Exit restricted Mode
+            <ArrowLeft size={14} /> Exit restricted mode
           </button>
 
           <h1 className="text-[var(--status-early)] mb-2 flex items-center gap-3">

@@ -427,10 +427,10 @@ export default function App() {
         {authError && (
           <Callout tone="active" className="mb-6" edge={false}>
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="kicker kicker--caps text-[var(--accent)] mb-2">Sign-in status</div>
-                <p className="text-[var(--fs-sm)] text-[var(--text-primary)] m-0">{authError}</p>
-              </div>
+                <div>
+                  <div className="kicker text-[var(--accent)] mb-2">Sign-in status</div>
+                  <p className="text-[var(--fs-sm)] text-[var(--text-primary)] m-0">{authError}</p>
+                </div>
               <button
                 type="button"
                 className="btn-ghost min-h-[44px] px-4"

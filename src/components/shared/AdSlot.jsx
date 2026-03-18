@@ -10,26 +10,33 @@ export function AdSlot({ id = 'default', type = 'rectangle' }) {
   }, [id])
 
   if (type === 'rectangle') return (
-    <div className="flex justify-center my-4">
-      <ins className="adsbygoogle"
-        style={{ display: 'inline-block', width: '300px', height: '250px' }}
-        data-ad-client={AD_CLIENT}
-        data-ad-slot="REPLACE_SLOT_1" />
+    <div className="card card--inset card--compact my-4">
+      <div className="kicker mb-3">Sponsored</div>
+      <div className="flex justify-center overflow-x-auto">
+        <ins className="adsbygoogle"
+          style={{ display: 'inline-block', width: '300px', height: '250px' }}
+          data-ad-client={AD_CLIENT}
+          data-ad-slot="REPLACE_SLOT_1" />
+      </div>
     </div>
   )
 
   if (type === 'leaderboard') return (
-    <div className="flex justify-center my-4 overflow-x-hidden">
-      <ins className="adsbygoogle"
-        style={{ display: 'inline-block', width: '728px', height: '90px', maxWidth: '100%' }}
-        data-ad-client={AD_CLIENT}
-        data-ad-slot="REPLACE_SLOT_2"
-        data-ad-format="horizontal" />
+    <div className="card card--inset card--compact my-4">
+      <div className="kicker mb-3">Sponsored</div>
+      <div className="flex justify-center overflow-x-auto">
+        <ins className="adsbygoogle"
+          style={{ display: 'inline-block', width: '728px', height: '90px', maxWidth: '100%' }}
+          data-ad-client={AD_CLIENT}
+          data-ad-slot="REPLACE_SLOT_2"
+          data-ad-format="horizontal" />
+      </div>
     </div>
   )
 
   return (
-    <div className="my-4">
+    <div className="card card--inset card--compact my-4">
+      <div className="kicker mb-3">Sponsored</div>
       <ins className="adsbygoogle"
         style={{ display: 'block' }}
         data-ad-client={AD_CLIENT}

@@ -18,10 +18,7 @@ export function ThemeToggle() {
       whileTap={shouldReduceMotion ? undefined : { scale: 0.94 }}
       transition={shouldReduceMotion ? { duration: 0.01 } : springs.response}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="flex items-center justify-center w-11 h-11 rounded-pill
-                 bg-[var(--bg-inset)] border border-[var(--border)]
-                 text-[var(--text-secondary)] hover:text-[var(--text-primary)]
-                 transition-colors duration-150 flex-shrink-0"
+      className="btn-ghost w-11 px-0 flex-shrink-0 rounded-pill"
     >
       {isDark
         ? <Sun size={18} strokeWidth={1.8} />

@@ -11,6 +11,9 @@ import { FadeIn } from '../../components/motion/FadeIn'
 import { springs } from '../../lib/springs'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
+import { Callout } from '../../components/ui/Callout'
+import { List } from '../../components/ui/List'
+import { ListRow } from '../../components/ui/ListRow'
 
 const ARROW = '\u2192'
 const DOT = '\u00B7'
@@ -216,7 +219,7 @@ export default function ReportsTab({ user, authLoading }) {
         <div className="card lg:sticky lg:top-[calc(var(--topbar-height)+24px)]">
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
-              <div className="overline text-[var(--accent)]">
+              <div className="kicker kicker--caps text-[var(--accent)]">
                 Submit a report
               </div>
               <div className="text-[var(--fs-sm)] text-[var(--text-muted)] mt-1 leading-relaxed">
@@ -233,7 +236,7 @@ export default function ReportsTab({ user, authLoading }) {
 
           {!authLoading && !user ? (
             <div className="text-center py-6">
-              <div className="overline text-[var(--text-muted)] mb-3">
+              <div className="kicker kicker--caps text-[var(--text-muted)] mb-3">
                 Sign in required
               </div>
               <h2 className="font-display font-bold text-[var(--fs-body)] text-[var(--text-primary)] mb-2 m-0">
@@ -264,9 +267,9 @@ export default function ReportsTab({ user, authLoading }) {
             <FadeIn delay={0.1}>
               <div>
                 {submitError && (
-                  <div className="rounded-md border border-[var(--status-severe-border)] bg-[var(--status-severe-soft)] px-3 py-2 text-[var(--fs-sm)] text-[var(--text-primary)] mb-4">
-                    {submitError}
-                  </div>
+                  <Callout tone="severe" className="mb-4">
+                    <div className="text-[var(--fs-sm)] text-[var(--text-primary)]">{submitError}</div>
+                  </Callout>
                 )}
 
                 <Field id="report-pin" label="PIN code" meta="6 digits" required>
@@ -345,7 +348,7 @@ export default function ReportsTab({ user, authLoading }) {
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2">
               <AlertCircle size={14} className="text-[var(--accent)]" />
-              <span className="overline text-[var(--text-muted)]">
+              <span className="kicker kicker--caps">
                 Reports feed
               </span>
               <span className="text-[var(--divider)] text-[var(--fs-xs)]" aria-hidden="true">
@@ -361,9 +364,9 @@ export default function ReportsTab({ user, authLoading }) {
           </div>
 
           {fetchError && (
-            <div className="mb-4 rounded-md border border-[var(--status-active-border)] bg-[var(--status-active-soft)] px-3 py-2 text-[var(--fs-sm)] text-[var(--text-primary)]">
-              {fetchError}
-            </div>
+            <Callout tone="active" className="mb-4">
+              <div className="text-[var(--fs-sm)] text-[var(--text-primary)]">{fetchError}</div>
+            </Callout>
           )}
 
           {loading ? (
@@ -384,19 +387,22 @@ export default function ReportsTab({ user, authLoading }) {
             <EmptyState title="No reports yet" description="Be the first to flag an issue in your area." />
           ) : (
             <FadeIn delay={0.08}>
-              <div className="space-y-4">
+              <List>
                 {reports.map((r) => {
                   const area = displayArea(r)
                   const company = r.company ? companyMeta.get(r.company) : null
+                  const rowStatus =
+                    r.votes > 20 ? 'severe' : r.votes > 8 ? 'active' : r.votes > 3 ? 'early' : null
 
                   return (
-                    <article
+                    <ListRow
                       key={r.id}
-                      className="card relative group"
+                      as="article"
+                      status={rowStatus}
+                      interactive={true}
                       style={{ contentVisibility: 'auto' }}
-                    >
-                      <div className="flex justify-between items-start gap-4 mb-3">
-                        <div className="flex items-center gap-2 flex-wrap">
+                      badges={
+                        <>
                           <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
                             PIN {r.pin}
                           </span>
@@ -410,49 +416,44 @@ export default function ReportsTab({ user, authLoading }) {
                               {r.delivery_days} day{r.delivery_days === 1 ? '' : 's'}
                             </span>
                           )}
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <span className="text-[var(--fs-xs)] text-[var(--text-muted)] font-body font-medium">
-                            {fmtDate(r.created_at)}
-                          </span>
-
-                          {user && r.user_id === user.id && editingReportId !== r.id && (
-                            <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingReportId(r.id)
-                                  setEditingText(r.issue)
-                                }}
-                                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1"
-                                aria-label="Edit report"
-                                title="Edit"
-                              >
-                                <Edit2 size={13} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteReport(r.id)}
-                                className="text-[var(--status-severe)] hover:bg-[var(--status-severe-soft)] rounded p-1"
-                                aria-label="Delete report"
-                                title="Delete"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {area && (
-                        <div className="text-[var(--fs-body)] font-bold font-display text-[var(--text-primary)] mb-2 tracking-tight">
-                          {area}
-                        </div>
-                      )}
-
+                        </>
+                      }
+                      meta={fmtDate(r.created_at)}
+                      title={
+                        <h3 className="text-[var(--fs-body)] font-semibold font-display text-[var(--text-primary)] leading-snug m-0">
+                          {area || `PIN ${r.pin}`}
+                        </h3>
+                      }
+                      actions={
+                        user && r.user_id === user.id && editingReportId !== r.id ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingReportId(r.id)
+                                setEditingText(r.issue)
+                              }}
+                              className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                              aria-label="Edit report"
+                              title="Edit"
+                            >
+                              <Edit2 size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteReport(r.id)}
+                              className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--status-severe-border)] bg-[var(--status-severe-soft)] text-[var(--status-severe)] transition-colors hover:border-[var(--status-severe)]"
+                              aria-label="Delete report"
+                              title="Delete"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </>
+                        ) : null
+                      }
+                    >
                       {editingReportId === r.id ? (
-                        <div className="mt-2 mb-4">
+                        <div>
                           <textarea
                             className="input resize-y mb-3"
                             style={{ minHeight: 96 }}
@@ -481,7 +482,7 @@ export default function ReportsTab({ user, authLoading }) {
                         </p>
                       )}
 
-                      <div className="flex justify-between items-center pt-4 border-t border-[var(--divider)] mt-4">
+                      <div className="flex justify-between items-center pt-4 border-t border-[var(--divider)] mt-4 gap-3">
                         <motion.button
                           type="button"
                           whileTap={shouldReduceMotion ? undefined : { scale: 1.08 }}
@@ -512,10 +513,10 @@ export default function ReportsTab({ user, authLoading }) {
                           </span>
                         )}
                       </div>
-                    </article>
+                    </ListRow>
                   )
                 })}
-              </div>
+              </List>
             </FadeIn>
           )}
         </div>

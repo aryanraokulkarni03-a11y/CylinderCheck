@@ -123,7 +123,7 @@ export default function CommercialPage({ prefilledCity }) {
       <CommercialHero hasAnyVendors={hasAnyVendors} />
 
       <div id="commercial-vendors" className="mt-14 md:mt-20 w-full">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)] overline text-[var(--text-muted)] w-full">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)] kicker kicker--caps w-full">
           <span className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-[var(--status-early)]" />
             License checks rolling out
@@ -247,7 +247,7 @@ export default function CommercialPage({ prefilledCity }) {
                   <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mb-2">
                     They'll be here faster than you think.
                   </p>
-                  <p className="overline text-[var(--text-muted)]">
+                  <p className="kicker kicker--caps">
                     Verified listings for {activeState} are onboarding now.
                   </p>
                   <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] mt-4">

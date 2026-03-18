@@ -111,7 +111,7 @@ export function UrgencyScore({ score }) {
         transition={shouldReduceMotion ? { duration: 0.01 } : { ...springs.arrival, delay: 0.8 }}
       >
         <div
-          className="overline"
+          className="kicker kicker--caps"
           style={{ color: config.color }}
         >
           {config.label}

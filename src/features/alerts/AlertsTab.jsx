@@ -10,6 +10,7 @@ import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { SlideUp } from '../../components/motion/SlideUp'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
+import { Callout } from '../../components/ui/Callout'
 
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || ''
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -238,7 +239,7 @@ export default function AlertsTab() {
                   <span className="badge text-[var(--status-clear)] bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)]">
                     Free
                   </span>
-                  <span className="overline text-[var(--text-muted)]">
+                  <span className="kicker kicker--caps">
                     Booking window reminder
                   </span>
                 </div>
@@ -298,16 +299,18 @@ export default function AlertsTab() {
             </div>
 
             {freeAlertError && (
-              <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)] mb-4">
-                {freeAlertError}
-              </div>
+              <Callout tone="severe" className="mb-4" edge={false}>
+                <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium">{freeAlertError}</div>
+              </Callout>
             )}
 
             {alertSaved && (
-              <div className="text-[var(--fs-xs)] text-[var(--status-clear)] font-medium bg-[var(--status-clear-soft)] px-3 py-2 rounded-md border border-[var(--status-clear-border)] mb-4 flex items-center gap-2">
-                <Check size={14} />
-                Alert activated. We will message you 2 days before your window opens.
-              </div>
+              <Callout tone="clear" className="mb-4" edge={false}>
+                <div className="text-[var(--fs-xs)] text-[var(--status-clear)] font-medium flex items-center gap-2">
+                  <Check size={14} />
+                  Alert activated. We will message you 2 days before your window opens.
+                </div>
+              </Callout>
             )}
 
             <button
@@ -342,7 +345,7 @@ export default function AlertsTab() {
                   <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
                     Plus
                   </span>
-                  <span className="overline text-[var(--text-muted)]">
+                  <span className="kicker kicker--caps">
                     Early access
                   </span>
                 </div>
@@ -356,7 +359,7 @@ export default function AlertsTab() {
                 <div className="price text-[var(--fs-h2)] tracking-[-0.02em] text-[var(--text-primary)] leading-none">
                   {RUPEE}49
                 </div>
-                <div className="overline text-[var(--text-muted)]">
+                <div className="kicker kicker--caps mt-1">
                   per month
                 </div>
               </div>
@@ -416,9 +419,9 @@ export default function AlertsTab() {
                 </Field>
 
                 {payError && (
-                  <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium bg-[var(--status-severe-soft)] px-3 py-2 rounded-md border border-[var(--status-severe-border)] mt-4">
-                    {payError}
-                  </div>
+                  <Callout tone="severe" className="mt-4" edge={false}>
+                    <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium">{payError}</div>
+                  </Callout>
                 )}
 
                 <LiquidGlassBtn

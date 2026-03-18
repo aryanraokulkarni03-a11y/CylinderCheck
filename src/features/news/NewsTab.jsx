@@ -8,6 +8,10 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { PillRow } from '../../components/ui/PillRow'
 import { Card } from '../../components/ui/Card'
 import { Callout } from '../../components/ui/Callout'
+import { List } from '../../components/ui/List'
+import { ListRow } from '../../components/ui/ListRow'
+import { CardBody, CardHeader } from '../../components/ui/CardParts'
+import { SectionMarker } from '../../components/shared/SectionMarker'
 
 const DOT = '\u00B7'
 const DOWN = '\u2193'
@@ -221,7 +225,7 @@ export default function NewsTab() {
             </div>
           ) : !validNews.length ? (
             <Card variant="raised" className="mt-4 card--dashed card--spacious text-center">
-              <div className="overline text-[var(--text-muted)] mb-4">
+              <div className="kicker kicker--caps mb-4">
                 No feed yet
               </div>
               <h2 className="font-display font-bold text-[var(--fs-body)] text-[var(--text-primary)] mb-2 m-0">
@@ -235,7 +239,7 @@ export default function NewsTab() {
             <FadeIn delay={0.08}>
               <div className="mt-6 space-y-10">
                 {leadStory && (
-                  <article className="card relative overflow-hidden">
+                  <Card as="article" className="relative overflow-hidden card--interactive">
                     <div
                       className={`absolute top-0 left-0 h-full w-1 ${
                         CAT_STATUS[getCategory(leadStory.title)] === 'severe'
@@ -249,76 +253,76 @@ export default function NewsTab() {
                       aria-hidden="true"
                     />
 
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-3">
-                          {(() => {
-                            const cat = getCategory(leadStory.title)
-                            const status = CAT_STATUS[cat] || 'clear'
-                            return (
-                              <span className={`badge ${statusPill(status)}`}>
-                                {cat}
-                              </span>
-                            )
-                          })()}
-                          {leadStory.city && (
-                            <span className="badge text-[var(--text-secondary)] bg-[var(--bg-inset)] border border-[var(--border)]">
-                              <span className="inline-flex items-center gap-1">
-                                <MapPin size={12} className="text-[var(--accent)]" /> {leadStory.city}
-                              </span>
+                    <CardHeader
+                      kicker="Lead story"
+                      titleAs="h2"
+                      title={leadStory.title}
+                      meta={timeAgo(leadStory.pubDate)}
+                      actions={
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={leadStory.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                            aria-label="Open article"
+                            title="Open"
+                          >
+                            <ExternalLink size={16} />
+                          </a>
+                          <a
+                            href={buildWhatsAppLink(leadStory)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)]"
+                            aria-label="Share to WhatsApp"
+                            title="Share"
+                          >
+                            <MessageCircle size={16} />
+                          </a>
+                        </div>
+                      }
+                      className="pl-3"
+                    >
+                      <div className="flex items-center gap-2 flex-wrap mt-3">
+                        {(() => {
+                          const cat = getCategory(leadStory.title)
+                          const status = CAT_STATUS[cat] || 'clear'
+                          return (
+                            <span className={`badge ${statusPill(status)}`}>
+                              {cat}
                             </span>
-                          )}
-                          <span className="text-[var(--fs-xs)] text-[var(--text-muted)] font-body font-medium">
-                            {timeAgo(leadStory.pubDate)}
+                          )
+                        })()}
+                        {leadStory.city ? (
+                          <span className="badge text-[var(--text-secondary)] bg-[var(--bg-inset)] border border-[var(--border)]">
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin size={12} className="text-[var(--accent)]" /> {leadStory.city}
+                            </span>
                           </span>
-                        </div>
+                        ) : null}
+                      </div>
+                    </CardHeader>
 
+                    <CardBody className="pl-3">
+                      <div className="flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
+                        <span className="kicker kicker--caps text-[var(--text-secondary)]">
+                          {leadStory.source}
+                        </span>
+                        <span className="text-[var(--divider)]" aria-hidden="true">
+                          {DOT}
+                        </span>
                         <a
                           href={leadStory.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block"
+                          className="text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
                         >
-                          <h2 className="text-[var(--fs-h3)] font-bold font-display text-[var(--text-primary)] leading-snug">
-                            {leadStory.title}
-                          </h2>
-                        </a>
-
-                        <div className="mt-3 flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
-                          <span className="font-medium uppercase tracking-[0.14em]">
-                            {leadStory.source}
-                          </span>
-                          <span className="text-[var(--divider)]" aria-hidden="true">
-                            {DOT}
-                          </span>
-                          <span>Lead story</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <a
-                          href={leadStory.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
-                          aria-label="Open article"
-                          title="Open"
-                        >
-                          <ExternalLink size={16} />
-                        </a>
-                        <a
-                          href={buildWhatsAppLink(leadStory)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)]"
-                          aria-label="Share to WhatsApp"
-                          title="Share"
-                        >
-                          <MessageCircle size={16} />
+                          Open article
                         </a>
                       </div>
-                    </div>
-                  </article>
+                    </CardBody>
+                  </Card>
                 )}
 
                 {order.map((cat) => {
@@ -330,10 +334,12 @@ export default function NewsTab() {
                       <button
                         key={cat}
                         type="button"
-                        className="w-full rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-colors py-4 overline"
+                        className="w-full card card--inset card--dashed card--compact row--interactive text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         onClick={() => setShowGeneral(true)}
                       >
-                        Show {items.length} general items {DOWN}
+                        <span className="kicker kicker--caps">
+                          Show {items.length} general items {DOWN}
+                        </span>
                       </button>
                     )
                   }
@@ -342,7 +348,7 @@ export default function NewsTab() {
                     <div key={cat}>
                       <SectionMarker status={CAT_STATUS[cat] || 'clear'} label={cat} />
 
-                      <div className="space-y-4">
+                      <List className="mt-4">
                         {items.map((item, i) => {
                           if (leadStory && item.link === leadStory.link) return null
 
@@ -350,59 +356,57 @@ export default function NewsTab() {
                           const status = CAT_STATUS[catHere] || 'clear'
 
                           return (
-                            <article key={`${item.link}:${i}`} className="card">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap mb-2">
-                                    <span className={`badge ${statusPill(status)}`}>{catHere}</span>
-                                    <span className="text-[var(--fs-xs)] text-[var(--text-muted)] font-body font-medium">
-                                      {timeAgo(item.pubDate)}
-                                    </span>
-                                  </div>
-
-                                  <a
-                                    href={item.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block"
-                                  >
-                                    <h3 className="text-[var(--fs-body)] font-semibold font-display text-[var(--text-primary)] leading-snug">
-                                      {item.title}
-                                    </h3>
-                                  </a>
-
-                                  <div className="mt-2 flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
-                                    <span className="font-medium uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                                      {item.source}
-                                    </span>
-                                    {item.city && (
-                                      <>
-                                        <span className="text-[var(--divider)]" aria-hidden="true">
-                                          {DOT}
-                                        </span>
-                                        <span className="inline-flex items-center gap-1">
-                                          <MapPin size={12} className="text-[var(--accent)]" /> {item.city}
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-
+                            <ListRow
+                              key={`${item.link}:${i}`}
+                              as="article"
+                              status={status}
+                              interactive={true}
+                              meta={timeAgo(item.pubDate)}
+                              badges={<span className={`badge ${statusPill(status)}`}>{catHere}</span>}
+                              title={
+                                <a
+                                  href={item.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block"
+                                >
+                                  <h3 className="text-[var(--fs-body)] font-semibold font-display text-[var(--text-primary)] leading-snug m-0">
+                                    {item.title}
+                                  </h3>
+                                </a>
+                              }
+                              actions={
                                 <a
                                   href={buildWhatsAppLink(item)}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)] shrink-0"
+                                  className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)]"
                                   aria-label="Share to WhatsApp"
                                   title="Share"
                                 >
                                   <MessageCircle size={16} />
                                 </a>
+                              }
+                            >
+                              <div className="flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
+                                <span className="kicker kicker--caps text-[var(--text-secondary)]">
+                                  {item.source}
+                                </span>
+                                {item.city ? (
+                                  <>
+                                    <span className="text-[var(--divider)]" aria-hidden="true">
+                                      {DOT}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1">
+                                      <MapPin size={12} className="text-[var(--accent)]" /> {item.city}
+                                    </span>
+                                  </>
+                                ) : null}
                               </div>
-                            </article>
+                            </ListRow>
                           )
                         })}
-                      </div>
+                      </List>
                     </div>
                   )
                 })}
@@ -413,7 +417,7 @@ export default function NewsTab() {
 
         <div className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)] min-w-0">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="overline text-[var(--text-muted)]">
+            <div className="kicker kicker--caps">
               Signals map
             </div>
             <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
@@ -434,7 +438,7 @@ export default function NewsTab() {
                 />
 
                 <div className="absolute bottom-4 right-4 z-[400] rounded-full border border-[var(--border)] bg-[var(--bg-raised)] px-3 py-1 pointer-events-none">
-                  <div className="flex items-center gap-2 overline text-[var(--text-muted)]">
+                  <div className="flex items-center gap-2 kicker kicker--caps">
                     <span className="w-2 h-2 rounded-full bg-[var(--accent)]" aria-hidden="true" />
                     Live signals
                   </div>

@@ -84,7 +84,7 @@ export default function VendorCard({ vendor }) {
                   />
                 )}
               </div>
-              <div className="flex items-center gap-1.5 overline text-[var(--text-muted)]">
+              <div className="flex items-center gap-1.5 kicker kicker--caps">
                 <MapPin size={12} className="text-[var(--accent)]" />
                 <span className="truncate">
                   {vendor?.city || 'India'}
@@ -97,7 +97,7 @@ export default function VendorCard({ vendor }) {
                 </p>
               )}
               {isVerified && licenseNumber && (
-                <div className="mt-2 overline text-[var(--text-muted)]">
+                <div className="mt-2 kicker kicker--caps">
                   License <span className="text-[var(--divider)]" aria-hidden="true">{DOT}</span>{' '}
                   <span className="stat-value text-[var(--text-data)] tracking-[0.02em] normal-case">
                     {licenseNumber}

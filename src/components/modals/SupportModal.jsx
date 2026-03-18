@@ -65,7 +65,7 @@ export function SupportModal({ onClose }) {
 
           {/* Section: Wrong Price */}
           <section>
-            <h3 className="overline text-[var(--text-muted)] mb-3">
+            <h3 className="kicker kicker--caps mb-3">
               Wrong Price Shown
             </h3>
             <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
@@ -79,7 +79,7 @@ export function SupportModal({ onClose }) {
 
           {/* Section: Billing */}
           <section>
-            <h3 className="overline text-[var(--text-muted)] mb-3">
+            <h3 className="kicker kicker--caps mb-3">
               Billing & Alerts
             </h3>
             <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
@@ -96,7 +96,7 @@ export function SupportModal({ onClose }) {
 
           {/* Section: Feedback */}
           <section>
-            <h3 className="overline text-[var(--text-muted)] mb-3">
+            <h3 className="kicker kicker--caps mb-3">
               Feedback
             </h3>
             <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed">
@@ -112,7 +112,7 @@ export function SupportModal({ onClose }) {
 
           {/* Section: FAQ */}
           <section>
-            <h3 className="overline text-[var(--text-muted)] mb-3">
+            <h3 className="kicker kicker--caps mb-3">
               FAQ
             </h3>
             <div className="space-y-3">

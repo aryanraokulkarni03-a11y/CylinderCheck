@@ -28,7 +28,7 @@ export default function CompanyPicker({ value, onChange, compact }) {
   return (
     <div role="group" aria-label="LPG company">
       {!compact && (
-        <div className="overline text-[var(--text-primary)] mb-3 flex items-center justify-between">
+        <div className="kicker kicker--caps text-[var(--text-primary)] mb-3 flex items-center justify-between">
           Your gas company
           <span className="caption text-[var(--text-muted)] tracking-normal normal-case">
             (optional)

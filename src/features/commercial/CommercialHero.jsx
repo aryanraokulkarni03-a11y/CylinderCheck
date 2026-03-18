@@ -40,7 +40,7 @@ export default function CommercialHero({ hasAnyVendors = null }) {
       >
         {/* Left: copy */}
         <div className="md:col-span-7">
-          <div className="overline text-[var(--accent)] mb-4">
+          <div className="kicker kicker--caps text-[var(--accent)] mb-4">
             For Business
           </div>
 
@@ -88,7 +88,7 @@ export default function CommercialHero({ hasAnyVendors = null }) {
         {/* Right: the one allowed glass hero surface */}
         <div className="md:col-span-5">
           <div className="glass-mid rounded-[var(--radius-lg)] p-6 md:p-7">
-            <div className="overline text-[var(--text-muted)]">
+            <div className="kicker kicker--caps">
               How it works
             </div>
 

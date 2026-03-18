@@ -12,7 +12,7 @@ export function Footer({ onSupportOpen }) {
     <footer className="mt-16 pt-10 border-t border-[var(--divider)]">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-[64ch]">
-          <div className="overline text-[var(--text-muted)] mb-2">
+          <div className="kicker kicker--caps mb-2">
             Disclaimer
           </div>
           <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] leading-relaxed m-0">
@@ -22,7 +22,7 @@ export function Footer({ onSupportOpen }) {
         </div>
 
         <div className="flex items-center gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
-          <span className="overline">
+          <span className="kicker kicker--caps text-[var(--text-muted)]">
             {COPY} {year} CylinderCheck
           </span>
           <span className="text-[var(--divider)]" aria-hidden="true">

@@ -5,8 +5,22 @@
 /* Tailwind defines `.overline` as text-decoration-line: overline.
    We use `.overline` as a typography utility, so we must neutralize decoration. */
 .overline {
-  text-decoration: none;
-  text-decoration-line: none;
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+}
+
+/* Kicker: calmer metadata label (overline stays special). */
+.kicker {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: var(--ls-wide);
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+.kicker--caps {
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
 }
 
 /* ============================================================
@@ -158,6 +172,199 @@ body::before {
 .card-strip {
   padding-top: 0;
   padding-bottom: 0;
+}
+
+/* Interior structure: makes cards feel designed, not "just padded rectangles". */
+.card-header {
+  position: relative;
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.card-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--divider);
+  pointer-events: none;
+}
+.card-header__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+.card-header__meta {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.card-header__submeta {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.card-header__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.card-header__title {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--ls-snug);
+}
+.card-body {
+  min-width: 0;
+}
+.card-footer {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--divider);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* Dojigiri dense lists: one surface, many rows. */
+.list {
+  background: var(--bg-raised);
+}
+.list-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-top: 1px solid var(--divider);
+}
+.list-row:first-child {
+  border-top: none;
+}
+.list-row.status-edge::after {
+  left: 12px;
+  top: 14px;
+  bottom: 14px;
+}
+.list-row__main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.list-row__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: 8px;
+}
+.list-row__badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.list-row__meta {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.list-row__title {
+  min-width: 0;
+}
+.list-row__body {
+  margin-top: 10px;
+  min-width: 0;
+}
+.list-row__actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+@media (max-width: 768px) {
+  .list-row {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .list-row__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Luxury motion: subtle hover lift on hover-capable devices only. */
+@media (hover: hover) and (pointer: fine) {
+  .card--interactive,
+  .row--interactive {
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out);
+    will-change: transform;
+  }
+
+  .card--interactive:hover {
+    transform: translateY(-2px);
+    border-color: var(--fog-border);
+    box-shadow: 0 10px 30px var(--shadow-modal);
+  }
+
+  .row--interactive:hover {
+    transform: translateY(-1px);
+    background: var(--bg-inset);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card--interactive,
+  .row--interactive {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* Sunlight readability: component-level tuning in light theme. */
+[data-theme="light"] .kicker {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .card {
+  border-color: var(--fog-border);
+}
+[data-theme="light"] .callout {
+  border-color: var(--fog-border);
+}
+[data-theme="light"] .input {
+  border-color: var(--fog-border);
+}
+[data-theme="light"] .input::placeholder {
+  opacity: 0.65;
+}
+[data-theme="light"] .badge {
+  border-color: var(--fog-border);
+}
+[data-theme="light"] .list {
+  border-color: var(--fog-border);
+}
+[data-theme="light"] .list-row {
+  background: var(--bg-raised);
+}
+[data-theme="light"] .list-row__meta {
+  color: var(--text-secondary);
 }
 
 /* Status edge rail for cards/callouts (Dojigiri-like: dense, calm, precise). */

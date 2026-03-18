@@ -107,7 +107,7 @@ export function TrackTab({
           </AnimatePresence>
 
           <div className="card">
-            <div className="overline text-[var(--accent)] mb-4">
+            <div className="kicker kicker--caps text-[var(--accent)] mb-4">
               Delivery Prediction
             </div>
 
@@ -165,7 +165,7 @@ export function TrackTab({
                                 }`}
                   >
                     <span className="text-[var(--fs-body)] leading-none">{emoji}</span>
-                    <span className="overline leading-none">
+                    <span className="kicker kicker--caps leading-none text-[inherit]">
                       {label}
                     </span>
                     <span className="caption text-[var(--text-muted)] leading-none">{hint}</span>
@@ -217,7 +217,7 @@ export function TrackTab({
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <MapPin size={12} style={{ color: 'var(--accent)' }} />
-                        <span className="overline text-[var(--accent)]">
+                        <span className="kicker kicker--caps text-[var(--accent)]">
                           {pinData.area || `PIN ${pinData.pin}`}
                         </span>
                       </div>
@@ -275,7 +275,7 @@ export function TrackTab({
 
                 {pinData.urgencyScore !== undefined && (
                   <div className="card mb-4 text-center">
-                    <div className="overline text-[var(--accent)] mb-4">
+                    <div className="kicker kicker--caps text-[var(--accent)] mb-4">
                       Urgency Score
                     </div>
                     <UrgencyScore score={pinData.urgencyScore} />
@@ -290,14 +290,14 @@ export function TrackTab({
                         : 'border-[var(--border)] bg-[var(--bg-raised)]'
                     }`}
                   >
-                    <div className="overline text-[var(--accent)] mb-4">
+                    <div className="kicker kicker--caps text-[var(--accent)] mb-4">
                       Your Booking Window
                     </div>
 
                     <div className="flex items-center gap-5">
                       <Ring daysLeft={bookingResult.daysLeft} />
                       <div>
-                        <p className="overline text-[var(--text-muted)] mb-1">
+                        <p className="kicker kicker--caps mb-1">
                           {bookingResult.daysLeft <= 0 ? 'Window is open now' : 'Next window opens'}
                         </p>
 
@@ -346,7 +346,7 @@ export function TrackTab({
                     <StatusDot status={pinData.reportCount >= 5 ? 'severe' : 'active'} size={7} />
                     <div>
                       <div
-                        className="overline mb-1"
+                        className="kicker kicker--caps mb-1"
                         style={{
                           color: pinData.reportCount >= 5 ? 'var(--status-severe)' : 'var(--status-active)',
                         }}

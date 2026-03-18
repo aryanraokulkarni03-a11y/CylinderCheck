@@ -94,8 +94,11 @@ export default function NewsMap({
   const mapInstRef = useRef(null)
   const tileLayerRef = useRef(null)
   const markersLayerRef = useRef(null)
+  const leadMarkerRef = useRef(null)
   const pulseResetRef = useRef(null)
   const prevLeadSignalRef = useRef('')
+  const lastCenteredCityRef = useRef('')
+  const didInvalidateRef = useRef(false)
 
   const { L, loaded } = useLeaflet()
   const themeMode = useThemeMode()
@@ -145,15 +148,22 @@ export default function NewsMap({
     if (!map || !tile || !markers) return
 
     tile.setUrl(tileUrlForMode(themeMode))
-    map.invalidateSize()
+    if (!didInvalidateRef.current) {
+      map.invalidateSize()
+      didInvalidateRef.current = true
+    }
 
-    markers.clearLayers()
     const city = leadCity && CITY_COORDS[leadCity] ? leadCity : null
 
     if (!city) {
+      if (leadMarkerRef.current) {
+        markers.removeLayer(leadMarkerRef.current)
+        leadMarkerRef.current = null
+      }
+      lastCenteredCityRef.current = ''
       map.flyTo([22.5, 78.5], 4, {
         animate: true,
-        duration: 0.9,
+        duration: 0.85,
       })
       return
     }
@@ -208,14 +218,31 @@ export default function NewsMap({
       iconAnchor: [24, 24],
     })
 
-    const marker = L.marker([coords.lat, coords.lng], { icon, zIndexOffset: 1000 })
-    marker.on('click', () => onSelectCity?.(city))
-    marker.addTo(markers)
+    if (!leadMarkerRef.current) {
+      leadMarkerRef.current = L.marker([coords.lat, coords.lng], { icon, zIndexOffset: 1000 })
+      leadMarkerRef.current.on('click', () => onSelectCity?.(city))
+      leadMarkerRef.current.addTo(markers)
+    } else {
+      leadMarkerRef.current.setLatLng([coords.lat, coords.lng])
+      leadMarkerRef.current.setIcon(icon)
+    }
 
-    map.flyTo([coords.lat, coords.lng], 6, {
-      animate: true,
-      duration: 1,
-    })
+    const shouldRecenter = lastCenteredCityRef.current !== city
+    lastCenteredCityRef.current = city
+
+    if (shouldRecenter) {
+      map.flyTo([coords.lat, coords.lng], 5.6, {
+        animate: true,
+        duration: 0.9,
+        easeLinearity: 0.25,
+      })
+    } else {
+      map.panTo([coords.lat, coords.lng], {
+        animate: true,
+        duration: 0.55,
+        easeLinearity: 0.3,
+      })
+    }
 
     if (shouldPulse) {
       pulseResetRef.current = setTimeout(() => {
@@ -229,6 +256,9 @@ export default function NewsMap({
       if (pulseResetRef.current) {
         clearTimeout(pulseResetRef.current)
       }
+      leadMarkerRef.current = null
+      lastCenteredCityRef.current = ''
+      didInvalidateRef.current = false
     }
   }, [])
 

@@ -157,7 +157,12 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    let token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+    const requestBody = await req.json().catch(() => ({}));
+    if (!token && typeof requestBody?.accessToken === "string") {
+      token = requestBody.accessToken.trim();
+    }
 
     if (!token) {
       return jsonResponse({ error: "Missing bearer token" }, 401);

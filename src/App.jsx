@@ -120,10 +120,10 @@ export default function App() {
 
       try {
         const { error } = await supabase.functions.invoke('notify-sign-in', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
+          body: {
+            source: 'google-oauth',
+            accessToken,
           },
-          body: { source: 'google-oauth' },
         })
 
         if (error) {

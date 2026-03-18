@@ -264,7 +264,7 @@ export default function NewsTab() {
                             href={leadStory.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                            className="icon-btn"
                             aria-label="Open article"
                             title="Open"
                           >
@@ -274,7 +274,7 @@ export default function NewsTab() {
                             href={buildWhatsAppLink(leadStory)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)]"
+                            className="icon-btn icon-btn--signal"
                             aria-label="Share to WhatsApp"
                             title="Share"
                           >
@@ -380,7 +380,7 @@ export default function NewsTab() {
                                   href={buildWhatsAppLink(item)}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--status-clear)]"
+                                  className="icon-btn icon-btn--signal"
                                   aria-label="Share to WhatsApp"
                                   title="Share"
                                 >

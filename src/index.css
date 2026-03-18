@@ -522,6 +522,53 @@ body::before {
   }
 }
 
+.icon-btn {
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.icon-btn--danger {
+  border-color: var(--status-severe-border);
+  background: var(--status-severe-soft);
+  color: var(--status-severe);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover {
+    background: var(--bg-raised);
+    color: var(--text-primary);
+  }
+
+  .icon-btn--signal:hover {
+    color: var(--status-clear);
+  }
+
+  .icon-btn--danger:hover {
+    border-color: var(--status-severe);
+    color: var(--status-severe);
+  }
+}
+
+@media (max-width: 768px) {
+  .icon-btn {
+    width: 48px;
+    min-height: 48px;
+  }
+}
+
 .input {
   background: linear-gradient(180deg, var(--fog-highlight), transparent 34px), var(--bg-inset);
   border: 1px solid var(--border);

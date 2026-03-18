@@ -426,7 +426,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                                 setEditingReportId(r.id)
                                 setEditingText(r.issue)
                               }}
-                              className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                              className="icon-btn"
                               aria-label="Edit report"
                               title="Edit"
                             >
@@ -435,7 +435,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                             <button
                               type="button"
                               onClick={() => handleDeleteReport(r.id)}
-                              className="inline-flex items-center justify-center w-11 h-11 rounded-md border border-[var(--status-severe-border)] bg-[var(--status-severe-soft)] text-[var(--status-severe)] transition-colors hover:border-[var(--status-severe)]"
+                              className="icon-btn icon-btn--danger"
                               aria-label="Delete report"
                               title="Delete"
                             >

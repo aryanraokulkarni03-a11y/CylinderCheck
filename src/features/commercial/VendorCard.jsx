@@ -154,7 +154,7 @@ export default function VendorCard({ vendor }) {
             <a
               href={telHref || undefined}
               aria-disabled={!telHref || undefined}
-              className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-primary)] transition-colors text-[var(--fs-sm)] font-medium ${
+              className={`btn-ghost text-[var(--fs-sm)] ${
                 telHref ? '' : 'opacity-50 pointer-events-none'
               }`}
             >
@@ -167,7 +167,7 @@ export default function VendorCard({ vendor }) {
                 href={vendor.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center py-2.5 px-3 rounded-md border border-[var(--border)] bg-[var(--bg-inset)] hover:bg-[var(--bg-raised)] text-[var(--text-primary)] transition-colors"
+                className="icon-btn"
                 title="Visit Website"
               >
                 <ExternalLink size={16} />

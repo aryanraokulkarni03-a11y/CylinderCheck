@@ -298,7 +298,7 @@ export function TrackTab({
 
                 {bookingResult && (
                   <Card
-                    className={`rounded-[var(--radius-lg)] border p-6 mb-4 ${
+                    className={`mb-4 ${
                       bookingResult.daysLeft <= 0
                         ? 'border-[var(--status-clear-border)] bg-[var(--status-clear-soft)]'
                         : 'border-[var(--border)] bg-[var(--bg-raised)]'

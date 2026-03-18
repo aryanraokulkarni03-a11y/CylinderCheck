@@ -13,3 +13,4 @@ agent-skills*/
 .agent
 supabase/.temp/
 ui-ux-pro-max-skill-main/
+.vscode/mcp.json

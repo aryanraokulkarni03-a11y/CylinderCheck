@@ -83,6 +83,9 @@ INSERT INTO lpg_prices (company, price) VALUES
   ('HP Gas',    906.00),
   ('Bharat Gas',901.00);
 
+ALTER TABLE lpg_prices ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read LPG prices" ON lpg_prices FOR SELECT USING (true);
+
 -- 5. Paid subscriptions
 --    Written by verify-payment edge function, read by admin stats.
 CREATE TABLE IF NOT EXISTS subscriptions (
@@ -139,6 +142,11 @@ CREATE INDEX IF NOT EXISTS auth_notification_log_email_idx
 
 CREATE INDEX IF NOT EXISTS auth_notification_log_status_idx
   ON auth_notification_log (status);
+
+ALTER TABLE pin_data ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read pin data" ON pin_data FOR SELECT USING (true);
+
+ALTER TABLE auth_notification_log ENABLE ROW LEVEL SECURITY;
 
 -- Live DB note (verified 2026-03-18):
 -- The production project also contains auxiliary tables:

@@ -15,20 +15,74 @@ function tileUrlForMode(mode) {
   return mode === 'light' ? TILE_LIGHT : TILE_DARK
 }
 
-export function getCity(title) {
-  const t = String(title || '').toLowerCase()
+function normalizeCityToken(token) {
+  const cleaned = String(token || '')
+    .toLowerCase()
+    .replace(/[-_]+/g, ' ')
+    .trim()
 
-  // Prefer explicit normalisations first (vizag, bengaluru, etc.)
+  if (!cleaned) return null
+
   for (const [needle, canonical] of Object.entries(CITY_NORMALISE)) {
-    if (t.includes(needle)) return canonical
+    if (cleaned === needle || cleaned.includes(needle)) return canonical
   }
 
-  // Fall back to direct city name substring matching.
   for (const city of CITY_KEYS) {
-    if (t.includes(city.toLowerCase())) return city
+    if (cleaned === city.toLowerCase()) return city
   }
 
   return null
+}
+
+function getCityFromLink(link) {
+  try {
+    const url = new URL(String(link || '').trim())
+    const parts = url.pathname
+      .split('/')
+      .filter(Boolean)
+      .map((part) => decodeURIComponent(part))
+
+    const cityIndex = parts.findIndex((part) => part.toLowerCase() === 'city')
+    if (cityIndex !== -1 && parts[cityIndex + 1]) {
+      return normalizeCityToken(parts[cityIndex + 1])
+    }
+
+    for (const part of parts) {
+      const normalized = normalizeCityToken(part)
+      if (normalized) return normalized
+    }
+  } catch {
+    return null
+  }
+
+  return null
+}
+
+export function getCity(title, link = '') {
+  const byLink = getCityFromLink(link)
+  if (byLink) return byLink
+
+  const t = String(title || '').toLowerCase()
+  const matches = []
+
+  for (const [needle, canonical] of Object.entries(CITY_NORMALISE)) {
+    const index = t.indexOf(needle)
+    if (index >= 0) {
+      matches.push({ city: canonical, index })
+    }
+  }
+
+  for (const city of CITY_KEYS) {
+    const index = t.indexOf(city.toLowerCase())
+    if (index >= 0) {
+      matches.push({ city, index })
+    }
+  }
+
+  if (!matches.length) return null
+
+  matches.sort((a, b) => a.index - b.index)
+  return matches[0].city
 }
 
 export default function NewsMap({
@@ -91,6 +145,7 @@ export default function NewsMap({
     if (!map || !tile || !markers) return
 
     tile.setUrl(tileUrlForMode(themeMode))
+    map.invalidateSize()
 
     markers.clearLayers()
     const city = leadCity && CITY_COORDS[leadCity] ? leadCity : null
@@ -153,7 +208,7 @@ export default function NewsMap({
       iconAnchor: [24, 24],
     })
 
-    const marker = L.marker([coords.lat, coords.lng], { icon })
+    const marker = L.marker([coords.lat, coords.lng], { icon, zIndexOffset: 1000 })
     marker.on('click', () => onSelectCity?.(city))
     marker.addTo(markers)
 

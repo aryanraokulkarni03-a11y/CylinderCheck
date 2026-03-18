@@ -125,7 +125,7 @@ export default function NewsTab() {
             googleLink: a.googleLink,
             sourceUrl: a.sourceUrl,
             pubDate: new Date(a.pubDate),
-            city: getCity(a.title),
+            city: getCity(a.title, a.link),
           }))
           cachedNews = parsed
           lastFetchedAt = Date.now()

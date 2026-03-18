@@ -472,7 +472,7 @@ export default function App() {
                   />
                 }
               />
-              <Route path={TAB_ROUTES.authCallback} element={<AuthCallbackPage />} />
+              <Route path={TAB_ROUTES.authCallback} element={<AuthCallbackPage user={user} />} />
               <Route
                 path={TAB_ROUTES.admin}
                 element={

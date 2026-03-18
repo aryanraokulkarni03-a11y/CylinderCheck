@@ -54,11 +54,12 @@ function readAuthError(location) {
   )
 }
 
-export function AuthCallbackPage() {
+export function AuthCallbackPage({ user }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [error, setError] = useState('')
-  const hasFinalizedRef = useRef(false)
+  const hasCompletedRef = useRef(false)
+  const hasNotifiedRef = useRef(false)
 
   const requestedNext = useMemo(() => {
     const params = new URLSearchParams(location.search)
@@ -75,55 +76,68 @@ export function AuthCallbackPage() {
     let cancelled = false
 
     async function finalizeAuth() {
-      if (hasFinalizedRef.current) return
-      hasFinalizedRef.current = true
+      if (hasCompletedRef.current) return
 
       const authError = readAuthError(location)
       if (authError) {
+        hasCompletedRef.current = true
         setError(authError)
         return
       }
 
+      let session = null
+
       if (authCode) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode)
+        const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode)
 
         if (cancelled) return
 
         if (exchangeError) {
+          hasCompletedRef.current = true
           setError('We could not complete sign-in. Please try again.')
           return
         }
+
+        session = exchangeData.session
       }
 
       const { data, error: sessionError } = await supabase.auth.getSession()
 
       if (cancelled) return
 
-      if (sessionError) {
+      if (sessionError && !user) {
+        hasCompletedRef.current = true
         setError('We could not complete sign-in. Please try again.')
         return
       }
 
-      if (!data.session?.user) {
-        setError('No active session was found after sign-in. Please try again.')
+      if (!session) {
+        session = data.session ?? null
+      }
+
+      const activeUser = session?.user ?? user ?? null
+
+      if (!activeUser) {
         return
       }
 
+      if (!hasNotifiedRef.current && session?.access_token) {
+        hasNotifiedRef.current = true
+        // Keep sign-in instant. Email delivery happens in the background.
+        triggerFirstSignInEmail(session.access_token)
+      }
+
+      hasCompletedRef.current = true
       const fallbackNext = getStoredNextPath()
       const target = requestedNext || (isSafeNextPath(fallbackNext) ? fallbackNext : null) || '/track'
       navigate(target, { replace: true })
-
-      if (authCode && data.session.access_token) {
-        // Keep sign-in instant. Email delivery happens in the background.
-        triggerFirstSignInEmail(data.session.access_token)
-      }
     }
 
     finalizeAuth()
     return () => {
       cancelled = true
     }
-  }, [authCode, location, navigate, requestedNext])
+  }, [authCode, location, navigate, requestedNext, user])
 
   return (
     <div className="reading-page">

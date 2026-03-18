@@ -22,9 +22,9 @@ export function PageHeader({
 
       <div className="page-header__row">
         <div className="page-header__copy">
-          <TitleTag className="page-header__title">
+          <TitleTag className="page-header__title type-page-title">
             {Icon ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              <span className="page-header__title-row">
                 <Icon size={28} className="text-[var(--accent)]" aria-hidden="true" />
                 <span>{title}</span>
               </span>
@@ -32,7 +32,7 @@ export function PageHeader({
               title
             )}
           </TitleTag>
-          {description ? <p className="page-header__desc">{description}</p> : null}
+          {description ? <p className="page-header__desc type-page-desc">{description}</p> : null}
         </div>
 
         {actions ? <div className="page-header__actions">{actions}</div> : null}
@@ -42,4 +42,3 @@ export function PageHeader({
 }
 
 export default PageHeader
-

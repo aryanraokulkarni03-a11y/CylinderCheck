@@ -81,7 +81,7 @@ export function LegalPageLayout({
             meta={<span className="reading-meta">Effective {effectiveDate}</span>}
           />
           <CardBody>
-            <p className="m-0">{intro}</p>
+            <p className="type-reading-copy m-0">{intro}</p>
           </CardBody>
         </Card>
 

@@ -29,7 +29,7 @@ export function CardHeader({
       ) : null}
 
       {title ? (
-        <TitleTag className="card-header__title">
+        <TitleTag className="card-header__title type-card-title">
           {title}
         </TitleTag>
       ) : null}
@@ -56,4 +56,3 @@ export function CardFooter({ className, children, ...props }) {
 }
 
 export default CardHeader
-

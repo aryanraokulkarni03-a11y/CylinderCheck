@@ -67,7 +67,7 @@ export function PriceTicker({ mapPrices = {} }) {
             <span className="kicker">
               {city}
             </span>
-            <span className="price text-[var(--fs-sm)]" style={{ color }}>
+            <span className="type-table-value" style={{ color }}>
               {RUPEE}
               {price}
             </span>

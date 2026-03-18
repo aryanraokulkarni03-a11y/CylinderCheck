@@ -115,7 +115,7 @@ export function TrackTab({
               title="Check your local booking window"
               titleAs="h2"
             >
-              <p className="caption text-[var(--text-secondary)] mt-3 mb-0">
+              <p className="type-card-copy mt-3 mb-0">
                 Enter your PIN, optional booking date, and current cylinder level for a calm read on what to do next.
               </p>
             </CardHeader>
@@ -124,7 +124,7 @@ export function TrackTab({
             <div className="mb-5">
               <Field id="pin-input" label="Where are you?" required>
                 <input
-                  className="input min-h-[52px] tracking-[0.12em] text-[var(--text-data)]"
+                  className="input type-data-input min-h-[52px]"
                   placeholder="Enter 6-digit PIN"
                   value={pin}
                   maxLength={6}
@@ -174,18 +174,18 @@ export function TrackTab({
                                     : 'bg-[var(--bg-inset)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
                                 }`}
                   >
-                    <span className="text-[var(--fs-body)] leading-none">{emoji}</span>
+                    <span className="type-emoji-chip" aria-hidden="true">{emoji}</span>
                     <span className="kicker leading-none text-[inherit]">
                       {label}
                     </span>
-                    <span className="caption text-[var(--text-muted)] leading-none">{hint}</span>
+                    <span className="type-note leading-none">{hint}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {error && (
-              <p className="text-[var(--fs-xs)] text-[var(--status-severe)] mb-3">
+              <p className="type-note text-[var(--status-severe)] mb-3">
                 {error}
               </p>
             )}
@@ -247,34 +247,34 @@ export function TrackTab({
 
                   <CardBody className="divide-y divide-[var(--divider)]">
                     <div className="flex justify-between items-start py-3">
-                      <span className="text-[var(--fs-sm)] text-[var(--text-secondary)]">Avg Delivery</span>
+                      <span className="type-meta">Avg Delivery</span>
                       <span className="text-right">
                         {avgDays != null ? (
                           <span className="inline-flex items-baseline justify-end gap-2">
-                            <span className="stat-value text-[var(--fs-body)] text-[var(--text-data)]">
+                            <span className="type-data-value">
                               {avgDays}
                             </span>
-                            <span className="label-text text-[var(--text-muted)]">days</span>
+                            <span className="type-data-label">days</span>
                           </span>
                         ) : (
-                          <span className="text-[var(--fs-sm)] text-[var(--text-muted)]">No data yet</span>
+                          <span className="type-note">No data yet</span>
                         )}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-start py-3">
-                      <span className="text-[var(--fs-sm)] text-[var(--text-secondary)]">Gas Agency</span>
-                      <span className="text-[var(--fs-sm)] text-[var(--text-secondary)] font-medium text-right">
+                      <span className="type-meta">Gas Agency</span>
+                      <span className="type-card-copy--compact font-medium text-right">
                         {COMPANY_LABELS?.[pinData.agency] || pinData.agency}
                       </span>
                     </div>
 
                     {shortage && (
                       <div className="flex justify-between items-start py-3">
-                        <span className="text-[var(--fs-sm)] text-[var(--text-secondary)]">Shortage Status</span>
+                        <span className="type-meta">Shortage Status</span>
                         <span className="flex items-center justify-end gap-2">
                           <StatusDot status={shortage.status} size={7} />
-                          <span className="label-text text-[var(--text-data)]">
+                          <span className="type-data-label text-[var(--text-data)]">
                             {shortage.label}
                           </span>
                         </span>
@@ -314,28 +314,28 @@ export function TrackTab({
                       <Ring daysLeft={bookingResult.daysLeft} />
                       <div>
                         {bookingResult.daysLeft <= 0 ? (
-                          <p className="font-display font-bold text-[var(--fs-h4)] tracking-[-0.02em] text-[var(--status-clear)]">
+                          <p className="type-section-title text-[var(--status-clear)] mb-0">
                             Book right now
                           </p>
                         ) : (
-                          <p className="stat text-[var(--fs-h4)] text-[var(--text-data)]">
+                          <p className="type-data-value type-data-value--hero mb-0">
                             {fmt(bookingResult.nextWindow)}
                           </p>
                         )}
 
                         {bookingResult.daysLeft > 0 && avgDays != null && (
-                          <p className="caption text-[var(--text-muted)] mt-2">
+                          <p className="type-note mt-2 mb-0">
                             Est. delivery by {fmt(addDays(bookingResult.nextWindow, Math.round(avgDays)))}
                           </p>
                         )}
 
                         <KalamkariDivider />
-                        <p className="caption text-[var(--text-muted)]">
+                        <p className="type-note mb-0">
                           Based on{' '}
-                          <span className="stat-value text-[var(--text-data)]">25</span>-day rule
+                          <span className="type-data-value text-[inherit] text-[var(--text-data)]">25</span>-day rule
                           {avgDays != null ? (
                             <>
-                              {' '}+ <span className="stat-value text-[var(--text-data)]">{avgDays}</span>-day local delivery lag
+                              {' '}+ <span className="type-data-value text-[inherit] text-[var(--text-data)]">{avgDays}</span>-day local delivery lag
                             </>
                           ) : (
                             <> + local delivery lag</>
@@ -365,8 +365,8 @@ export function TrackTab({
                       >
                         {pinData.reportCount >= 5 ? 'Severe shortage in your area' : 'Active shortage in your area'}
                       </div>
-                      <p className="text-[var(--fs-sm)] text-[var(--text-secondary)]">
-                        Expect <span className="stat-value text-[var(--text-data)]">3-7</span> extra days on delivery.
+                      <p className="type-card-copy mb-0">
+                        Expect <span className="type-data-value text-[inherit] text-[var(--text-data)]">3-7</span> extra days on delivery.
                         Book as early as your window allows.
                       </p>
                     </div>
@@ -383,15 +383,15 @@ export function TrackTab({
                     className="mb-4"
                     edge={false}
                   >
-                    <p className="text-[var(--fs-sm)] font-medium text-[var(--text-primary)] mb-1">
+                    <p className="type-card-title mb-1">
                       Running a restaurant or hotel?
                     </p>
-                    <p className="text-[var(--fs-xs)] text-[var(--text-secondary)] mb-3">
+                    <p className="type-note mb-3">
                       Commercial gas cut across India. Find verified alternatives today.
                     </p>
                     <button
                       onClick={onCommercialClick}
-                      className="text-[var(--fs-xs)] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)]
+                      className="type-nav text-[var(--accent)] hover:text-[var(--accent-pop)]
                                  transition-colors duration-150"
                     >
                       Find alternatives now {' \u2192'}

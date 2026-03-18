@@ -206,7 +206,7 @@ export default function NewsTab() {
 
           {error && (
             <Callout tone="active" className="mt-3">
-              <div className="text-[var(--fs-sm)] text-[var(--text-primary)]">{error}</div>
+              <div className="type-card-copy text-[var(--text-primary)]">{error}</div>
             </Callout>
           )}
 
@@ -305,7 +305,7 @@ export default function NewsTab() {
                     </CardHeader>
 
                     <CardBody className="pl-3">
-                      <div className="flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
+                      <div className="flex items-center gap-2 type-note">
                         <span className="kicker text-[var(--text-secondary)]">
                           {leadStory.source}
                         </span>
@@ -370,10 +370,10 @@ export default function NewsTab() {
                                   rel="noopener noreferrer"
                                   className="block"
                                 >
-                                  <h3 className="text-[var(--fs-body)] font-semibold font-display text-[var(--text-primary)] leading-snug m-0">
-                                    {item.title}
-                                  </h3>
-                                </a>
+                                <h3 className="type-list-title m-0">
+                                  {item.title}
+                                </h3>
+                              </a>
                               }
                               actions={
                                 <a
@@ -388,7 +388,7 @@ export default function NewsTab() {
                                 </a>
                               }
                             >
-                              <div className="flex items-center gap-2 text-[var(--fs-xs)] text-[var(--text-muted)]">
+                              <div className="flex items-center gap-2 type-note">
                                 <span className="kicker text-[var(--text-secondary)]">
                                   {item.source}
                                 </span>

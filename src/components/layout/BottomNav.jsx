@@ -28,7 +28,7 @@ export function BottomNav({ tabs, activeTab, onTabChange }) {
               transition={shouldReduceMotion ? { duration: 0.01 } : springs.response}
               className={`flex flex-col items-center justify-center gap-[4px]
                           px-[4px] py-[7px] relative min-h-[52px] rounded-[var(--radius-md)]
-                          text-[var(--fs-xs)] font-medium tracking-[0.02em]
+                          type-nav
                           transition-colors duration-150
                           ${activeTab === tab.id
                             ? 'text-[var(--accent)] bg-[var(--accent-soft)]'

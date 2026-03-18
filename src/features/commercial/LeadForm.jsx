@@ -134,10 +134,10 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
             <div className="w-16 h-16 rounded-full bg-[var(--status-clear-soft)] flex items-center justify-center mb-6 border border-[var(--status-clear-border)]">
               <Check size={32} className="text-[var(--status-clear)]" />
             </div>
-            <h3 className="text-[var(--fs-h3)] font-bold font-display text-[var(--status-clear)] mb-3">
+            <h3 className="type-section-title text-[var(--status-clear)] mb-3">
               Request Received
             </h3>
-            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] max-w-[280px]">
+            <p className="type-card-copy max-w-[280px]">
               {isWaitlist
                 ? `You're on the list for ${selectedState || 'your area'}. We'll reach out as soon as listings go live.`
                 : `We will connect you with listed agencies in ${selectedState || 'your area'}.`}
@@ -160,7 +160,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
               title={isWaitlist ? 'Get notified' : 'Get custom quotes'}
               meta={selectedState || 'India'}
             >
-              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mt-3 mb-0 max-w-[32ch]">
+              <p className="type-card-copy mt-3 mb-0 max-w-[32ch]">
                 {isWaitlist
                   ? `Share your details and we'll reach out when agencies go live in ${selectedState || 'your area'}.`
                   : `Skip the calls. Get quotes from listed agencies in ${selectedState || 'your area'}.`}
@@ -237,7 +237,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                     type="tel"
                     required
                     inputMode="numeric"
-                    className="input tracking-[0.14em] text-[var(--text-data)]"
+                    className="input type-data-input"
                     placeholder="10-digit number"
                     value={phone}
                     onChange={(e) => {
@@ -252,7 +252,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
-                    className="input tracking-[0.14em] text-[var(--text-data)]"
+                    className="input type-data-input"
                     placeholder="6-digit PIN"
                     value={pin}
                     onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
@@ -265,7 +265,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                   type="text"
                   inputMode="numeric"
                   maxLength={3}
-                  className="input tracking-[0.14em] text-[var(--text-data)]"
+                  className="input type-data-input"
                   placeholder="e.g. 4"
                   value={cylindersWeek}
                   onChange={(e) => setCylindersWeek(e.target.value.replace(/\D/g, ''))}
@@ -283,7 +283,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
 
               {submitError && (
                 <Callout tone="severe" edge={false}>
-                  <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium">
+                  <div className="type-note text-[var(--status-severe)] font-medium">
                     {submitError}
                   </div>
                 </Callout>

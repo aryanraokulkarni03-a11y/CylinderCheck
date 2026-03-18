@@ -231,7 +231,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
               ) : null
             }
           >
-            <p className="caption text-[var(--text-secondary)] mt-3 mb-0">
+            <p className="type-card-copy mt-3 mb-0">
               Keep it factual. If you can, add delivery days and your LPG provider.
             </p>
           </CardHeader>
@@ -241,10 +241,10 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                 <div className="kicker text-[var(--text-muted)] mb-3">
                   Sign in required
                 </div>
-              <h2 className="font-display font-bold text-[var(--fs-body)] text-[var(--text-primary)] mb-2 m-0">
+              <h2 className="type-card-title mb-2 m-0">
                 Sign in to submit
               </h2>
-              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mb-5 leading-relaxed">
+              <p className="type-card-copy mb-5">
                 Reports require a Google account so the community stays spam-free and accountable.
               </p>
               <LiquidGlassBtn
@@ -259,13 +259,13 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
               <div>
                 {submitError && (
                   <Callout tone="severe" className="mb-4">
-                    <div className="text-[var(--fs-sm)] text-[var(--text-primary)]">{submitError}</div>
+                    <div className="type-card-copy text-[var(--text-primary)]">{submitError}</div>
                   </Callout>
                 )}
 
                 <Field id="report-pin" label="PIN code" meta="6 digits" required>
                   <input
-                    className="input tracking-[0.12em] text-[var(--text-data)]"
+                    className="input type-data-input"
                     placeholder="6-digit PIN"
                     value={reportPin}
                     maxLength={6}
@@ -342,21 +342,21 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                 <span className="kicker">
                   Reports feed
                 </span>
-              <span className="text-[var(--divider)] text-[var(--fs-xs)]" aria-hidden="true">
+              <span className="text-[var(--divider)] type-note" aria-hidden="true">
                 {DOT}
               </span>
               <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
                 Top voted
               </span>
             </div>
-            <div className="text-[var(--fs-xs)] text-[var(--text-muted)]">
+            <div className="type-note">
               {loading ? 'Loading\u2026' : `${reports.length} shown`}
             </div>
           </div>
 
           {fetchError && (
             <Callout tone="active" className="mb-4">
-              <div className="text-[var(--fs-sm)] text-[var(--text-primary)]">{fetchError}</div>
+              <div className="type-card-copy text-[var(--text-primary)]">{fetchError}</div>
             </Callout>
           )}
 
@@ -413,7 +413,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                       }
                       meta={fmtDate(r.created_at)}
                       title={
-                        <h3 className="text-[var(--fs-body)] font-semibold font-display text-[var(--text-primary)] leading-snug m-0">
+                        <h3 className="type-list-title m-0">
                           {area || `PIN ${r.pin}`}
                         </h3>
                       }
@@ -455,14 +455,14 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                           />
                           <div className="flex gap-2">
                             <LiquidGlassBtn
-                              className="py-1.5 px-4 text-[var(--fs-xs)]"
+                              className="py-1.5 px-4"
                               onClick={() => handleEditReport(r.id)}
                             >
                               Save
                             </LiquidGlassBtn>
                             <button
                               type="button"
-                              className="text-[var(--fs-xs)] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] px-4"
+                              className="type-nav text-[var(--text-muted)] hover:text-[var(--text-primary)] px-4"
                               onClick={() => setEditingReportId(null)}
                             >
                               Cancel
@@ -470,7 +470,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                           </div>
                         </div>
                       ) : (
-                        <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
+                        <p className="type-card-copy whitespace-pre-wrap mb-0">
                           {r.issue}
                         </p>
                       )}
@@ -481,7 +481,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                           whileTap={shouldReduceMotion ? undefined : { scale: 1.08 }}
                           transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
                           onClick={() => handleVote(r)}
-                          className={`inline-flex items-center gap-1.5 text-[var(--fs-xs)] font-medium uppercase tracking-[0.14em] px-3 py-2 rounded-full transition-colors ${
+                          className={`inline-flex items-center gap-1.5 type-data-label px-3 py-2 rounded-full transition-colors ${
                             votes[r.id]
                               ? 'bg-[var(--accent)] text-[var(--text-on-accent)]'
                               : 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]'

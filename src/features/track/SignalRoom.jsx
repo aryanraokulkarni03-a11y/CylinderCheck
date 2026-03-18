@@ -82,8 +82,8 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
             <div className="kicker text-[var(--status-active)] mb-1">
               Hotspot | {shortageSummary.hotspot}
             </div>
-            <p className="text-[var(--fs-sm)] text-[var(--text-secondary)]">
-              <span className="stat-value text-[var(--text-data)]">
+            <p className="type-card-copy mb-0">
+              <span className="type-data-value text-[inherit] text-[var(--text-data)]">
                 {shortageSummary.hotspotReports}
               </span>
               {' '}reports in the last 30 days.{' '}
@@ -96,7 +96,7 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
       )}
 
       {/* Instruction */}
-      <p className="text-[var(--fs-sm)] text-[var(--text-muted)] mt-4 text-center">
+      <p className="type-note mt-4 text-center">
         Enter your PIN below for intelligence specific to your area
       </p>
     </motion.div>

@@ -243,7 +243,7 @@ export default function AlertsTab() {
                 <button
                   type="button"
                   onClick={scrollToPlus}
-                  className="text-[var(--fs-sm)] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+                  className="type-nav text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
                 >
                   Plus details {ARROW}
                 </button>
@@ -254,7 +254,7 @@ export default function AlertsTab() {
                   Free
                 </span>
               </div>
-              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed mt-4 mb-0 max-w-[70ch]">
+              <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
                 Enter your last booking date and we will alert you 2 days before your next window opens. No app. No spam.
               </p>
             </CardHeader>
@@ -264,7 +264,7 @@ export default function AlertsTab() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <Field id="free-pin" label="PIN" meta="Optional">
                 <input
-                  className="input tracking-[0.14em] text-[var(--text-data)]"
+                  className="input type-data-input"
                   placeholder="6-digit PIN"
                   value={alertPin}
                   maxLength={6}
@@ -300,13 +300,13 @@ export default function AlertsTab() {
 
             {freeAlertError && (
               <Callout tone="severe" className="mb-4" edge={false}>
-                <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium">{freeAlertError}</div>
+                <div className="type-note text-[var(--status-severe)] font-medium">{freeAlertError}</div>
               </Callout>
             )}
 
             {alertSaved && (
               <Callout tone="clear" className="mb-4" edge={false}>
-                <div className="text-[var(--fs-xs)] text-[var(--status-clear)] font-medium flex items-center gap-2">
+                <div className="type-note text-[var(--status-clear)] font-medium flex items-center gap-2">
                   <Check size={14} />
                   Alert activated. We will message you 2 days before your window opens.
                 </div>
@@ -331,7 +331,7 @@ export default function AlertsTab() {
               )}
             </button>
 
-            <p className="text-[var(--fs-xs)] text-[var(--text-muted)] mt-4 mb-0">
+            <p className="type-note mt-4 mb-0">
               You can opt out anytime by replying STOP.
             </p>
             </CardBody>
@@ -351,7 +351,7 @@ export default function AlertsTab() {
               titleAs="h2"
               actions={
                 <div className="text-right">
-                  <div className="price text-[var(--fs-h2)] tracking-[-0.02em] text-[var(--text-primary)] leading-none">
+                  <div className="type-data-value type-data-value--hero text-[var(--text-primary)] leading-none">
                     {RUPEE}49
                   </div>
                   <div className="kicker mt-1">per month</div>
@@ -363,7 +363,7 @@ export default function AlertsTab() {
                   Plus
                 </span>
               </div>
-              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed mt-4 mb-0 max-w-[70ch]">
+              <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
                 Shortage intelligence for households. Calm, precise, and pin-level when it matters.
               </p>
             </CardHeader>
@@ -376,7 +376,7 @@ export default function AlertsTab() {
                   <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
                     {tag}
                   </span>
-                  <span className="text-[var(--fs-sm)] text-[var(--text-primary)] leading-relaxed">
+                  <span className="type-card-copy text-[var(--text-primary)]">
                     {text}
                   </span>
                 </div>
@@ -389,7 +389,7 @@ export default function AlertsTab() {
                   <Check size={16} />
                   You are a Plus member.
                 </div>
-                <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mt-2 mb-0">
+                <p className="type-card-copy mt-2 mb-0">
                   Alerts will be sent to <span className="font-medium">{payContact}</span>.
                 </p>
               </div>
@@ -409,7 +409,7 @@ export default function AlertsTab() {
 
                 <Field id="plus-pin" label="PIN" meta="Optional">
                   <input
-                    className="input tracking-[0.14em] text-[var(--text-data)]"
+                    className="input type-data-input"
                     placeholder="6-digit PIN"
                     value={payPin}
                     maxLength={6}
@@ -421,7 +421,7 @@ export default function AlertsTab() {
 
                 {payError && (
                   <Callout tone="severe" className="mt-4" edge={false}>
-                    <div className="text-[var(--fs-xs)] text-[var(--status-severe)] font-medium">{payError}</div>
+                    <div className="type-note text-[var(--status-severe)] font-medium">{payError}</div>
                   </Callout>
                 )}
 
@@ -443,7 +443,7 @@ export default function AlertsTab() {
                   )}
                 </LiquidGlassBtn>
 
-                <div className="flex items-center justify-center gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
+                <div className="flex items-center justify-center gap-3 type-note">
                   <span className="inline-flex items-center gap-2">
                     <ShieldAlert size={12} />
                     Razorpay

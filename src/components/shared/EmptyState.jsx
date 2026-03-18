@@ -10,7 +10,7 @@ export default function EmptyState({ title, description, actionText, onAction, i
     >
       <div className="text-center">
         <div className="kicker mb-2">Awaiting signal</div>
-        <h3 className="font-display text-[var(--fs-body-lg)] font-bold text-[var(--text-primary)] mb-0">
+        <h3 className="type-empty-title mb-0">
           {title}
         </h3>
       </div>
@@ -24,7 +24,7 @@ export default function EmptyState({ title, description, actionText, onAction, i
             </svg>
           )}
         </div>
-        <p className="font-body text-[var(--fs-sm)] text-[var(--text-secondary)] max-w-sm mx-auto mb-0">
+        <p className="type-empty-copy max-w-sm mx-auto mb-0">
           {description}
         </p>
       </CardBody>

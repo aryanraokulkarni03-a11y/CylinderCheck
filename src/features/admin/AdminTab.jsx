@@ -22,11 +22,11 @@ export default function AdminTab({ data, loading, onLock }) {
             <ArrowLeft size={14} /> Exit restricted mode
           </button>
 
-          <h1 className="text-[var(--status-early)] mb-2 flex items-center gap-3">
+          <h1 className="type-page-title text-[var(--status-early)] mb-2 flex items-center gap-3">
             <Shield size={28} className="text-[var(--status-early)]" />
             System Control
           </h1>
-          <p className="text-[var(--status-early)] opacity-80 leading-relaxed font-medium">
+          <p className="type-page-desc text-[var(--status-early)] opacity-80 font-medium">
             Administrative overview. Authorized access only.
           </p>
         </div>
@@ -42,10 +42,10 @@ export default function AdminTab({ data, loading, onLock }) {
               meta={<AlertTriangle size={14} className="text-[var(--accent)]" aria-hidden="true" />}
             />
             <CardBody>
-              <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">
+              <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
                 {loading ? EM_DASH : reportCount}
               </div>
-              <div className="caption text-[var(--text-secondary)] mt-2">Community issues flagged</div>
+              <div className="type-note mt-2">Community issues flagged</div>
             </CardBody>
           </Card>
         </StaggerItem>
@@ -59,10 +59,10 @@ export default function AdminTab({ data, loading, onLock }) {
               meta={<Bell size={14} className="text-[var(--status-clear)]" aria-hidden="true" />}
             />
             <CardBody>
-              <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">
+              <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
                 {loading ? EM_DASH : alertCount}
               </div>
-              <div className="caption text-[var(--text-secondary)] mt-2">PINs being monitored</div>
+              <div className="type-note mt-2">PINs being monitored</div>
             </CardBody>
           </Card>
         </StaggerItem>
@@ -76,10 +76,10 @@ export default function AdminTab({ data, loading, onLock }) {
               meta={<Users size={14} className="text-[var(--status-early)]" aria-hidden="true" />}
             />
             <CardBody>
-              <div className="stat text-[var(--fs-h1)] text-[var(--text-primary)]">
+              <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
                 {loading ? EM_DASH : subscriptions.length}
               </div>
-              <div className="caption text-[var(--text-secondary)] mt-2">Active paid users</div>
+              <div className="type-note mt-2">Active paid users</div>
             </CardBody>
           </Card>
         </StaggerItem>
@@ -88,10 +88,10 @@ export default function AdminTab({ data, loading, onLock }) {
       <FadeIn delay={0.4} className="mt-8">
         <div className="mb-4">
           <div className="kicker mb-1">Access ledger</div>
-          <h2 className="text-[var(--fs-body-lg)] font-semibold font-display text-[var(--text-primary)] m-0">
+          <h2 className="type-list-title m-0">
             Subscribers directory
           </h2>
-          <p className="caption text-[var(--text-secondary)] mt-2 mb-0">
+          <p className="type-note mt-2 mb-0">
             Live payment records synced from the Plus subscriber table.
           </p>
         </div>
@@ -99,16 +99,16 @@ export default function AdminTab({ data, loading, onLock }) {
           <table className="w-full text-left relative min-w-[600px]">
             <thead className="border-b border-[var(--border)] bg-[var(--bg-raised)]">
               <tr>
-                <th className="px-5 py-3 text-[var(--fs-xs)] font-medium tracking-widest uppercase text-[var(--text-muted)]">
+                <th className="px-5 py-3 type-table-heading">
                   ID / Contact
                 </th>
-                <th className="px-5 py-3 text-[var(--fs-xs)] font-medium tracking-widest uppercase text-[var(--text-muted)]">
+                <th className="px-5 py-3 type-table-heading">
                   Payment ID
                 </th>
-                <th className="px-5 py-3 text-[var(--fs-xs)] font-medium tracking-widest uppercase text-[var(--text-muted)]">
+                <th className="px-5 py-3 type-table-heading">
                   Amount
                 </th>
-                <th className="px-5 py-3 text-[var(--fs-xs)] font-medium tracking-widest uppercase text-[var(--text-muted)]">
+                <th className="px-5 py-3 type-table-heading">
                   Status
                 </th>
               </tr>
@@ -116,13 +116,13 @@ export default function AdminTab({ data, loading, onLock }) {
             <tbody className="divide-y divide-[var(--divider)]">
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="px-5 py-8 text-center text-[var(--fs-sm)] text-[var(--text-muted)] font-medium">
+                  <td colSpan="4" className="px-5 py-8 text-center type-card-copy--compact font-medium">
                     <span className="motion-safe:animate-pulse">Loading directory...</span>
                   </td>
                 </tr>
               ) : subscriptions.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-5 py-8 text-center text-[var(--fs-sm)] text-[var(--text-muted)] font-medium">
+                  <td colSpan="4" className="px-5 py-8 text-center type-card-copy--compact font-medium">
                     No active subscriptions.
                   </td>
                 </tr>
@@ -130,17 +130,17 @@ export default function AdminTab({ data, loading, onLock }) {
                 subscriptions.map((s, i) => (
                   <tr key={s.id || i} className="hover:bg-[var(--bg-raised)] transition-colors">
                     <td className="px-5 py-4">
-                      <div className="text-[var(--fs-sm)] font-medium text-[var(--text-primary)] mb-1">
+                      <div className="type-table-value mb-1">
                         {s.contact}
                       </div>
-                      <div className="text-[var(--fs-xs)] text-[var(--text-muted)] font-body">
+                      <div className="type-note">
                         Joined {new Date(s.created_at).toLocaleDateString()}
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-[var(--fs-xs)] text-[var(--text-secondary)]">
+                    <td className="px-5 py-4 type-table-cell">
                       {s.razorpay_payment_id || EM_DASH}
                     </td>
-                    <td className="px-5 py-4 price text-[var(--fs-sm)] text-[var(--text-primary)]">
+                    <td className="px-5 py-4 type-table-value">
                       {s.amount ? `${RUPEE}${s.amount}` : EM_DASH}
                     </td>
                     <td className="px-5 py-4">

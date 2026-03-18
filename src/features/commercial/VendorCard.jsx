@@ -72,7 +72,7 @@ export default function VendorCard({ vendor }) {
           <div className="flex justify-between items-start mb-4 gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-[var(--fs-body-lg)] font-bold font-display text-[var(--text-primary)] leading-tight group-hover:text-[var(--accent)] transition-colors truncate">
+                <h3 className="type-list-title group-hover:text-[var(--accent)] transition-colors truncate">
                   {vendor?.name || 'Supplier'}
                 </h3>
                 {isVerified && (
@@ -92,14 +92,14 @@ export default function VendorCard({ vendor }) {
                 </span>
               </div>
               {vendor?.tagline && (
-                <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mt-3 leading-relaxed">
+                <p className="type-card-copy mt-3">
                   {vendor.tagline}
                 </p>
               )}
               {isVerified && licenseNumber && (
                 <div className="mt-2 kicker">
                   License <span className="text-[var(--divider)]" aria-hidden="true">{DOT}</span>{' '}
-                  <span className="stat-value text-[var(--text-data)] tracking-[0.02em] normal-case">
+                  <span className="type-data-value text-[inherit] text-[var(--text-data)] normal-case">
                     {licenseNumber}
                   </span>
                 </div>
@@ -123,7 +123,7 @@ export default function VendorCard({ vendor }) {
             </div>
           </div>
 
-          <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] leading-relaxed mb-6 flex-grow">
+          <p className="type-card-copy mb-6 flex-grow">
             {vendor?.description || 'Contact this supplier for availability and pricing.'}
           </p>
 
@@ -134,7 +134,7 @@ export default function VendorCard({ vendor }) {
               target="_blank"
               rel="noopener noreferrer"
               disabled={!waHref}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[var(--fs-sm)]"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -154,7 +154,7 @@ export default function VendorCard({ vendor }) {
             <a
               href={telHref || undefined}
               aria-disabled={!telHref || undefined}
-              className={`btn-ghost text-[var(--fs-sm)] ${
+              className={`btn-ghost ${
                 telHref ? '' : 'opacity-50 pointer-events-none'
               }`}
             >

@@ -147,7 +147,7 @@ export function SupportPage() {
             meta={<span className="reading-meta">Effective {EFFECTIVE_DATE}</span>}
           />
           <CardBody className="support-contact-card">
-            <p className="m-0">
+            <p className="type-reading-copy m-0">
               CylinderCheck support runs through a single editorial inbox: <a href={buildMailto('CylinderCheck support', generalSupportBody)}>{CONTACT_EMAIL}</a>.
               Choose the issue lane below if you want the subject line pre-filled for billing, trust, commercial, or account help.
             </p>
@@ -228,7 +228,7 @@ export function SupportPage() {
               }
             />
             <CardBody>
-              <p className="m-0">{copy}</p>
+              <p className="type-card-copy m-0">{copy}</p>
               <ul className="reading-list reading-list--dense support-stream__notes">
                 <li>{note}</li>
                 <li>All replies still come from {CONTACT_EMAIL}, but the subject line keeps the issue context intact.</li>
@@ -276,11 +276,11 @@ export function SupportPage() {
           meta={<span className="reading-meta">Email-first support</span>}
         />
         <CardBody className="support-faq">
-          {FAQ_ITEMS.map(({ question, answer }) => (
+              {FAQ_ITEMS.map(({ question, answer }) => (
             <Card key={question} variant="inset" size="compact">
               <CardHeader kicker="Question" titleAs="h3" title={question} />
               <CardBody>
-                <p className="m-0">{answer}</p>
+                <p className="type-card-copy m-0">{answer}</p>
               </CardBody>
             </Card>
           ))}

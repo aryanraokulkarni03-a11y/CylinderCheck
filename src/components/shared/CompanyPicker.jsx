@@ -30,7 +30,7 @@ export default function CompanyPicker({ value, onChange, compact }) {
         {!compact && (
           <div className="kicker text-[var(--text-primary)] mb-3 flex items-center justify-between">
             Your gas company
-            <span className="caption text-[var(--text-muted)] tracking-normal normal-case">
+            <span className="type-note tracking-normal normal-case">
               (optional)
             </span>
           </div>
@@ -45,10 +45,10 @@ export default function CompanyPicker({ value, onChange, compact }) {
             onClick={() => onChange(value === co.id ? null : co.id)}
             aria-pressed={value === co.id}
           >
-            <span className="text-[var(--fs-body-lg)]" aria-hidden="true">
+            <span className="type-emoji-chip" aria-hidden="true">
               {co.emoji}
             </span>
-            <span className="text-[var(--fs-xs)] font-medium tracking-wide">
+            <span className="type-nav">
               {compact ? co.short : co.label}
             </span>
           </button>

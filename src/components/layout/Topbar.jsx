@@ -59,7 +59,7 @@ export function Topbar({
             title={logoClicks > 0 ? `${5 - logoClicks} more${ELLIPSIS}` : 'CylinderCheck'}
           >
             <FlameIcon size={22} />
-            <span className="font-display font-bold text-[var(--fs-body-lg)] tracking-[-0.02em] text-[var(--text-primary)]">
+            <span className="type-brand">
               CylinderCheck
               <span
                 className="w-[6px] h-[6px] rounded-full bg-[var(--accent)] inline-block ml-[6px]"
@@ -77,7 +77,7 @@ export function Topbar({
                   key={t.id}
                   type="button"
                   onClick={() => onTabChange?.(t.id)}
-                  className={`relative px-3 py-2 rounded-md font-medium transition-colors ${
+                  className={`relative px-3 py-2 rounded-md type-nav transition-colors ${
                     active
                       ? 'text-[var(--text-primary)]'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -118,7 +118,7 @@ export function Topbar({
               <div className="flex items-center gap-2">
                 <div
                   className="hidden sm:flex w-8 h-8 rounded-full flex-shrink-0 bg-[var(--accent-soft)] border border-[var(--accent)]
-                             items-center justify-center text-[var(--fs-xs)] font-medium text-[var(--accent)]"
+                             items-center justify-center type-data-label text-[var(--accent)]"
                   aria-label="Signed in"
                   title={user.email || 'Signed in'}
                 >
@@ -145,13 +145,13 @@ export function Topbar({
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="kicker mb-1">Sign-in status</div>
-                  <p className="text-[var(--fs-xs)] text-[var(--text-primary)] m-0">{authError}</p>
+                  <p className="type-note text-[var(--text-primary)] m-0">{authError}</p>
                 </div>
                 {onDismissAuthError ? (
                   <button
                     type="button"
                     onClick={onDismissAuthError}
-                    className="btn-ghost shrink-0 min-h-[40px] px-3 text-[var(--fs-xs)]"
+                    className="btn-ghost shrink-0 min-h-[40px] px-3"
                   >
                     Dismiss
                   </button>

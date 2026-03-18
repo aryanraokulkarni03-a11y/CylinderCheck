@@ -94,10 +94,10 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
                 <Lock size={24} className={error ? 'motion-safe:animate-pulse' : ''} />
               </div>
 
-              <h2 className="text-[var(--fs-h4)] font-bold font-display text-[var(--text-primary)] mb-2">
+              <h2 className="type-card-title mb-2">
                 Restricted Area
               </h2>
-              <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] text-center max-w-[260px] mb-8 font-medium leading-relaxed">
+              <p className="type-card-copy text-center max-w-[260px] mb-8 font-medium">
                 Enter clearance code to access system metrics.
               </p>
 
@@ -120,7 +120,7 @@ export default function AdminModal({ isOpen, onClose, onUnlock, loading }) {
                     placeholder="Password"
                     autoFocus
                     aria-invalid={error || undefined}
-                    className={`input rounded-[var(--radius-sm)] tracking-[0.2em] text-center ${
+                    className={`input type-data-input rounded-[var(--radius-sm)] text-center ${
                       error ? 'border-[var(--status-severe)]' : ''
                     }`}
                   />

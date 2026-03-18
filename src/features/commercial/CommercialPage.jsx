@@ -158,7 +158,7 @@ export default function CommercialPage({ prefilledCity }) {
           <div className="lg:col-span-7 xl:col-span-8 w-full min-w-0">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
-                <div className="font-display font-bold text-[var(--fs-body-lg)] text-[var(--text-primary)]">
+                <div className="type-list-title">
                   Listings in {activeState}
                 </div>
                 <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
@@ -216,11 +216,11 @@ export default function CommercialPage({ prefilledCity }) {
                   className="callout--roomy text-center"
                   edge={false}
                 >
-                  <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mb-3">{vendorError}</p>
+                  <p className="type-card-copy mb-3">{vendorError}</p>
                   <button
                     type="button"
                     onClick={() => fetchVendors(activeState)}
-                    className="text-[var(--fs-sm)] font-medium text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+                    className="type-nav text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
                   >
                     Try again {ARROW}
                   </button>
@@ -248,9 +248,9 @@ export default function CommercialPage({ prefilledCity }) {
             </AnimatePresence>
 
             {vendors.length > 0 && (
-              <Card variant="inset" size="compact" className="mt-8 flex gap-3 text-[var(--fs-xs)] text-[var(--text-muted)]">
-                <FileText size={14} className="shrink-0 text-[var(--text-secondary)] mt-0.5" />
-                <p className="m-0">
+            <Card variant="inset" size="compact" className="mt-8 flex gap-3 type-note">
+              <FileText size={14} className="shrink-0 text-[var(--text-secondary)] mt-0.5" />
+              <p className="m-0">
                   CylinderCheck does not guarantee stock availability or set prices. Always confirm rates directly with
                   the agency.
                 </p>

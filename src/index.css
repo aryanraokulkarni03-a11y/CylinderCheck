@@ -434,6 +434,77 @@ body::before {
   opacity: 0.92;
 }
 
+.commercial-hero {
+  isolation: isolate;
+}
+
+.commercial-hero__wash {
+  background:
+    radial-gradient(circle at 18% 26%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 34%),
+    radial-gradient(circle at 42% 18%, color-mix(in srgb, var(--k-terracotta) 7%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 10%, transparent), transparent 58%);
+}
+
+.commercial-hero__glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(120px);
+  opacity: 0.18;
+  transform: translateZ(0);
+}
+
+.commercial-hero__glow--primary {
+  top: -220px;
+  left: -80px;
+  width: 540px;
+  height: 540px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 34%, transparent) 0%, transparent 68%);
+}
+
+.commercial-hero__glow--secondary {
+  top: -120px;
+  left: 24%;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--k-terracotta) 24%, transparent) 0%, transparent 70%);
+}
+
+.commercial-hero__glow--accent {
+  right: -120px;
+  top: 12%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-soft) 20%, transparent) 0%, transparent 72%);
+  opacity: 0.12;
+}
+
+@media (max-width: 768px) {
+  .commercial-hero__wash {
+    background:
+      radial-gradient(circle at 16% 18%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 40%),
+      radial-gradient(circle at 56% 8%, color-mix(in srgb, var(--k-terracotta) 8%, transparent), transparent 34%),
+      linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 9%, transparent), transparent 44%);
+  }
+
+  .commercial-hero__glow--primary {
+    top: -180px;
+    left: -140px;
+    width: 420px;
+    height: 420px;
+  }
+
+  .commercial-hero__glow--secondary {
+    top: -120px;
+    left: 26%;
+    width: 280px;
+    height: 280px;
+  }
+
+  .commercial-hero__glow--accent {
+    display: none;
+  }
+}
+
 @media (min-width: 768px) {
   .commercial-market-band__meta {
     flex-direction: row;

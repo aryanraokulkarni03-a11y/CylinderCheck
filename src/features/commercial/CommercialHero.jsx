@@ -22,14 +22,11 @@ export default function CommercialHero({ hasAnyVendors = null }) {
   }, [shouldReduceMotion])
 
   return (
-    <section className="relative pt-10 md:pt-16 pb-10 md:pb-14 w-full overflow-hidden">
-      {/* Restrained atmospheric wash */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden="true"
-      >
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[720px] h-[720px] rounded-full bg-[var(--accent)] opacity-[0.06] blur-[140px]" />
-        <div className="absolute -bottom-56 -left-56 w-[560px] h-[560px] rounded-full bg-[var(--k-terracotta)] opacity-[0.04] blur-[160px]" />
+    <section className="commercial-hero relative pt-10 md:pt-16 pb-10 md:pb-14 w-full overflow-hidden">
+      <div className="commercial-hero__wash pointer-events-none absolute inset-0" aria-hidden="true">
+        <div className="commercial-hero__glow commercial-hero__glow--primary" />
+        <div className="commercial-hero__glow commercial-hero__glow--secondary" />
+        <div className="commercial-hero__glow commercial-hero__glow--accent" />
       </div>
 
       <motion.div

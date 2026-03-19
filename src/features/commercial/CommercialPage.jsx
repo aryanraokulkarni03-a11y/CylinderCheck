@@ -211,6 +211,18 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
     <div className="pb-24 w-full min-w-0">
       <CommercialHero hasAnyVendors={hasAnyVendors} />
 
+      <div id="commercial-vendors" className="mt-8 md:mt-10 w-full">
+        <PageHeader
+          as="h2"
+          markerStatus="active"
+          markerLabel="Commercial Alternatives"
+          markerSublabel="Private suppliers"
+          icon={Store}
+          title="Private suppliers"
+          description="Choose your state to see listings as they go live. If your state is empty today, join the list and we will notify you."
+        />
+      </div>
+
       <section
         className={`commercial-market-band mt-8${pricesFreshness.isStale ? ' commercial-market-band--stale' : ''}`}
         aria-label="Commercial LPG market snapshot"
@@ -221,7 +233,6 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
           productType={productType}
           ariaLabel="Commercial LPG prices ticker"
           className="commercial-market-band__ticker"
-          mobileBehavior="snap"
         />
         <div className="commercial-market-band__meta">
           <div className="commercial-market-band__details">
@@ -250,17 +261,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
         </div>
       </section>
 
-      <div id="commercial-vendors" className="mt-8 md:mt-10 w-full">
-        <PageHeader
-          as="h2"
-          markerStatus="active"
-          markerLabel="Commercial Alternatives"
-          markerSublabel="Private suppliers"
-          icon={Store}
-          title="Private suppliers"
-          description="Choose your state to see listings as they go live. If your state is empty today, join the list and we will notify you."
-        />
-
+      <div className="mt-8 md:mt-10 w-full">
         <PillRow
           ariaLabel="Choose a state"
           value={activeState}

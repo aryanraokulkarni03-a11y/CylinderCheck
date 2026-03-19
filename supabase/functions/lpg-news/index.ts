@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { NEWS_LIMIT, scrapeLatestNews } from "../_shared/news.ts";
+import { inferDisplayLocation, NEWS_LIMIT, scrapeLatestNews } from "../_shared/news.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -36,6 +36,7 @@ function toResponseArticle(article: StoredArticleRow) {
     sourceUrl: article.source_url ?? "",
     category: article.category,
     city: article.city,
+    displayLocation: inferDisplayLocation(article.title, article.link, article.city),
     pubDate: article.published_at,
     scrapedAt: article.scraped_at,
   };
@@ -78,6 +79,7 @@ async function seedNewsCache() {
     sourceUrl: article.source_url,
     category: article.category,
     city: article.city,
+    displayLocation: inferDisplayLocation(article.title, article.link, article.city),
     pubDate: article.published_at,
     scrapedAt: article.scraped_at,
   }));

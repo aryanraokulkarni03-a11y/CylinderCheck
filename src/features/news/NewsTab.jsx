@@ -25,6 +25,55 @@ const RE_SHORTAGE = /shortage|delay|disruption|supply|scarcity|crisis|queue|queu
 const RE_PRICE = /price|rate|hike|revision|subsidy|cost|expensive/i
 const RE_POLICY = /ministry|government|policy|rule|regulation|announce|minister|customer data|oil cos seek/i
 
+const STATE_LOCATION_LABELS = [
+  ['andaman and nicobar islands', 'Andaman and Nicobar Islands'],
+  ['andaman & nicobar islands', 'Andaman and Nicobar Islands'],
+  ['andhra pradesh', 'Andhra Pradesh'],
+  ['arunachal pradesh', 'Arunachal Pradesh'],
+  ['assam', 'Assam'],
+  ['bihar', 'Bihar'],
+  ['chandigarh', 'Chandigarh'],
+  ['chhattisgarh', 'Chhattisgarh'],
+  ['dadra and nagar haveli and daman and diu', 'Dadra and Nagar Haveli and Daman and Diu'],
+  ['dadra & nagar haveli and daman & diu', 'Dadra and Nagar Haveli and Daman and Diu'],
+  ['dadra and nagar haveli', 'Dadra and Nagar Haveli and Daman and Diu'],
+  ['daman and diu', 'Dadra and Nagar Haveli and Daman and Diu'],
+  ['delhi', 'Delhi'],
+  ['nct of delhi', 'Delhi'],
+  ['goa', 'Goa'],
+  ['gujarat', 'Gujarat'],
+  ['haryana', 'Haryana'],
+  ['himachal pradesh', 'Himachal Pradesh'],
+  ['jammu and kashmir', 'Jammu and Kashmir'],
+  ['jammu & kashmir', 'Jammu and Kashmir'],
+  [' j&k ', 'Jammu and Kashmir'],
+  ['jharkhand', 'Jharkhand'],
+  ['karnataka', 'Karnataka'],
+  ['kerala', 'Kerala'],
+  ['ladakh', 'Ladakh'],
+  ['lakshadweep', 'Lakshadweep'],
+  ['madhya pradesh', 'Madhya Pradesh'],
+  ['maharashtra', 'Maharashtra'],
+  ['manipur', 'Manipur'],
+  ['meghalaya', 'Meghalaya'],
+  ['mizoram', 'Mizoram'],
+  ['nagaland', 'Nagaland'],
+  ['odisha', 'Odisha'],
+  ['orissa', 'Odisha'],
+  ['puducherry', 'Puducherry'],
+  ['pondicherry', 'Puducherry'],
+  ['punjab', 'Punjab'],
+  ['rajasthan', 'Rajasthan'],
+  ['sikkim', 'Sikkim'],
+  ['tamil nadu', 'Tamil Nadu'],
+  ['telangana', 'Telangana'],
+  ['tripura', 'Tripura'],
+  ['uttar pradesh', 'Uttar Pradesh'],
+  ['uttarakhand', 'Uttarakhand'],
+  ['uttaranchal', 'Uttarakhand'],
+  ['west bengal', 'West Bengal'],
+]
+
 function getCategory(title) {
   if (RE_SHORTAGE.test(title)) return 'SHORTAGE SIGNALS'
   if (RE_PRICE.test(title)) return 'PRICE & RATES'
@@ -118,6 +167,21 @@ function categoryStreamLabel(category) {
   return 'More coverage'
 }
 
+function getDisplayLocation(item) {
+  if (item?.displayLocation) return String(item.displayLocation).trim()
+  if (item?.city) return String(item.city).trim()
+
+  const exactCity = getCity(item?.title || '', item?.link || '')
+  if (exactCity) return exactCity
+
+  const haystack = `${item?.title || ''} ${item?.link || ''}`.toLowerCase()
+  for (const [needle, label] of STATE_LOCATION_LABELS) {
+    if (haystack.includes(needle)) return label
+  }
+
+  return ''
+}
+
 export default function NewsTab() {
   const [news, setNews] = useState(cachedNews)
   const [loading, setLoading] = useState(!cachedNews.length)
@@ -158,6 +222,7 @@ export default function NewsTab() {
             pubDate: new Date(a.pubDate),
             category: a.category || getCategory(a.title),
             city: a.city || getCity(a.title, a.link),
+            displayLocation: a.displayLocation || '',
           }))
           cachedNews = parsed
           cachedNewsUpdatedAt = d.updatedAt || null
@@ -212,6 +277,10 @@ export default function NewsTab() {
   }, [filteredNews])
 
   const leadStory = filteredNews[0] || null
+  const leadLocation = useMemo(
+    () => (leadStory ? getDisplayLocation(leadStory) : ''),
+    [leadStory],
+  )
   const mapStory = useMemo(
     () => filteredNews.find((item) => item?.city) || null,
     [filteredNews],
@@ -277,12 +346,9 @@ export default function NewsTab() {
           />
 
           {newsUpdatedAt ? (
-            <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="mt-3">
               <span className="type-note text-[var(--text-muted)]">
                 {formatLastUpdated(newsUpdatedAt)}
-              </span>
-              <span className="type-note text-[var(--text-muted)]">
-                Latest-first feed
               </span>
             </div>
           ) : null}
@@ -329,13 +395,13 @@ export default function NewsTab() {
                           <span className="news-lead-card__source">
                             {leadStory.source}
                           </span>
-                          {leadStory.city ? (
+                          {leadLocation ? (
                             <>
                               <span className="news-lead-card__sep" aria-hidden="true">
                                 {DOT}
                               </span>
                               <span className="news-lead-card__city">
-                                <MapPin size={12} className="text-[var(--accent)]" /> {leadStory.city}
+                                <MapPin size={12} className="text-[var(--accent)]" /> {leadLocation}
                               </span>
                             </>
                           ) : null}
@@ -415,6 +481,7 @@ export default function NewsTab() {
 
                           const catHere = item.category || getCategory(item.title)
                           const status = CAT_STATUS[catHere] || 'clear'
+                          const locationLabel = getDisplayLocation(item)
 
                           return (
                             <article
@@ -426,13 +493,13 @@ export default function NewsTab() {
                                   <span className="news-signal-row__source">
                                     {item.source}
                                   </span>
-                                  {item.city ? (
+                                  {locationLabel ? (
                                     <>
                                       <span className="news-signal-row__sep" aria-hidden="true">
                                         {DOT}
                                       </span>
                                       <span className="news-signal-row__city">
-                                        <MapPin size={12} className="text-[var(--accent)]" /> {item.city}
+                                        <MapPin size={12} className="text-[var(--accent)]" /> {locationLabel}
                                       </span>
                                     </>
                                   ) : null}

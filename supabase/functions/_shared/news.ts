@@ -60,6 +60,55 @@ const CITY_NORMALISE: Record<string, string> = {
 
 const CITY_KEYS = Object.keys(CITY_COORDS);
 
+const STATE_LOCATION_LABELS: Array<[string, string]> = [
+  ["andaman and nicobar islands", "Andaman and Nicobar Islands"],
+  ["andaman & nicobar islands", "Andaman and Nicobar Islands"],
+  ["andhra pradesh", "Andhra Pradesh"],
+  ["arunachal pradesh", "Arunachal Pradesh"],
+  ["assam", "Assam"],
+  ["bihar", "Bihar"],
+  ["chandigarh", "Chandigarh"],
+  ["chhattisgarh", "Chhattisgarh"],
+  ["dadra and nagar haveli and daman and diu", "Dadra and Nagar Haveli and Daman and Diu"],
+  ["dadra & nagar haveli and daman & diu", "Dadra and Nagar Haveli and Daman and Diu"],
+  ["dadra and nagar haveli", "Dadra and Nagar Haveli and Daman and Diu"],
+  ["daman and diu", "Dadra and Nagar Haveli and Daman and Diu"],
+  ["delhi", "Delhi"],
+  ["nct of delhi", "Delhi"],
+  ["goa", "Goa"],
+  ["gujarat", "Gujarat"],
+  ["haryana", "Haryana"],
+  ["himachal pradesh", "Himachal Pradesh"],
+  ["jammu and kashmir", "Jammu and Kashmir"],
+  ["jammu & kashmir", "Jammu and Kashmir"],
+  [" j&k ", "Jammu and Kashmir"],
+  ["jharkhand", "Jharkhand"],
+  ["karnataka", "Karnataka"],
+  ["kerala", "Kerala"],
+  ["ladakh", "Ladakh"],
+  ["lakshadweep", "Lakshadweep"],
+  ["madhya pradesh", "Madhya Pradesh"],
+  ["maharashtra", "Maharashtra"],
+  ["manipur", "Manipur"],
+  ["meghalaya", "Meghalaya"],
+  ["mizoram", "Mizoram"],
+  ["nagaland", "Nagaland"],
+  ["odisha", "Odisha"],
+  ["orissa", "Odisha"],
+  ["puducherry", "Puducherry"],
+  ["pondicherry", "Puducherry"],
+  ["punjab", "Punjab"],
+  ["rajasthan", "Rajasthan"],
+  ["sikkim", "Sikkim"],
+  ["tamil nadu", "Tamil Nadu"],
+  ["telangana", "Telangana"],
+  ["tripura", "Tripura"],
+  ["uttar pradesh", "Uttar Pradesh"],
+  ["uttarakhand", "Uttarakhand"],
+  ["uttaranchal", "Uttarakhand"],
+  ["west bengal", "West Bengal"],
+];
+
 export type NewsArticle = {
   article_key: string;
   title: string;
@@ -175,6 +224,18 @@ function getCity(title: string, link: string) {
   if (!matches.length) return null;
   matches.sort((a, b) => a.index - b.index);
   return matches[0].city;
+}
+
+export function inferDisplayLocation(title: string, link: string, city: string | null) {
+  const exactCity = String(city || "").trim() || getCity(title, link);
+  if (exactCity) return exactCity;
+
+  const haystack = `${title || ""} ${link || ""}`.toLowerCase();
+  for (const [needle, label] of STATE_LOCATION_LABELS) {
+    if (haystack.includes(needle)) return label;
+  }
+
+  return "";
 }
 
 function extractGoogleArticleId(link: string) {

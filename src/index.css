@@ -1401,6 +1401,46 @@ body::before {
   gap: var(--space-3);
 }
 
+.national-snapshot-card {
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, var(--fog-highlight), transparent 44%),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent-soft) 8%, transparent), transparent 42%),
+    var(--bg-raised);
+}
+
+.national-snapshot-hero,
+.national-snapshot-stat {
+  border: 1px solid var(--divider);
+  border-radius: calc(var(--radius-lg) + 2px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 80%, transparent), transparent 70%),
+    var(--bg-inset);
+}
+
+.national-snapshot-hero {
+  padding: clamp(18px, 2vw, 24px);
+  box-shadow: inset 0 1px 0 var(--fog-highlight);
+}
+
+.national-snapshot-stat {
+  padding: 18px;
+  min-height: 142px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+  .national-snapshot-card {
+    margin-top: 4px;
+  }
+
+  .national-snapshot-stat {
+    min-height: auto;
+  }
+}
+
 .booking-date-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));

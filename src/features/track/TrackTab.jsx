@@ -136,12 +136,6 @@ export function TrackTab({
 
       <div className="grid md:grid-cols-[420px_1fr] gap-6 items-start min-w-0">
         <div className="space-y-4 min-w-0">
-          <AnimatePresence>
-            {!pinData && !loading && (
-              <SignalRoom shortageSummary={shortageSummary} mapPrices={mapPrices} />
-            )}
-          </AnimatePresence>
-
           <Card>
             <CardHeader
               kicker="Booking check"
@@ -520,6 +514,12 @@ export function TrackTab({
               </motion.div>
             )}
           </AnimatePresence>
+
+          <SignalRoom
+            shortageSummary={shortageSummary}
+            mapPrices={mapPrices}
+            pricesUpdatedAt={pricesUpdatedAt}
+          />
         </div>
       </div>
     </div>

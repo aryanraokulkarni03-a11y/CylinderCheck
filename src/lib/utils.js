@@ -64,6 +64,23 @@ export const CITY_COORDS = {
   Ranchi:    { lat: 23.3441, lng: 85.3096 },
 }
 
+export const CITY_STATE_LABELS = {
+  Delhi: 'Delhi',
+  Mumbai: 'Maharashtra',
+  Bangalore: 'Karnataka',
+  Hyderabad: 'Telangana',
+  Chennai: 'Tamil Nadu',
+  Kochi: 'Kerala',
+  Pune: 'Maharashtra',
+  Kolkata: 'West Bengal',
+  Ahmedabad: 'Gujarat',
+  Vizag: 'Andhra Pradesh',
+  Jaipur: 'Rajasthan',
+  Lucknow: 'Uttar Pradesh',
+  Patna: 'Bihar',
+  Ranchi: 'Jharkhand',
+}
+
 export const COMMERCIAL_CITIES = [
   'Mumbai', 'Bangalore', 'Hyderabad',
   'Chennai', 'Delhi', 'Kolkata', 'Vizag'

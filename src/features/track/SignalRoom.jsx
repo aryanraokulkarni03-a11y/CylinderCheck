@@ -1,29 +1,65 @@
 // src/features/track/SignalRoom.jsx
-// The national live intelligence feed shown BEFORE user enters PIN
-// This is the "control room of Indian LPG intelligence"
+// National snapshot for the Track tab.
 
 import { motion, useReducedMotion } from 'motion/react'
-import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerContainer'
 import { StatusDot } from '../../components/shared/StatusDot'
 import { springs } from '../../lib/springs'
-import { StatCard } from '../../components/ui/StatCard'
-import { Callout } from '../../components/ui/Callout'
+import { Card } from '../../components/ui/Card'
+import { CardBody, CardHeader } from '../../components/ui/CardParts'
+import { CITY_STATE_LABELS } from '../../lib/utils'
 
-export function SignalRoom({ shortageSummary, mapPrices }) {
+function formatSnapshotUpdated(value) {
+  if (!value) return 'Waiting for latest sync'
+
+  try {
+    const date = new Date(value)
+    const diff = Date.now() - date.getTime()
+    const mins = Math.max(0, Math.round(diff / 60000))
+    if (mins < 60) return `Updated ${mins}m ago`
+
+    const hrs = Math.round(mins / 60)
+    if (hrs < 24) return `Updated ${hrs}h ago`
+
+    return `Updated ${date.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`
+  } catch {
+    return 'Waiting for latest sync'
+  }
+}
+
+export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
   const shouldReduceMotion = useReducedMotion()
-  // Derive national stats
-  const activeCities = shortageSummary?.activePinCount || 0
-  const totalReports = shortageSummary?.totalReports || 0  // sourced from shortageSummary, not raw reports
-  const cheapestPrice = Object.values(mapPrices).length > 0
-    ? Math.min(...Object.values(mapPrices)
-        .flatMap(c => Object.values(c).map(v => v.price))
-        .filter(Boolean))
+
+  const nationalPriceRows = Object.entries(mapPrices || {}).flatMap(([city, comps]) =>
+    Object.values(comps || {})
+      .map((entry) => Number(entry?.price))
+      .filter((price) => Number.isFinite(price))
+      .map((price) => ({
+        city,
+        state: CITY_STATE_LABELS[city] || '',
+        price,
+      })),
+  )
+
+  const lowestTracked = nationalPriceRows.length
+    ? nationalPriceRows.reduce((best, current) => (current.price < best.price ? current : best))
     : null
 
-  const overallStatus = activeCities >= 5 ? 'severe'
-    : activeCities >= 2 ? 'active'
-    : activeCities >= 1 ? 'early'
-    : 'clear'
+  const activeClusters = shortageSummary?.activePinCount || 0
+  const hotspot = shortageSummary?.hotspot || ''
+  const hotspotReports = shortageSummary?.hotspotReports || 0
+  const overallStatus =
+    activeClusters >= 5 ? 'severe' :
+      activeClusters >= 2 ? 'active' :
+        activeClusters >= 1 ? 'early' : 'clear'
+  const hotspotTone =
+    hotspotReports >= 5 ? 'severe' :
+      hotspotReports >= 2 ? 'active' :
+        hotspotReports >= 1 ? 'early' : 'clear'
 
   return (
     <motion.div
@@ -31,74 +67,82 @@ export function SignalRoom({ shortageSummary, mapPrices }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
       transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
-      className="mb-8"
+      className="mt-4"
     >
-      {/* National status header */}
-        <div className="flex items-center gap-3 mb-5">
-          <StatusDot status={overallStatus} size={8} />
-          <span className="kicker">
-            National LPG Intelligence | Live
-          </span>
-        </div>
-
-      {/* Live stats */}
-      <StaggerContainer staggerVal={0.14}
-        className="grid grid-cols-3 gap-3 mb-6">
-        {[
-          {
-            value: activeCities > 0 ? `${activeCities}` : '0',
-            label: 'shortage zones',
-            status: activeCities > 0 ? 'active' : 'clear',
-          },
-          {
-            value: cheapestPrice ? `Rs ${cheapestPrice}` : '-',
-            label: 'lowest price today',
-            status: 'clear',
-          },
-          {
-            value: totalReports > 0 ? `${totalReports}` : '0',
-            label: 'community reports',
-            status: totalReports > 10 ? 'early' : 'clear',
-          },
-        ].map(({ value, label, status }) => (
-          <StaggerItem key={label}>
-            <StatCard value={value} label={label} status={status} />
-          </StaggerItem>
-        ))}
-      </StaggerContainer>
-
-      {/* Hotspot alert if active */}
-      {shortageSummary && (
-        <Callout
-          as={motion.div}
-          tone="active"
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
-          className="flex items-start gap-3"
+      <Card variant="inset" className="card--spacious national-snapshot-card">
+        <CardHeader
+          kicker="National snapshot"
+          title="Across India right now"
+          titleAs="h3"
+          actions={
+            <span className="type-note text-[var(--text-muted)]">
+              {formatSnapshotUpdated(pricesUpdatedAt)}
+            </span>
+          }
         >
-          <StatusDot status="active" size={7} />
-          <div>
-            <div className="kicker text-[var(--status-active)] mb-1">
-              Hotspot | {shortageSummary.hotspot}
-            </div>
-            <p className="type-card-copy mb-0">
-              <span className="type-data-value text-[inherit] text-[var(--text-data)]">
-                {shortageSummary.hotspotReports}
-              </span>
-              {' '}reports in the last 30 days.{' '}
-              <span className="kicker text-[var(--status-active)] inline">
-                {shortageSummary.activePinCount} PIN{shortageSummary.activePinCount > 1 ? 's' : ''} affected.
-              </span>
-            </p>
-          </div>
-        </Callout>
-      )}
+          <p className="type-card-copy mt-3 mb-0 max-w-[42ch]">
+            Daily tracked prices and recent shortage reporting, kept separate from your personal booking read.
+          </p>
+        </CardHeader>
 
-      {/* Instruction */}
-      <p className="type-note mt-4 text-center">
-        Enter your PIN below for intelligence specific to your area
-      </p>
+        <CardBody className="pt-2">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
+            <div className="national-snapshot-hero">
+              <div className="flex items-center gap-2">
+                <StatusDot status="clear" size={7} />
+                <span className="kicker text-[var(--accent)]">Lowest tracked refill today</span>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-1">
+                <span className="type-data-value type-data-value--hero">
+                  {lowestTracked ? `₹${lowestTracked.price}` : '—'}
+                </span>
+                <span className="type-card-title text-[var(--text-secondary)]">
+                  {lowestTracked
+                    ? `${lowestTracked.city}${lowestTracked.state ? `, ${lowestTracked.state}` : ''}`
+                    : 'Waiting for latest city prices'}
+                </span>
+              </div>
+
+              <p className="type-note mt-3 mb-0 max-w-[42ch]">
+                Based on the most recent tracked city prices in the current national scrape.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              <div className="national-snapshot-stat">
+                <div className="flex items-center gap-2">
+                  <StatusDot status={overallStatus} size={7} />
+                  <span className="kicker">Active shortage clusters</span>
+                </div>
+                <div className="mt-3 flex items-end gap-2">
+                  <span className="type-data-value">
+                    {activeClusters}
+                  </span>
+                  <span className="type-note mb-1">
+                    {activeClusters === 1 ? 'area under strain' : 'areas under strain'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="national-snapshot-stat">
+                <div className="flex items-center gap-2">
+                  <StatusDot status={hotspotTone} size={7} />
+                  <span className="kicker">Current hotspot</span>
+                </div>
+                <p className="type-card-title mt-3 mb-1">
+                  {hotspot || 'No hotspot yet'}
+                </p>
+                <p className="type-note mb-0">
+                  {hotspot
+                    ? `${hotspotReports} report${hotspotReports === 1 ? '' : 's'} in the last 30 days.`
+                    : 'No active shortage cluster is standing out right now.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
     </motion.div>
   )
 }

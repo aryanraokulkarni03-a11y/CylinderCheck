@@ -238,7 +238,6 @@ export default function BookingDatePicker({ id, value, onChange }) {
         className={`booking-date-trigger ${value ? 'booking-date-trigger--filled' : ''}`}
       >
         <span className="booking-date-trigger__copy">
-          <span className="booking-date-trigger__eyebrow">Last booking date</span>
           <span className="booking-date-trigger__value">
             {formatFieldValue(value)}
           </span>

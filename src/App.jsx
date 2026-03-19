@@ -14,6 +14,8 @@ import { supabase } from './supabaseClient'
 import { springs } from './lib/springs'
 import {
   CITY_NORMALISE,
+  CITY_STATE_LABELS,
+  LPG_PRODUCT_TYPES,
   addDays,
   computeUrgency,
   daysUntil,
@@ -254,9 +256,13 @@ export default function App() {
             const grouped = {}
             for (const row of prices) {
               grouped[row.city] ||= {}
-              // We only want the latest entry per city/company (query is sorted desc).
-              if (!grouped[row.city][row.company]) {
-                grouped[row.city][row.company] = { price: row.price }
+              // We only want the latest entry per city/product type (query is sorted desc).
+              if (!grouped[row.city][row.product_type]) {
+                grouped[row.city][row.product_type] = {
+                  price: row.price,
+                  state: row.state || CITY_STATE_LABELS[row.city] || '',
+                  sourceUrl: row.source_url || '',
+                }
               }
             }
             setMapPrices(grouped)
@@ -513,7 +519,17 @@ export default function App() {
               />
               <Route path={TAB_ROUTES.news} element={<NewsTab />} />
               <Route path={TAB_ROUTES.alerts} element={<AlertsTab />} />
-              <Route path={TAB_ROUTES.commercial} element={<CommercialPage prefilledCity={normalizedCity} />} />
+              <Route
+                path={TAB_ROUTES.commercial}
+                element={
+                  <CommercialPage
+                    prefilledCity={normalizedCity}
+                    mapPrices={mapPrices}
+                    pricesUpdatedAt={pricesUpdatedAt}
+                    productType={LPG_PRODUCT_TYPES.commercial_19kg}
+                  />
+                }
+              />
               <Route path={TAB_ROUTES.support} element={<SupportPage />} />
               <Route path={TAB_ROUTES.privacy} element={<PrivacyPage />} />
               <Route path={TAB_ROUTES.terms} element={<TermsPage />} />

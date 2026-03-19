@@ -81,6 +81,16 @@ export const CITY_STATE_LABELS = {
   Ranchi: 'Jharkhand',
 }
 
+export const LPG_PRODUCT_TYPES = {
+  domestic_14_2kg: 'domestic_14_2kg',
+  commercial_19kg: 'commercial_19kg',
+}
+
+export const LPG_PRODUCT_LABELS = {
+  [LPG_PRODUCT_TYPES.domestic_14_2kg]: 'Domestic LPG (14.2kg)',
+  [LPG_PRODUCT_TYPES.commercial_19kg]: 'Commercial LPG (19kg)',
+}
+
 export const COMMERCIAL_CITIES = [
   'Mumbai', 'Bangalore', 'Hyderabad',
   'Chennai', 'Delhi', 'Kolkata', 'Vizag'

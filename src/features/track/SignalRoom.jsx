@@ -6,7 +6,7 @@ import { StatusDot } from '../../components/shared/StatusDot'
 import { springs } from '../../lib/springs'
 import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
-import { CITY_STATE_LABELS } from '../../lib/utils'
+import { CITY_STATE_LABELS, LPG_PRODUCT_TYPES } from '../../lib/utils'
 
 function formatSnapshotUpdated(value) {
   if (!value) return 'Waiting for latest sync'
@@ -35,14 +35,15 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
   const shouldReduceMotion = useReducedMotion()
 
   const nationalPriceRows = Object.entries(mapPrices || {}).flatMap(([city, comps]) =>
-    Object.values(comps || {})
-      .map((entry) => Number(entry?.price))
-      .filter((price) => Number.isFinite(price))
-      .map((price) => ({
+    (() => {
+      const price = Number(comps?.[LPG_PRODUCT_TYPES.domestic_14_2kg]?.price)
+      if (!Number.isFinite(price)) return []
+      return [{
         city,
         state: CITY_STATE_LABELS[city] || '',
         price,
-      })),
+      }]
+    })(),
   )
 
   const lowestTracked = nationalPriceRows.length
@@ -90,7 +91,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
             <div className="national-snapshot-hero">
               <div className="flex items-center gap-2">
                 <StatusDot status="clear" size={7} />
-                <span className="kicker text-[var(--accent)]">Lowest tracked refill today</span>
+                <span className="kicker text-[var(--accent)]">Lowest tracked 14.2kg refill today</span>
               </div>
 
               <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-1">

@@ -20,9 +20,102 @@ const CITIES = [
   { city: "Jaipur", slug: "jaipur" },
   { city: "Lucknow", slug: "lucknow" },
   { city: "Patna", slug: "patna" },
+] as const;
+
+const CITY_STATE_LABELS: Record<string, string> = {
+  Delhi: "Delhi",
+  Mumbai: "Maharashtra",
+  Bangalore: "Karnataka",
+  Hyderabad: "Telangana",
+  Chennai: "Tamil Nadu",
+  Pune: "Maharashtra",
+  Kolkata: "West Bengal",
+  Ahmedabad: "Gujarat",
+  Vizag: "Andhra Pradesh",
+  Jaipur: "Rajasthan",
+  Lucknow: "Uttar Pradesh",
+  Patna: "Bihar",
+};
+
+const PRODUCT_TYPES = ["domestic_14_2kg", "commercial_19kg"] as const;
+const FETCH_TIMEOUT_MS = 8000;
+const MIN_PRICE = 700;
+const MAX_PRICE_BY_TYPE = {
+  domestic_14_2kg: 1400,
+  commercial_19kg: 4000,
+} as const;
+const MAX_ABSOLUTE_DELTA = 120;
+const MAX_PERCENT_DELTA = 0.12;
+const MAX_ABSOLUTE_DELTA_BY_TYPE = {
+  domestic_14_2kg: 120,
+  commercial_19kg: 500,
+} as const;
+
+type ProductType = typeof PRODUCT_TYPES[number];
+
+type ProductCandidate = {
+  price: number | null;
+  parseMethod: string | null;
+  parseReason: string;
+};
+
+type CityScrapeResult = {
+  city: string;
+  state: string;
+  sourceUrl: string;
+  prices: Record<ProductType, ProductCandidate>;
+};
+
+type ValidationResult = {
+  accepted: boolean;
+  status: "accepted" | "rejected" | "missing";
+  reason: string;
+};
+
+type PriceLogRow = {
+  city: string;
+  state: string;
+  product_type: ProductType;
+  source_url: string;
+  candidate_price: number | null;
+  published_price: number | null;
+  parse_method: string | null;
+  validation_status: string;
+  validation_reason: string;
+  scraped_at: string;
+};
+
+const PRODUCT_PATTERNS: Array<{ key: ProductType; patterns: RegExp[] }> = [
+  {
+    key: "domestic_14_2kg",
+    patterns: [
+      /domestic\s*\(14\.2\s*kg\)\s*(?:₹|â‚¹|rs\.?|inr)?\s*([\d,]+(?:\.\d{1,2})?)/i,
+      /domestic\s*\(14\.2\s*kg\)[\s\S]{0,80}?(?:₹|â‚¹|rs\.?|inr)\s*([\d,]+(?:\.\d{1,2})?)/i,
+    ],
+  },
+  {
+    key: "commercial_19kg",
+    patterns: [
+      /commercial\s*\(19\s*kg\)\s*(?:₹|â‚¹|rs\.?|inr)?\s*([\d,]+(?:\.\d{1,2})?)/i,
+      /commercial\s*\(19\s*kg\)[\s\S]{0,80}?(?:₹|â‚¹|rs\.?|inr)\s*([\d,]+(?:\.\d{1,2})?)/i,
+    ],
+  },
 ];
 
-const FETCH_TIMEOUT_MS = 8000;
+function emptyCandidates(): Record<ProductType, ProductCandidate> {
+  return {
+    domestic_14_2kg: {
+      price: null,
+      parseMethod: null,
+      parseReason: "No product-specific match found",
+    },
+    commercial_19kg: {
+      price: null,
+      parseMethod: null,
+      parseReason: "No product-specific match found",
+    },
+  };
+}
 
 async function fetchWithTimeout(url: string, init: RequestInit = {}) {
   const controller = new AbortController();
@@ -38,82 +131,132 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}) {
   }
 }
 
-async function scrapeCityPrices(slug: string): Promise<{
-  IndianOil: number | null;
-  "HP Gas": number | null;
-  "Bharat Gas": number | null;
-}> {
-  const result = { IndianOil: null as number | null, "HP Gas": null as number | null, "Bharat Gas": null as number | null };
+function normalizeSourceText(html: string) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&#8377;|&#x20b9;|&rupee;/gi, "₹")
+    .replace(/â‚¹/g, "₹")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parsePrice(raw: string | undefined, productType: ProductType) {
+  if (!raw) return null;
+  const value = Number.parseFloat(raw.replace(/,/g, ""));
+  if (!Number.isFinite(value)) return null;
+  if (value < MIN_PRICE || value > MAX_PRICE_BY_TYPE[productType]) return null;
+  return value;
+}
+
+function validateCandidate(
+  candidate: ProductCandidate,
+  previousPrice: number | null,
+  productType: ProductType,
+): ValidationResult {
+  if (candidate.price == null) {
+    return {
+      accepted: false,
+      status: "missing",
+      reason: candidate.parseReason,
+    };
+  }
+
+  if (previousPrice == null || !Number.isFinite(previousPrice)) {
+    return {
+      accepted: true,
+      status: "accepted",
+      reason: "Accepted from company-specific match",
+    };
+  }
+
+  const absoluteDelta = Math.abs(candidate.price - previousPrice);
+  const percentDelta = previousPrice > 0 ? absoluteDelta / previousPrice : 0;
+
+  if (absoluteDelta > MAX_ABSOLUTE_DELTA_BY_TYPE[productType] || percentDelta > MAX_PERCENT_DELTA) {
+    return {
+      accepted: false,
+      status: "rejected",
+      reason: `Rejected: suspicious delta vs last trusted price (${previousPrice})`,
+    };
+  }
+
+  return {
+    accepted: true,
+    status: "accepted",
+    reason: "Accepted against previous trusted price",
+  };
+}
+
+async function scrapeCityPrices(city: string, slug: string): Promise<CityScrapeResult> {
+  const sourceUrl = `https://www.goodreturns.in/lpg-price-in-${slug}.html`;
+  const prices = emptyCandidates();
+  const state = CITY_STATE_LABELS[city] || "";
 
   try {
-    const url = `https://www.goodreturns.in/lpg-price-in-${slug}.html`;
-    const res = await fetchWithTimeout(url, {
+    const res = await fetchWithTimeout(sourceUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; CylinderCheck/1.0; +https://cylindercheck.in)",
         "Accept": "text/html,application/xhtml+xml",
       },
     });
-    if (!res.ok) return result;
-    const html = await res.text();
 
-    const companyPatterns: Array<{ key: keyof typeof result; patterns: RegExp[] }> = [
-      {
-        key: "IndianOil",
-        patterns: [
-          /indian\s*oil[^₹]*₹\s*([\d,]+(?:\.\d{1,2})?)/i,
-          /indane[^₹]*₹\s*([\d,]+(?:\.\d{1,2})?)/i,
-        ],
-      },
-      {
-        key: "HP Gas",
-        patterns: [
-          /hp\s*gas[^₹]*₹\s*([\d,]+(?:\.\d{1,2})?)/i,
-          /hindustan\s*petroleum[^₹]*₹\s*([\d,]+(?:\.\d{1,2})?)/i,
-        ],
-      },
-      {
-        key: "Bharat Gas",
-        patterns: [
-          /bharat\s*gas[^₹]*₹\s*([\d,]+(?:\.\d{1,2})?)/i,
-          /bpcl[^₹]*₹\s*([\d,]+(?:\.\d{1,2})?)/i,
-        ],
-      },
-    ];
+    if (!res.ok) {
+      const reason = `Source returned ${res.status}`;
+      for (const productType of PRODUCT_TYPES) {
+        prices[productType] = {
+          price: null,
+          parseMethod: null,
+          parseReason: reason,
+        };
+      }
+      return { city, state, sourceUrl, prices };
+    }
 
-    for (const { key, patterns } of companyPatterns) {
-      for (const pattern of patterns) {
+    const html = normalizeSourceText(await res.text());
+
+    for (const { key, patterns } of PRODUCT_PATTERNS) {
+      for (let index = 0; index < patterns.length; index += 1) {
+        const pattern = patterns[index];
         const match = html.match(pattern);
-        if (match) {
-          const price = parseFloat(match[1].replace(/,/g, ""));
-          if (price >= 700 && price <= 1200) {
-            result[key] = price;
-            break;
-          }
+        if (!match) continue;
+
+        const price = parsePrice(match[1], key);
+        if (price == null) {
+          prices[key] = {
+            price: null,
+            parseMethod: `regex:${index + 1}`,
+            parseReason: "Matched text but extracted price was outside trusted range",
+          };
+          continue;
         }
+
+        prices[key] = {
+          price,
+          parseMethod: `regex:${index + 1}`,
+          parseReason: "Matched product-specific price",
+        };
+        break;
       }
     }
+  } catch (error) {
+    const reason =
+      error instanceof Error && error.name === "AbortError"
+        ? "Timed out while reading source page"
+        : "Failed to read source page";
 
-    // Fallback: grab first 3 distinct LPG-range prices in page order
-    if (!result.IndianOil && !result["HP Gas"] && !result["Bharat Gas"]) {
-      const genericPrices: number[] = [];
-      const allPriceMatches = html.matchAll(/₹\s*([\d,]+(?:\.\d{1,2})?)/g);
-      for (const m of allPriceMatches) {
-        const p = parseFloat(m[1].replace(/,/g, ""));
-        if (p >= 700 && p <= 1200 && !genericPrices.includes(p)) {
-          genericPrices.push(p);
-          if (genericPrices.length === 3) break;
-        }
-      }
-      if (genericPrices[0]) result.IndianOil = genericPrices[0];
-      if (genericPrices[1]) result["HP Gas"] = genericPrices[1];
-      if (genericPrices[2]) result["Bharat Gas"] = genericPrices[2];
+    for (const productType of PRODUCT_TYPES) {
+      prices[productType] = {
+        price: null,
+        parseMethod: null,
+        parseReason: reason,
+      };
     }
-
-  } catch {
-    // silent fail
   }
 
-  return result;
+  return { city, state, sourceUrl, prices };
 }
 
 serve(async (req: Request) => {
@@ -122,9 +265,6 @@ serve(async (req: Request) => {
   }
 
   try {
-    // Auth: Bearer token must exactly match CRON_SECRET env var.
-    // Set this in: Supabase Dashboard → Edge Functions → Secrets → CRON_SECRET
-    // Use the same value in your cron job Authorization header: "Bearer <CRON_SECRET>"
     const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -137,65 +277,148 @@ serve(async (req: Request) => {
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const results: { city: string; prices: Record<string, number | null>; status: string }[] = [];
-    const upserts: {
-      company: string;
-      price: number;
-      city: string;
-      recorded_at: string;
-    }[] = [];
-    const scrapeStartedAt = new Date().toISOString();
-    const cityResults = await Promise.all(
-      CITIES.map(async ({ city, slug }) => {
-        const prices = await scrapeCityPrices(slug);
-        let gotAny = false;
+    const { data: existingRows, error: existingError } = await supabase
+      .from("lpg_prices")
+      .select("city, state, product_type, price");
 
-        for (const [company, price] of Object.entries(prices)) {
-          if (price !== null) {
-            upserts.push({ company, price, city, recorded_at: scrapeStartedAt });
-            gotAny = true;
-          }
+    if (existingError) {
+      return new Response(
+        JSON.stringify({ ok: false, error: existingError.message }),
+        { status: 500, headers: CORS },
+      );
+    }
+
+    const previousPriceMap = new Map<string, number>();
+    for (const row of existingRows ?? []) {
+      const key = `${row.city}::${row.product_type}`;
+      previousPriceMap.set(key, Number(row.price));
+    }
+
+    const results: Array<{
+      city: string;
+      sourceUrl: string;
+      accepted: number;
+      held: number;
+      missing: number;
+      prices: Record<string, number | null>;
+      status: "ok" | "partial" | "held";
+    }> = [];
+    const upserts: Array<{
+      city: string;
+      state: string;
+      product_type: ProductType;
+      price: number;
+      source_url: string;
+      recorded_at: string;
+    }> = [];
+    const logs: PriceLogRow[] = [];
+    const scrapeStartedAt = new Date().toISOString();
+
+    const cityResults = await Promise.all(
+      CITIES.map(({ city, slug }) => scrapeCityPrices(city, slug)),
+    );
+
+    for (const cityResult of cityResults) {
+      let accepted = 0;
+      let held = 0;
+      let missing = 0;
+      const publishedPrices: Record<string, number | null> = {};
+
+      for (const productType of PRODUCT_TYPES) {
+        const candidate = cityResult.prices[productType];
+        const previousPrice = previousPriceMap.get(`${cityResult.city}::${productType}`) ?? null;
+        const validation = validateCandidate(candidate, previousPrice, productType);
+        const publishedPrice =
+          validation.accepted && candidate.price != null ? candidate.price : previousPrice;
+
+        if (validation.status === "accepted" && candidate.price != null) {
+          accepted += 1;
+          upserts.push({
+            city: cityResult.city,
+            state: cityResult.state,
+            product_type: productType,
+            price: candidate.price,
+            source_url: cityResult.sourceUrl,
+            recorded_at: scrapeStartedAt,
+          });
+        } else if (validation.status === "rejected") {
+          held += 1;
+        } else {
+          missing += 1;
         }
 
-        return { city, prices, status: gotAny ? "ok" : "failed" };
-      })
-    );
+        publishedPrices[productType] = publishedPrice;
+        logs.push({
+          city: cityResult.city,
+          state: cityResult.state,
+          product_type: productType,
+          source_url: cityResult.sourceUrl,
+          candidate_price: candidate.price,
+          published_price: publishedPrice,
+          parse_method: candidate.parseMethod,
+          validation_status: validation.status,
+          validation_reason: validation.reason,
+          scraped_at: scrapeStartedAt,
+        });
+      }
 
-    results.push(...cityResults);
+      results.push({
+        city: cityResult.city,
+        sourceUrl: cityResult.sourceUrl,
+        accepted,
+        held,
+        missing,
+        prices: publishedPrices,
+        status: accepted > 0 ? (held > 0 || missing > 0 ? "partial" : "ok") : "held",
+      });
+    }
 
     if (upserts.length > 0) {
       const { error: dbError } = await supabase
         .from("lpg_prices")
-        .upsert(upserts, { onConflict: "company,city" });
+        .upsert(upserts, { onConflict: "city,product_type" });
 
       if (dbError) {
         return new Response(
           JSON.stringify({ ok: false, error: dbError.message }),
-          { status: 500, headers: CORS }
+          { status: 500, headers: CORS },
         );
       }
     }
 
+    if (logs.length > 0) {
+      const { error: logError } = await supabase
+        .from("lpg_price_scrape_log")
+        .insert(logs);
+
+      if (logError) {
+        console.error("lpg_price_scrape_log insert failed:", logError.message);
+      }
+    }
+
     const successful = results.filter((r) => r.status === "ok").length;
-    const failed = results.filter((r) => r.status === "failed").length;
+    const partial = results.filter((r) => r.status === "partial").length;
+    const held = results.filter((r) => r.status === "held").length;
 
     return new Response(
       JSON.stringify({
         ok: true,
-        message: `Scraped ${successful}/${CITIES.length} cities — ${upserts.length} prices upserted, ${failed} failed`,
+        message: `Scraped ${results.length} cities — ${upserts.length} trusted prices published, ${partial} partial, ${held} held`,
+        successful,
+        partial,
+        held,
         results,
         updated_at: new Date().toISOString(),
       }),
-      { headers: CORS }
+      { headers: CORS },
     );
-
   } catch (err) {
     return new Response(
       JSON.stringify({ ok: false, error: String(err) }),
-      { status: 500, headers: CORS }
+      { status: 500, headers: CORS },
     );
   }
 });

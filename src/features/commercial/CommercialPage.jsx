@@ -8,6 +8,7 @@ import { StaggerContainer } from '../../components/motion/StaggerContainer'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { PillRow } from '../../components/ui/PillRow'
 import {
+  LPG_PRODUCT_LABELS,
   COMMERCIAL_CITIES_BY_STATE,
   COMMERCIAL_STATES,
   commercialStateForCity,
@@ -19,6 +20,7 @@ import LeadForm from './LeadForm'
 import { Card } from '../../components/ui/Card'
 import { Callout } from '../../components/ui/Callout'
 import EmptyState from '../../components/shared/EmptyState'
+import { PriceTicker } from '../../components/shared/PriceTicker'
 
 const ARROW = '\u2192'
 const DOT = '\u00B7'
@@ -34,7 +36,30 @@ function isTestVendor(v) {
   return false
 }
 
-export default function CommercialPage({ prefilledCity }) {
+function formatPricesUpdated(value) {
+  if (!value) return ''
+
+  try {
+    const date = new Date(value)
+    const diff = Date.now() - date.getTime()
+    const mins = Math.max(0, Math.round(diff / 60000))
+    if (mins < 60) return `Updated ${mins}m ago`
+
+    const hrs = Math.round(mins / 60)
+    if (hrs < 24) return `Updated ${hrs}h ago`
+
+    return `Updated ${date.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`
+  } catch {
+    return ''
+  }
+}
+
+export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUpdatedAt = null, productType }) {
   const shouldReduceMotion = useReducedMotion()
 
   const defaultState = useMemo(() => {
@@ -119,9 +144,52 @@ export default function CommercialPage({ prefilledCity }) {
     fetchVendors(activeState)
   }, [activeState, fetchVendors])
 
+  const commercialPriceRows = useMemo(
+    () =>
+      Object.entries(mapPrices).flatMap(([city, products]) => {
+        const entry = products?.[productType]
+        const price = Number(entry?.price)
+        if (!Number.isFinite(price)) return []
+        return [{
+          city,
+          state: entry?.state || '',
+          price,
+        }]
+      }),
+    [mapPrices, productType],
+  )
+
+  const lowestCommercial = useMemo(
+    () =>
+      commercialPriceRows.length
+        ? commercialPriceRows.reduce((best, current) => (current.price < best.price ? current : best))
+        : null,
+    [commercialPriceRows],
+  )
+
   return (
     <div className="pb-24 w-full min-w-0">
       <CommercialHero hasAnyVendors={hasAnyVendors} />
+
+      <div className="mt-8">
+        <PriceTicker
+          mapPrices={mapPrices}
+          productType={productType}
+          ariaLabel="Commercial LPG prices ticker"
+        />
+        <div className="mb-8 mt-[-1rem] flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <p className="type-note mb-0">
+            {lowestCommercial
+              ? `Lowest tracked 19kg refill today: ₹${lowestCommercial.price} in ${lowestCommercial.city}${lowestCommercial.state ? `, ${lowestCommercial.state}` : ''}`
+              : `${LPG_PRODUCT_LABELS[productType]} prices will appear here after the next trusted scrape.`}
+          </p>
+          {pricesUpdatedAt ? (
+            <span className="type-note text-[var(--text-muted)]">
+              {formatPricesUpdated(pricesUpdatedAt)}
+            </span>
+          ) : null}
+        </div>
+      </div>
 
       <div id="commercial-vendors" className="mt-14 md:mt-20 w-full">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)] kicker w-full">

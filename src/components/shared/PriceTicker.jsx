@@ -3,26 +3,36 @@
 // Loops slowly under reduced motion (per motion rules).
 
 import { motion, useReducedMotion } from 'motion/react'
-import { COMPANIES } from '../../lib/utils'
+import { LPG_PRODUCT_TYPES } from '../../lib/utils'
 import { Card } from '../ui/Card'
 
 const DOT = '\u00B7'
 const RUPEE = '\u20B9'
 
-export function PriceTicker({ mapPrices = {} }) {
+export function PriceTicker({
+  mapPrices = {},
+  productType = LPG_PRODUCT_TYPES.domestic_14_2kg,
+  ariaLabel = 'LPG prices ticker',
+}) {
   const prefersReduced = useReducedMotion()
   const duration = prefersReduced ? 60 : 24
 
-  const items = Object.entries(mapPrices).flatMap(([city, comps]) => {
-    const prices = COMPANIES.map(c => comps[c]?.price).filter(Boolean)
-    if (!prices.length) return []
-    const cheapest = Math.min(...prices)
-    const color = cheapest < 880
-      ? 'var(--status-clear)'
-      : cheapest < 930
-        ? 'var(--status-early)'
-        : 'var(--status-active)'
-    return [{ city, price: cheapest, color }]
+  const items = Object.entries(mapPrices).flatMap(([city, products]) => {
+    const price = Number(products?.[productType]?.price)
+    if (!Number.isFinite(price)) return []
+    const color =
+      productType === LPG_PRODUCT_TYPES.commercial_19kg
+        ? price < 1800
+          ? 'var(--status-clear)'
+          : price < 2200
+            ? 'var(--status-early)'
+            : 'var(--status-active)'
+        : price < 880
+          ? 'var(--status-clear)'
+          : price < 930
+            ? 'var(--status-early)'
+            : 'var(--status-active)'
+    return [{ city, price, color }]
   })
 
   if (!items.length) {
@@ -41,7 +51,7 @@ export function PriceTicker({ mapPrices = {} }) {
       variant="inset"
       size="compact"
       className="card-strip w-full overflow-hidden mb-6 h-11 flex items-center relative select-none"
-      aria-label="LPG prices ticker"
+      aria-label={ariaLabel}
     >
       {/* Edge fade masks */}
       <div className="absolute left-0 top-0 w-8 h-full z-10

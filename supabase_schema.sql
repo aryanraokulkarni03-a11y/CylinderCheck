@@ -72,19 +72,38 @@ CREATE POLICY "Public can insert subscription" ON alert_subscriptions FOR INSERT
 -- 4. LPG Prices table
 CREATE TABLE IF NOT EXISTS lpg_prices (
   id          BIGSERIAL PRIMARY KEY,
-  company     TEXT NOT NULL,
+  city        TEXT NOT NULL,
+  state       TEXT,
+  product_type TEXT NOT NULL DEFAULT 'domestic_14_2kg',
   price       NUMERIC(7,2) NOT NULL,
-  city        TEXT DEFAULT 'Delhi',  -- prices vary by city
-  recorded_at TIMESTAMPTZ DEFAULT NOW()
+  source_url  TEXT,
+  recorded_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (city, product_type)
 );
 
-INSERT INTO lpg_prices (company, price) VALUES
-  ('IndianOil', 903.00),
-  ('HP Gas',    906.00),
-  ('Bharat Gas',901.00);
+INSERT INTO lpg_prices (city, state, product_type, price) VALUES
+  ('Delhi', 'Delhi', 'domestic_14_2kg', 903.00)
+ON CONFLICT (city, product_type) DO NOTHING;
 
 ALTER TABLE lpg_prices ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can read LPG prices" ON lpg_prices FOR SELECT USING (true);
+
+CREATE TABLE IF NOT EXISTS lpg_price_scrape_log (
+  id                BIGSERIAL PRIMARY KEY,
+  city              TEXT NOT NULL,
+  state             TEXT,
+  product_type      TEXT NOT NULL,
+  source_url        TEXT NOT NULL,
+  candidate_price   NUMERIC(7,2),
+  published_price   NUMERIC(7,2),
+  parse_method      TEXT,
+  validation_status TEXT NOT NULL,
+  validation_reason TEXT,
+  scraped_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE lpg_price_scrape_log ENABLE ROW LEVEL SECURITY;
 
 -- 5. Paid subscriptions
 --    Written by verify-payment edge function, read by admin stats.

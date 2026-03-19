@@ -144,21 +144,21 @@ export function TrackTab({
 
           <Card>
             <CardHeader
-              kicker="Delivery prediction"
-              title="Check your local booking window"
+              kicker="Booking check"
+              title="See when to book in your area"
               titleAs="h2"
             >
               <p className="type-card-copy mt-3 mb-0">
-                Enter your PIN, optional booking date, and current cylinder level for a calm read on what to do next.
+                Use your PIN to check delivery pace, shortage pressure, and the safest booking window for your area.
               </p>
             </CardHeader>
 
             <CardBody>
             <div className="mb-5">
-              <Field id="pin-input" label="Where are you?" required>
+              <Field id="pin-input" label="Your 6-digit PIN" required>
                 <input
                   className="input type-data-input min-h-[52px]"
-                  placeholder="Enter 6-digit PIN"
+                  placeholder="Enter your area PIN"
                   value={pin}
                   maxLength={6}
                   inputMode="numeric"
@@ -176,7 +176,7 @@ export function TrackTab({
             </div>
 
             <div className="mb-6">
-              <Field id="booking-date" label="Last booking date" meta="Optional">
+              <Field id="booking-date" label="Last booking date" meta="Optional but useful">
                 <BookingDatePicker
                   id="booking-date"
                   value={lastBooking}
@@ -188,7 +188,7 @@ export function TrackTab({
             <div className="flex flex-col gap-2 mb-6">
               <div className="field__top">
                 <div className="field__label">Current cylinder level</div>
-                <div className="field__meta">Optional (unlocks urgency score)</div>
+                <div className="field__meta">Optional for urgency read</div>
               </div>
               <div className="grid grid-cols-4 gap-2" role="group" aria-label="Current cylinder level">
                 {CYLINDER_LEVELS.map(({ value, label, emoji, hint }) => (
@@ -228,7 +228,7 @@ export function TrackTab({
             )}
 
             <LiquidGlassBtn onClick={handleTrack} disabled={loading} className="w-full justify-center">
-              {loading ? 'Looking up...' : `See what's happening ${ARROW}`}
+              {loading ? 'Looking up...' : `Check my area ${ARROW}`}
             </LiquidGlassBtn>
             </CardBody>
           </Card>
@@ -451,47 +451,69 @@ export function TrackTab({
                   className="card--spacious min-h-[300px] w-full border-[var(--border)]"
                 >
                   <CardHeader
-                    kicker="Area preview"
-                    title="See what changes in your area before you book"
+                    kicker="For your area"
+                    title="What unlocks when you check your PIN"
                     titleAs="h3"
                   >
                     <p className="type-card-copy mt-3 mb-0 max-w-[38ch]">
-                      Delivery delay, shortage pressure, and your next booking window will appear here for the PIN you check.
+                      You&apos;ll get a clearer read on delivery pace, local shortage pressure, and whether it&apos;s time to book now or wait.
                     </p>
                   </CardHeader>
 
                   <CardBody className="pt-2">
-                    <div className="space-y-3">
+                    <div className="grid gap-3 md:grid-cols-2">
                       {[
                         {
                           icon: Clock3,
-                          title: 'Delivery time in your area',
-                          note: 'See the local average wait before your cylinder reaches home.',
+                          eyebrow: 'Delivery pace',
+                          title: 'How long cylinders are taking nearby',
+                          note: 'See the local average wait before a refill reaches homes around your PIN.',
                         },
                         {
                           icon: MapPin,
-                          title: 'Shortage signals near your PIN',
-                          note: 'Spot active delivery strain before you place the next booking.',
+                          eyebrow: 'Shortage watch',
+                          title: 'Whether your area is under strain',
+                          note: 'Spot active delivery pressure before it turns into a late refill or stock stress.',
                         },
                         {
                           icon: CalendarRange,
-                          title: 'Best date to book next',
-                          note: 'Use your last booking date to judge when your window opens again.',
+                          eyebrow: 'Booking cue',
+                          title: 'When your next booking window opens',
+                          note: 'Use your last booking date to judge whether to book now, hold, or plan ahead.',
                         },
-                      ].map(({ icon: Icon, title, note }) => (
+                      ].map(({ icon: Icon, eyebrow, title, note }, index) => (
                         <div
                           key={title}
-                          className="flex items-start gap-3 rounded-[20px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-3"
+                          className={`rounded-[22px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-4 ${
+                            index === 2 ? 'md:col-span-2' : ''
+                          }`}
                         >
-                          <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--accent)]">
-                            <Icon size={18} />
-                          </span>
-                          <div className="min-w-0">
-                            <p className="type-card-title mb-1">{title}</p>
-                            <p className="type-note mb-0">{note}</p>
+                          <div className="flex items-start gap-3">
+                            <span className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[color:color-mix(in_srgb,var(--accent)_12%,var(--bg-inset))] text-[var(--accent)] shadow-[0_12px_30px_rgba(241,139,31,0.12)]">
+                              <Icon size={18} />
+                            </span>
+                            <div className="min-w-0">
+                              <p className="kicker mb-2 text-[var(--accent)]">{eyebrow}</p>
+                              <p className="type-card-title mb-1">{title}</p>
+                              <p className="type-note mb-0 max-w-[40ch]">{note}</p>
+                            </div>
                           </div>
                         </div>
                       ))}
+                    </div>
+
+                    <div className="mt-4 rounded-[22px] border border-[var(--divider)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent)_6%,var(--bg-raised))_0%,var(--bg-raised)_100%)] px-4 py-4">
+                      <div className="flex items-start gap-3">
+                        <span className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--accent)]">
+                          <Target size={18} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="type-card-title mb-1">Better read with the optional details</p>
+                          <p className="type-note mb-0">
+                            Add your last booking date and current cylinder level for a more useful urgency read, especially when local deliveries are slowing down.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </CardBody>
                 </Card>

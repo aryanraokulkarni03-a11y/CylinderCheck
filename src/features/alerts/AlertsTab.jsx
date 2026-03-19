@@ -3,7 +3,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
-import { BadgeCheck, Bell, Check, Loader2, ShieldAlert, Zap } from 'lucide-react'
+import { Bell, Loader2 } from 'lucide-react'
 
 import { supabase } from '../../supabaseClient'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
@@ -13,6 +13,7 @@ import { Field } from '../../components/ui/Field'
 import { Callout } from '../../components/ui/Callout'
 import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
+import BookingDatePicker from '../track/BookingDatePicker'
 
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || ''
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -23,11 +24,26 @@ const DOT = '\u00B7'
 const ARROW = '\u2192'
 
 const PLUS_FEATURES = [
-  ['WINDOW', 'WhatsApp/SMS alert 2 days before your booking window'],
-  ['WARN', 'Early shortage warning for your PIN, before it spreads'],
-  ['PRICE', 'Price revision heads-up 24 hours before news breaks'],
-  ['PING', 'Delivery day status ping so you are home on time'],
-  ['SCORE', 'Monthly supply health score for your area'],
+  {
+    eyebrow: 'Booking window',
+    text: 'WhatsApp or SMS reminder 2 days before your booking window opens.',
+  },
+  {
+    eyebrow: 'Shortage warning',
+    text: 'Early heads-up for your PIN when local supply starts tightening.',
+  },
+  {
+    eyebrow: 'Price revision',
+    text: 'Advance notice before a cylinder price update becomes common news.',
+  },
+  {
+    eyebrow: 'Delivery ping',
+    text: 'A timely reminder on delivery day so someone is home to receive it.',
+  },
+  {
+    eyebrow: 'Area score',
+    text: 'A monthly supply health read for your area so you can plan ahead.',
+  },
 ]
 
 function loadRazorpay() {
@@ -236,36 +252,31 @@ export default function AlertsTab() {
         <SlideUp delay={0.02} className="w-full min-w-0">
           <Card>
             <CardHeader
-              kicker="Booking window reminder"
-              title="Know when to book"
+              kicker="Free reminder"
+              title="Stay ahead of your next booking window"
               titleAs="h2"
-              actions={
+            >
+              <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
+                Add your last booking date and we&apos;ll remind you 2 days before your next LPG booking window opens. No app. No spam.
+              </p>
+              <div className="mt-4">
                 <button
                   type="button"
                   onClick={scrollToPlus}
                   className="type-nav text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
                 >
-                  Plus details {ARROW}
+                  See Plus details {ARROW}
                 </button>
-              }
-            >
-              <div className="mt-3">
-                <span className="badge text-[var(--status-clear)] bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)]">
-                  Free
-                </span>
               </div>
-              <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
-                Enter your last booking date and we will alert you 2 days before your next window opens. No app. No spam.
-              </p>
             </CardHeader>
 
             <CardBody>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <Field id="free-pin" label="PIN" meta="Optional">
+            <div className="space-y-4 mb-4">
+              <Field id="free-pin" label="Your 6-digit PIN" meta="Optional">
                 <input
                   className="input type-data-input"
-                  placeholder="6-digit PIN"
+                  placeholder="Enter your area PIN"
                   value={alertPin}
                   maxLength={6}
                   inputMode="numeric"
@@ -274,18 +285,17 @@ export default function AlertsTab() {
                 />
               </Field>
 
-              <Field id="free-date" label="Last booking" meta="Optional">
-                <input
-                  type="date"
-                  className="input"
+              <Field id="free-date" label="Last booking date" meta="Optional but useful">
+                <BookingDatePicker
+                  id="free-date"
                   value={alertDate}
-                  onChange={(e) => setAlertDate(e.target.value)}
+                  onChange={setAlertDate}
                 />
               </Field>
             </div>
 
             <div className="mb-4">
-              <Field id="free-contact" label="Mobile or email" required>
+              <Field id="free-contact" label="Mobile or email for alerts" required>
                 <input
                   className="input"
                   placeholder="98xxxxxxxx or you@email.com"
@@ -306,8 +316,7 @@ export default function AlertsTab() {
 
             {alertSaved && (
               <Callout tone="clear" className="mb-4" edge={false}>
-                <div className="type-note text-[var(--status-clear)] font-medium flex items-center gap-2">
-                  <Check size={14} />
+                <div className="type-note text-[var(--status-clear)] font-medium">
                   Alert activated. We will message you 2 days before your window opens.
                 </div>
               </Callout>
@@ -326,7 +335,7 @@ export default function AlertsTab() {
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2">
-                  Enable free alerts {ARROW}
+                  Set free reminder {ARROW}
                 </span>
               )}
             </button>
@@ -339,15 +348,10 @@ export default function AlertsTab() {
         </SlideUp>
 
         <SlideUp delay={0.06} className="w-full min-w-0">
-          <Card id="plus-card" variant="featured">
+            <Card id="plus-card" variant="featured">
             <CardHeader
               kicker="Early access"
-              title={
-                <span className="inline-flex items-center gap-2">
-                  <BadgeCheck size={22} className="text-[var(--accent)]" />
-                  CylinderCheck Plus
-                </span>
-              }
+              title="CylinderCheck Plus"
               titleAs="h2"
               actions={
                 <div className="text-right">
@@ -358,35 +362,30 @@ export default function AlertsTab() {
                 </div>
               }
             >
-              <div className="mt-3">
-                <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
-                  Plus
-                </span>
-              </div>
               <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
-                Shortage intelligence for households. Calm, precise, and pin-level when it matters.
+                Household alerts that help you book earlier, spot pressure sooner, and stay ahead of delivery delays.
               </p>
             </CardHeader>
 
             <CardBody>
 
-            <div className="space-y-3 pb-6 border-b border-[var(--divider)] mb-6">
-              {PLUS_FEATURES.map(([tag, text]) => (
-                <div key={tag} className="flex items-start gap-3">
-                  <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
-                    {tag}
-                  </span>
-                  <span className="type-card-copy text-[var(--text-primary)]">
+            <div className="space-y-2 pb-6 border-b border-[var(--divider)] mb-6">
+              {PLUS_FEATURES.map(({ eyebrow, text }) => (
+                <div
+                  key={eyebrow}
+                  className="rounded-[18px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-3"
+                >
+                  <p className="kicker mb-2 text-[var(--accent)]">{eyebrow}</p>
+                  <p className="type-card-copy mb-0 text-[var(--text-primary)]">
                     {text}
-                  </span>
+                  </p>
                 </div>
               ))}
             </div>
 
             {paySuccess ? (
               <div className="rounded-md bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)] p-5">
-                <div className="flex items-center gap-2 text-[var(--status-clear)] font-medium">
-                  <Check size={16} />
+                <div className="text-[var(--status-clear)] font-medium">
                   You are a Plus member.
                 </div>
                 <p className="type-card-copy mt-2 mb-0">
@@ -395,7 +394,7 @@ export default function AlertsTab() {
               </div>
             ) : (
               <div>
-                <Field id="plus-contact" label="Mobile or email" required>
+                <Field id="plus-contact" label="Mobile or email for Plus alerts" required>
                   <input
                     className="input"
                     placeholder="98xxxxxxxx or you@email.com"
@@ -407,10 +406,10 @@ export default function AlertsTab() {
                   />
                 </Field>
 
-                <Field id="plus-pin" label="PIN" meta="Optional">
+                <Field id="plus-pin" label="Your 6-digit PIN" meta="Optional">
                   <input
                     className="input type-data-input"
-                    placeholder="6-digit PIN"
+                    placeholder="Enter your area PIN"
                     value={payPin}
                     maxLength={6}
                     inputMode="numeric"
@@ -436,18 +435,12 @@ export default function AlertsTab() {
                       Opening payment...
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-2">
-                      <Zap size={16} />
-                      Get Plus {ARROW}
-                    </span>
+                    <span>Get Plus {ARROW}</span>
                   )}
                 </LiquidGlassBtn>
 
                 <div className="flex items-center justify-center gap-3 type-note">
-                  <span className="inline-flex items-center gap-2">
-                    <ShieldAlert size={12} />
-                    Razorpay
-                  </span>
+                  <span>Razorpay</span>
                   <span className="text-[var(--divider)]" aria-hidden="true">
                     {DOT}
                   </span>

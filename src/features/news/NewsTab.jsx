@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import NewsMap, { getCity } from './NewsMap'
 import { FadeIn } from '../../components/motion/FadeIn'
-import { Loader2, MapPin, MessageCircle, Newspaper, RefreshCw } from 'lucide-react'
+import { Loader2, MapPin, Newspaper, RefreshCw } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { PillRow } from '../../components/ui/PillRow'
 import { Card } from '../../components/ui/Card'
@@ -116,13 +116,6 @@ function categoryStreamLabel(category) {
   if (category === 'PRICE & RATES') return 'Price watch'
   if (category === 'POLICY') return 'Policy watch'
   return 'More coverage'
-}
-
-function rowContextLabel(category) {
-  if (category === 'SHORTAGE SIGNALS') return 'Live update'
-  if (category === 'PRICE & RATES') return 'Rate update'
-  if (category === 'POLICY') return 'Policy update'
-  return 'Reported item'
 }
 
 export default function NewsTab() {
@@ -329,78 +322,56 @@ export default function NewsTab() {
             <FadeIn delay={0.08}>
               <div className="mt-6 space-y-10">
                 {leadStory && (
-                  <Card as="article" className="relative overflow-hidden card--interactive">
-                    <div
-                      className={`absolute top-0 left-0 h-full w-1 ${
-                        CAT_STATUS[getCategory(leadStory.title)] === 'severe'
-                          ? 'bg-[var(--status-severe)]'
-                          : CAT_STATUS[getCategory(leadStory.title)] === 'active'
-                            ? 'bg-[var(--status-active)]'
-                            : CAT_STATUS[getCategory(leadStory.title)] === 'early'
-                              ? 'bg-[var(--status-early)]'
-                              : 'bg-[var(--divider)]'
-                      }`}
-                      aria-hidden="true"
-                    />
+                  <Card as="article" className="news-lead-card relative overflow-hidden card--interactive">
+                    <CardBody>
+                      <div className="news-lead-card__topline">
+                        <div className="news-lead-card__meta">
+                          <span className="news-lead-card__source">
+                            {leadStory.source}
+                          </span>
+                          {leadStory.city ? (
+                            <>
+                              <span className="news-lead-card__sep" aria-hidden="true">
+                                {DOT}
+                              </span>
+                              <span className="news-lead-card__city">
+                                <MapPin size={12} className="text-[var(--accent)]" /> {leadStory.city}
+                              </span>
+                            </>
+                          ) : null}
+                        </div>
 
-                    <CardHeader
-                      kicker="Lead story"
-                      titleAs="h2"
-                      title={leadStory.title}
-                      meta={timeAgo(leadStory.pubDate)}
-                      actions={
-                        <div className="flex items-center gap-2">
+                        <div className="news-lead-card__actions">
+                          <span className="news-lead-card__time">
+                            {timeAgo(leadStory.pubDate)}
+                          </span>
+                          <span className="news-lead-card__sep" aria-hidden="true">
+                            {DOT}
+                          </span>
                           <a
                             href={buildWhatsAppLink(leadStory)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="icon-btn icon-btn--signal"
+                            className="news-lead-card__share"
                             aria-label="Share to WhatsApp"
                             title="Share"
                           >
-                            <MessageCircle size={16} />
+                            Share
                           </a>
                         </div>
-                      }
-                      className="pl-3"
-                    >
-                      <div className="flex items-center gap-2 flex-wrap mt-3">
-                        {(() => {
-                          const cat = leadStory.category || getCategory(leadStory.title)
-                          const status = CAT_STATUS[cat] || 'clear'
-                          return (
-                            <span className={`badge ${statusPill(status)}`}>
-                              {cat}
-                            </span>
-                          )
-                        })()}
-                        {leadStory.city ? (
-                          <span className="badge text-[var(--text-secondary)] bg-[var(--bg-inset)] border border-[var(--border)]">
-                            <span className="inline-flex items-center gap-1">
-                              <MapPin size={12} className="text-[var(--accent)]" /> {leadStory.city}
-                            </span>
-                          </span>
-                        ) : null}
                       </div>
-                    </CardHeader>
 
-                    <CardBody className="pl-3">
-                      <div className="flex items-center gap-2 type-note">
-                        <span className="kicker text-[var(--text-secondary)]">
-                          {leadStory.source}
-                        </span>
-                        <span className="text-[var(--divider)]" aria-hidden="true">
-                          {DOT}
-                        </span>
+                      <h2 className="news-lead-card__headline">
                         <a
                           href={leadStory.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
+                          className="news-lead-card__headline-link"
                         >
-                          Open article
+                          {leadStory.title}
                         </a>
-                      </div>
+                      </h2>
+
                     </CardBody>
                   </Card>
                 )}
@@ -427,7 +398,7 @@ export default function NewsTab() {
                   return (
                     <div key={cat}>
                       <div className="news-stream-heading">
-                        <div className="news-stream-heading__pill">
+                        <div className="news-stream-heading__main">
                           <span
                             className={`news-stream-heading__dot news-stream-heading__dot--${CAT_STATUS[cat] || 'clear'}`}
                             aria-hidden="true"
@@ -448,12 +419,24 @@ export default function NewsTab() {
                           return (
                             <article
                               key={`${item.link}:${i}`}
-                              className={`news-signal-row status-edge status-edge--${status} row--interactive`}
+                              className={`news-signal-row news-signal-row--${status} row--interactive`}
                             >
                               <div className="news-signal-row__topline">
-                                <span className="news-signal-row__context">
-                                  {rowContextLabel(catHere)}
-                                </span>
+                                <div className="news-signal-row__meta">
+                                  <span className="news-signal-row__source">
+                                    {item.source}
+                                  </span>
+                                  {item.city ? (
+                                    <>
+                                      <span className="news-signal-row__sep" aria-hidden="true">
+                                        {DOT}
+                                      </span>
+                                      <span className="news-signal-row__city">
+                                        <MapPin size={12} className="text-[var(--accent)]" /> {item.city}
+                                      </span>
+                                    </>
+                                  ) : null}
+                                </div>
                                 <span className="news-signal-row__time">
                                   {timeAgo(item.pubDate)}
                                 </span>
@@ -470,23 +453,7 @@ export default function NewsTab() {
                                 </h3>
                               </a>
 
-                              <div className="news-signal-row__footer">
-                                <div className="news-signal-row__meta">
-                                  <span className="news-signal-row__source">
-                                    {item.source}
-                                  </span>
-                                  {item.city ? (
-                                    <>
-                                      <span className="news-signal-row__sep" aria-hidden="true">
-                                        {DOT}
-                                      </span>
-                                      <span className="news-signal-row__city">
-                                        <MapPin size={12} className="text-[var(--accent)]" /> {item.city}
-                                      </span>
-                                    </>
-                                  ) : null}
-                                </div>
-
+                              <div className="news-signal-row__shareline">
                                 <a
                                   href={buildWhatsAppLink(item)}
                                   target="_blank"

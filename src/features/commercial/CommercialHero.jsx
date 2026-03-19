@@ -26,17 +26,16 @@ export default function CommercialHero({ hasAnyVendors = null }) {
       <div className="commercial-hero__wash pointer-events-none absolute inset-0" aria-hidden="true">
         <div className="commercial-hero__glow commercial-hero__glow--primary" />
         <div className="commercial-hero__glow commercial-hero__glow--secondary" />
-        <div className="commercial-hero__glow commercial-hero__glow--accent" />
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
-        className="grid md:grid-cols-12 gap-8 md:gap-10 items-start"
+        className="commercial-hero__grid grid md:grid-cols-12 gap-8 md:gap-10 items-start"
       >
         {/* Left: copy */}
-        <div className="md:col-span-7">
+        <div className="commercial-hero__copy md:col-span-7">
           <div className="kicker text-[var(--accent)] mb-4">
             For Business
           </div>
@@ -84,7 +83,7 @@ export default function CommercialHero({ hasAnyVendors = null }) {
         </div>
 
         {/* Right: the one allowed glass hero surface */}
-        <div className="md:col-span-5">
+        <div className="commercial-hero__panel md:col-span-5">
           <div className="glass-mid rounded-[var(--radius-lg)] p-6 md:p-7">
             <div className="kicker">
               How it works

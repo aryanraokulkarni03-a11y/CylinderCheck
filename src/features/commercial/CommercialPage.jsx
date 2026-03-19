@@ -216,7 +216,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
           as="h2"
           markerStatus="active"
           markerLabel="Commercial Alternatives"
-          markerSublabel="Private suppliers"
+          markerShowStatus={false}
           icon={Store}
           title="Private suppliers"
           description="Choose your state to see listings as they go live. If your state is empty today, join the list and we will notify you."
@@ -227,7 +227,6 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
         className={`commercial-market-band mt-8${pricesFreshness.isStale ? ' commercial-market-band--stale' : ''}`}
         aria-label="Commercial LPG market snapshot"
       >
-        <div className="commercial-market-band__eyebrow kicker">Commercial LPG snapshot</div>
         <PriceTicker
           mapPrices={mapPrices}
           productType={productType}

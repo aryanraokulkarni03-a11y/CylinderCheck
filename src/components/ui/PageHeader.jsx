@@ -5,6 +5,7 @@ export function PageHeader({
   markerStatus = 'clear',
   markerLabel,
   markerSublabel,
+  markerShowStatus = true,
   as = 'h1',
   icon: Icon,
   title,
@@ -17,7 +18,12 @@ export function PageHeader({
   return (
     <div className={`page-header ${className}`}>
       {markerLabel ? (
-        <SectionMarker status={markerStatus} label={markerLabel} sublabel={markerSublabel} />
+        <SectionMarker
+          status={markerStatus}
+          label={markerLabel}
+          sublabel={markerSublabel}
+          showStatus={markerShowStatus}
+        />
       ) : null}
 
       <div className="page-header__row">

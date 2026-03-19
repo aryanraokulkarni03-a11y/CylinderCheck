@@ -352,6 +352,101 @@ body::before {
   padding-bottom: 0;
 }
 
+.price-ticker--snap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.price-ticker--snap::-webkit-scrollbar {
+  display: none;
+}
+
+.price-ticker__snap-track {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: max-content;
+  padding: 2px 2px;
+  scroll-snap-type: x proximity;
+}
+
+.price-ticker__snap-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-raised) 58%, transparent);
+  scroll-snap-align: start;
+}
+
+.commercial-market-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.commercial-market-band__eyebrow {
+  padding-left: 2px;
+}
+
+.commercial-market-band__ticker {
+  margin-bottom: 0;
+  min-height: 46px;
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--bg-inset) 88%, var(--bg-raised));
+}
+
+.commercial-market-band__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commercial-market-band__details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.commercial-market-band__summary {
+  color: var(--text-secondary);
+}
+
+.commercial-market-band__state-note,
+.commercial-market-band__trust {
+  color: var(--text-muted);
+}
+
+.commercial-market-band__updated {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.commercial-market-band__updated--stale {
+  color: var(--status-early);
+}
+
+.commercial-market-band--stale .commercial-market-band__ticker {
+  opacity: 0.92;
+}
+
+@media (min-width: 768px) {
+  .commercial-market-band__meta {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-6);
+  }
+
+  .commercial-market-band__details {
+    max-width: 70ch;
+  }
+}
+
 /* Interior structure: makes cards feel designed, not "just padded rectangles". */
 .card-header {
   position: relative;

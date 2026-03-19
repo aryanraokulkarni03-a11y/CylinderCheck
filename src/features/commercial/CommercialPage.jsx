@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { FileText, RefreshCw, ShieldCheck, Store } from 'lucide-react'
+import { FileText, RefreshCw, Store } from 'lucide-react'
 import { supabase } from '../../supabaseClient'
 import { StaggerContainer } from '../../components/motion/StaggerContainer'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -23,7 +23,7 @@ import EmptyState from '../../components/shared/EmptyState'
 import { PriceTicker } from '../../components/shared/PriceTicker'
 
 const ARROW = '\u2192'
-const DOT = '\u00B7'
+const RUPEE = '\u20B9'
 
 function isTestVendor(v) {
   const hay = `${v?.name || ''} ${v?.tagline || ''} ${v?.description || ''}`.toLowerCase()
@@ -56,6 +56,31 @@ function formatPricesUpdated(value) {
     })}`
   } catch {
     return ''
+  }
+}
+
+function getPricesFreshness(value) {
+  if (!value) return { label: '', isStale: false }
+
+  try {
+    const date = new Date(value)
+    const diff = Date.now() - date.getTime()
+    const hours = diff / 3600000
+
+    if (hours >= 24) {
+      const roundedDays = Math.max(1, Math.round(hours / 24))
+      return {
+        label: `Last trusted update ${roundedDays}d ago`,
+        isStale: true,
+      }
+    }
+
+    return {
+      label: formatPricesUpdated(value),
+      isStale: false,
+    }
+  } catch {
+    return { label: '', isStale: false }
   }
 }
 
@@ -167,45 +192,65 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
     [commercialPriceRows],
   )
 
+  const activeStateCommercial = useMemo(
+    () => commercialPriceRows.filter((row) => row.state === activeState),
+    [activeState, commercialPriceRows],
+  )
+
+  const lowestInActiveState = useMemo(
+    () =>
+      activeStateCommercial.length
+        ? activeStateCommercial.reduce((best, current) => (current.price < best.price ? current : best))
+        : null,
+    [activeStateCommercial],
+  )
+
+  const pricesFreshness = useMemo(() => getPricesFreshness(pricesUpdatedAt), [pricesUpdatedAt])
+
   return (
     <div className="pb-24 w-full min-w-0">
       <CommercialHero hasAnyVendors={hasAnyVendors} />
 
-      <div className="mt-8">
+      <section
+        className={`commercial-market-band mt-8${pricesFreshness.isStale ? ' commercial-market-band--stale' : ''}`}
+        aria-label="Commercial LPG market snapshot"
+      >
+        <div className="commercial-market-band__eyebrow kicker">Commercial LPG snapshot</div>
         <PriceTicker
           mapPrices={mapPrices}
           productType={productType}
           ariaLabel="Commercial LPG prices ticker"
+          className="commercial-market-band__ticker"
+          mobileBehavior="snap"
         />
-        <div className="mb-8 mt-[-1rem] flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <p className="type-note mb-0">
-            {lowestCommercial
-              ? `Lowest tracked 19kg refill today: ₹${lowestCommercial.price} in ${lowestCommercial.city}${lowestCommercial.state ? `, ${lowestCommercial.state}` : ''}`
-              : `${LPG_PRODUCT_LABELS[productType]} prices will appear here after the next trusted scrape.`}
-          </p>
-          {pricesUpdatedAt ? (
-            <span className="type-note text-[var(--text-muted)]">
-              {formatPricesUpdated(pricesUpdatedAt)}
+        <div className="commercial-market-band__meta">
+          <div className="commercial-market-band__details">
+            <p className="type-note mb-0 commercial-market-band__summary">
+              {lowestCommercial
+                ? `Lowest tracked 19kg refill today: ${RUPEE}${lowestCommercial.price} in ${lowestCommercial.city}${lowestCommercial.state ? `, ${lowestCommercial.state}` : ''}`
+                : `${LPG_PRODUCT_LABELS[productType]} prices will appear here after the next trusted scrape.`}
+            </p>
+            {lowestInActiveState ? (
+              <p className="kicker commercial-market-band__state-note">
+                In {activeState}: {lowestInActiveState.city} {RUPEE}
+                {lowestInActiveState.price}
+              </p>
+            ) : null}
+            <p className="kicker commercial-market-band__trust">
+              Tracked from published city LPG rates. Confirm final dealer quote before ordering.
+            </p>
+          </div>
+          {pricesFreshness.label ? (
+            <span
+              className={`type-note commercial-market-band__updated${pricesFreshness.isStale ? ' commercial-market-band__updated--stale' : ''}`}
+            >
+              {pricesFreshness.label}
             </span>
           ) : null}
         </div>
-      </div>
+      </section>
 
-      <div id="commercial-vendors" className="mt-14 md:mt-20 w-full">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12 py-6 border-y border-[var(--border)] bg-[var(--bg-inset)] kicker w-full">
-          <span className="flex items-center gap-2">
-            <ShieldCheck size={16} className="text-[var(--status-early)]" />
-            License checks rolling out
-          </span>
-          <span className="hidden sm:inline text-[var(--divider)]" aria-hidden="true">
-            {DOT}
-          </span>
-          <span className="flex items-center gap-2">
-            <FileText size={16} className="text-[var(--text-secondary)]" />
-            No middlemen
-          </span>
-        </div>
-
+      <div id="commercial-vendors" className="mt-8 md:mt-10 w-full">
         <PageHeader
           as="h2"
           markerStatus="active"
@@ -317,9 +362,9 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
             </AnimatePresence>
 
             {vendors.length > 0 && (
-            <Card variant="inset" size="compact" className="mt-8 flex gap-3 type-note">
-              <FileText size={14} className="shrink-0 text-[var(--text-secondary)] mt-0.5" />
-              <p className="m-0">
+              <Card variant="inset" size="compact" className="mt-8 flex gap-3 type-note">
+                <FileText size={14} className="shrink-0 text-[var(--text-secondary)] mt-0.5" />
+                <p className="m-0">
                   CylinderCheck does not guarantee stock availability or set prices. Always confirm rates directly with
                   the agency.
                 </p>

@@ -8,10 +8,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { PillRow } from '../../components/ui/PillRow'
 import { Card } from '../../components/ui/Card'
 import { Callout } from '../../components/ui/Callout'
-import { List } from '../../components/ui/List'
-import { ListRow } from '../../components/ui/ListRow'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
-import { SectionMarker } from '../../components/shared/SectionMarker'
 import EmptyState from '../../components/shared/EmptyState'
 
 const DOT = '\u00B7'
@@ -112,6 +109,20 @@ function buildWhatsAppLink(item) {
     link,
   ].filter(Boolean).join('\n')
   return `https://wa.me/?text=${encodeURIComponent(text)}`
+}
+
+function categoryStreamLabel(category) {
+  if (category === 'SHORTAGE SIGNALS') return 'Shortage watch'
+  if (category === 'PRICE & RATES') return 'Price watch'
+  if (category === 'POLICY') return 'Policy watch'
+  return 'More coverage'
+}
+
+function rowContextLabel(category) {
+  if (category === 'SHORTAGE SIGNALS') return 'Live update'
+  if (category === 'PRICE & RATES') return 'Rate update'
+  if (category === 'POLICY') return 'Policy update'
+  return 'Reported item'
 }
 
 export default function NewsTab() {
@@ -415,9 +426,19 @@ export default function NewsTab() {
 
                   return (
                     <div key={cat}>
-                      <SectionMarker status={CAT_STATUS[cat] || 'clear'} label={cat} />
+                      <div className="news-stream-heading">
+                        <div className="news-stream-heading__pill">
+                          <span
+                            className={`news-stream-heading__dot news-stream-heading__dot--${CAT_STATUS[cat] || 'clear'}`}
+                            aria-hidden="true"
+                          />
+                          <span className="news-stream-heading__label">
+                            {categoryStreamLabel(cat)}
+                          </span>
+                        </div>
+                      </div>
 
-                      <List className="mt-4">
+                      <div className="news-stream-list mt-4">
                         {items.map((item, i) => {
                           if (leadStory && item.link === leadStory.link) return null
 
@@ -425,57 +446,62 @@ export default function NewsTab() {
                           const status = CAT_STATUS[catHere] || 'clear'
 
                           return (
-                            <ListRow
+                            <article
                               key={`${item.link}:${i}`}
-                              as="article"
-                              status={status}
-                              interactive={true}
-                              meta={timeAgo(item.pubDate)}
-                              badges={<span className={`badge ${statusPill(status)}`}>{catHere}</span>}
-                              title={
-                                <a
-                                  href={item.link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block"
-                                >
-                                <h3 className="type-list-title m-0">
+                              className={`news-signal-row status-edge status-edge--${status} row--interactive`}
+                            >
+                              <div className="news-signal-row__topline">
+                                <span className="news-signal-row__context">
+                                  {rowContextLabel(catHere)}
+                                </span>
+                                <span className="news-signal-row__time">
+                                  {timeAgo(item.pubDate)}
+                                </span>
+                              </div>
+
+                              <a
+                                href={item.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="news-signal-row__headline-link"
+                              >
+                                <h3 className="type-list-title m-0 news-signal-row__headline">
                                   {item.title}
                                 </h3>
                               </a>
-                              }
-                              actions={
+
+                              <div className="news-signal-row__footer">
+                                <div className="news-signal-row__meta">
+                                  <span className="news-signal-row__source">
+                                    {item.source}
+                                  </span>
+                                  {item.city ? (
+                                    <>
+                                      <span className="news-signal-row__sep" aria-hidden="true">
+                                        {DOT}
+                                      </span>
+                                      <span className="news-signal-row__city">
+                                        <MapPin size={12} className="text-[var(--accent)]" /> {item.city}
+                                      </span>
+                                    </>
+                                  ) : null}
+                                </div>
+
                                 <a
                                   href={buildWhatsAppLink(item)}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="icon-btn icon-btn--signal"
+                                  className="news-signal-row__share"
                                   aria-label="Share to WhatsApp"
                                   title="Share"
                                 >
-                                  <MessageCircle size={16} />
+                                  Share
                                 </a>
-                              }
-                            >
-                              <div className="flex items-center gap-2 type-note">
-                                <span className="kicker text-[var(--text-secondary)]">
-                                  {item.source}
-                                </span>
-                                {item.city ? (
-                                  <>
-                                    <span className="text-[var(--divider)]" aria-hidden="true">
-                                      {DOT}
-                                    </span>
-                                    <span className="inline-flex items-center gap-1">
-                                      <MapPin size={12} className="text-[var(--accent)]" /> {item.city}
-                                    </span>
-                                  </>
-                                ) : null}
                               </div>
-                            </ListRow>
+                            </article>
                           )
                         })}
-                      </List>
+                      </div>
                     </div>
                   )
                 })}

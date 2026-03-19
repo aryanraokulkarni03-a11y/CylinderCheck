@@ -2,7 +2,7 @@
 // Booking tracker + shortage intelligence by PIN.
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { MapPin, Target } from 'lucide-react'
+import { CalendarRange, Clock3, MapPin, Target } from 'lucide-react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { UrgencyScore } from './UrgencyScore'
 import { Ring } from '../../components/shared/Ring'
@@ -19,7 +19,6 @@ import { Field } from '../../components/ui/Field'
 import { Callout } from '../../components/ui/Callout'
 import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
-import EmptyState from '../../components/shared/EmptyState'
 
 const ARROW = '\u2192'
 
@@ -169,6 +168,11 @@ export function TrackTab({
                   onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
                 />
               </Field>
+              {!pinData && !loading ? (
+                <p className="type-note mt-3 mb-0 md:hidden">
+                  We&apos;ll show local delivery delay, shortage pressure, and your next booking window.
+                </p>
+              ) : null}
             </div>
 
             <div className="mb-6">
@@ -442,10 +446,55 @@ export function TrackTab({
                 transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                 className="hidden md:block"
               >
-                <EmptyState
-                  title="Enter your PIN for live intelligence"
-                  description="Your delivery pattern, shortage status, and booking timing will appear here once we know which area to inspect."
-                />
+                <Card
+                  variant="inset"
+                  className="card--spacious min-h-[300px] w-full border-[var(--border)]"
+                >
+                  <CardHeader
+                    kicker="Area preview"
+                    title="See what changes in your area before you book"
+                    titleAs="h3"
+                  >
+                    <p className="type-card-copy mt-3 mb-0 max-w-[38ch]">
+                      Delivery delay, shortage pressure, and your next booking window will appear here for the PIN you check.
+                    </p>
+                  </CardHeader>
+
+                  <CardBody className="pt-2">
+                    <div className="space-y-3">
+                      {[
+                        {
+                          icon: Clock3,
+                          title: 'Delivery time in your area',
+                          note: 'See the local average wait before your cylinder reaches home.',
+                        },
+                        {
+                          icon: MapPin,
+                          title: 'Shortage signals near your PIN',
+                          note: 'Spot active delivery strain before you place the next booking.',
+                        },
+                        {
+                          icon: CalendarRange,
+                          title: 'Best date to book next',
+                          note: 'Use your last booking date to judge when your window opens again.',
+                        },
+                      ].map(({ icon: Icon, title, note }) => (
+                        <div
+                          key={title}
+                          className="flex items-start gap-3 rounded-[20px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-3"
+                        >
+                          <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--accent)]">
+                            <Icon size={18} />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="type-card-title mb-1">{title}</p>
+                            <p className="type-note mb-0">{note}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardBody>
+                </Card>
               </motion.div>
             )}
           </AnimatePresence>

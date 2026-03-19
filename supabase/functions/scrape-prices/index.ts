@@ -22,6 +22,22 @@ const CITIES = [
   { city: "Patna", slug: "patna" },
 ];
 
+const FETCH_TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(url: string, init: RequestInit = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function scrapeCityPrices(slug: string): Promise<{
   IndianOil: number | null;
   "HP Gas": number | null;
@@ -31,7 +47,7 @@ async function scrapeCityPrices(slug: string): Promise<{
 
   try {
     const url = `https://www.goodreturns.in/lpg-price-in-${slug}.html`;
-    const res = await fetch(url, {
+    const res = await fetchWithTimeout(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; CylinderCheck/1.0; +https://cylindercheck.in)",
         "Accept": "text/html,application/xhtml+xml",
@@ -131,22 +147,24 @@ serve(async (req: Request) => {
       city: string;
       recorded_at: string;
     }[] = [];
+    const scrapeStartedAt = new Date().toISOString();
+    const cityResults = await Promise.all(
+      CITIES.map(async ({ city, slug }) => {
+        const prices = await scrapeCityPrices(slug);
+        let gotAny = false;
 
-    for (const { city, slug } of CITIES) {
-      const prices = await scrapeCityPrices(slug);
-      const now = new Date().toISOString();
-      let gotAny = false;
-
-      for (const [company, price] of Object.entries(prices)) {
-        if (price !== null) {
-          upserts.push({ company, price, city, recorded_at: now });
-          gotAny = true;
+        for (const [company, price] of Object.entries(prices)) {
+          if (price !== null) {
+            upserts.push({ company, price, city, recorded_at: scrapeStartedAt });
+            gotAny = true;
+          }
         }
-      }
 
-      results.push({ city, prices, status: gotAny ? "ok" : "failed" });
-      await new Promise((r) => setTimeout(r, 1000));
-    }
+        return { city, prices, status: gotAny ? "ok" : "failed" };
+      })
+    );
+
+    results.push(...cityResults);
 
     if (upserts.length > 0) {
       const { error: dbError } = await supabase

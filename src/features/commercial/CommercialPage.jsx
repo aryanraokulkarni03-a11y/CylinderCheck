@@ -29,7 +29,6 @@ function isTestVendor(v) {
   const hay = `${v?.name || ''} ${v?.tagline || ''} ${v?.description || ''}`.toLowerCase()
   if (!hay) return false
 
-  // Obvious test artifacts we do not want to ship in the commercial list.
   const needles = ['test', 'demo', 'sample', 'dummy', 'asdf', 'lorem', 'ipsum']
   if (needles.some((n) => hay.includes(n))) return true
 
@@ -216,7 +215,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
           as="h2"
           icon={Store}
           title="Private suppliers"
-          description="Choose your state to see listings as they go live. If your state is empty today, join the list and we will notify you."
+          description="Choose your state to see available suppliers. If your state is still empty, leave your details and we will contact you when listings open."
         />
       </div>
 
@@ -240,8 +239,8 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
             </p>
             <p className="kicker commercial-market-band__trust">
               {lowestInActiveState
-                ? `In ${activeState}: ${lowestInActiveState.city} ${RUPEE}${lowestInActiveState.price}. Confirm final dealer quote before ordering.`
-                : 'Tracked from published city LPG rates. Confirm final dealer quote before ordering.'}
+                ? `In ${activeState}: ${lowestInActiveState.city} ${RUPEE}${lowestInActiveState.price}. Based on published city LPG rates. Confirm the dealer quote before ordering.`
+                : 'Based on published city LPG rates. Confirm the dealer quote before ordering.'}
             </p>
           </div>
           {pricesFreshness.label ? (
@@ -270,7 +269,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
                   Listings in {activeState}
                 </div>
                 <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
-                  {vendorsLoading ? '\u2026' : (vendors.length > 0 ? `${vendors.length}` : 'Soon')}
+                  {vendorsLoading ? '\u2026' : (vendors.length > 0 ? `${vendors.length}` : 'None yet')}
                 </span>
               </div>
 
@@ -348,8 +347,8 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
                   transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                 >
                   <EmptyState
-                    title="They'll be here faster than you think."
-                    description={`Verified listings for ${activeState} are onboarding now. Drop your details on the right and we will reach out as soon as agencies go live.`}
+                    title="No suppliers listed yet"
+                    description={`We are still verifying suppliers in ${activeState}. Leave your details on the right and we will contact you when listings open.`}
                   />
                 </motion.div>
               )}
@@ -359,8 +358,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
               <Card variant="inset" size="compact" className="mt-8 flex gap-3 type-note">
                 <FileText size={14} className="shrink-0 text-[var(--text-secondary)] mt-0.5" />
                 <p className="m-0">
-                  CylinderCheck does not guarantee stock availability or set prices. Always confirm rates directly with
-                  the agency.
+                  CylinderCheck does not set prices or guarantee stock. Confirm both directly with the supplier.
                 </p>
               </Card>
             )}

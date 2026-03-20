@@ -123,8 +123,8 @@ export function AuthCallbackPage({ user }) {
     <div className="reading-page">
       <Card variant="raised" className="max-w-[640px] mx-auto">
         <CardHeader
-          kicker="Authentication"
-          title={error ? 'Sign-in needs another try' : 'Signing you in'}
+          kicker="Sign-in"
+          title={error ? 'Sign-in needs another try' : 'Finishing sign-in'}
           meta={<span className="reading-meta">CylinderCheck</span>}
         />
         <CardBody className="stack-copy">
@@ -132,14 +132,14 @@ export function AuthCallbackPage({ user }) {
             <>
               <p className="type-card-copy m-0">{error}</p>
               <p className="type-note m-0">
-                Return to Track and try signing in again if the problem persists.
+                Go back to Track and try again if the problem continues.
               </p>
             </>
           ) : (
             <>
               <div className="inline-flex items-center gap-2 type-card-copy text-[var(--text-primary)]">
                 <Loader2 size={18} className="motion-safe:animate-spin" />
-                Restoring your session and returning you to the page you left.
+                Restoring your session and taking you back to where you were.
               </div>
               <p className="type-note m-0">
                 This should only take a moment.

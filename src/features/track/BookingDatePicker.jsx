@@ -278,7 +278,7 @@ export default function BookingDatePicker({ id, value, onChange }) {
               <div className="booking-date-panel__header">
                 <div>
                   <div className="kicker text-[var(--text-secondary)]">Last booking date</div>
-                  <h3 id={`${id}-title`} className="type-card-title m-0 mt-1">Choose your booking window anchor</h3>
+                  <h3 id={`${id}-title`} className="type-card-title m-0 mt-1">Pick your last booking date</h3>
                 </div>
 
                 <button
@@ -367,7 +367,7 @@ export default function BookingDatePicker({ id, value, onChange }) {
               </div>
 
               <p className="type-note m-0">
-                We use this date to estimate your next booking window. Future dates stay locked to keep the forecast honest.
+                We use this date to estimate your next booking date. Future dates stay locked so the estimate stays realistic.
               </p>
             </motion.div>
           </>

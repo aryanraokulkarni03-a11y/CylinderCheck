@@ -38,19 +38,19 @@ export default function CommercialHero({ hasAnyVendors = null }) {
           <h1 className="hero-title text-[var(--text-primary)]">
             <span className="page-header__title-row">
               <Store size={30} className="text-[var(--accent)]" aria-hidden="true" />
-              <span>{isWaitlist ? 'Private suppliers are onboarding.' : 'Commercial LPG, without chaos.'}</span>
+              <span>{isWaitlist ? 'Private LPG suppliers are being added.' : 'Private LPG suppliers, state by state.'}</span>
             </span>
           </h1>
 
-          <p className="type-page-desc mt-4 max-w-[66ch]">
+          <p className="type-page-desc mt-4 max-w-[62ch]">
             {isWaitlist
-              ? "They'll be here faster than you think. Leave your details and we'll reach out when listings go live in your state."
-              : 'Find listed private agencies in your state with active inventory. License checks are rolling out. Always confirm rates and availability directly with the supplier.'}
+              ? 'Leave your details. We will contact you when verified suppliers open in your state.'
+              : 'See listed private suppliers in your state and contact them directly for rates and stock.'}
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
             <LiquidGlassBtn onClick={scrollToVendors} className="justify-center">
-              {isWaitlist ? 'Join the list' : 'View listed agencies'} {ARROW}
+              {isWaitlist ? 'Join waitlist' : 'See suppliers'} {ARROW}
             </LiquidGlassBtn>
             <button
               type="button"
@@ -65,14 +65,14 @@ export default function CommercialHero({ hasAnyVendors = null }) {
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 type-note">
             <span className="inline-flex items-center gap-2">
               <ShieldCheck size={14} className="text-[var(--status-early)]" />
-              License checks rolling out
+              Verified before listing
             </span>
             <span className="text-[var(--divider)]" aria-hidden="true">
               {DOT}
             </span>
             <span className="inline-flex items-center gap-2">
               <PhoneCall size={14} className="text-[var(--text-secondary)]" />
-              {isWaitlist ? 'Direct contact once listings go live' : 'Call or WhatsApp directly'}
+              Direct supplier contact
             </span>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function CommercialHero({ hasAnyVendors = null }) {
         <div className="commercial-hero__panel md:col-span-5">
           <div className="glass-mid rounded-[var(--radius-lg)] p-6 md:p-7">
             <div className="kicker">
-              How it works
+              What happens next
             </div>
 
             <div className="mt-4 space-y-4 type-card-copy">
@@ -89,24 +89,24 @@ export default function CommercialHero({ hasAnyVendors = null }) {
                 <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
                   01
                 </span>
-                <span>{isWaitlist ? 'Pick your state and join the onboarding list.' : 'Pick your state and browse listed agencies.'}</span>
+                <span>{isWaitlist ? 'Pick your state and leave your details.' : 'Pick your state and review listed suppliers.'}</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
                   02
                 </span>
-                <span>{isWaitlist ? 'We will reach out when listings go live in your area.' : 'Contact suppliers directly to confirm rates and stock.'}</span>
+                <span>{isWaitlist ? 'We contact you when verified suppliers open in your area.' : 'Contact suppliers directly to confirm rate and stock.'}</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
                   03
                 </span>
-                <span>{isWaitlist ? 'Then contact suppliers directly to confirm rates and stock.' : 'Request quotes if you need emergency matching.'}</span>
+                <span>{isWaitlist ? 'Confirm rate and stock with the supplier directly.' : 'Leave your details if you want help getting quotes.'}</span>
               </div>
             </div>
 
             <div className="mt-6 rounded-md bg-[var(--bg-inset)] border border-[var(--divider)] px-4 py-3 type-note">
-              We do not set prices or guarantee availability. Always verify before paying.
+              CylinderCheck does not set prices or guarantee stock. Confirm both before paying.
             </div>
           </div>
         </div>

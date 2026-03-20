@@ -161,10 +161,10 @@ function buildWhatsAppLink(item) {
 }
 
 function categoryStreamLabel(category) {
-  if (category === 'SHORTAGE SIGNALS') return 'Shortage watch'
-  if (category === 'PRICE & RATES') return 'Price watch'
-  if (category === 'POLICY') return 'Policy watch'
-  return 'More coverage'
+  if (category === 'SHORTAGE SIGNALS') return 'Shortage reports'
+  if (category === 'PRICE & RATES') return 'Price changes'
+  if (category === 'POLICY') return 'Policy updates'
+  return 'More news'
 }
 
 function getDisplayLocation(item) {
@@ -289,14 +289,14 @@ export default function NewsTab() {
   const leadSignalKey = mapStory
     ? `${mapStory.title}:${mapStory.pubDate instanceof Date ? mapStory.pubDate.toISOString() : ''}:${mapStory.city || ''}`
     : ''
-  const mapLabel = leadCity || 'No mapped city'
-  const mapHeading = mapStory ? 'Latest mapped signal' : 'Signals map'
+  const mapLabel = leadCity || 'No city tag'
+  const mapHeading = mapStory ? 'Latest mapped story' : 'News map'
   const mapNote = !mapStory
-    ? 'Latest stories are statewide or unmapped right now. The map will lock onto the next city-tagged signal as soon as it lands.'
+    ? 'Recent stories are statewide or do not mention a city yet. The map will update when the next city-tagged story arrives.'
     : leadStory && mapStory.link !== leadStory.link
-      ? `Lead story is broader than a city pin. The map is following the newest city-tagged signal from ${mapStory.city}.`
+      ? `The top story is broader than one city. The map is following the newest city-tagged story from ${mapStory.city}.`
       : leadCity
-        ? `Map is tracking the latest city-tagged signal from ${leadCity}.`
+        ? `Map is following the latest city-tagged story from ${leadCity}.`
         : ''
   const order = ['SHORTAGE SIGNALS', 'PRICE & RATES', 'POLICY', 'GENERAL']
 
@@ -314,11 +314,12 @@ export default function NewsTab() {
   return (
     <div className="pb-12 w-full min-w-0">
       <PageHeader
+        markerShowStatus={false}
         markerStatus={pageStatus}
-        markerLabel="Intelligence Feed"
+        markerLabel="LPG news"
         icon={Newspaper}
-        title="LPG Intelligence"
-        description="Live tracking of shortages, price hikes, and policy shifts across India. City-tagged when possible."
+        title="News"
+        description="Shortages, price changes, and policy moves that affect LPG across India. City-tagged when location is clear."
         actions={
           <button
             type="button"
@@ -327,7 +328,7 @@ export default function NewsTab() {
             className="btn-ghost disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 size={18} className="motion-safe:animate-spin" /> : <RefreshCw size={18} />}
-            Sync feed
+            Refresh feed
           </button>
         }
       />
@@ -368,7 +369,7 @@ export default function NewsTab() {
                   className="opacity-60 motion-safe:animate-pulse"
                   aria-hidden="true"
                 >
-                  <div className="kicker mb-3">Loading feed item</div>
+                  <div className="kicker mb-3">Loading story</div>
                   <div className="h-4 w-32 rounded bg-[var(--bg-inset)] mb-3" />
                   <div className="h-3 w-4/5 rounded bg-[var(--bg-inset)] mb-2" />
                   <div className="h-3 w-2/3 rounded bg-[var(--bg-inset)]" />
@@ -378,9 +379,9 @@ export default function NewsTab() {
           ) : !validNews.length ? (
             <div className="mt-4">
               <EmptyState
-                title="Scraper quiet"
-                description="No recent intelligence found right now. Sync the feed and we will check again."
-                actionText="Sync feed"
+                title="No recent news"
+                description="No recent LPG stories are showing right now. Refresh and check again."
+                actionText="Refresh feed"
                 onAction={() => fetchNews(true)}
               />
             </div>
@@ -580,10 +581,10 @@ export default function NewsTab() {
                   <div className="absolute inset-4 z-[350] flex items-center justify-center pointer-events-none">
                     <div className="max-w-[18rem] rounded-[var(--radius-lg)] border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-raised)_88%,transparent)] px-4 py-3 text-center shadow-[var(--shadow-soft)] backdrop-blur-sm">
                       <div className="kicker text-[var(--text-secondary)] mb-2">
-                        Waiting for a city signal
+                        Waiting for a mapped city
                       </div>
                       <p className="type-note m-0 text-[var(--text-muted)]">
-                        The latest feed is broader than a single city right now. We will zoom in automatically when the next mapped article arrives.
+                        Recent stories are broader than one city right now. The map will update when a city-tagged story arrives.
                       </p>
                     </div>
                   </div>
@@ -592,7 +593,7 @@ export default function NewsTab() {
                 <div className="absolute bottom-4 right-4 z-[400] rounded-full border border-[var(--border)] bg-[var(--bg-raised)] px-3 py-1 pointer-events-none">
                   <div className="flex items-center gap-2 kicker">
                     <span className="w-2 h-2 rounded-full bg-[var(--accent)]" aria-hidden="true" />
-                    Live signals
+                    Mapped stories
                   </div>
                 </div>
               </div>

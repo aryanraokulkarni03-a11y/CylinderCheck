@@ -25,24 +25,24 @@ const ARROW = '\u2192'
 
 const PLUS_FEATURES = [
   {
-    eyebrow: 'Booking window',
-    text: 'WhatsApp or SMS reminder 2 days before your booking window opens.',
+    eyebrow: 'Booking date',
+    text: 'WhatsApp or SMS reminder 2 days before you can book again.',
   },
   {
-    eyebrow: 'Shortage warning',
-    text: 'Early heads-up for your PIN when local supply starts tightening.',
+    eyebrow: 'Supply pressure',
+    text: 'Early warning for your PIN when local supply starts tightening.',
   },
   {
-    eyebrow: 'Price revision',
+    eyebrow: 'Price change',
     text: 'Advance notice before a cylinder price update becomes common news.',
   },
   {
-    eyebrow: 'Delivery ping',
-    text: 'A timely reminder on delivery day so someone is home to receive it.',
+    eyebrow: 'Delivery day',
+    text: 'A timely reminder on delivery day so someone is home to receive the cylinder.',
   },
   {
-    eyebrow: 'Area score',
-    text: 'A monthly supply health read for your area so you can plan ahead.',
+    eyebrow: 'Monthly summary',
+    text: 'A monthly area summary so you can plan ahead when delivery slows down.',
   },
 ]
 
@@ -240,12 +240,12 @@ export default function AlertsTab() {
   return (
     <div className="pb-16 w-full min-w-0">
       <PageHeader
+        markerShowStatus={false}
         markerStatus="active"
-        markerLabel="Alerts"
-        markerSublabel="Signals and reminders"
+        markerLabel="Reminders"
         icon={Bell}
         title="Alerts"
-        description="Get a ping before your next booking window, and early warnings when supply tightens in your area."
+        description="Set a reminder before your next booking date, or pay for earlier warnings when supply gets tighter in your area."
       />
 
       <div className="grid lg:grid-cols-2 gap-6 items-start min-w-0">
@@ -253,11 +253,11 @@ export default function AlertsTab() {
           <Card>
             <CardHeader
               kicker="Free reminder"
-              title="Stay ahead of your next booking window"
+              title="Get a free booking reminder"
               titleAs="h2"
             >
               <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
-                Add your last booking date and we&apos;ll remind you 2 days before your next LPG booking window opens. No app. No spam.
+                Add your last booking date and we'll remind you 2 days before you can book again.
               </p>
               <div className="mt-4">
                 <button
@@ -265,7 +265,7 @@ export default function AlertsTab() {
                   onClick={scrollToPlus}
                   className="type-nav text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
                 >
-                  See Plus details {ARROW}
+                  See Plus {ARROW}
                 </button>
               </div>
             </CardHeader>
@@ -317,7 +317,7 @@ export default function AlertsTab() {
             {alertSaved && (
               <Callout tone="clear" className="mb-4" edge={false}>
                 <div className="type-note text-[var(--status-clear)] font-medium">
-                  Alert activated. We will message you 2 days before your window opens.
+                  Reminder saved. We will message you 2 days before your next booking date.
                 </div>
               </Callout>
             )}
@@ -335,7 +335,7 @@ export default function AlertsTab() {
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2">
-                  Set free reminder {ARROW}
+                  Save free reminder {ARROW}
                 </span>
               )}
             </button>
@@ -350,8 +350,8 @@ export default function AlertsTab() {
         <SlideUp delay={0.06} className="w-full min-w-0">
             <Card id="plus-card" variant="featured">
             <CardHeader
-              kicker="Early access"
-              title="CylinderCheck Plus"
+              kicker="Paid plan"
+              title="Plus alerts"
               titleAs="h2"
               actions={
                 <div className="text-right">
@@ -363,7 +363,7 @@ export default function AlertsTab() {
               }
             >
               <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
-                Household alerts that help you book earlier, spot pressure sooner, and stay ahead of delivery delays.
+                Earlier warnings for households that want more notice around booking, shortage pressure, and delivery.
               </p>
             </CardHeader>
 
@@ -384,10 +384,10 @@ export default function AlertsTab() {
             </div>
 
             {paySuccess ? (
-              <div className="rounded-md bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)] p-5">
-                <div className="text-[var(--status-clear)] font-medium">
-                  You are a Plus member.
-                </div>
+                <div className="rounded-md bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)] p-5">
+                  <div className="text-[var(--status-clear)] font-medium">
+                  Plus plan active.
+                  </div>
                 <p className="type-card-copy mt-2 mb-0">
                   Alerts will be sent to <span className="font-medium">{payContact}</span>.
                 </p>
@@ -435,7 +435,7 @@ export default function AlertsTab() {
                       Opening payment...
                     </span>
                   ) : (
-                    <span>Get Plus {ARROW}</span>
+                    <span>Start Plus {ARROW}</span>
                   )}
                 </LiquidGlassBtn>
 

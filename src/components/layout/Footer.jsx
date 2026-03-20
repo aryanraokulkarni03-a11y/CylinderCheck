@@ -18,7 +18,7 @@ export function Footer() {
           Independent data notice
         </div>
         <p className="footer-ledger__copy">
-          CylinderCheck is not affiliated with Indane (IndianOil), HP Gas, or Bharatgas. Intelligence is
+          CylinderCheck is not affiliated with Indane (IndianOil), HP Gas, or Bharatgas. Some data is
           community-sourced and may be incomplete. Always verify availability and rates with your local agency.
         </p>
       </div>

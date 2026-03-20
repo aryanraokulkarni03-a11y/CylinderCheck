@@ -8,6 +8,8 @@ import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
 import { CITY_STATE_LABELS, LPG_PRODUCT_TYPES } from '../../lib/utils'
 
+const RUPEE = '\u20B9'
+
 function formatSnapshotUpdated(value) {
   if (!value) return 'Waiting for latest sync'
 
@@ -72,17 +74,17 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
     >
       <Card variant="inset" className="card--spacious national-snapshot-card">
         <CardHeader
-          kicker="National snapshot"
-          title="Across India right now"
+          kicker="India today"
+          title="Domestic LPG across India"
           titleAs="h3"
-          actions={
+          actions={(
             <span className="type-note text-[var(--text-muted)]">
               {formatSnapshotUpdated(pricesUpdatedAt)}
             </span>
-          }
+          )}
         >
           <p className="type-card-copy mt-3 mb-0 max-w-[42ch]">
-            Daily tracked prices and recent shortage reporting, kept separate from your personal booking read.
+            Current city prices and recent shortage reporting, kept separate from your local result.
           </p>
         </CardHeader>
 
@@ -91,12 +93,12 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
             <div className="national-snapshot-hero">
               <div className="flex items-center gap-2">
                 <StatusDot status="clear" size={7} />
-                <span className="kicker text-[var(--accent)]">Lowest tracked 14.2kg refill today</span>
+                <span className="kicker text-[var(--accent)]">Lowest tracked 14.2kg refill</span>
               </div>
 
               <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-1">
                 <span className="type-data-value type-data-value--hero">
-                  {lowestTracked ? `₹${lowestTracked.price}` : '—'}
+                  {lowestTracked ? `${RUPEE}${lowestTracked.price}` : '—'}
                 </span>
                 <span className="type-card-title text-[var(--text-secondary)]">
                   {lowestTracked
@@ -106,7 +108,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
               </div>
 
               <p className="type-note mt-3 mb-0 max-w-[42ch]">
-                Based on the most recent tracked city prices in the current national scrape.
+                Based on the latest trusted city prices.
               </p>
             </div>
 
@@ -114,7 +116,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
               <div className="national-snapshot-stat">
                 <div className="flex items-center gap-2">
                   <StatusDot status={overallStatus} size={7} />
-                  <span className="kicker">Active shortage clusters</span>
+                  <span className="kicker">Areas under pressure</span>
                 </div>
                 <div className="mt-3 flex items-end gap-2">
                   <span className="type-data-value">
@@ -129,7 +131,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
               <div className="national-snapshot-stat">
                 <div className="flex items-center gap-2">
                   <StatusDot status={hotspotTone} size={7} />
-                  <span className="kicker">Current hotspot</span>
+                  <span className="kicker">Most reported city</span>
                 </div>
                 <p className="type-card-title mt-3 mb-1">
                   {hotspot || 'No hotspot yet'}

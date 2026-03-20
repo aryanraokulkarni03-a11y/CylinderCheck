@@ -107,7 +107,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
       setSubmitError(
         isWaitlist
           ? 'That did not go through. Try again in a moment.'
-          : 'That did not go through. You can still contact listed agencies directly.',
+          : 'That did not go through. You can still contact listed suppliers directly.',
       )
     } finally {
       setLoading(false)
@@ -135,12 +135,12 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
               <Check size={32} className="text-[var(--status-clear)]" />
             </div>
             <h3 className="type-section-title text-[var(--status-clear)] mb-3">
-              Request Received
+              Details received
             </h3>
             <p className="type-card-copy max-w-[280px]">
               {isWaitlist
-                ? `You're on the list for ${selectedState || 'your area'}. We'll reach out as soon as listings go live.`
-                : `We will connect you with listed agencies in ${selectedState || 'your area'}.`}
+                ? `You’re on the list for ${selectedState || 'your area'}. We’ll contact you when verified suppliers open.`
+                : `We’ll use these details to help route supplier quotes in ${selectedState || 'your area'}.`}
             </p>
           </motion.div>
         ) : (
@@ -155,15 +155,15 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
             noValidate
           >
             <CardHeader
-              kicker={isWaitlist ? 'Waitlist' : 'Commercial matching'}
+              kicker={isWaitlist ? 'State interest' : 'Supplier quotes'}
               kickerCaps={true}
-              title={isWaitlist ? 'Get notified' : 'Get custom quotes'}
+              title={isWaitlist ? 'Leave your details' : 'Request supplier quotes'}
               meta={selectedState || 'India'}
             >
               <p className="type-card-copy mt-3 mb-0 max-w-[32ch]">
                 {isWaitlist
-                  ? `Share your details and we'll reach out when agencies go live in ${selectedState || 'your area'}.`
-                  : `Skip the calls. Get quotes from listed agencies in ${selectedState || 'your area'}.`}
+                  ? `Leave your details and we’ll contact you when verified suppliers open in ${selectedState || 'your area'}.`
+                  : `Share your details if you want help getting supplier quotes in ${selectedState || 'your area'}.`}
               </p>
             </CardHeader>
 
@@ -300,7 +300,7 @@ export default function LeadForm({ selectedState = '', vendorsCount = 0, vendors
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    {isWaitlist ? 'Notify me' : 'Request quotes'} <Send size={16} />
+                    {isWaitlist ? 'Join waitlist' : 'Request quotes'} <Send size={16} />
                   </span>
                 )}
               </LiquidGlassBtn>

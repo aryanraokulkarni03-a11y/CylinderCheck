@@ -62,15 +62,15 @@ export function LegalPageLayout({
   return (
     <div className="reading-page">
       <PageHeader
+        markerShowStatus={false}
         markerStatus="clear"
         markerLabel={markerLabel}
-        markerSublabel="Xisch.Co"
         icon={icon}
         title={title}
         description={description}
         actions={(
           <Link to="/track" className="btn-ghost">
-            Return to Track
+            Back to Track
           </Link>
         )}
       />
@@ -79,7 +79,7 @@ export function LegalPageLayout({
         <Card variant="raised">
           <CardHeader
             kicker="Overview"
-            title="What this page covers"
+            title="Overview"
             meta={<span className="reading-meta">Effective {effectiveDate}</span>}
           />
           <CardBody>
@@ -90,8 +90,8 @@ export function LegalPageLayout({
         <Card variant="inset" className="reading-page__toc">
           <CardHeader
             kicker="On this page"
-            title="Quick navigation"
-            meta={<span className="reading-meta">Scroll-aware</span>}
+            title="Contents"
+            meta={<span className="reading-meta">Jump to</span>}
           />
           <CardBody>
             <div className="reading-link-list" role="navigation" aria-label={`${title} section links`}>

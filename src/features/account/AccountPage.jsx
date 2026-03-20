@@ -35,7 +35,7 @@ const ESSENTIAL_LINKS = [
   {
     to: '/support',
     kicker: 'Help',
-    title: 'Support Center',
+    title: 'Support',
     note: 'Billing, corrections, commercial help, and account questions.',
     icon: LifeBuoy,
   },
@@ -59,7 +59,7 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
   const [themeMode, setThemeMode] = useState(() => getTheme())
 
   const signedInLabel = useMemo(() => {
-    if (authLoading) return 'Checking session'
+    if (authLoading) return 'Checking account'
     return user?.email || 'Not signed in'
   }, [authLoading, user])
 
@@ -71,19 +71,19 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
   return (
     <div className="account-page">
       <PageHeader
+        markerShowStatus={false}
         markerStatus={user ? 'clear' : 'early'}
         markerLabel="Account"
-        markerSublabel="Essentials"
         icon={CircleUserRound}
-        title="Account & Essentials"
-        description="Manage sign-in, theme preference, and the core support and legal pages from one mobile-first control space."
+        title="Account"
+        description="Manage sign-in, theme, support, and core legal pages in one place."
       />
 
       <div className="account-grid">
         <Card variant="featured">
           <CardHeader
             kicker="Identity"
-            title={user ? 'Signed in to CylinderCheck' : 'Sign in when you need it'}
+            title={user ? 'Signed in' : 'Sign in when needed'}
             meta={<span className="reading-meta">{signedInLabel}</span>}
           />
           <CardBody className="stack-copy">
@@ -156,7 +156,7 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
       <Card variant="raised">
         <CardHeader
           kicker="Essentials"
-          title="Support, privacy, and trust"
+          title="Support, privacy, and legal"
           meta={<span className="reading-meta">Core product links</span>}
         />
         <CardBody>

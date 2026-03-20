@@ -212,18 +212,19 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
   return (
     <div className="w-full min-w-0">
       <PageHeader
+        markerShowStatus={false}
         markerStatus="early"
-        markerLabel="Community Reports"
+        markerLabel="Reports"
         icon={MessageSquare}
-        title="Community Reports"
-        description="Flag delivery delays, shortages, and agency issues in your area. Real reports from real people."
+        title="Community reports"
+        description="Report delivery delays, shortage pressure, and agency issues in your area."
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start min-w-0">
         <Card className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)]">
           <CardHeader
             kicker="Submit a report"
-            title="Share what is happening in your area"
+            title="Report an issue in your area"
             titleAs="h2"
             actions={
               user ? (
@@ -234,7 +235,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
             }
           >
             <p className="type-card-copy mt-3 mb-0">
-              Keep it factual. If you can, add delivery days and your LPG provider.
+              Keep it factual. Add delivery days, agency name, or extra charges if you know them.
             </p>
           </CardHeader>
 
@@ -244,10 +245,10 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                   Sign in required
                 </div>
               <h2 className="type-card-title mb-2 m-0">
-                Sign in to submit
+                Sign in to post a report
               </h2>
               <p className="type-card-copy mb-5">
-                Reports require a Google account so the community stays spam-free and accountable.
+                Sign in with Google so reports stay accountable and harder to spam.
               </p>
               <GoogleSignInButton
                 className="w-full justify-center"
@@ -342,17 +343,17 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
             <div className="flex items-center gap-2">
               <AlertCircle size={14} className="text-[var(--accent)]" />
                 <span className="kicker">
-                  Reports feed
+                  Recent reports
                 </span>
               <span className="text-[var(--divider)] type-note" aria-hidden="true">
                 {DOT}
               </span>
               <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
-                Top voted
+                Most upvoted
               </span>
             </div>
             <div className="type-note">
-              {loading ? 'Loading\u2026' : `${reports.length} shown`}
+              {loading ? 'Loading...' : `${reports.length} shown`}
             </div>
           </div>
 
@@ -379,7 +380,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
               ))}
             </div>
           ) : reports.length === 0 ? (
-            <EmptyState title="No reports yet" description="Be the first to flag an issue in your area." />
+            <EmptyState title="No reports yet" description="No one has reported an issue here yet." />
           ) : (
             <FadeIn delay={0.08}>
               <List>

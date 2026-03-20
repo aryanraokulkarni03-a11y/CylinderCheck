@@ -24,7 +24,7 @@ const sections = [
     content: (
       <>
         <p>
-          CylinderCheck provides LPG delivery intelligence, booking guidance, community report signals, alert workflows,
+          CylinderCheck provides LPG delivery guidance, booking guidance, community reports, alert workflows,
           and commercial enquiry tools. The service is informational and operational in nature.
         </p>
         <ul className="reading-list reading-list--dense">
@@ -41,7 +41,7 @@ const sections = [
     content: (
       <>
         <p>
-          We work to keep the service useful and current, but community-sourced data, pricing signals, and delivery
+          We work to keep the service useful and current, but community-sourced data, price updates, and delivery
           estimates may be delayed, incomplete, or incorrect. You should always verify final availability, delivery,
           and pricing with the relevant agency, distributor, or supplier before acting on the information.
         </p>
@@ -158,7 +158,7 @@ export function TermsPage() {
       title="Terms of Use"
       description="The core rules, limitations, and responsibilities for using CylinderCheck and its paid features."
       effectiveDate={EFFECTIVE_DATE}
-      intro="These terms describe how CylinderCheck can be used, what the service is designed to provide, what it does not guarantee, and the responsibilities that come with using reports, alerts, pricing intelligence, and commercial enquiries."
+        intro="These terms describe how CylinderCheck can be used, what the service is designed to provide, what it does not guarantee, and the responsibilities that come with using reports, alerts, price updates, and commercial enquiries."
       sections={sections}
     />
   )

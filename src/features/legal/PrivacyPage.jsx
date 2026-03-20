@@ -31,7 +31,7 @@ const sections = [
     title: 'How we use information',
     content: (
       <ul className="reading-list">
-        <li>To deliver tracking, alerts, shortage intelligence, and commercial lead workflows.</li>
+        <li>To deliver tracking, alerts, shortage updates, and commercial lead workflows.</li>
         <li>To maintain sign-in sessions and protect the product against spam, abuse, and duplicate activity.</li>
         <li>To respond to support requests, payment questions, corrections, and feedback.</li>
         <li>To improve data quality, product performance, and reliability across mobile and web.</li>

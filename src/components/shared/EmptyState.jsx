@@ -9,7 +9,6 @@ export default function EmptyState({ title, description, actionText, onAction, i
       className="card--dashed card--spacious min-h-[300px] w-full"
     >
       <div className="text-center">
-        <div className="kicker mb-2">Awaiting signal</div>
         <h3 className="type-empty-title mb-0">
           {title}
         </h3>

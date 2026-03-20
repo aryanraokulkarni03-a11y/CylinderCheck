@@ -1,5 +1,5 @@
 // src/features/track/TrackTab.jsx
-// Booking tracker + shortage intelligence by PIN.
+// Booking tracker + shortage pressure by PIN.
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { CalendarRange, Clock3, MapPin, Target } from 'lucide-react'
@@ -112,6 +112,7 @@ export function TrackTab({
   return (
     <div className="w-full min-w-0">
       <PageHeader
+        markerShowStatus={false}
         markerStatus={
           pinData?.reportCount >= 5
             ? 'severe'
@@ -119,10 +120,10 @@ export function TrackTab({
               ? 'active'
               : 'clear'
         }
-        markerLabel="Track Your Area"
+        markerLabel="Home LPG"
         icon={Target}
         title="Booking Tracker"
-        description="Know when to book. Know if there is a shortage. Real-time delivery intelligence by PIN code."
+        description="Check delivery time, booking date, and shortage pressure in your area with your PIN."
       />
 
       <PriceTicker mapPrices={mapPrices} />
@@ -138,12 +139,12 @@ export function TrackTab({
         <div className="space-y-4 min-w-0">
           <Card>
             <CardHeader
-              kicker="Booking check"
-              title="See when to book in your area"
+              kicker="Local check"
+              title="Check your area before you book"
               titleAs="h2"
             >
               <p className="type-card-copy mt-3 mb-0">
-                Use your PIN to check delivery pace, shortage pressure, and the safest booking window for your area.
+                Use your PIN to see local delivery time, shortage pressure, and the next sensible booking date.
               </p>
             </CardHeader>
 
@@ -164,7 +165,7 @@ export function TrackTab({
               </Field>
               {!pinData && !loading ? (
                 <p className="type-note mt-3 mb-0 md:hidden">
-                  We&apos;ll show local delivery delay, shortage pressure, and your next booking window.
+                  We&apos;ll show delivery time, shortage pressure, and your next booking date.
                 </p>
               ) : null}
             </div>
@@ -182,7 +183,7 @@ export function TrackTab({
             <div className="flex flex-col gap-2 mb-6">
               <div className="field__top">
                 <div className="field__label">Current cylinder level</div>
-                <div className="field__meta">Optional for urgency read</div>
+                <div className="field__meta">Optional for a sharper read</div>
               </div>
               <div className="grid grid-cols-4 gap-2" role="group" aria-label="Current cylinder level">
                 {CYLINDER_LEVELS.map(({ value, label, emoji, hint }) => (
@@ -222,7 +223,7 @@ export function TrackTab({
             )}
 
             <LiquidGlassBtn onClick={handleTrack} disabled={loading} className="w-full justify-center">
-              {loading ? 'Looking up...' : `Check my area ${ARROW}`}
+              {loading ? 'Checking...' : `Check your area ${ARROW}`}
             </LiquidGlassBtn>
             </CardBody>
           </Card>
@@ -244,7 +245,7 @@ export function TrackTab({
                 variant="inset"
                 className="status-edge status-edge--early"
               >
-                <div className="kicker mb-4">Reading local signal</div>
+                <div className="kicker mb-4">Checking your area</div>
                 {[55, 100, 80, 90].map((w, i) => (
                   <div
                     key={i}
@@ -272,7 +273,7 @@ export function TrackTab({
                   >
                     <div className="flex items-center gap-2 mt-3 text-[var(--accent)]">
                       <MapPin size={12} />
-                      <span className="kicker text-[inherit]">Delivery intelligence</span>
+                      <span className="kicker text-[inherit]">Local delivery picture</span>
                     </div>
                   </CardHeader>
 
@@ -317,8 +318,8 @@ export function TrackTab({
                 {pinData.urgencyScore !== undefined && (
                   <Card className="mb-4 text-center">
                     <CardHeader
-                      kicker="Personal readout"
-                      title="Urgency score"
+                      kicker="Based on your details"
+                      title="Booking priority"
                       titleAs="h2"
                     />
                     <CardBody>
@@ -336,8 +337,8 @@ export function TrackTab({
                     }`}
                   >
                     <CardHeader
-                      kicker="Booking window"
-                      title={bookingResult.daysLeft <= 0 ? 'Window is open now' : 'Next booking window'}
+                      kicker="Booking date"
+                      title={bookingResult.daysLeft <= 0 ? 'You can book now' : 'Next booking date'}
                       titleAs="h2"
                     />
 
@@ -346,7 +347,7 @@ export function TrackTab({
                       <div>
                         {bookingResult.daysLeft <= 0 ? (
                           <p className="type-section-title text-[var(--status-clear)] mb-0">
-                            Book right now
+                            Book now
                           </p>
                         ) : (
                           <p className="type-data-value type-data-value--hero mb-0">
@@ -362,15 +363,16 @@ export function TrackTab({
 
                         <KalamkariDivider />
                         <p className="type-note mb-0">
-                          Based on{' '}
+                          Based on the{' '}
                           <span className="type-data-value text-[inherit] text-[var(--text-data)]">25</span>-day rule
                           {avgDays != null ? (
                             <>
-                              {' '}+ <span className="type-data-value text-[inherit] text-[var(--text-data)]">{avgDays}</span>-day local delivery lag
+                              {' '}and a local delivery time of <span className="type-data-value text-[inherit] text-[var(--text-data)]">{avgDays}</span> days
                             </>
                           ) : (
-                            <> + local delivery lag</>
+                            <> and current local delivery time</>
                           )}
+                          .
                         </p>
                       </div>
                     </div>
@@ -394,11 +396,10 @@ export function TrackTab({
                           color: pinData.reportCount >= 5 ? 'var(--status-severe)' : 'var(--status-active)',
                         }}
                       >
-                        {pinData.reportCount >= 5 ? 'Severe shortage in your area' : 'Active shortage in your area'}
+                        {pinData.reportCount >= 5 ? 'Shortage pressure is high in your area' : 'Shortage pressure is active in your area'}
                       </div>
                       <p className="type-card-copy mb-0">
-                        Expect <span className="type-data-value text-[inherit] text-[var(--text-data)]">3-7</span> extra days on delivery.
-                        Book as early as your window allows.
+                        Expect about <span className="type-data-value text-[inherit] text-[var(--text-data)]">3-7</span> extra days on delivery. Book as soon as your window opens.
                       </p>
                     </div>
                   </Callout>
@@ -415,17 +416,17 @@ export function TrackTab({
                     edge={false}
                   >
                     <p className="type-card-title mb-1">
-                      Running a restaurant or hotel?
+                      Need commercial supply?
                     </p>
                     <p className="type-note mb-3">
-                      Commercial gas cut across India. Find verified alternatives today.
+                      Check private LPG supplier options for restaurants, hotels, and other business use.
                     </p>
                     <button
                       onClick={onCommercialClick}
                       className="type-nav text-[var(--accent)] hover:text-[var(--accent-pop)]
                                  transition-colors duration-150"
                     >
-                      Find alternatives now {' \u2192'}
+                      See commercial options {' \u2192'}
                     </button>
                   </Callout>
                 )}
@@ -445,12 +446,12 @@ export function TrackTab({
                   className="card--spacious min-h-[300px] w-full border-[var(--border)]"
                 >
                   <CardHeader
-                    kicker="For your area"
-                    title="What unlocks when you check your PIN"
+                    kicker="Before you check"
+                    title="What you'll get after you enter your PIN"
                     titleAs="h3"
                   >
                     <p className="type-card-copy mt-3 mb-0 max-w-[38ch]">
-                      You&apos;ll get a clearer read on delivery pace, local shortage pressure, and whether it&apos;s time to book now or wait.
+                      You'll get local delivery time, shortage pressure, and a practical booking date for your area.
                     </p>
                   </CardHeader>
 
@@ -459,21 +460,21 @@ export function TrackTab({
                       {[
                         {
                           icon: Clock3,
-                          eyebrow: 'Delivery pace',
-                          title: 'How long cylinders are taking nearby',
-                          note: 'See the local average wait before a refill reaches homes around your PIN.',
+                          eyebrow: 'Delivery time',
+                          title: 'How long refills are taking nearby',
+                          note: 'See the local average wait before a refill reaches homes near your PIN.',
                         },
                         {
                           icon: MapPin,
-                          eyebrow: 'Shortage watch',
+                          eyebrow: 'Shortage pressure',
                           title: 'Whether your area is under strain',
-                          note: 'Spot active delivery pressure before it turns into a late refill or stock stress.',
+                          note: 'See whether supply pressure is building before it turns into a late refill.',
                         },
                         {
                           icon: CalendarRange,
-                          eyebrow: 'Booking cue',
-                          title: 'When your next booking window opens',
-                          note: 'Use your last booking date to judge whether to book now, hold, or plan ahead.',
+                          eyebrow: 'Booking date',
+                          title: 'When you can book again',
+                          note: 'Use your last booking date to judge whether to book now or wait.',
                         },
                       ].map(({ icon: Icon, eyebrow, title, note }, index) => (
                         <div
@@ -502,9 +503,9 @@ export function TrackTab({
                           <Target size={18} />
                         </span>
                         <div className="min-w-0">
-                          <p className="type-card-title mb-1">Better read with the optional details</p>
+                          <p className="type-card-title mb-1">Optional details help</p>
                           <p className="type-note mb-0">
-                            Add your last booking date and current cylinder level for a more useful urgency read, especially when local deliveries are slowing down.
+                            Add your last booking date and cylinder level for a more accurate booking priority read.
                           </p>
                         </div>
                       </div>

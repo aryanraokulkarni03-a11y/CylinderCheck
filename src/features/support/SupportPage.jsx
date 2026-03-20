@@ -32,16 +32,16 @@ const SUPPORT_STREAMS = [
   {
     icon: Receipt,
     kicker: 'Billing',
-    title: 'Paid alerts and payments',
-    copy: 'Use this lane for payment verification, duplicate charges, missing activation, or billing clarification on paid alert workflows.',
+    title: 'Billing and paid alerts',
+    copy: 'Use this for payment verification, duplicate charges, missing activation, or billing questions about paid alerts.',
     subject: 'CylinderCheck billing support',
     note: 'Best for subscriptions, payment references, and alert activation issues.',
   },
   {
     icon: TriangleAlert,
     kicker: 'Corrections',
-    title: 'Wrong data or broken signals',
-    copy: 'Flag incorrect pricing, missing agency context, bad shortage signals, or pages that are not behaving correctly on mobile or desktop.',
+    title: 'Wrong prices or broken pages',
+    copy: 'Report wrong prices, missing agency context, misleading shortage flags, or pages that are not working properly on mobile or desktop.',
     subject: 'CylinderCheck data correction',
     note: 'Best for accuracy issues, pricing mismatches, and reports that look unreliable.',
   },
@@ -56,8 +56,8 @@ const SUPPORT_STREAMS = [
   {
     icon: ShieldCheck,
     kicker: 'Account',
-    title: 'Google sign-in and access',
-    copy: 'Reach out here if sign-in fails, your access flow is stuck, or you need help understanding how account-linked features behave.',
+    title: 'Sign-in and account access',
+    copy: 'Reach out here if sign-in fails, your access flow is stuck, or you need help with account-linked features.',
     subject: 'CylinderCheck account support',
     note: 'Best for authentication, account-linked features, and access restoration.',
   },
@@ -127,15 +127,15 @@ export function SupportPage() {
   return (
     <div className="support-page">
       <PageHeader
+        markerShowStatus={false}
         markerStatus="clear"
         markerLabel="Support"
-        markerSublabel="Xisch.Co"
         icon={LifeBuoy}
-        title="Support Center"
-        description="One editorial support inbox for billing, corrections, commercial issues, and access questions. Built mobile first, with clean follow-through instead of dead-end links."
+        title="Support"
+        description="Email support for billing, corrections, supplier listings, and account access."
         actions={(
           <Link to="/track" className="btn-ghost">
-            Return to Track
+            Back to Track
           </Link>
         )}
       />
@@ -144,13 +144,13 @@ export function SupportPage() {
         <Card variant="featured">
           <CardHeader
             kicker="Contact"
-            title="Write to Xisch.Co support"
+            title="Email Xisch.Co support"
             meta={<span className="reading-meta">Effective {EFFECTIVE_DATE}</span>}
           />
           <CardBody className="support-contact-card">
             <p className="type-reading-copy m-0">
-              CylinderCheck support runs through a single editorial inbox: <a href={buildMailto('CylinderCheck support', generalSupportBody)}>{CONTACT_EMAIL}</a>.
-              Choose the issue lane below if you want the subject line pre-filled for billing, trust, commercial, or account help.
+              CylinderCheck support runs through one email inbox: <a href={buildMailto('CylinderCheck support', generalSupportBody)}>{CONTACT_EMAIL}</a>.
+              Use the issue lanes below if you want the subject line pre-filled for billing, data fixes, commercial listings, or account help.
             </p>
 
             <div className="support-contact-card__cta">
@@ -184,13 +184,13 @@ export function SupportPage() {
             <ul className="reading-list reading-list--dense support-contact-card__notes">
               <li>Open Gmail is the most reliable option if you do not have a default mail app configured.</li>
               <li>If your device mail app does not open, use Gmail compose or copy the address directly.</li>
-              <li>Replies are handled from the same Xisch.Co inbox, with the subject line routing the context.</li>
+              <li>Replies come from the same Xisch.Co inbox, with the subject line helping us route the issue faster.</li>
             </ul>
           </CardBody>
         </Card>
 
         <Card variant="inset">
-          <CardHeader kicker="Before you write" title="What helps us resolve things faster" meta={<span className="reading-meta">Include these details</span>} />
+          <CardHeader kicker="Before you write" title="What to include" meta={<span className="reading-meta">Checklist</span>} />
           <CardBody>
             <ul className="reading-list">
               <li>Tell us which page or workflow you were using.</li>
@@ -220,7 +220,7 @@ export function SupportPage() {
           <Card key={title} variant="raised">
             <CardHeader
               kicker={kicker}
-              meta={<span className="reading-meta">Shared inbox, dedicated subject</span>}
+              meta={<span className="reading-meta">Subject line</span>}
               title={
                 <span className="support-card__title">
                   <Icon size={18} className="text-[var(--accent)]" aria-hidden="true" />
@@ -232,7 +232,7 @@ export function SupportPage() {
               <p className="type-card-copy m-0">{copy}</p>
               <ul className="reading-list reading-list--dense support-stream__notes">
                 <li>{note}</li>
-                <li>All replies still come from {CONTACT_EMAIL}, but the subject line keeps the issue context intact.</li>
+                  <li>Replies still come from {CONTACT_EMAIL}.</li>
               </ul>
               <div className="support-stream__actions">
                 <a
@@ -273,8 +273,8 @@ export function SupportPage() {
       <Card variant="raised">
         <CardHeader
           kicker="FAQ"
-          title="Common support questions"
-          meta={<span className="reading-meta">Email-first support</span>}
+          title="Common questions"
+          meta={<span className="reading-meta">Email support</span>}
         />
         <CardBody className="support-faq">
               {FAQ_ITEMS.map(({ question, answer }) => (

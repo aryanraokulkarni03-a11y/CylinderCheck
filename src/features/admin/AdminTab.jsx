@@ -16,12 +16,12 @@ export default function AdminTab({ data, loading, onLock }) {
     <div className="space-y-8 pb-12 w-full min-w-0">
       <div className="border-b border-[var(--border)] pb-6">
         <PageHeader
+          markerShowStatus={false}
           markerStatus="early"
           markerLabel="Admin"
-          markerSublabel="Restricted mode"
           icon={Shield}
-          title="System Control"
-          description="Administrative overview for alerts, community activity, and paid subscribers. Authorized access only."
+          title="Admin"
+          description="Overview of reports, alerts, and paid subscribers. Authorized access only."
           actions={(
             <button
               type="button"
@@ -29,7 +29,7 @@ export default function AdminTab({ data, loading, onLock }) {
               className="btn-ghost"
             >
               <ArrowLeft size={16} />
-              <span>Exit restricted mode</span>
+              <span>Lock admin</span>
             </button>
           )}
         />
@@ -95,7 +95,7 @@ export default function AdminTab({ data, loading, onLock }) {
             Subscribers directory
           </h2>
           <p className="type-note mt-2 mb-0">
-            Live payment records synced from the Plus subscriber table.
+            Payment records from the Plus subscriber table.
           </p>
         </div>
         <Card variant="inset" className="card--flush overflow-x-auto">
@@ -120,7 +120,7 @@ export default function AdminTab({ data, loading, onLock }) {
               {loading ? (
                 <tr>
                   <td colSpan="4" className="px-5 py-8 text-center type-card-copy--compact font-medium">
-                    <span className="motion-safe:animate-pulse">Loading directory...</span>
+                    <span className="motion-safe:animate-pulse">Loading subscribers...</span>
                   </td>
                 </tr>
               ) : subscriptions.length === 0 ? (

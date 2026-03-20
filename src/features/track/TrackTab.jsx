@@ -110,7 +110,7 @@ export function TrackTab({
   const shortage = pinData ? shortageMeta(pinData.reportCount || 0) : null
 
   return (
-    <div className="w-full min-w-0">
+    <div className="page-root">
       <PageHeader
         markerShowStatus={false}
         markerStatus={
@@ -126,16 +126,18 @@ export function TrackTab({
         description="Check delivery time, booking date, and shortage pressure in your area with your PIN."
       />
 
-      <PriceTicker mapPrices={mapPrices} />
-      {pricesUpdatedAt ? (
-        <div className="mb-6 mt-[-1rem] flex justify-end">
-          <span className="type-note text-[var(--text-muted)]">
-            {formatLastUpdated(pricesUpdatedAt)}
-          </span>
-        </div>
-      ) : null}
+      <div className="page-section page-section--tight">
+        <PriceTicker mapPrices={mapPrices} className="!mb-0" />
+        {pricesUpdatedAt ? (
+          <div className="page-note-row">
+            <span className="type-note text-[var(--text-muted)]">
+              {formatLastUpdated(pricesUpdatedAt)}
+            </span>
+          </div>
+        ) : null}
+      </div>
 
-      <div className="grid md:grid-cols-[420px_1fr] gap-6 items-start min-w-0">
+      <div className="page-grid-form-feed">
         <div className="space-y-4 min-w-0">
           <Card>
             <CardHeader
@@ -231,7 +233,7 @@ export function TrackTab({
 
         <div
           ref={resultRef}
-          className="scroll-mt-[calc(var(--topbar-height)+8px)] min-w-0"
+          className="page-scroll-anchor min-w-0"
         >
           <AnimatePresence mode="wait">
             {loading && (

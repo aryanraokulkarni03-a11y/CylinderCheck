@@ -12,9 +12,9 @@ export default function AppShell({ sidebar, topbar, bottomNav, footer, children 
 
         <main
           id="main-content"
-          className="flex-1 w-full pb-[calc(var(--bottomnav-height)+8px+env(safe-area-inset-bottom))] md:pb-6"
+          className="app-main flex-1 w-full"
         >
-          <div className="content-frame py-6">
+          <div className="content-frame app-main__frame">
             {children}
           </div>
         </main>

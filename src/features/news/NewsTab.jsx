@@ -312,7 +312,7 @@ export default function NewsTab() {
             : 'clear'
 
   return (
-    <div className="pb-12 w-full min-w-0">
+    <div className="page-root">
       <PageHeader
         markerShowStatus={false}
         markerStatus={pageStatus}
@@ -333,7 +333,7 @@ export default function NewsTab() {
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start min-w-0">
+      <div className="page-grid-rail">
         <div className="min-w-0">
           <PillRow
             ariaLabel="Filter by city"
@@ -545,7 +545,7 @@ export default function NewsTab() {
           )}
         </div>
 
-        <div className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)] min-w-0">
+        <div className="page-sticky-lg min-w-0">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="kicker">
               {mapHeading}

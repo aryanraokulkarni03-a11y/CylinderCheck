@@ -207,10 +207,10 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
   const pricesFreshness = useMemo(() => getPricesFreshness(pricesUpdatedAt), [pricesUpdatedAt])
 
   return (
-    <div className="pb-24 w-full min-w-0">
+    <div className="page-root">
       <CommercialHero hasAnyVendors={hasAnyVendors} />
 
-      <div id="commercial-vendors" className="mt-8 md:mt-10 w-full">
+      <div id="commercial-vendors" className="page-section">
         <PageHeader
           as="h2"
           icon={Store}
@@ -220,7 +220,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
       </div>
 
       <section
-        className={`commercial-market-band mt-8${pricesFreshness.isStale ? ' commercial-market-band--stale' : ''}`}
+        className={`commercial-market-band${pricesFreshness.isStale ? ' commercial-market-band--stale' : ''}`}
         aria-label="Commercial LPG market snapshot"
       >
         <PriceTicker
@@ -253,7 +253,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
         </div>
       </section>
 
-      <div className="mt-8 md:mt-10 w-full">
+      <div className="page-section">
         <PillRow
           ariaLabel="Choose a state"
           value={activeState}
@@ -261,8 +261,8 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
           items={COMMERCIAL_STATES.map((st) => ({ value: st, label: st }))}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-14 items-start w-full mt-8 min-w-0">
-          <div className="lg:col-span-7 xl:col-span-8 w-full min-w-0">
+        <div className="page-grid-commercial">
+          <div className="w-full min-w-0">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="type-list-title">
@@ -364,7 +364,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
             )}
           </div>
 
-          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--topbar-height)+32px)] w-full min-w-0">
+          <div className="page-sticky-lg w-full min-w-0">
             <LeadForm selectedState={activeState} vendorsCount={vendors.length} vendorsLoading={vendorsLoading} />
           </div>
         </div>

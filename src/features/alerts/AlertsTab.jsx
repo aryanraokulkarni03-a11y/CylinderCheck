@@ -238,7 +238,7 @@ export default function AlertsTab() {
   }, [payContact, payPin])
 
   return (
-    <div className="pb-16 w-full min-w-0">
+    <div className="page-root">
       <PageHeader
         markerShowStatus={false}
         markerStatus="active"
@@ -248,7 +248,7 @@ export default function AlertsTab() {
         description="Set a reminder before your next booking date, or pay for earlier warnings when supply gets tighter in your area."
       />
 
-      <div className="grid lg:grid-cols-2 gap-6 items-start min-w-0">
+      <div className="page-grid-dual">
         <SlideUp delay={0.02} className="w-full min-w-0">
           <Card>
             <CardHeader

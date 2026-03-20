@@ -69,7 +69,7 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
   }
 
   return (
-    <div className="account-page">
+    <div className="page-root account-page">
       <PageHeader
         markerShowStatus={false}
         markerStatus={user ? 'clear' : 'early'}
@@ -79,7 +79,7 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
         description="Manage sign-in, theme, support, and core legal pages in one place."
       />
 
-      <div className="account-grid">
+      <div className="page-section page-grid-account account-grid">
         <Card variant="featured">
           <CardHeader
             kicker="Identity"
@@ -153,29 +153,31 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
         </Card>
       </div>
 
-      <Card variant="raised">
-        <CardHeader
-          kicker="Essentials"
-          title="Support, privacy, and legal"
-          meta={<span className="reading-meta">Core product links</span>}
-        />
-        <CardBody>
-          <div className="account-essentials">
-            {ESSENTIAL_LINKS.map(({ to, kicker, title, note, icon: Icon }) => (
-              <Link key={to} to={to} className="account-link-card">
-                <span className="account-link-card__icon" aria-hidden="true">
-                  <Icon size={18} />
-                </span>
-                <span className="account-link-card__copy">
-                  <span className="kicker">{kicker}</span>
-                  <span className="type-card-title">{title}</span>
-                  <span className="type-note">{note}</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </CardBody>
-      </Card>
+      <div className="page-section">
+        <Card variant="raised">
+          <CardHeader
+            kicker="Essentials"
+            title="Support, privacy, and legal"
+            meta={<span className="reading-meta">Core product links</span>}
+          />
+          <CardBody>
+            <div className="account-essentials">
+              {ESSENTIAL_LINKS.map(({ to, kicker, title, note, icon: Icon }) => (
+                <Link key={to} to={to} className="account-link-card">
+                  <span className="account-link-card__icon" aria-hidden="true">
+                    <Icon size={18} />
+                  </span>
+                  <span className="account-link-card__copy">
+                    <span className="kicker">{kicker}</span>
+                    <span className="type-card-title">{title}</span>
+                    <span className="type-note">{note}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      </div>
     </div>
   )
 }

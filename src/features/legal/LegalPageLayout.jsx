@@ -60,7 +60,7 @@ export function LegalPageLayout({
   }
 
   return (
-    <div className="reading-page">
+    <div className="page-root reading-page">
       <PageHeader
         markerShowStatus={false}
         markerStatus="clear"
@@ -75,7 +75,7 @@ export function LegalPageLayout({
         )}
       />
 
-      <div className="reading-page__intro-grid">
+      <div className="page-section page-grid-reading reading-page__intro-grid">
         <Card variant="raised">
           <CardHeader
             kicker="Overview"
@@ -87,7 +87,7 @@ export function LegalPageLayout({
           </CardBody>
         </Card>
 
-        <Card variant="inset" className="reading-page__toc">
+        <Card variant="inset" className="reading-page__toc page-sticky-lg">
           <CardHeader
             kicker="On this page"
             title="Contents"
@@ -122,7 +122,7 @@ export function LegalPageLayout({
         </Card>
       </div>
 
-      <div className="reading-page__sections">
+      <div className="page-section reading-page__sections">
         {sections.map((section) => (
           <Card key={section.id} id={section.id} variant="raised" className="reading-section">
             <CardHeader

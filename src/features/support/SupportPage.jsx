@@ -125,7 +125,7 @@ export function SupportPage() {
   }
 
   return (
-    <div className="support-page">
+    <div className="page-root support-page">
       <PageHeader
         markerShowStatus={false}
         markerStatus="clear"
@@ -140,7 +140,7 @@ export function SupportPage() {
         )}
       />
 
-      <div className="support-page__intro">
+      <div className="page-section page-grid-reading support-page__intro">
         <Card variant="featured">
           <CardHeader
             kicker="Contact"
@@ -202,7 +202,7 @@ export function SupportPage() {
         </Card>
       </div>
 
-      <div className="support-grid">
+      <div className="page-section page-grid-dual support-grid">
         {SUPPORT_STREAMS.map(({ icon: Icon, kicker, title, copy, subject, note }) => {
           const body = [
             'Hello Xisch.Co team,',
@@ -270,23 +270,25 @@ export function SupportPage() {
         })}
       </div>
 
-      <Card variant="raised">
-        <CardHeader
-          kicker="FAQ"
-          title="Common questions"
-          meta={<span className="reading-meta">Email support</span>}
-        />
-        <CardBody className="support-faq">
-              {FAQ_ITEMS.map(({ question, answer }) => (
-            <Card key={question} variant="inset" size="compact">
-              <CardHeader kicker="Question" titleAs="h3" title={question} />
-              <CardBody>
-                <p className="type-card-copy m-0">{answer}</p>
-              </CardBody>
-            </Card>
-          ))}
-        </CardBody>
-      </Card>
+      <div className="page-section">
+        <Card variant="raised">
+          <CardHeader
+            kicker="FAQ"
+            title="Common questions"
+            meta={<span className="reading-meta">Email support</span>}
+          />
+          <CardBody className="page-grid-dual support-faq">
+                {FAQ_ITEMS.map(({ question, answer }) => (
+              <Card key={question} variant="inset" size="compact">
+                <CardHeader kicker="Question" titleAs="h3" title={question} />
+                <CardBody>
+                  <p className="type-card-copy m-0">{answer}</p>
+                </CardBody>
+              </Card>
+            ))}
+          </CardBody>
+        </Card>
+      </div>
     </div>
   )
 }

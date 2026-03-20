@@ -210,7 +210,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
   )
 
   return (
-    <div className="w-full min-w-0">
+    <div className="page-root">
       <PageHeader
         markerShowStatus={false}
         markerStatus="early"
@@ -220,8 +220,8 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
         description="Report delivery delays, shortage pressure, and agency issues in your area."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start min-w-0">
-        <Card className="lg:sticky lg:top-[calc(var(--topbar-height)+24px)]">
+      <div className="page-grid-form-feed">
+        <Card className="page-sticky-lg">
           <CardHeader
             kicker="Submit a report"
             title="Report an issue in your area"

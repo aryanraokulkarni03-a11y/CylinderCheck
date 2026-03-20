@@ -13,7 +13,7 @@ export default function AdminTab({ data, loading, onLock }) {
   const { subscriptions = [], reportCount = 0, alertCount = 0 } = data || {}
 
   return (
-    <div className="space-y-8 pb-12 w-full min-w-0">
+    <div className="page-root">
       <div className="border-b border-[var(--border)] pb-6">
         <PageHeader
           markerShowStatus={false}

@@ -26,6 +26,7 @@ import { supabase } from '../../supabaseClient'
 const ARROW = '\u2192'
 const SIGNAL_PANEL_DISMISS_MS = 24 * 60 * 60 * 1000
 const SIGNAL_SUBMISSION_COOLDOWN_MS = 12 * 60 * 60 * 1000
+const SIGNAL_PANEL_ENTRY_DELAY_MS = 1000
 
 const CYLINDER_LEVELS = [
   { value: 'full', label: 'Full', emoji: '\u{1F7E2}', hint: '> 75%' }, // green circle
@@ -123,7 +124,9 @@ export function TrackTab({
   const [signalState, setSignalState] = useState({ ok: '', error: '' })
   const [signalPanelOpen, setSignalPanelOpen] = useState(false)
   const [signalPanelInteracted, setSignalPanelInteracted] = useState(false)
+  const [signalPanelMode, setSignalPanelMode] = useState('closed')
   const skipNextPanelAutoOpenRef = useRef(false)
+  const panelEntryTimeoutRef = useRef(null)
 
   const deliveryEstimate = pinData?.deliveryEstimate || null
   const supplyPressure = pinData?.supplyPressure || null
@@ -185,29 +188,57 @@ export function TrackTab({
     }
   }
 
+  const clearPendingSignalPanelEntry = () => {
+    if (panelEntryTimeoutRef.current) {
+      window.clearTimeout(panelEntryTimeoutRef.current)
+      panelEntryTimeoutRef.current = null
+    }
+  }
+
   useEffect(() => {
+    clearPendingSignalPanelEntry()
+
     if (!pinData?.pin) return
 
     if (skipNextPanelAutoOpenRef.current) {
       skipNextPanelAutoOpenRef.current = false
       setSignalPanelOpen(false)
       setSignalPanelInteracted(false)
+      setSignalPanelMode('closed')
       return
     }
 
-    setSignalPanelOpen(!wasSignalPanelDismissedRecently(signalDismissKey))
+    if (wasSignalPanelDismissedRecently(signalDismissKey)) {
+      setSignalPanelOpen(false)
+      setSignalPanelMode('closed')
+      setSignalPanelInteracted(false)
+      return
+    }
+
+    panelEntryTimeoutRef.current = window.setTimeout(() => {
+      setSignalPanelOpen(true)
+      setSignalPanelInteracted(false)
+      setSignalPanelMode('passive')
+      panelEntryTimeoutRef.current = null
+    }, SIGNAL_PANEL_ENTRY_DELAY_MS)
+
+    setSignalPanelOpen(false)
     setSignalPanelInteracted(false)
+
+    return () => clearPendingSignalPanelEntry()
   }, [pinData?.pin, signalDismissKey])
 
   useEffect(() => {
-    if (!pinData?.pin || !signalPanelOpen || signalPanelInteracted) return undefined
+    if (!pinData?.pin || !signalPanelOpen || signalPanelInteracted || signalPanelMode !== 'passive') {
+      return undefined
+    }
 
     const timeoutId = window.setTimeout(() => {
       setSignalPanelOpen(false)
     }, 10000)
 
     return () => window.clearTimeout(timeoutId)
-  }, [pinData?.pin, signalPanelOpen, signalPanelInteracted])
+  }, [pinData?.pin, signalPanelOpen, signalPanelInteracted, signalPanelMode])
 
   useEffect(() => {
     if (!signalPanelOpen) return undefined
@@ -225,6 +256,21 @@ export function TrackTab({
 
   const markSignalInteraction = () => {
     if (!signalPanelInteracted) setSignalPanelInteracted(true)
+  }
+
+  const closeSignalPanel = ({ remember = false } = {}) => {
+    clearPendingSignalPanelEntry()
+    if (remember) rememberSignalPanelDismiss(signalDismissKey)
+    setSignalPanelOpen(false)
+    setSignalPanelMode('closed')
+  }
+
+  const openSignalPanel = (mode = 'manual') => {
+    clearPendingSignalPanelEntry()
+    clearSignalPanelDismiss(signalDismissKey)
+    setSignalPanelOpen(true)
+    setSignalPanelMode(mode)
+    setSignalPanelInteracted(mode === 'manual' ? hasSignalDraft : false)
   }
 
   const handleSignalSubmit = async () => {
@@ -302,6 +348,7 @@ export function TrackTab({
     clearSignalPanelDismiss(signalDismissKey)
     setSignalPanelOpen(false)
     setSignalPanelInteracted(false)
+    setSignalPanelMode('closed')
     await handleTrack()
   }
 
@@ -521,10 +568,16 @@ export function TrackTab({
                     <motion.div
                       key="signal-panel"
                       className="track-contribute-float"
-                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10, scale: 0.985 }}
+                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20, scale: 0.965 }}
                       animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.985 }}
-                      transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
+                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.975 }}
+                      transition={
+                        shouldReduceMotion
+                          ? { duration: 0.01 }
+                          : signalPanelMode === 'passive'
+                            ? { ...springs.arrival, mass: 1.08 }
+                            : { ...springs.smooth, mass: 1.02 }
+                      }
                     >
                       <Card className="track-contribute-panel">
                         <CardHeader
@@ -536,10 +589,7 @@ export function TrackTab({
                               type="button"
                               className="track-contribute-dismiss"
                               aria-label="Close local signal panel"
-                              onClick={() => {
-                                rememberSignalPanelDismiss(signalDismissKey)
-                                setSignalPanelOpen(false)
-                              }}
+                              onClick={() => closeSignalPanel({ remember: true })}
                             >
                               <X size={18} />
                             </button>
@@ -647,32 +697,48 @@ export function TrackTab({
                       </Card>
                     </motion.div>
                   ) : (
-                    <motion.button
+                    <motion.div
                       key="signal-toggle"
-                      type="button"
                       className="track-contribute-toggle mb-4"
-                      aria-expanded="false"
-                      onClick={() => {
-                        clearSignalPanelDismiss(signalDismissKey)
-                        setSignalPanelOpen(true)
-                        setSignalPanelInteracted(hasSignalDraft)
-                      }}
                       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
                       animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
                       transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
                     >
-                      <span className="track-contribute-toggle__icon" aria-hidden="true">
-                        <Target size={16} />
-                      </span>
-                      <span className="track-contribute-toggle__copy">
-                        <span className="track-contribute-toggle__eyebrow">Community input</span>
-                        <span className="track-contribute-toggle__title">Add a local signal</span>
-                        <span className="track-contribute-toggle__note">
-                          {signalState.ok || 'Help sharpen delivery and supply pressure around this PIN.'}
+                      <button
+                        type="button"
+                        className="track-contribute-toggle__hit"
+                        aria-expanded="false"
+                        onClick={() => openSignalPanel('manual')}
+                      >
+                        <span className="track-contribute-toggle__icon" aria-hidden="true">
+                          <Target size={16} />
                         </span>
-                      </span>
-                    </motion.button>
+                        <span className="track-contribute-toggle__copy">
+                          <span className="track-contribute-toggle__eyebrow">
+                            {!user ? 'Google sign-in' : 'Community input'}
+                          </span>
+                          <span className="track-contribute-toggle__title">
+                            {!user ? 'Sign in to add a local signal' : 'Add a local signal'}
+                          </span>
+                          <span className="track-contribute-toggle__note">
+                            {signalState.ok || (!user
+                              ? 'Use Google sign-in to share a trusted local delivery or supply signal.'
+                              : 'Help sharpen delivery and supply pressure around this PIN.')}
+                          </span>
+                        </span>
+                      </button>
+                      {!user && !authLoading ? (
+                        <div className="track-contribute-toggle__actions">
+                          <GoogleSignInButton
+                            className="w-full justify-center"
+                            onClick={() => onGoogleSignIn?.('/track')}
+                          >
+                            Sign in with Google
+                          </GoogleSignInButton>
+                        </div>
+                      ) : null}
+                    </motion.div>
                   )}
                 </AnimatePresence>
 

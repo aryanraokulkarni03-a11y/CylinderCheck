@@ -549,32 +549,37 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                         </p>
                       )}
 
-                      <div className="flex justify-between items-center pt-4 border-t border-[var(--divider)] mt-4 gap-3">
+                      <div className="reports-row__footer">
                         <motion.button
                           type="button"
                           whileTap={shouldReduceMotion ? undefined : { scale: 1.08 }}
                           transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
                           onClick={() => handleVote(r)}
                           disabled={Boolean(votes[r.id] || voting[r.id])}
-                          className={`inline-flex items-center gap-1.5 type-data-label px-3 py-2 rounded-full transition-colors ${
+                          className={`reports-row__vote ${
                             !user
-                              ? 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)]'
+                              ? 'reports-row__vote--gated'
                               : votes[r.id]
-                              ? 'bg-[var(--accent)] text-[var(--text-on-accent)]'
+                              ? 'reports-row__vote--voted'
                               : voting[r.id]
-                                ? 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] opacity-70'
-                                : 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]'
+                                ? 'reports-row__vote--busy'
+                                : ''
                           }`}
                         >
                           <ArrowUp
                             size={14}
-                            className={
-                              votes[r.id] ? 'text-[var(--text-on-accent)]' : 'text-[var(--text-muted)]'
-                            }
+                            className="reports-row__vote-icon"
                           />
-                          {!user
-                            ? `Sign in to upvote · ${r.votes}`
-                            : `${r.votes} UPVOTE${r.votes !== 1 ? 'S' : ''}`}
+                          <span className="reports-row__vote-copy">
+                            <span className="reports-row__vote-count">
+                              {r.votes}
+                            </span>
+                            <span className="reports-row__vote-label">
+                              {!user
+                                ? 'Sign in to upvote'
+                                : `${r.votes === 1 ? 'Upvote' : 'Upvotes'}`}
+                            </span>
+                          </span>
                         </motion.button>
 
                         {r.votes > 20 && (

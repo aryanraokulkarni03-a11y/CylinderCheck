@@ -13,16 +13,16 @@ const ARROW = '\u2192'
 
 const PLUS_PREVIEW = [
   {
-    eyebrow: 'Delivery day',
-    text: 'A later Plus version can handle delivery-day nudges once message delivery is proven.',
+    eyebrow: 'Refill timing',
+    text: 'Get earlier nudges when your home is moving toward the next sensible refill window.',
   },
   {
-    eyebrow: 'Shortage pressure',
-    text: 'We will only turn on earlier shortage warnings after free reminders are sending reliably.',
+    eyebrow: 'Pressure shifts',
+    text: 'See local supply pressure turn sooner, with more room to plan before a routine refill becomes urgent.',
   },
   {
-    eyebrow: 'Price change',
-    text: 'Price alerts stay dark until we have a dependable delivery pipeline and clear opt-out handling.',
+    eyebrow: 'Price moves',
+    text: 'Stay ahead of price changes that matter to your next booking instead of finding out after the fact.',
   },
 ]
 
@@ -204,17 +204,17 @@ export default function AlertsTab() {
 
         <Card id="plus-card" variant="featured">
           <CardHeader
-            kicker="Plus stays dark"
-            title="Coming after delivery goes live"
+            kicker="Plus preview"
+            title="A calmer planning layer for regular LPG households"
             titleAs="h2"
             actions={(
               <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
-                In build
+                Preview
               </span>
             )}
           >
             <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
-              We are not taking paid alert subscriptions publicly until free reminder delivery is proven and dependable.
+              Plus is designed for households that want earlier signals, steadier planning, and fewer last-minute booking surprises.
             </p>
           </CardHeader>
 
@@ -231,13 +231,13 @@ export default function AlertsTab() {
               ))}
             </div>
 
-              <Callout tone="accent" edge={false}>
+            <Callout tone="accent" edge={false}>
               <div className="flex items-start gap-3">
                 <Mail size={18} className="mt-0.5 text-[var(--accent)]" />
                 <div>
-                  <p className="type-card-title mb-1">Free alerts come first</p>
+                  <p className="type-card-title mb-1">Built carefully, not rushed</p>
                   <p className="type-note mb-0">
-                    Once email reminders are sending reliably, we can turn on a paid Plus plan with more notice and additional alert types.
+                    Free reminders stay first in line. Once delivery is dependable enough to support a premium layer well, Plus can open with earlier notice and richer alert types.
                   </p>
                 </div>
               </div>

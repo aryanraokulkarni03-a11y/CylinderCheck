@@ -1892,6 +1892,18 @@ body::before {
   flex-wrap: wrap;
 }
 
+.page-header__title-icon {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .page-header__title-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 .page-header__desc {
   margin: 0;
   max-width: var(--prose-width);

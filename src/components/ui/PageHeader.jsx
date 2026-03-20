@@ -31,7 +31,9 @@ export function PageHeader({
           <TitleTag className="page-header__title type-page-title">
             {Icon ? (
               <span className="page-header__title-row">
-                <Icon size={28} className="text-[var(--accent)]" aria-hidden="true" />
+                <span className="page-header__title-icon" aria-hidden="true">
+                  <Icon size={28} className="text-[var(--accent)]" />
+                </span>
                 <span>{title}</span>
               </span>
             ) : (

@@ -198,3 +198,152 @@ export function computeUrgency({ cylinderLevel, daysLeft, reportCount, avgDays }
 
   return Math.min(10, Math.round(score))
 }
+
+function median(values) {
+  if (!values.length) return null
+  const sorted = [...values].sort((a, b) => a - b)
+  const middle = Math.floor(sorted.length / 2)
+  if (sorted.length % 2 === 0) {
+    return (sorted[middle - 1] + sorted[middle]) / 2
+  }
+  return sorted[middle]
+}
+
+function percentile(values, p) {
+  if (!values.length) return null
+  const sorted = [...values].sort((a, b) => a - b)
+  const index = (sorted.length - 1) * p
+  const lower = Math.floor(index)
+  const upper = Math.ceil(index)
+  if (lower === upper) return sorted[lower]
+  const weight = index - lower
+  return sorted[lower] * (1 - weight) + sorted[upper] * weight
+}
+
+function pluralize(count, singular, plural = `${singular}s`) {
+  return count === 1 ? singular : plural
+}
+
+export function buildDeliveryEstimate({ avgDays, deliverySignals = [] }) {
+  const cleanSignals = deliverySignals
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value > 0 && value <= 30)
+
+  if (cleanSignals.length >= 3) {
+    const low = Math.max(1, Math.floor(percentile(cleanSignals, 0.25) || 0))
+    const high = Math.max(low, Math.ceil(percentile(cleanSignals, 0.75) || low))
+    const typicalDays = Math.max(1, Math.round(median(cleanSignals) || low))
+
+    return {
+      kind: 'range',
+      summary: low === high ? `About ${low} ${pluralize(low, 'day')}` : `Usually ${low}-${high} days`,
+      note: `Based on ${cleanSignals.length} recent local delivery ${pluralize(cleanSignals.length, 'report')}.`,
+      bookingCopy:
+        low === high
+          ? `a local delivery estimate of about ${low} ${pluralize(low, 'day')}`
+          : `a local delivery estimate of ${low}-${high} days`,
+      typicalDays,
+      sampleSize: cleanSignals.length,
+      confidence: cleanSignals.length >= 5 ? 'high' : 'medium',
+    }
+  }
+
+  if (cleanSignals.length > 0) {
+    const typicalDays = Math.max(1, Math.round(median(cleanSignals) || cleanSignals[0]))
+    return {
+      kind: 'single',
+      summary: `About ${typicalDays} ${pluralize(typicalDays, 'day')}`,
+      note: `Based on ${cleanSignals.length} recent local delivery ${pluralize(cleanSignals.length, 'report')}.`,
+      bookingCopy: `a local delivery estimate of about ${typicalDays} ${pluralize(typicalDays, 'day')}`,
+      typicalDays,
+      sampleSize: cleanSignals.length,
+      confidence: 'low',
+    }
+  }
+
+  if (Number.isFinite(avgDays)) {
+    const typicalDays = Math.max(1, Math.round(avgDays))
+    return {
+      kind: 'historical',
+      summary: `About ${typicalDays} ${pluralize(typicalDays, 'day')}`,
+      note: 'Based on historical PIN-level delivery data.',
+      bookingCopy: `a historical delivery estimate of about ${typicalDays} ${pluralize(typicalDays, 'day')}`,
+      typicalDays,
+      sampleSize: 0,
+      confidence: 'low',
+    }
+  }
+
+  return {
+    kind: 'unknown',
+    summary: 'Not enough local signals yet',
+    note: 'We do not have enough recent delivery data for this PIN yet.',
+    bookingCopy: 'current local delivery signals',
+    typicalDays: null,
+    sampleSize: 0,
+    confidence: 'limited',
+  }
+}
+
+export function buildSupplyPressure({ reportCount = 0, last7 = 0, prior7 = 0, deliveryEstimate }) {
+  const deliveryDays = Number(deliveryEstimate?.typicalDays) || 0
+  const hasDeliverySignal = deliveryEstimate?.kind && deliveryEstimate.kind !== 'unknown'
+
+  if (reportCount === 0 && !hasDeliverySignal) {
+    return {
+      level: 'limited',
+      label: 'Limited signal',
+      note: 'Not enough recent local reports yet to judge supply pressure confidently.',
+      status: 'early',
+      badgeLabel: 'Limited signal',
+    }
+  }
+
+  let score = Math.min(42, last7 * 16)
+  score += Math.min(18, Math.max(0, reportCount - last7) * 6)
+
+  if (last7 > prior7 + 1) score += 12
+  if (deliveryDays >= 7) score += 10
+  if (deliveryDays >= 10) score += 12
+
+  if (score >= 70) {
+    return {
+      level: 'severe',
+      label: 'Severe',
+      note: 'Recent local reports and delivery signals both point to strong supply strain.',
+      status: 'severe',
+      badgeLabel: 'Severe pressure',
+    }
+  }
+
+  if (score >= 42) {
+    return {
+      level: 'active',
+      label: 'Active',
+      note: 'Recent local reports suggest supply pressure is active around this PIN.',
+      status: 'active',
+      badgeLabel: 'Active pressure',
+    }
+  }
+
+  if (score >= 20) {
+    return {
+      level: 'building',
+      label: 'Building',
+      note: 'There are early local pressure signals, so it is worth checking before you book.',
+      status: 'early',
+      badgeLabel: 'Building',
+    }
+  }
+
+  return {
+    level: 'low',
+    label: 'Low',
+    note:
+      reportCount > 0
+        ? 'Recent local reports are present, but pressure still looks low for now.'
+        : 'Recent delivery signals look steady and we have not seen local shortage reports.',
+    status: 'clear',
+    badgeLabel: 'Low pressure',
+  }
+}

@@ -13,7 +13,7 @@ import { KalamkariDivider } from '../../components/shared/KalamkariDivider'
 import { StatusDot } from '../../components/shared/StatusDot'
 import BookingDatePicker from './BookingDatePicker'
 import { springs } from '../../lib/springs'
-import { COMPANY_LABELS, addDays, fmt } from '../../lib/utils'
+import { addDays, fmt } from '../../lib/utils'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
 import { Callout } from '../../components/ui/Callout'
@@ -29,33 +29,40 @@ const CYLINDER_LEVELS = [
   { value: 'critical', label: 'Critical', emoji: '\u{1F534}', hint: 'Empty' }, // red circle
 ]
 
-function trendPill(trend) {
-  if (trend === 'improving') {
+function pressurePill(supplyPressure) {
+  if (!supplyPressure) {
     return {
-      label: 'Improving',
+      label: 'Limited signal',
+      className:
+        'text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]',
+    }
+  }
+  if (supplyPressure.status === 'clear') {
+    return {
+      label: supplyPressure.badgeLabel,
       className:
         'text-[var(--status-clear)] bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)]',
     }
   }
-  if (trend === 'worsening') {
+  if (supplyPressure.status === 'active') {
     return {
-      label: 'Worsening',
+      label: supplyPressure.badgeLabel,
       className:
         'text-[var(--status-active)] bg-[var(--status-active-soft)] border border-[var(--status-active-border)]',
     }
   }
+  if (supplyPressure.status === 'severe') {
+    return {
+      label: supplyPressure.badgeLabel,
+      className:
+        'text-[var(--status-severe)] bg-[var(--status-severe-soft)] border border-[var(--status-severe-border)]',
+    }
+  }
   return {
-    label: 'Stable',
+    label: supplyPressure.badgeLabel,
     className:
       'text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]',
   }
-}
-
-function shortageMeta(reportCount) {
-  if (reportCount <= 0) return { status: 'clear', label: 'All clear' }
-  if (reportCount === 1) return { status: 'early', label: 'Early signal (1 report)' }
-  if (reportCount <= 4) return { status: 'active', label: `Active shortage (${reportCount} reports)` }
-  return { status: 'severe', label: `Severe shortage (${reportCount} reports)` }
 }
 
 function formatLastUpdated(value) {
@@ -102,19 +109,16 @@ export function TrackTab({
 }) {
   const shouldReduceMotion = useReducedMotion()
 
-  const avgDays =
-    typeof pinData?.avg_days === 'number'
-      ? pinData.avg_days
-      : null
-  const trend = pinData?.trend ? trendPill(pinData.trend) : null
-  const shortage = pinData ? shortageMeta(pinData.reportCount || 0) : null
+  const deliveryEstimate = pinData?.deliveryEstimate || null
+  const supplyPressure = pinData?.supplyPressure || null
+  const pressure = pressurePill(supplyPressure)
 
   return (
     <div className="page-root">
       <PageHeader
         icon={Target}
         title="Booking Tracker"
-        description="Check delivery time, booking date, and shortage pressure in your area with your PIN."
+        description="Check delivery estimates, booking date, and local supply pressure in your area with your PIN."
       />
 
       <div className="page-section page-section--tight">
@@ -137,7 +141,7 @@ export function TrackTab({
               titleAs="h2"
             >
               <p className="type-card-copy mt-3 mb-0">
-                Use your PIN to see local delivery time, shortage pressure, and the next sensible booking date.
+                Use your PIN to see a local delivery estimate, supply pressure signal, and the next sensible booking date.
               </p>
             </CardHeader>
 
@@ -158,7 +162,7 @@ export function TrackTab({
               </Field>
               {!pinData && !loading ? (
                 <p className="type-note mt-3 mb-0 md:hidden">
-                  We&apos;ll show delivery time, shortage pressure, and your next booking date.
+                  We&apos;ll show delivery estimates, supply pressure, and your next booking date.
                 </p>
               ) : null}
             </div>
@@ -257,54 +261,64 @@ export function TrackTab({
                     title={pinData.city}
                     titleAs="h2"
                     actions={
-                      trend ? (
-                        <span className={`badge ${trend.className}`}>
-                          {trend.label}
+                      pressure ? (
+                        <span className={`badge ${pressure.className}`}>
+                          {pressure.label}
                         </span>
                       ) : null
                     }
                   >
                     <div className="flex items-center gap-2 mt-3 text-[var(--accent)]">
                       <MapPin size={12} />
-                      <span className="kicker text-[inherit]">Local delivery picture</span>
+                      <span className="kicker text-[inherit]">Local planning signal</span>
                     </div>
                   </CardHeader>
 
                   <CardBody className="divide-y divide-[var(--divider)]">
-                    <div className="flex justify-between items-start py-3">
-                      <span className="type-meta">Avg Delivery</span>
-                      <span className="text-right">
-                        {avgDays != null ? (
-                          <span className="inline-flex items-baseline justify-end gap-2">
-                            <span className="type-data-value">
-                              {avgDays}
-                            </span>
-                            <span className="type-data-label">days</span>
-                          </span>
-                        ) : (
-                          <span className="type-note">No data yet</span>
-                        )}
+                    <div className="flex flex-col gap-2 py-3 md:flex-row md:items-start md:justify-between">
+                      <div className="min-w-0">
+                        <span className="type-meta">Delivery estimate</span>
+                        <p className="type-note mt-2 mb-0 max-w-[38ch]">
+                          {deliveryEstimate?.note}
+                        </p>
+                      </div>
+                      <span className="text-left md:text-right">
+                        <span className="type-data-label text-[var(--text-data)]">
+                          {deliveryEstimate?.summary}
+                        </span>
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-start py-3">
-                      <span className="type-meta">Gas Agency</span>
-                      <span className="type-card-copy--compact font-medium text-right">
-                        {COMPANY_LABELS?.[pinData.agency] || pinData.agency}
-                      </span>
-                    </div>
-
-                    {shortage && (
-                      <div className="flex justify-between items-start py-3">
-                        <span className="type-meta">Shortage Status</span>
-                        <span className="flex items-center justify-end gap-2">
-                          <StatusDot status={shortage.status} size={7} />
+                    {supplyPressure && (
+                      <div className="flex flex-col gap-2 py-3 md:flex-row md:items-start md:justify-between">
+                        <div className="min-w-0">
+                          <span className="type-meta">Supply pressure</span>
+                          <p className="type-note mt-2 mb-0 max-w-[38ch]">
+                            {supplyPressure.note}
+                          </p>
+                        </div>
+                        <span className="flex items-center justify-start gap-2 md:justify-end">
+                          <StatusDot status={supplyPressure.status} size={7} />
                           <span className="type-data-label text-[var(--text-data)]">
-                            {shortage.label}
+                            {supplyPressure.label}
                           </span>
                         </span>
                       </div>
                     )}
+
+                    {pinData?.verifiedAgencyLabel ? (
+                      <div className="flex flex-col gap-2 py-3 md:flex-row md:items-start md:justify-between">
+                        <div className="min-w-0">
+                          <span className="type-meta">Verified distributor</span>
+                          <p className="type-note mt-2 mb-0 max-w-[38ch]">
+                            Confirm booking status and delivery timing directly with the verified distributor.
+                          </p>
+                        </div>
+                        <span className="type-data-label text-[var(--text-data)] text-left md:text-right">
+                          {pinData.verifiedAgencyLabel}
+                        </span>
+                      </div>
+                    ) : null}
                   </CardBody>
                 </Card>
 
@@ -348,9 +362,9 @@ export function TrackTab({
                           </p>
                         )}
 
-                        {bookingResult.daysLeft > 0 && avgDays != null && (
+                        {bookingResult.daysLeft > 0 && deliveryEstimate?.typicalDays != null && (
                           <p className="type-note mt-2 mb-0">
-                            Est. delivery by {fmt(addDays(bookingResult.nextWindow, Math.round(avgDays)))}
+                            Estimated delivery by {fmt(addDays(bookingResult.nextWindow, Math.round(deliveryEstimate.typicalDays)))}
                           </p>
                         )}
 
@@ -358,12 +372,12 @@ export function TrackTab({
                         <p className="type-note mb-0">
                           Based on the{' '}
                           <span className="type-data-value text-[inherit] text-[var(--text-data)]">25</span>-day rule
-                          {avgDays != null ? (
+                          {deliveryEstimate?.kind && deliveryEstimate.kind !== 'unknown' ? (
                             <>
-                              {' '}and a local delivery time of <span className="type-data-value text-[inherit] text-[var(--text-data)]">{avgDays}</span> days
+                              {' '}and {deliveryEstimate.bookingCopy}
                             </>
                           ) : (
-                            <> and current local delivery time</>
+                            <> and current local delivery signals</>
                           )}
                           .
                         </p>
@@ -372,33 +386,33 @@ export function TrackTab({
                   </Card>
                 )}
 
-                {pinData.reportCount >= 2 && (
+                {(supplyPressure?.level === 'active' || supplyPressure?.level === 'severe') && (
                   <Callout
                     as={motion.div}
-                    tone={pinData.reportCount >= 5 ? 'severe' : 'active'}
+                    tone={supplyPressure.level === 'severe' ? 'severe' : 'active'}
                     initial={{ opacity: 0, scale: 0.97 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={shouldReduceMotion ? { duration: 0.01 } : springs.urgent}
                     className="flex items-start gap-3 mb-4"
                   >
-                    <StatusDot status={pinData.reportCount >= 5 ? 'severe' : 'active'} size={7} />
+                    <StatusDot status={supplyPressure.status} size={7} />
                     <div>
                       <div
                         className="kicker mb-1"
                         style={{
-                          color: pinData.reportCount >= 5 ? 'var(--status-severe)' : 'var(--status-active)',
+                          color: supplyPressure.level === 'severe' ? 'var(--status-severe)' : 'var(--status-active)',
                         }}
                       >
-                        {pinData.reportCount >= 5 ? 'Shortage pressure is high in your area' : 'Shortage pressure is active in your area'}
+                        {supplyPressure.level === 'severe' ? 'Supply pressure looks severe in your area' : 'Supply pressure looks active in your area'}
                       </div>
                       <p className="type-card-copy mb-0">
-                        Expect about <span className="type-data-value text-[inherit] text-[var(--text-data)]">3-7</span> extra days on delivery. Book as soon as your window opens.
+                        {supplyPressure.note} Plan ahead and confirm delivery timing before your booking window opens.
                       </p>
                     </div>
                   </Callout>
                 )}
 
-                {pinData.reportCount >= 2 && (
+                {(supplyPressure?.level === 'active' || supplyPressure?.level === 'severe') && (
                   <Callout
                     as={motion.div}
                     tone="accent"
@@ -440,11 +454,11 @@ export function TrackTab({
                 >
                   <CardHeader
                     kicker="Before you check"
-                    title="What you'll get after you enter your PIN"
-                    titleAs="h3"
+                      title="What you'll get after you enter your PIN"
+                      titleAs="h3"
                   >
                     <p className="type-card-copy mt-3 mb-0 max-w-[38ch]">
-                      You'll get local delivery time, shortage pressure, and a practical booking date for your area.
+                      You'll get a local delivery estimate, supply pressure signal, and a practical booking date for your area.
                     </p>
                   </CardHeader>
 
@@ -453,15 +467,15 @@ export function TrackTab({
                       {[
                         {
                           icon: Clock3,
-                          eyebrow: 'Delivery time',
-                          title: 'How long refills are taking nearby',
-                          note: 'See the local average wait before a refill reaches homes near your PIN.',
+                          eyebrow: 'Delivery estimate',
+                          title: 'How refills are moving near your PIN',
+                          note: 'See the strongest local delivery signal we currently have, with evidence level built in.',
                         },
                         {
                           icon: MapPin,
-                          eyebrow: 'Shortage pressure',
-                          title: 'Whether your area is under strain',
-                          note: 'See whether supply pressure is building before it turns into a late refill.',
+                          eyebrow: 'Supply pressure',
+                          title: 'Whether local strain is building',
+                          note: 'See whether recent local reports suggest calm conditions, early pressure, or active strain.',
                         },
                         {
                           icon: CalendarRange,

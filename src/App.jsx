@@ -17,6 +17,8 @@ import {
   CITY_STATE_LABELS,
   LPG_PRODUCT_TYPES,
   addDays,
+  buildDeliveryEstimate,
+  buildSupplyPressure,
   computeUrgency,
   daysUntil,
   lookupPIN,
@@ -344,7 +346,7 @@ export default function App() {
     ] = await Promise.all([
       supabase.from('pin_data').select('*').eq('pin', pin).single(),
       lookupPIN(pin),
-      supabase.from('reports').select('id, created_at').eq('pin', pin)
+      supabase.from('reports').select('id, created_at, delivery_days').eq('pin', pin)
         .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString()),
       supabase.rpc('get_avg_delivery_days', { p_pin: pin }),
     ])
@@ -354,15 +356,26 @@ export default function App() {
       (r) => new Date(r.created_at) > new Date(Date.now() - 7 * 86400000)
     ).length
     const prior7 = reportCount - last7
-    const trend = last7 > prior7 + 1
-      ? 'worsening'
-      : last7 < prior7
-        ? 'improving'
-        : 'stable'
 
     const avgDays = typeof dbData?.avg_days === 'number'
       ? dbData.avg_days
       : (typeof rpcAvgData === 'number' ? rpcAvgData : null)
+
+    const deliverySignals = (recentReports || [])
+      .map((report) => report.delivery_days)
+      .filter((value) => Number.isFinite(value))
+
+    const deliveryEstimate = buildDeliveryEstimate({
+      avgDays,
+      deliverySignals,
+    })
+
+    const supplyPressure = buildSupplyPressure({
+      reportCount,
+      last7,
+      prior7,
+      deliveryEstimate,
+    })
 
     const builtPinData = dbData
       ? {
@@ -370,8 +383,12 @@ export default function App() {
           avg_days: avgDays ?? '—',
           city: location ? `${location.city}, ${location.state}` : dbData.city,
           area: location?.area || '',
-          trend,
           reportCount,
+          last7ReportCount: last7,
+          prior7ReportCount: prior7,
+          deliveryEstimate,
+          supplyPressure,
+          verifiedAgencyLabel: null,
         }
       : {
           pin,
@@ -379,8 +396,12 @@ export default function App() {
           area: location?.area || '',
           agency: 'Check with local agency',
           avg_days: avgDays ?? '—',
-          trend,
           reportCount,
+          last7ReportCount: last7,
+          prior7ReportCount: prior7,
+          deliveryEstimate,
+          supplyPressure,
+          verifiedAgencyLabel: null,
         }
 
     // Compute urgency score when cylinder level is known
@@ -390,7 +411,7 @@ export default function App() {
         cylinderLevel,
         daysLeft: dLeft,
         reportCount,
-        avgDays: typeof avgDays === 'number' ? avgDays : 5,
+        avgDays: typeof deliveryEstimate.typicalDays === 'number' ? deliveryEstimate.typicalDays : 5,
       })
     }
 

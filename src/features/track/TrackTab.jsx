@@ -209,6 +209,20 @@ export function TrackTab({
     return () => window.clearTimeout(timeoutId)
   }, [pinData?.pin, signalPanelOpen, signalPanelInteracted])
 
+  useEffect(() => {
+    if (!signalPanelOpen) return undefined
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        rememberSignalPanelDismiss(signalDismissKey)
+        setSignalPanelOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [signalPanelOpen, signalDismissKey])
+
   const markSignalInteraction = () => {
     if (!signalPanelInteracted) setSignalPanelInteracted(true)
   }
@@ -506,12 +520,13 @@ export function TrackTab({
                   {signalPanelOpen ? (
                     <motion.div
                       key="signal-panel"
+                      className="track-contribute-float"
                       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10, scale: 0.985 }}
                       animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
                       exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.985 }}
                       transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                     >
-                      <Card className="mb-4 track-contribute-panel">
+                      <Card className="track-contribute-panel">
                         <CardHeader
                           kicker="Signed-in local signal"
                           title="Add a local signal"

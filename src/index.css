@@ -2479,6 +2479,27 @@ body::before {
 
 .track-contribute-panel {
   position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 92%, transparent), transparent 62%),
+    color-mix(in srgb, var(--accent) 4%, var(--bg-raised));
+  box-shadow:
+    0 28px 70px rgba(15, 10, 29, 0.2),
+    0 10px 30px rgba(241, 139, 31, 0.08);
+}
+
+.track-contribute-float {
+  position: fixed;
+  left: calc(16px + env(safe-area-inset-left));
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(var(--bottomnav-height) + 18px + env(safe-area-inset-bottom));
+  z-index: 320;
+  pointer-events: none;
+}
+
+.track-contribute-float > .track-contribute-panel {
+  pointer-events: auto;
 }
 
 .track-contribute-dismiss {
@@ -2503,6 +2524,9 @@ body::before {
 .track-contribute-dismiss:hover {
   border-color: var(--text-muted);
   color: var(--text-primary);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 90%, transparent), transparent 60%),
+    color-mix(in srgb, var(--accent) 8%, var(--bg-inset));
 }
 
 .track-contribute-dismiss:active {
@@ -2645,6 +2669,13 @@ body::before {
 
   .track-contribute-toggle {
     padding: 16px 18px;
+  }
+
+  .track-contribute-float {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    width: min(420px, calc(100vw - 48px));
   }
 
   .support-grid > .card,

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { FileText, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { supabase } from '../../supabaseClient'
 import { StaggerContainer } from '../../components/motion/StaggerContainer'
 import { PillRow } from '../../components/ui/PillRow'
@@ -199,8 +199,8 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
             </p>
             <p className="kicker commercial-market-band__trust">
               {lowestInActiveState
-                ? `In ${activeState}: ${lowestInActiveState.city} ${RUPEE}${lowestInActiveState.price}. Based on published city LPG rates. Confirm the dealer quote before ordering.`
-                : 'Based on published city LPG rates. Confirm the dealer quote before ordering.'}
+                ? `In ${activeState}: ${lowestInActiveState.city} ${RUPEE}${lowestInActiveState.price}.`
+                : 'Published city LPG rates.'}
             </p>
           </div>
           {pricesFreshness.label ? (
@@ -214,13 +214,6 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
       </section>
 
       <div className="page-section">
-        <div className="commercial-directory-intro">
-          <h2 className="type-section-title m-0">Private suppliers</h2>
-          <p className="type-card-copy m-0">
-            Choose a state to browse verified suppliers and contact them directly.
-          </p>
-        </div>
-
         <PillRow
           ariaLabel="Choose a state"
           value={activeState}
@@ -230,9 +223,9 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
 
         <div className="w-full min-w-0">
             <div className="flex items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="type-list-title">
-                  Listings in {activeState}
+            <div className="flex items-center gap-3">
+              <div className="type-list-title">
+                Listings in {activeState}
                 </div>
                 <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
                   {vendorsLoading ? '\u2026' : (vendors.length > 0 ? `${vendors.length}` : 'None yet')}
@@ -319,15 +312,6 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {vendors.length > 0 && (
-              <Card variant="inset" size="compact" className="mt-8 flex gap-3 type-note">
-                <FileText size={14} className="shrink-0 text-[var(--text-secondary)] mt-0.5" />
-                <p className="m-0">
-                  CylinderCheck does not set prices or guarantee stock. Confirm both directly with the supplier.
-                </p>
-              </Card>
-            )}
         </div>
       </div>
     </div>

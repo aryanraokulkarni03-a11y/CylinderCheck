@@ -248,7 +248,7 @@ body {
 }
 
 .app-main__frame {
-  padding-top: var(--space-4);
+  padding-top: 10px;
   padding-bottom: var(--space-10);
 }
 
@@ -257,7 +257,7 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: 18px;
 }
 
 .page-section {
@@ -311,12 +311,12 @@ body {
   }
 
   .app-main__frame {
-    padding-top: var(--space-6);
+    padding-top: 18px;
     padding-bottom: var(--space-12);
   }
 
   .page-root {
-    gap: var(--space-7);
+    gap: 22px;
   }
 
   .page-grid-dual {
@@ -584,17 +584,46 @@ body::before {
   isolation: isolate;
 }
 
-.commercial-directory-intro {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .commercial-hero__grid,
 .commercial-hero__copy,
 .commercial-hero__panel {
   position: relative;
   z-index: 1;
+}
+
+.commercial-hero {
+  padding-top: 0;
+  padding-bottom: 6px;
+}
+
+.commercial-hero__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.commercial-hero__title {
+  margin: 0;
+}
+
+.commercial-hero__title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.commercial-hero__title-icon {
+  display: none;
+}
+
+.commercial-hero__desc {
+  margin: 0;
+  max-width: 56ch;
+}
+
+.commercial-hero__cta-row {
+  margin: 0;
 }
 
 @media (min-width: 768px) {
@@ -607,6 +636,17 @@ body::before {
 
   .commercial-market-band__details {
     max-width: 70ch;
+  }
+
+  .commercial-hero {
+    padding-top: 2px;
+    padding-bottom: 10px;
+  }
+
+  .commercial-hero__title-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -1852,25 +1892,25 @@ body::before {
 .page-header {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
 .page-header__row {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 6px;
 }
 
 @media (min-width: 768px) {
   .page-header {
-    margin-bottom: var(--space-6);
+    margin-bottom: 14px;
   }
   .page-header__row {
     flex-direction: row;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: var(--space-5);
+    gap: 18px;
   }
 }
 
@@ -1878,7 +1918,7 @@ body::before {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .page-header__title {
@@ -1914,6 +1954,7 @@ body::before {
   gap: var(--space-2);
   align-items: center;
   flex-shrink: 0;
+  padding-top: 6px;
 }
 
 /* Footer: shell-owned, compact ledger rhythm. */

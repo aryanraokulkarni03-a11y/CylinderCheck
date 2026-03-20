@@ -2470,6 +2470,10 @@ body::before {
   align-items: center;
 }
 
+.track-signal-row__value--status .status-dot {
+  margin-top: 0.22em;
+}
+
 .track-signal-row__summary {
   font-family: var(--font-body);
   font-size: var(--fs-body);
@@ -2638,6 +2642,11 @@ body::before {
     justify-content: flex-start;
     align-items: flex-start;
     text-align: left;
+    padding-top: 4px;
+  }
+
+  .track-signal-row__value--status {
+    align-items: flex-start;
   }
 
   .track-contribute-float {

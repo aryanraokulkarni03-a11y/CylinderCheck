@@ -465,6 +465,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                     <ListRow
                       key={r.id}
                       as="article"
+                      className="reports-row"
                       status={rowStatus}
                       interactive={true}
                       style={{ contentVisibility: 'auto' }}

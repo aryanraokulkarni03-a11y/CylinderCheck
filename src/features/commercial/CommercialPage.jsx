@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { FileText, RefreshCw, Store } from 'lucide-react'
+import { FileText, RefreshCw } from 'lucide-react'
 import { supabase } from '../../supabaseClient'
 import { StaggerContainer } from '../../components/motion/StaggerContainer'
-import { PageHeader } from '../../components/ui/PageHeader'
 import { PillRow } from '../../components/ui/PillRow'
 import {
   LPG_PRODUCT_LABELS,
@@ -16,7 +15,6 @@ import {
 import { springs } from '../../lib/springs'
 import CommercialHero from './CommercialHero'
 import VendorCard from './VendorCard'
-import LeadForm from './LeadForm'
 import { Card } from '../../components/ui/Card'
 import { Callout } from '../../components/ui/Callout'
 import EmptyState from '../../components/shared/EmptyState'
@@ -95,40 +93,11 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
   const [vendors, setVendors] = useState([])
   const [vendorsLoading, setVendorsLoading] = useState(true)
   const [vendorError, setVendorError] = useState(null)
-  const [hasAnyVendors, setHasAnyVendors] = useState(false)
 
   useEffect(() => {
     const st = commercialStateForCity(prefilledCity)
     if (st && COMMERCIAL_STATES.includes(st)) setActiveState(st)
   }, [prefilledCity])
-
-  useEffect(() => {
-    let alive = true
-
-    async function checkAny() {
-      try {
-        const nowIso = new Date().toISOString()
-        const { data, error } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('active', true)
-          .eq('verification_status', 'verified')
-          .or(`listing_expires_at.is.null,listing_expires_at.gt.${nowIso}`)
-          .limit(1)
-
-        if (!alive) return
-        if (error) return
-        setHasAnyVendors((Array.isArray(data) ? data : []).length > 0)
-      } catch {
-        // Non-blocking: keep as unknown.
-      }
-    }
-
-    checkAny()
-    return () => {
-      alive = false
-    }
-  }, [])
 
   const fetchVendors = useCallback(async (stateName) => {
     setVendorsLoading(true)
@@ -160,7 +129,6 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
 
     const clean = (Array.isArray(data) ? data : []).filter((v) => !isTestVendor(v))
     setVendors(clean)
-    if (clean.length > 0) setHasAnyVendors(true)
     setVendorsLoading(false)
   }, [])
 
@@ -208,18 +176,10 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
 
   return (
     <div className="page-root">
-      <CommercialHero hasAnyVendors={hasAnyVendors} />
-
-      <div id="commercial-vendors" className="page-section">
-        <PageHeader
-          as="h2"
-          icon={Store}
-          title="Private suppliers"
-          description="Choose your state to see available suppliers. If your state is still empty, leave your details and we will contact you when listings open."
-        />
-      </div>
+      <CommercialHero />
 
       <section
+        id="commercial-vendors"
         className={`commercial-market-band${pricesFreshness.isStale ? ' commercial-market-band--stale' : ''}`}
         aria-label="Commercial LPG market snapshot"
       >
@@ -254,6 +214,13 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
       </section>
 
       <div className="page-section">
+        <div className="commercial-directory-intro">
+          <h2 className="type-section-title m-0">Private suppliers</h2>
+          <p className="type-card-copy m-0">
+            Choose a state to browse verified suppliers and contact them directly.
+          </p>
+        </div>
+
         <PillRow
           ariaLabel="Choose a state"
           value={activeState}
@@ -261,8 +228,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
           items={COMMERCIAL_STATES.map((st) => ({ value: st, label: st }))}
         />
 
-        <div className="page-grid-commercial">
-          <div className="w-full min-w-0">
+        <div className="w-full min-w-0">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="type-list-title">
@@ -348,7 +314,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
                 >
                   <EmptyState
                     title="No suppliers listed yet"
-                    description={`We are still verifying suppliers in ${activeState}. Leave your details on the right and we will contact you when listings open.`}
+                    description={`No verified suppliers are listed in ${activeState} yet. Try another state or check back later.`}
                   />
                 </motion.div>
               )}
@@ -362,11 +328,6 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
                 </p>
               </Card>
             )}
-          </div>
-
-          <div className="page-sticky-lg w-full min-w-0">
-            <LeadForm selectedState={activeState} vendorsCount={vendors.length} vendorsLoading={vendorsLoading} />
-          </div>
         </div>
       </div>
     </div>

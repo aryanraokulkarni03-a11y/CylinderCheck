@@ -5,7 +5,7 @@ import { supabase } from '../../supabaseClient'
 import CompanyPicker, { COMPANY_PICKER_OPTS } from '../../components/shared/CompanyPicker'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import EmptyState from '../../components/shared/EmptyState'
-import { AlertCircle, ArrowUp, Edit2, Loader2, MessageSquare, Send, Trash2 } from 'lucide-react'
+import { AlertCircle, ArrowUp, Edit2, Loader2, Send, Trash2 } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { FadeIn } from '../../components/motion/FadeIn'
 import { springs } from '../../lib/springs'
@@ -212,10 +212,6 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
   return (
     <div className="page-root reports-page">
       <PageHeader
-        markerShowStatus={false}
-        markerStatus="early"
-        markerLabel="Reports"
-        icon={MessageSquare}
         title="Community reports"
         description="Report delivery delays, shortage pressure, and agency issues in your area."
       />

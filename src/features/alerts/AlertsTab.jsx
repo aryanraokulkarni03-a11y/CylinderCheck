@@ -3,7 +3,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
-import { Bell, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 import { supabase } from '../../supabaseClient'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
@@ -240,10 +240,6 @@ export default function AlertsTab() {
   return (
     <div className="page-root">
       <PageHeader
-        markerShowStatus={false}
-        markerStatus="active"
-        markerLabel="Reminders"
-        icon={Bell}
         title="Alerts"
         description="Set a reminder before your next booking date, or pay for earlier warnings when supply gets tighter in your area."
       />

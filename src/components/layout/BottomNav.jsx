@@ -34,14 +34,6 @@ export function BottomNav({ tabs, activeTab, onTabChange }) {
                             : 'text-[var(--text-secondary)]'
                           }`}
             >
-              {activeTab === tab.id && (
-                <motion.span
-                  layoutId="nav-pip"
-                  className="bottomnav-tab__pip"
-                  transition={shouldReduceMotion ? { duration: 0.01 } : springs.response}
-                />
-              )}
-
               <tab.icon
                 className="bottomnav-tab__icon"
                 size={18}

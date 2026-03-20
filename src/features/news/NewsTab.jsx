@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import NewsMap, { getCity } from './NewsMap'
 import { FadeIn } from '../../components/motion/FadeIn'
-import { Loader2, MapPin, Newspaper, RefreshCw } from 'lucide-react'
+import { Loader2, MapPin, RefreshCw } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { PillRow } from '../../components/ui/PillRow'
 import { Card } from '../../components/ui/Card'
@@ -314,10 +314,6 @@ export default function NewsTab() {
   return (
     <div className="page-root">
       <PageHeader
-        markerShowStatus={false}
-        markerStatus={pageStatus}
-        markerLabel="LPG news"
-        icon={Newspaper}
         title="News"
         description="Shortages, price changes, and policy moves that affect LPG across India. City-tagged when location is clear."
         actions={

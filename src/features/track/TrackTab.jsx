@@ -2,7 +2,7 @@
 // Booking tracker + shortage pressure by PIN.
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { CalendarRange, Clock3, MapPin, Target } from 'lucide-react'
+import { CalendarRange, Clock3, MapPin } from 'lucide-react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { UrgencyScore } from './UrgencyScore'
 import { Ring } from '../../components/shared/Ring'
@@ -112,16 +112,6 @@ export function TrackTab({
   return (
     <div className="page-root">
       <PageHeader
-        markerShowStatus={false}
-        markerStatus={
-          pinData?.reportCount >= 5
-            ? 'severe'
-            : pinData?.reportCount >= 2
-              ? 'active'
-              : 'clear'
-        }
-        markerLabel="Home LPG"
-        icon={Target}
         title="Booking Tracker"
         description="Check delivery time, booking date, and shortage pressure in your area with your PIN."
       />

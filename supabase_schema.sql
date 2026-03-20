@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS reports (
   city          TEXT,
   issue         TEXT NOT NULL,
   votes         INT DEFAULT 0,
+  vote_baseline INT DEFAULT 0,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   user_id       UUID,            -- auth.users.id — set when signed in
   user_email    TEXT,            -- for admin reference
@@ -52,6 +53,22 @@ CREATE TABLE IF NOT EXISTS reports (
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can read reports"  ON reports FOR SELECT USING (is_hidden IS NOT TRUE);
 CREATE POLICY "Anyone can insert report" ON reports FOR INSERT WITH CHECK (true);
+
+-- 2b. Report votes table
+--     Signed-in users can upvote a report once.
+CREATE TABLE IF NOT EXISTS report_votes (
+  id         BIGSERIAL PRIMARY KEY,
+  report_id  BIGINT NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+  user_id    UUID NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (report_id, user_id)
+);
+
+ALTER TABLE report_votes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users can read own report votes"
+  ON report_votes FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Authenticated users can insert own report votes"
+  ON report_votes FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 -- 3. Alert subscriptions table
 --    Stores email/phone for booking window alerts
@@ -358,7 +375,7 @@ CREATE POLICY "Anyone can read news articles" ON news_articles FOR SELECT USING 
 
 -- Live DB note (verified 2026-03-18):
 -- The production project also contains auxiliary tables:
---   feedback, price_corrections, report_votes
+--   feedback, price_corrections
 -- They are not yet represented in this bootstrap schema because the
 -- current frontend repo does not depend on their column contract directly.
 

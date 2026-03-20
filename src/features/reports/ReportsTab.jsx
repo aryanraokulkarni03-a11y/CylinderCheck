@@ -70,6 +70,8 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
   const [submitError, setSubmitError] = useState(null)
 
   const [votes, setVotes] = useState({})
+  const [voting, setVoting] = useState({})
+  const [voteError, setVoteError] = useState(null)
 
   const [editingReportId, setEditingReportId] = useState(null)
   const [editingText, setEditingText] = useState('')
@@ -86,22 +88,42 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
     async function fetchReports() {
       setLoading(true)
       setFetchError(null)
-      const { data, error } = await supabase
+      setVoteError(null)
+
+      const reportsPromise = supabase
         .from('reports')
         .select('*')
         .order('votes', { ascending: false })
         .limit(30)
+
+      const votesPromise = user
+        ? supabase
+            .from('report_votes')
+            .select('report_id')
+            .eq('user_id', user.id)
+        : Promise.resolve({ data: [], error: null })
+
+      const [{ data, error }, voteResult] = await Promise.all([reportsPromise, votesPromise])
 
       if (!alive) return
 
       if (error) {
         setFetchError('Could not load community reports right now.')
         setReports([])
+        setVotes({})
         setLoading(false)
         return
       }
 
       setReports(Array.isArray(data) ? data : [])
+      if (voteResult?.error) {
+        setVotes({})
+      } else {
+        const nextVotes = Object.fromEntries(
+          (voteResult?.data || []).map((row) => [row.report_id, true]),
+        )
+        setVotes(nextVotes)
+      }
       setLoading(false)
     }
 
@@ -109,7 +131,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
     return () => {
       alive = false
     }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     try {
@@ -200,13 +222,59 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
 
   const handleVote = useCallback(
     async (r) => {
-      if (votes[r.id]) return
+      if (!user) {
+        setVoteError('Sign in with Google to upvote community reports.')
+        onGoogleSignIn?.('/reports')
+        return
+      }
+
+      if (votes[r.id] || voting[r.id]) return
+
+      setVoteError(null)
+      setVoting((prev) => ({ ...prev, [r.id]: true }))
+
+      const { error } = await supabase
+        .from('report_votes')
+        .insert([{ report_id: r.id, user_id: user.id }])
+
+      if (error) {
+        const isDuplicate =
+          error.code === '23505' || /duplicate|unique/i.test(String(error.message || ''))
+
+        if (isDuplicate) {
+          setVotes((prev) => ({ ...prev, [r.id]: true }))
+          setVoteError('You already upvoted this report.')
+        } else {
+          setVoteError('Could not record your upvote right now. Please try again.')
+        }
+
+        const { data: latestReport } = await supabase
+          .from('reports')
+          .select('id, votes')
+          .eq('id', r.id)
+          .maybeSingle()
+
+        if (latestReport) {
+          setReports((prev) => prev.map((x) => (x.id === r.id ? { ...x, votes: latestReport.votes } : x)))
+        }
+
+        setVoting((prev) => {
+          const next = { ...prev }
+          delete next[r.id]
+          return next
+        })
+        return
+      }
 
       setVotes((prev) => ({ ...prev, [r.id]: true }))
-      setReports((prev) => prev.map((x) => (x.id === r.id ? { ...x, votes: x.votes + 1 } : x)))
-      await supabase.from('reports').update({ votes: r.votes + 1 }).eq('id', r.id)
+      setReports((prev) => prev.map((x) => (x.id === r.id ? { ...x, votes: (x.votes || 0) + 1 } : x)))
+      setVoting((prev) => {
+        const next = { ...prev }
+        delete next[r.id]
+        return next
+      })
     },
-    [votes],
+    [onGoogleSignIn, user, votes, voting],
   )
 
   return (
@@ -360,6 +428,12 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
             </Callout>
           )}
 
+          {voteError && (
+            <Callout tone="active" className="mb-4">
+              <div className="type-card-copy text-[var(--text-primary)]">{voteError}</div>
+            </Callout>
+          )}
+
           {loading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -481,10 +555,15 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                           whileTap={shouldReduceMotion ? undefined : { scale: 1.08 }}
                           transition={shouldReduceMotion ? { duration: 0.01 } : springs.delight}
                           onClick={() => handleVote(r)}
+                          disabled={Boolean(votes[r.id] || voting[r.id])}
                           className={`inline-flex items-center gap-1.5 type-data-label px-3 py-2 rounded-full transition-colors ${
-                            votes[r.id]
+                            !user
+                              ? 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)]'
+                              : votes[r.id]
                               ? 'bg-[var(--accent)] text-[var(--text-on-accent)]'
-                              : 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]'
+                              : voting[r.id]
+                                ? 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] opacity-70'
+                                : 'bg-[var(--bg-inset)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]'
                           }`}
                         >
                           <ArrowUp
@@ -493,7 +572,9 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                               votes[r.id] ? 'text-[var(--text-on-accent)]' : 'text-[var(--text-muted)]'
                             }
                           />
-                          {r.votes} UPVOTE{r.votes !== 1 ? 'S' : ''}
+                          {!user
+                            ? `Sign in to upvote · ${r.votes}`
+                            : `${r.votes} UPVOTE${r.votes !== 1 ? 'S' : ''}`}
                         </motion.button>
 
                         {r.votes > 20 && (

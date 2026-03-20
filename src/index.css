@@ -2450,6 +2450,7 @@ body::before {
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   padding: 14px 0;
+  align-items: start;
 }
 
 .track-signal-row__copy {
@@ -2465,6 +2466,7 @@ body::before {
 
 .track-signal-row__value--status {
   gap: 10px;
+  align-items: center;
 }
 
 .track-signal-row__summary {
@@ -2473,8 +2475,8 @@ body::before {
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-data);
-  text-wrap: pretty;
-  max-width: 22ch;
+  text-wrap: balance;
+  max-width: 24ch;
 }
 
 .track-contribute-panel {
@@ -2496,9 +2498,16 @@ body::before {
   bottom: calc(var(--bottomnav-height) + 18px + env(safe-area-inset-bottom));
   z-index: 320;
   pointer-events: none;
+  display: flex;
+  justify-content: center;
 }
 
-.track-contribute-float > .track-contribute-panel {
+.track-contribute-float__surface {
+  width: 100%;
+  max-width: 440px;
+}
+
+.track-contribute-float__surface > .track-contribute-panel {
   pointer-events: auto;
 }
 
@@ -2669,14 +2678,15 @@ body::before {
   }
 
   .track-signal-row {
-    grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
-    align-items: start;
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+    align-items: center;
+    gap: 28px;
   }
 
   .track-signal-row__value {
-    justify-content: flex-end;
-    text-align: right;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
   }
 
   .track-contribute-toggle {
@@ -2684,10 +2694,10 @@ body::before {
   }
 
   .track-contribute-float {
-    left: max(24px, calc(50vw - (var(--content-max) / 2) + 24px));
-    right: auto;
+    left: 0;
+    right: 0;
     bottom: 24px;
-    width: min(380px, calc(100vw - 48px));
+    padding-inline: 24px;
   }
 
   .support-grid > .card,

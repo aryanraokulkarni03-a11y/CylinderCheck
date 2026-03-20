@@ -13,7 +13,7 @@ import { SlideUp } from '../../components/motion/SlideUp'
 import { KalamkariDivider } from '../../components/shared/KalamkariDivider'
 import { StatusDot } from '../../components/shared/StatusDot'
 import BookingDatePicker from './BookingDatePicker'
-import { springs } from '../../lib/springs'
+import { easing, springs, timing } from '../../lib/springs'
 import { addDays, fmt } from '../../lib/utils'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
@@ -27,6 +27,7 @@ const ARROW = '\u2192'
 const SIGNAL_PANEL_DISMISS_MS = 24 * 60 * 60 * 1000
 const SIGNAL_SUBMISSION_COOLDOWN_MS = 12 * 60 * 60 * 1000
 const SIGNAL_PANEL_ENTRY_DELAY_MS = 1000
+const SIGNAL_PANEL_VISIBLE_MS = 10000
 
 const CYLINDER_LEVELS = [
   { value: 'full', label: 'Full', emoji: '\u{1F7E2}', hint: '> 75%' }, // green circle
@@ -226,7 +227,7 @@ export function TrackTab({
     setSignalPanelInteracted(false)
 
     return () => clearPendingSignalPanelEntry()
-  }, [pinData?.pin, signalDismissKey])
+  }, [pinData, signalDismissKey])
 
   useEffect(() => {
     if (!pinData?.pin || !signalPanelOpen || signalPanelInteracted || signalPanelMode !== 'passive') {
@@ -234,19 +235,18 @@ export function TrackTab({
     }
 
     const timeoutId = window.setTimeout(() => {
-      setSignalPanelOpen(false)
-    }, 10000)
+      closeSignalPanel()
+    }, SIGNAL_PANEL_VISIBLE_MS)
 
     return () => window.clearTimeout(timeoutId)
-  }, [pinData?.pin, signalPanelOpen, signalPanelInteracted, signalPanelMode])
+  }, [pinData?.pin, signalPanelOpen, signalPanelInteracted, signalPanelMode, signalDismissKey])
 
   useEffect(() => {
     if (!signalPanelOpen) return undefined
 
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
-        rememberSignalPanelDismiss(signalDismissKey)
-        setSignalPanelOpen(false)
+        closeSignalPanel({ remember: true })
       }
     }
 
@@ -262,6 +262,7 @@ export function TrackTab({
     clearPendingSignalPanelEntry()
     if (remember) rememberSignalPanelDismiss(signalDismissKey)
     setSignalPanelOpen(false)
+    setSignalPanelInteracted(false)
     setSignalPanelMode('closed')
   }
 
@@ -565,21 +566,21 @@ export function TrackTab({
 
                 <AnimatePresence initial={false} mode="wait">
                   {signalPanelOpen ? (
-                    <motion.div
-                      key="signal-panel"
-                      className="track-contribute-float"
-                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20, scale: 0.965 }}
-                      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.975 }}
-                      transition={
-                        shouldReduceMotion
-                          ? { duration: 0.01 }
-                          : signalPanelMode === 'passive'
-                            ? { ...springs.arrival, mass: 1.08 }
-                            : { ...springs.smooth, mass: 1.02 }
-                      }
-                    >
-                      <Card className="track-contribute-panel">
+                    <div key="signal-panel" className="track-contribute-float">
+                      <motion.div
+                        className="track-contribute-float__surface"
+                        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 26, scale: 0.985 }}
+                        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+                        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.99 }}
+                        transition={
+                          shouldReduceMotion
+                            ? { duration: 0.01 }
+                            : signalPanelMode === 'passive'
+                              ? { duration: timing.slow, ease: easing.out }
+                              : { duration: timing.base, ease: easing.out }
+                        }
+                      >
+                        <Card className="track-contribute-panel">
                         <CardHeader
                           kicker="Signed-in local signal"
                           title="Add a local signal"
@@ -694,16 +695,21 @@ export function TrackTab({
                             </>
                           )}
                         </CardBody>
-                      </Card>
-                    </motion.div>
+                        </Card>
+                      </motion.div>
+                    </div>
                   ) : (
                     <motion.div
                       key="signal-toggle"
                       className="track-contribute-toggle mb-4"
-                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
                       animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
-                      transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
+                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                      transition={
+                        shouldReduceMotion
+                          ? { duration: 0.01 }
+                          : { duration: timing.base, ease: easing.out }
+                      }
                     >
                       <button
                         type="button"

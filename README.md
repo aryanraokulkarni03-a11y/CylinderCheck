@@ -6,8 +6,8 @@ CylinderCheck is a web app for LPG booking-window tracking and community shortag
 - Track: booking window + delivery ETA + shortage signal by PIN
 - Reports: community shortage reports (sign-in required to submit)
 - News: LPG intelligence feed with city map filtering
-- Alerts: free booking-window reminder + Plus subscription (Razorpay)
-- Commercial: private supplier listings (state-based) + lead capture (waitlist until listings go live)
+- Alerts: free email booking reminder, with Plus kept dark until delivery is proven
+- Commercial: private supplier listings (state-based) + tracked commercial LPG pricing
 
 ## Tech
 - React + Vite + Tailwind (token-driven UI)
@@ -23,6 +23,15 @@ CylinderCheck is a web app for LPG booking-window tracking and community shortag
    - `VITE_RAZORPAY_KEY_ID` (required for Plus)
    - `VITE_ADMIN_PASSWORD` (optional; unlocks admin via the logo Easter egg)
 3. Run: `npm run dev`
+
+## Scheduled jobs
+- GitHub Actions drives recurring jobs for this repo.
+- Add these repository secrets before enabling schedules:
+  - `SUPABASE_FUNCTIONS_BASE_URL`
+  - `SUPABASE_ANON_KEY`
+- Workflows:
+  - `.github/workflows/dispatch-alerts.yml` runs hourly
+  - `.github/workflows/scrape-prices.yml` runs twice daily at 06:00 and 18:00 IST
 
 ## Notes
 - Canonical UI/UX spec: `docs/CONTEXT_0-4_*.md` + `docs/BRIEF_IMPLEMENTATION.md`

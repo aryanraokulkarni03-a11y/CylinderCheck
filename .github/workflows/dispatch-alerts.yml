@@ -1,0 +1,30 @@
+name: Dispatch Alerts
+
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+jobs:
+  dispatch-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invoke dispatch-alerts
+        env:
+          FUNCTIONS_BASE_URL: ${{ secrets.SUPABASE_FUNCTIONS_BASE_URL }}
+          ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          test -n "$FUNCTIONS_BASE_URL"
+          test -n "$ANON_KEY"
+
+          http_code=$(curl -sS -o response.json -w "%{http_code}" \
+            -X POST "${FUNCTIONS_BASE_URL}/dispatch-alerts" \
+            -H "Authorization: Bearer ${ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+
+          cat response.json
+
+          test "$http_code" -ge 200
+          test "$http_code" -lt 300
+          jq -e '.ok == true' response.json > /dev/null

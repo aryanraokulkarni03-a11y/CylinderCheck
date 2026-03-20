@@ -61,6 +61,13 @@ CREATE TABLE IF NOT EXISTS alert_subscriptions (
   pin             TEXT,
   last_booking    DATE,
   alert_type      TEXT DEFAULT 'free',  -- free / plus / annual
+  channel         TEXT DEFAULT 'whatsapp',
+  plan_code       TEXT DEFAULT 'free',
+  delivery_status TEXT DEFAULT 'pending',
+  next_send_at    TIMESTAMPTZ,
+  last_sent_at    TIMESTAMPTZ,
+  last_error      TEXT,
+  reminder_type   TEXT DEFAULT 'booking_d_minus_2',
   active          BOOLEAN DEFAULT true,
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -115,6 +122,10 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   razorpay_payment_id  TEXT NOT NULL UNIQUE,
   razorpay_signature   TEXT NOT NULL,
   status               TEXT NOT NULL DEFAULT 'active',
+  plan_code            TEXT DEFAULT 'plus_monthly',
+  delivery_enabled     BOOLEAN DEFAULT false,
+  expires_at           TIMESTAMPTZ,
+  cancelled_at         TIMESTAMPTZ,
   amount               INT NOT NULL DEFAULT 4900,
   created_at           TIMESTAMPTZ DEFAULT NOW()
 );

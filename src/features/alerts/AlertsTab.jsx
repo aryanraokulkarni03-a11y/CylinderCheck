@@ -1,13 +1,7 @@
-// src/features/alerts/AlertsTab.jsx
-// Alerts: free booking reminder + Plus subscription (Razorpay).
-
 import { useCallback, useMemo, useState } from 'react'
-import { useReducedMotion } from 'motion/react'
-import { Bell, Loader2 } from 'lucide-react'
+import { Bell, Loader2, MessageCircleMore } from 'lucide-react'
 
 import { supabase } from '../../supabaseClient'
-import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
-import { SlideUp } from '../../components/motion/SlideUp'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
 import { Callout } from '../../components/ui/Callout'
@@ -15,260 +9,128 @@ import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
 import BookingDatePicker from '../track/BookingDatePicker'
 
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || ''
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1`
-
-const RUPEE = '\u20B9'
-const DOT = '\u00B7'
 const ARROW = '\u2192'
 
-const PLUS_FEATURES = [
+const PLUS_PREVIEW = [
   {
-    eyebrow: 'Booking date',
-    text: 'WhatsApp or SMS reminder 2 days before you can book again.',
+    eyebrow: 'Delivery day',
+    text: 'A later Plus version can handle delivery-day nudges once message delivery is proven.',
   },
   {
-    eyebrow: 'Supply pressure',
-    text: 'Early warning for your PIN when local supply starts tightening.',
+    eyebrow: 'Shortage pressure',
+    text: 'We will only turn on earlier shortage warnings after free reminders are sending reliably.',
   },
   {
     eyebrow: 'Price change',
-    text: 'Advance notice before a cylinder price update becomes common news.',
-  },
-  {
-    eyebrow: 'Delivery day',
-    text: 'A timely reminder on delivery day so someone is home to receive the cylinder.',
-  },
-  {
-    eyebrow: 'Monthly summary',
-    text: 'A monthly area summary so you can plan ahead when delivery slows down.',
+    text: 'Price alerts stay dark until we have a dependable delivery pipeline and clear opt-out handling.',
   },
 ]
 
-function loadRazorpay() {
-  return new Promise((resolve) => {
-    if (typeof window === 'undefined') {
-      resolve(false)
-      return
-    }
-    if (window.Razorpay) {
-      resolve(true)
-      return
-    }
-    const s = document.createElement('script')
-    s.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    s.async = true
-    s.onload = () => resolve(true)
-    s.onerror = () => resolve(false)
-    document.body.appendChild(s)
-  })
+function isValidPin(pin) {
+  const value = String(pin || '').trim()
+  if (!value) return true
+  return /^[0-9]{6}$/.test(value)
 }
 
-function isValidPin(pin) {
-  const p = String(pin || '').trim()
-  if (!p) return true
-  return /^[0-9]{6}$/.test(p)
+function computeReminderSendAt(lastBooking) {
+  if (!lastBooking) return null
+
+  const booking = new Date(`${lastBooking}T00:00:00+05:30`)
+  if (!Number.isFinite(booking.getTime())) return null
+
+  booking.setUTCDate(booking.getUTCDate() + 23)
+  booking.setUTCHours(3, 30, 0, 0)
+  return booking.toISOString()
+}
+
+function normalizeWhatsAppContact(value) {
+  const digits = String(value || '').replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.length === 10) return `91${digits}`
+  return digits
 }
 
 export default function AlertsTab() {
-  const shouldReduceMotion = useReducedMotion()
-
   const [contact, setContact] = useState('')
   const [alertPin, setAlertPin] = useState('')
   const [alertDate, setAlertDate] = useState('')
 
-  const [freeAlertSaving, setFreeAlertSaving] = useState(false)
-  const [freeAlertError, setFreeAlertError] = useState('')
-  const [alertSaved, setAlertSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [saved, setSaved] = useState(false)
 
-  const [payContact, setPayContact] = useState('')
-  const [payPin, setPayPin] = useState('')
-  const [paying, setPaying] = useState(false)
-  const [paySuccess, setPaySuccess] = useState(false)
-  const [payError, setPayError] = useState('')
-
-  const canFreeSubmit = useMemo(() => !!contact.trim() && !freeAlertSaving, [contact, freeAlertSaving])
-  const canPay = useMemo(() => !!payContact.trim() && !paying, [payContact, paying])
-
-  const scrollToPlus = useCallback(() => {
-    const el = document.getElementById('plus-card')
-    if (!el) return
-    el.scrollIntoView({ behavior: shouldReduceMotion ? 'auto' : 'smooth', block: 'start' })
-  }, [shouldReduceMotion])
+  const canSubmit = useMemo(() => !!contact.trim() && !saving, [contact, saving])
 
   const handleFreeAlertSubmit = useCallback(async () => {
-    const c = contact.trim()
-    if (!c) {
-      setFreeAlertError('Enter your mobile number or email.')
+    const normalizedContact = normalizeWhatsAppContact(contact)
+
+    if (!normalizedContact) {
+      setError('Enter your WhatsApp number to continue.')
       return
     }
+
+    if (normalizedContact.length < 12) {
+      setError('Enter a valid WhatsApp number with country code or a 10-digit Indian mobile number.')
+      return
+    }
+
     if (!isValidPin(alertPin)) {
-      setFreeAlertError('Enter a valid 6-digit PIN, or leave it empty.')
+      setError('Enter a valid 6-digit PIN, or leave it empty.')
       return
     }
 
-    setFreeAlertSaving(true)
-    setFreeAlertError('')
-    setAlertSaved(false)
+    setSaving(true)
+    setError('')
+    setSaved(false)
 
-    const { error } = await supabase.from('alert_subscriptions').insert([
+    const nextSendAt = computeReminderSendAt(alertDate)
+
+    const { error: insertError } = await supabase.from('alert_subscriptions').insert([
       {
-        contact: c,
+        contact: normalizedContact,
         pin: alertPin || null,
         last_booking: alertDate || null,
         alert_type: 'free',
+        channel: 'whatsapp',
+        plan_code: 'free',
+        delivery_status: nextSendAt ? 'pending' : 'needs_booking_date',
+        next_send_at: nextSendAt,
+        reminder_type: 'booking_d_minus_2',
       },
     ])
 
-    if (error) {
-      setFreeAlertError('Something went wrong. Please try again.')
-      setFreeAlertSaving(false)
+    if (insertError) {
+      setError('Something went wrong. Please try again.')
+      setSaving(false)
       return
     }
 
-    setFreeAlertSaving(false)
-    setAlertSaved(true)
-    setTimeout(() => setAlertSaved(false), 6000)
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 6000)
   }, [contact, alertPin, alertDate])
-
-  const handlePayment = useCallback(async () => {
-    const c = payContact.trim()
-    if (!c) {
-      setPayError('Enter your mobile or email to continue.')
-      return
-    }
-    if (!isValidPin(payPin)) {
-      setPayError('Enter a valid 6-digit PIN, or leave it empty.')
-      return
-    }
-    if (!RAZORPAY_KEY_ID) {
-      setPayError('Missing Razorpay key (VITE_RAZORPAY_KEY_ID).')
-      return
-    }
-    if (!SUPABASE_ANON_KEY || !SUPABASE_FUNC_URL.includes('http')) {
-      setPayError('Missing Supabase config. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
-      return
-    }
-
-    setPayError('')
-    setPaying(true)
-
-    const loaded = await loadRazorpay()
-    if (!loaded) {
-      setPayError('Could not load payment gateway.')
-      setPaying(false)
-      return
-    }
-
-    try {
-      const res = await fetch(`${SUPABASE_FUNC_URL}/create-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ contact: c, pin: payPin || null }),
-      })
-
-      const json = await res.json().catch(() => ({}))
-      const orderId = json?.order_id
-      const orderErr = json?.error
-
-      if (!orderId) {
-        setPayError(orderErr || 'Could not create order.')
-        setPaying(false)
-        return
-      }
-
-      const themeColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--accent')
-        .trim()
-
-      const options = {
-        key: RAZORPAY_KEY_ID,
-        amount: 4900,
-        currency: 'INR',
-        order_id: orderId,
-        name: 'CylinderCheck',
-        description: 'Plus - Monthly Subscription',
-        prefill: { contact: c },
-        modal: {
-          backdropclose: false,
-          ondismiss: () => setPaying(false),
-        },
-        handler: async (response) => {
-          try {
-            const vr = await fetch(`${SUPABASE_FUNC_URL}/verify-payment`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-              },
-              body: JSON.stringify({ ...response, contact: c, pin: payPin || null }),
-            })
-
-            const vjson = await vr.json().catch(() => ({}))
-            if (vjson?.success) {
-              setPaySuccess(true)
-              setPaying(false)
-              return
-            }
-            setPayError(vjson?.error || 'Payment verification failed.')
-            setPaying(false)
-          } catch {
-            setPayError('Payment verification failed.')
-            setPaying(false)
-          }
-        },
-      }
-
-      if (themeColor) options.theme = { color: themeColor }
-
-      const rzp = new window.Razorpay(options)
-      rzp.on('payment.failed', () => {
-        setPayError('Payment failed. Please try again.')
-        setPaying(false)
-      })
-      rzp.open()
-    } catch {
-      setPayError('Something went wrong. Try again.')
-      setPaying(false)
-    }
-  }, [payContact, payPin])
 
   return (
     <div className="page-root">
       <PageHeader
         icon={Bell}
         title="Alerts"
-        description="Set a reminder before your next booking date, or pay for earlier warnings when supply gets tighter in your area."
+        description="Save a free WhatsApp reminder 2 days before your next booking date. Plus stays dark until delivery goes live reliably."
       />
 
       <div className="page-grid-dual">
-        <SlideUp delay={0.02} className="w-full min-w-0">
-          <Card>
-            <CardHeader
-              kicker="Free reminder"
-              title="Get a free booking reminder"
-              titleAs="h2"
-            >
-              <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
-                Add your last booking date and we'll remind you 2 days before you can book again.
-              </p>
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={scrollToPlus}
-                  className="type-nav text-[var(--accent)] hover:text-[var(--accent-pop)] transition-colors"
-                >
-                  See Plus {ARROW}
-                </button>
-              </div>
-            </CardHeader>
+        <Card>
+          <CardHeader
+            kicker="Free reminder"
+            title="Get a free WhatsApp reminder"
+            titleAs="h2"
+          >
+            <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
+              Add your last booking date and we&apos;ll queue a WhatsApp reminder 2 days before your next sensible booking date.
+            </p>
+          </CardHeader>
 
-            <CardBody>
-
+          <CardBody>
             <div className="space-y-4 mb-4">
               <Field id="free-pin" label="Your 6-digit PIN" meta="Optional">
                 <input
@@ -282,7 +144,7 @@ export default function AlertsTab() {
                 />
               </Field>
 
-              <Field id="free-date" label="Last booking date" meta="Optional but useful">
+              <Field id="free-date" label="Last booking date" meta="Required for the reminder schedule">
                 <BookingDatePicker
                   id="free-date"
                   value={alertDate}
@@ -292,40 +154,40 @@ export default function AlertsTab() {
             </div>
 
             <div className="mb-4">
-              <Field id="free-contact" label="Mobile or email for alerts" required>
+              <Field id="free-contact" label="WhatsApp number" required>
                 <input
                   className="input"
-                  placeholder="98xxxxxxxx or you@email.com"
+                  placeholder="98xxxxxxxx or 9198xxxxxxxx"
                   value={contact}
                   onChange={(e) => {
                     setContact(e.target.value)
-                    setFreeAlertError('')
+                    setError('')
                   }}
                 />
               </Field>
             </div>
 
-            {freeAlertError && (
+            {error ? (
               <Callout tone="severe" className="mb-4" edge={false}>
-                <div className="type-note text-[var(--status-severe)] font-medium">{freeAlertError}</div>
+                <div className="type-note text-[var(--status-severe)] font-medium">{error}</div>
               </Callout>
-            )}
+            ) : null}
 
-            {alertSaved && (
+            {saved ? (
               <Callout tone="clear" className="mb-4" edge={false}>
                 <div className="type-note text-[var(--status-clear)] font-medium">
-                  Reminder saved. We will message you 2 days before your next booking date.
+                  Reminder saved. We&apos;ll send a WhatsApp reminder 2 days before your next booking date.
                 </div>
               </Callout>
-            )}
+            ) : null}
 
             <button
               type="button"
               onClick={handleFreeAlertSubmit}
-              disabled={!canFreeSubmit}
+              disabled={!canSubmit}
               className="btn-ghost w-full justify-center"
             >
-              {freeAlertSaving ? (
+              {saving ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 size={16} className="motion-safe:animate-spin" />
                   Saving...
@@ -338,116 +200,53 @@ export default function AlertsTab() {
             </button>
 
             <p className="type-note mt-4 mb-0">
-              You can opt out anytime by replying STOP.
+              WhatsApp delivery is the first live channel. Reply STOP anytime after delivery goes live.
             </p>
-            </CardBody>
-          </Card>
-        </SlideUp>
+          </CardBody>
+        </Card>
 
-        <SlideUp delay={0.06} className="w-full min-w-0">
-            <Card id="plus-card" variant="featured">
-            <CardHeader
-              kicker="Paid plan"
-              title="Plus alerts"
-              titleAs="h2"
-              actions={
-                <div className="text-right">
-                  <div className="type-data-value type-data-value--hero text-[var(--text-primary)] leading-none">
-                    {RUPEE}49
-                  </div>
-                  <div className="kicker mt-1">per month</div>
-                </div>
-              }
-            >
-              <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
-                Earlier warnings for households that want more notice around booking, shortage pressure, and delivery.
-              </p>
-            </CardHeader>
+        <Card id="plus-card" variant="featured">
+          <CardHeader
+            kicker="Plus stays dark"
+            title="Coming after delivery goes live"
+            titleAs="h2"
+            actions={(
+              <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
+                In build
+              </span>
+            )}
+          >
+            <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
+              We are not taking paid alert subscriptions publicly until free reminder delivery is proven and dependable.
+            </p>
+          </CardHeader>
 
-            <CardBody>
-
+          <CardBody>
             <div className="space-y-2 pb-6 border-b border-[var(--divider)] mb-6">
-              {PLUS_FEATURES.map(({ eyebrow, text }) => (
+              {PLUS_PREVIEW.map(({ eyebrow, text }) => (
                 <div
                   key={eyebrow}
                   className="rounded-[18px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-3"
                 >
                   <p className="kicker mb-2 text-[var(--accent)]">{eyebrow}</p>
-                  <p className="type-card-copy mb-0 text-[var(--text-primary)]">
-                    {text}
-                  </p>
+                  <p className="type-card-copy mb-0 text-[var(--text-primary)]">{text}</p>
                 </div>
               ))}
             </div>
 
-            {paySuccess ? (
-                <div className="rounded-md bg-[var(--status-clear-soft)] border border-[var(--status-clear-border)] p-5">
-                  <div className="text-[var(--status-clear)] font-medium">
-                  Plus plan active.
-                  </div>
-                <p className="type-card-copy mt-2 mb-0">
-                  Alerts will be sent to <span className="font-medium">{payContact}</span>.
-                </p>
-              </div>
-            ) : (
-              <div>
-                <Field id="plus-contact" label="Mobile or email for Plus alerts" required>
-                  <input
-                    className="input"
-                    placeholder="98xxxxxxxx or you@email.com"
-                    value={payContact}
-                    onChange={(e) => {
-                      setPayContact(e.target.value)
-                      setPayError('')
-                    }}
-                  />
-                </Field>
-
-                <Field id="plus-pin" label="Your 6-digit PIN" meta="Optional">
-                  <input
-                    className="input type-data-input"
-                    placeholder="Enter your area PIN"
-                    value={payPin}
-                    maxLength={6}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    onChange={(e) => setPayPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  />
-                </Field>
-
-                {payError && (
-                  <Callout tone="severe" className="mt-4" edge={false}>
-                    <div className="type-note text-[var(--status-severe)] font-medium">{payError}</div>
-                  </Callout>
-                )}
-
-                <LiquidGlassBtn
-                  className="w-full justify-center mt-4"
-                  onClick={handlePayment}
-                  disabled={!canPay}
-                >
-                  {paying ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 size={16} className="motion-safe:animate-spin" />
-                      Opening payment...
-                    </span>
-                  ) : (
-                    <span>Start Plus {ARROW}</span>
-                  )}
-                </LiquidGlassBtn>
-
-                <div className="flex items-center justify-center gap-3 type-note">
-                  <span>Razorpay</span>
-                  <span className="text-[var(--divider)]" aria-hidden="true">
-                    {DOT}
-                  </span>
-                  <span>Cancel anytime</span>
+            <Callout tone="accent" edge={false}>
+              <div className="flex items-start gap-3">
+                <MessageCircleMore size={18} className="mt-0.5 text-[var(--accent)]" />
+                <div>
+                  <p className="type-card-title mb-1">Free alerts come first</p>
+                  <p className="type-note mb-0">
+                    Once WhatsApp reminders are sending reliably, we can turn on a paid Plus plan with more notice and additional alert types.
+                  </p>
                 </div>
               </div>
-            )}
-            </CardBody>
-          </Card>
-        </SlideUp>
+            </Callout>
+          </CardBody>
+        </Card>
       </div>
     </div>
   )

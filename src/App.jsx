@@ -32,6 +32,8 @@ import ReportsTab from './features/reports/ReportsTab'
 import NewsTab from './features/news/NewsTab'
 import AlertsTab from './features/alerts/AlertsTab'
 import CommercialPage from './features/commercial/CommercialPage'
+import BangaloreGuidePage from './features/seo/BangaloreGuidePage'
+import { BANGALORE_GUIDES } from './features/seo/bangaloreGuides'
 import AdminTab from './features/admin/AdminTab'
 import AdminModal from './features/admin/AdminModal'
 import SupportPage from './features/support/SupportPage'
@@ -39,6 +41,8 @@ import PrivacyPage from './features/legal/PrivacyPage'
 import TermsPage from './features/legal/TermsPage'
 import AuthCallbackPage from './features/auth/AuthCallbackPage'
 import AccountPage from './features/account/AccountPage'
+import SeoHead from './components/seo/SeoHead'
+import { getRouteMetadata } from './lib/metadata'
 
 const TABS = [
   { id: 'track', label: 'Track', icon: Target },
@@ -62,6 +66,12 @@ const TAB_ROUTES = {
   terms: '/terms',
   account: '/account',
   authCallback: '/auth/callback',
+}
+
+const CONTENT_ROUTES = {
+  bangalorePrice: '/bangalore-lpg-price',
+  bangaloreDelivery: '/bangalore-lpg-delivery-time',
+  bangaloreCommercial: '/bangalore-commercial-lpg',
 }
 
 const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1`
@@ -450,6 +460,8 @@ export default function App() {
     return null
   })()
 
+  const seoMetadata = getRouteMetadata(routerLocation.pathname || '/')
+
   const handleTabChange = useCallback((nextTab) => {
     const to = TAB_ROUTES[nextTab]
     if (to) navigate(to)
@@ -476,6 +488,7 @@ export default function App() {
 
   return (
     <>
+      <SeoHead metadata={seoMetadata} />
       <AppShell
         topbar={
           <Topbar
@@ -529,6 +542,18 @@ export default function App() {
                     productType={LPG_PRODUCT_TYPES.commercial_19kg}
                   />
                 }
+              />
+              <Route
+                path={CONTENT_ROUTES.bangalorePrice}
+                element={<BangaloreGuidePage {...BANGALORE_GUIDES[CONTENT_ROUTES.bangalorePrice]} mapPrices={mapPrices} />}
+              />
+              <Route
+                path={CONTENT_ROUTES.bangaloreDelivery}
+                element={<BangaloreGuidePage {...BANGALORE_GUIDES[CONTENT_ROUTES.bangaloreDelivery]} mapPrices={mapPrices} />}
+              />
+              <Route
+                path={CONTENT_ROUTES.bangaloreCommercial}
+                element={<BangaloreGuidePage {...BANGALORE_GUIDES[CONTENT_ROUTES.bangaloreCommercial]} mapPrices={mapPrices} />}
               />
               <Route path={TAB_ROUTES.support} element={<SupportPage />} />
               <Route path={TAB_ROUTES.privacy} element={<PrivacyPage />} />

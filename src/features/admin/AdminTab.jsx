@@ -10,7 +10,15 @@ const RUPEE = '\u20B9'
 const EM_DASH = '\u2014'
 
 export default function AdminTab({ data, loading, onLock }) {
-  const { subscriptions = [], reportCount = 0, alertCount = 0 } = data || {}
+  const {
+    subscriptions = [],
+    reportCount = 0,
+    alertCount = 0,
+    freeAlertCount = 0,
+    pendingAlertCount = 0,
+    failedAlertCount = 0,
+    sentTodayCount = 0,
+  } = data || {}
 
   return (
     <div className="page-root">
@@ -35,7 +43,7 @@ export default function AdminTab({ data, loading, onLock }) {
         />
       </div>
 
-      <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <StaggerItem>
           <Card variant="inset" edge status="active" className="h-full">
             <CardHeader
@@ -57,7 +65,7 @@ export default function AdminTab({ data, loading, onLock }) {
           <Card variant="inset" edge status="clear" className="h-full">
             <CardHeader
               kicker="Monitoring"
-              title="Active alerts"
+              title="All alerts"
               titleAs="h3"
               meta={<Bell size={14} className="text-[var(--status-clear)]" aria-hidden="true" />}
             />
@@ -65,7 +73,75 @@ export default function AdminTab({ data, loading, onLock }) {
               <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
                 {loading ? EM_DASH : alertCount}
               </div>
-              <div className="type-note mt-2">PINs being monitored</div>
+              <div className="type-note mt-2">All stored alert rows</div>
+            </CardBody>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card variant="inset" edge status="early" className="h-full">
+            <CardHeader
+              kicker="Free flow"
+              title="Free reminders"
+              titleAs="h3"
+              meta={<Users size={14} className="text-[var(--status-early)]" aria-hidden="true" />}
+            />
+            <CardBody>
+              <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
+                {loading ? EM_DASH : freeAlertCount}
+              </div>
+              <div className="type-note mt-2">WhatsApp-first free reminder signups</div>
+            </CardBody>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card variant="inset" edge status="active" className="h-full">
+            <CardHeader
+              kicker="Dispatch queue"
+              title="Pending sends"
+              titleAs="h3"
+              meta={<Bell size={14} className="text-[var(--status-active)]" aria-hidden="true" />}
+            />
+            <CardBody>
+              <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
+                {loading ? EM_DASH : pendingAlertCount}
+              </div>
+              <div className="type-note mt-2">Rows waiting for the reminder job</div>
+            </CardBody>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card variant="inset" edge status="clear" className="h-full">
+            <CardHeader
+              kicker="Delivery"
+              title="Sent today"
+              titleAs="h3"
+              meta={<Bell size={14} className="text-[var(--status-clear)]" aria-hidden="true" />}
+            />
+            <CardBody>
+              <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
+                {loading ? EM_DASH : sentTodayCount}
+              </div>
+              <div className="type-note mt-2">WhatsApp reminders delivered today</div>
+            </CardBody>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card variant="inset" edge status="severe" className="h-full">
+            <CardHeader
+              kicker="Failures"
+              title="Failed sends"
+              titleAs="h3"
+              meta={<AlertTriangle size={14} className="text-[var(--status-severe)]" aria-hidden="true" />}
+            />
+            <CardBody>
+              <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
+                {loading ? EM_DASH : failedAlertCount}
+              </div>
+              <div className="type-note mt-2">Rows that need retry or cleanup</div>
             </CardBody>
           </Card>
         </StaggerItem>
@@ -82,7 +158,7 @@ export default function AdminTab({ data, loading, onLock }) {
               <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
                 {loading ? EM_DASH : subscriptions.length}
               </div>
-              <div className="type-note mt-2">Active paid users</div>
+              <div className="type-note mt-2">Stored paid subscription records</div>
             </CardBody>
           </Card>
         </StaggerItem>

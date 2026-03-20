@@ -35,6 +35,10 @@ serve(async (req) => {
       { data: subscriptions },
       { count: reportCount },
       { count: alertCount },
+      { count: freeAlertCount },
+      { count: pendingAlertCount },
+      { count: failedAlertCount },
+      { count: sentTodayCount },
     ] = await Promise.all([
       supabase
         .from("subscriptions")
@@ -47,6 +51,22 @@ serve(async (req) => {
       supabase
         .from("alert_subscriptions")
         .select("*", { count: "exact", head: true }),
+      supabase
+        .from("alert_subscriptions")
+        .select("*", { count: "exact", head: true })
+        .eq("plan_code", "free"),
+      supabase
+        .from("alert_subscriptions")
+        .select("*", { count: "exact", head: true })
+        .in("delivery_status", ["pending", "queued", "needs_booking_date"]),
+      supabase
+        .from("alert_subscriptions")
+        .select("*", { count: "exact", head: true })
+        .eq("delivery_status", "failed"),
+      supabase
+        .from("alert_subscriptions")
+        .select("*", { count: "exact", head: true })
+        .gte("last_sent_at", new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString()),
     ]);
 
     return new Response(
@@ -55,6 +75,10 @@ serve(async (req) => {
         subscriptions: subscriptions || [],
         reportCount: reportCount || 0,
         alertCount: alertCount || 0,
+        freeAlertCount: freeAlertCount || 0,
+        pendingAlertCount: pendingAlertCount || 0,
+        failedAlertCount: failedAlertCount || 0,
+        sentTodayCount: sentTodayCount || 0,
       }),
       { headers: CORS }
     );

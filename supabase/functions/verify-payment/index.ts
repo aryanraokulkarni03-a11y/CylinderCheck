@@ -79,6 +79,8 @@ serve(async (req) => {
       razorpay_payment_id,
       razorpay_signature,
       status:                "active",
+      plan_code:             "plus_monthly",
+      delivery_enabled:      false,
       amount:                4900,
     }]);
 

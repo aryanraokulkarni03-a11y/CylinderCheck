@@ -2,8 +2,8 @@
 // Booking tracker + shortage pressure by PIN.
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { CalendarRange, Clock3, MapPin, Target } from 'lucide-react'
-import { useState } from 'react'
+import { CalendarRange, Clock3, MapPin, Target, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { UrgencyScore } from './UrgencyScore'
 import { Ring } from '../../components/shared/Ring'
@@ -24,6 +24,8 @@ import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import { supabase } from '../../supabaseClient'
 
 const ARROW = '\u2192'
+const SIGNAL_PANEL_DISMISS_MS = 24 * 60 * 60 * 1000
+const SIGNAL_SUBMISSION_COOLDOWN_MS = 12 * 60 * 60 * 1000
 
 const CYLINDER_LEVELS = [
   { value: 'full', label: 'Full', emoji: '\u{1F7E2}', hint: '> 75%' }, // green circle
@@ -119,10 +121,16 @@ export function TrackTab({
   const [signalNote, setSignalNote] = useState('')
   const [signalSubmitting, setSignalSubmitting] = useState(false)
   const [signalState, setSignalState] = useState({ ok: '', error: '' })
+  const [signalPanelOpen, setSignalPanelOpen] = useState(false)
+  const [signalPanelInteracted, setSignalPanelInteracted] = useState(false)
+  const skipNextPanelAutoOpenRef = useRef(false)
 
   const deliveryEstimate = pinData?.deliveryEstimate || null
   const supplyPressure = pinData?.supplyPressure || null
   const pressure = pressurePill(supplyPressure)
+  const hasSignalDraft =
+    !!signalDeliveryDays || !!signalPressureLevel || signalNote.trim().length > 0
+  const signalDismissKey = pinData?.pin ? `cc-track-signal-dismissed:${pinData.pin}` : ''
 
   const canSubmitSignal =
     !!user &&
@@ -131,6 +139,79 @@ export function TrackTab({
       (signalDeliveryDays && Number(signalDeliveryDays) >= 1 && Number(signalDeliveryDays) <= 30) ||
       !!signalPressureLevel
     )
+
+  const wasSignalPanelDismissedRecently = (dismissKey) => {
+    if (!dismissKey || typeof window === 'undefined') return false
+
+    try {
+      const rawValue = window.localStorage.getItem(dismissKey)
+      if (!rawValue) return false
+
+      const parsed = JSON.parse(rawValue)
+      const dismissedAt = Number(parsed?.dismissedAt)
+      if (!Number.isFinite(dismissedAt)) return false
+
+      if (Date.now() - dismissedAt > SIGNAL_PANEL_DISMISS_MS) {
+        window.localStorage.removeItem(dismissKey)
+        return false
+      }
+
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const rememberSignalPanelDismiss = (dismissKey) => {
+    if (!dismissKey || typeof window === 'undefined') return
+
+    try {
+      window.localStorage.setItem(
+        dismissKey,
+        JSON.stringify({ dismissedAt: Date.now() }),
+      )
+    } catch {
+      // Ignore storage issues.
+    }
+  }
+
+  const clearSignalPanelDismiss = (dismissKey) => {
+    if (!dismissKey || typeof window === 'undefined') return
+
+    try {
+      window.localStorage.removeItem(dismissKey)
+    } catch {
+      // Ignore storage issues.
+    }
+  }
+
+  useEffect(() => {
+    if (!pinData?.pin) return
+
+    if (skipNextPanelAutoOpenRef.current) {
+      skipNextPanelAutoOpenRef.current = false
+      setSignalPanelOpen(false)
+      setSignalPanelInteracted(false)
+      return
+    }
+
+    setSignalPanelOpen(!wasSignalPanelDismissedRecently(signalDismissKey))
+    setSignalPanelInteracted(false)
+  }, [pinData?.pin, signalDismissKey])
+
+  useEffect(() => {
+    if (!pinData?.pin || !signalPanelOpen || signalPanelInteracted) return undefined
+
+    const timeoutId = window.setTimeout(() => {
+      setSignalPanelOpen(false)
+    }, 10000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [pinData?.pin, signalPanelOpen, signalPanelInteracted])
+
+  const markSignalInteraction = () => {
+    if (!signalPanelInteracted) setSignalPanelInteracted(true)
+  }
 
   const handleSignalSubmit = async () => {
     if (!user || !pinData?.pin) return
@@ -147,6 +228,25 @@ export function TrackTab({
 
     setSignalSubmitting(true)
     setSignalState({ ok: '', error: '' })
+
+    const cooldownSince = new Date(Date.now() - SIGNAL_SUBMISSION_COOLDOWN_MS).toISOString()
+    const { data: recentOwnSignal, error: recentOwnSignalError } = await supabase
+      .from('pin_user_signals')
+      .select('created_at')
+      .eq('pin', pinData.pin)
+      .eq('user_id', user.id)
+      .gte('created_at', cooldownSince)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (!recentOwnSignalError && recentOwnSignal?.length) {
+      setSignalSubmitting(false)
+      setSignalState({
+        ok: '',
+        error: 'You already added a local signal for this PIN recently. Try again later if conditions change.',
+      })
+      return
+    }
 
     const { error: insertError } = await supabase
       .from('pin_user_signals')
@@ -167,7 +267,16 @@ export function TrackTab({
     setSignalSubmitting(false)
 
     if (insertError) {
-      setSignalState({ ok: '', error: 'Could not save your verified signal right now.' })
+      const cooldownBlocked =
+        typeof insertError.message === 'string' &&
+        insertError.message.toLowerCase().includes('track_signal_cooldown')
+
+      setSignalState({
+        ok: '',
+        error: cooldownBlocked
+          ? 'You already added a local signal for this PIN recently. Try again later if conditions change.'
+          : 'Could not save your verified signal right now.',
+      })
       return
     }
 
@@ -175,6 +284,10 @@ export function TrackTab({
     setSignalPressureLevel(null)
     setSignalNote('')
     setSignalState({ ok: 'Verified signal saved for this PIN.', error: '' })
+    skipNextPanelAutoOpenRef.current = true
+    clearSignalPanelDismiss(signalDismissKey)
+    setSignalPanelOpen(false)
+    setSignalPanelInteracted(false)
     await handleTrack()
   }
 
@@ -389,101 +502,164 @@ export function TrackTab({
                   </CardBody>
                 </Card>
 
-                <Card className="mb-4">
-                  <CardHeader
-                    kicker="Verified user input"
-                    title="Help strengthen this area"
-                    titleAs="h2"
-                  >
-                    <p className="type-card-copy mt-3 mb-0">
-                      Verified inputs strengthen this PIN first and build a cleaner local planning signal over time. Add what you actually saw near this PIN.
-                    </p>
-                  </CardHeader>
-                  <CardBody className="stack-copy">
-                    {!authLoading && !user ? (
-                      <div className="stack-copy--tight">
-                        <p className="type-note m-0">
-                          Sign in to add a verified delivery or pressure signal.
-                        </p>
-                        <GoogleSignInButton
-                          className="w-full justify-center"
-                          onClick={() => onGoogleSignIn?.('/track')}
+                <AnimatePresence initial={false} mode="wait">
+                  {signalPanelOpen ? (
+                    <motion.div
+                      key="signal-panel"
+                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10, scale: 0.985 }}
+                      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.985 }}
+                      transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
+                    >
+                      <Card className="mb-4 track-contribute-panel">
+                        <CardHeader
+                          kicker="Signed-in local signal"
+                          title="Add a local signal"
+                          titleAs="h2"
+                          actions={
+                            <button
+                              type="button"
+                              className="track-contribute-dismiss"
+                              aria-label="Close local signal panel"
+                              onClick={() => {
+                                rememberSignalPanelDismiss(signalDismissKey)
+                                setSignalPanelOpen(false)
+                              }}
+                            >
+                              <X size={18} />
+                            </button>
+                          }
                         >
-                          Sign in with Google
-                        </GoogleSignInButton>
-                      </div>
-                    ) : (
-                      <>
-                        <Field id="track-signal-delivery" label="Delivery days" meta="Optional">
-                          <input
-                            id="track-signal-delivery"
-                            className="input"
-                            placeholder="e.g. 5"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={signalDeliveryDays}
-                            onChange={(e) => setSignalDeliveryDays(e.target.value.replace(/\D/g, ''))}
-                          />
-                        </Field>
-
-                        <div className="field">
-                          <div className="field__top">
-                            <div className="field__label">Supply pressure</div>
-                            <div className="field__meta">Optional</div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                            {[
-                              ['low', 'Low'],
-                              ['building', 'Building'],
-                              ['active', 'Active'],
-                              ['severe', 'Severe'],
-                            ].map(([value, label]) => (
-                              <button
-                                key={value}
-                                type="button"
-                                className={`chip transition-colors ${
-                                  signalPressureLevel === value
-                                    ? 'border-[var(--accent)] bg-[color:color-mix(in_srgb,var(--accent)_12%,var(--bg-raised))] text-[var(--accent)] shadow-[0_10px_28px_rgba(241,139,31,0.14)]'
-                                    : ''
-                                }`}
-                                aria-pressed={signalPressureLevel === value}
-                                onClick={() => setSignalPressureLevel((prev) => (prev === value ? null : value))}
+                          <p className="type-card-copy mt-3 mb-0 max-w-[44ch]">
+                            Share what you actually saw near this PIN. We use it to strengthen local delivery and supply signals without overstating certainty.
+                          </p>
+                        </CardHeader>
+                        <CardBody className="stack-copy">
+                          {!authLoading && !user ? (
+                            <div className="stack-copy--tight">
+                              <p className="type-note m-0">
+                                Sign in to add a local delivery or supply signal.
+                              </p>
+                              <GoogleSignInButton
+                                className="w-full justify-center"
+                                onClick={() => onGoogleSignIn?.('/track')}
                               >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                                Sign in with Google
+                              </GoogleSignInButton>
+                            </div>
+                          ) : (
+                            <>
+                              <Field id="track-signal-delivery" label="Delivery days" meta="Optional">
+                                <input
+                                  id="track-signal-delivery"
+                                  className="input"
+                                  placeholder="e.g. 5"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={signalDeliveryDays}
+                                  onFocus={markSignalInteraction}
+                                  onChange={(e) => {
+                                    markSignalInteraction()
+                                    setSignalDeliveryDays(e.target.value.replace(/\D/g, ''))
+                                  }}
+                                />
+                              </Field>
 
-                        <Field id="track-signal-note" label="Short note" meta="Optional">
-                          <textarea
-                            id="track-signal-note"
-                            className="input resize-y"
-                            style={{ minHeight: 96 }}
-                            placeholder="e.g. Refill took 6 days and agency said stock was slow this week."
-                            value={signalNote}
-                            onChange={(e) => setSignalNote(e.target.value)}
-                          />
-                        </Field>
+                              <div className="field">
+                                <div className="field__top">
+                                  <div className="field__label">Supply pressure</div>
+                                  <div className="field__meta">Optional</div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                  {[
+                                    ['low', 'Low'],
+                                    ['building', 'Building'],
+                                    ['active', 'Active'],
+                                    ['severe', 'Severe'],
+                                  ].map(([value, label]) => (
+                                    <button
+                                      key={value}
+                                      type="button"
+                                      className={`chip transition-colors ${
+                                        signalPressureLevel === value
+                                          ? 'border-[var(--accent)] bg-[color:color-mix(in_srgb,var(--accent)_12%,var(--bg-raised))] text-[var(--accent)] shadow-[0_10px_28px_rgba(241,139,31,0.14)]'
+                                          : ''
+                                      }`}
+                                      aria-pressed={signalPressureLevel === value}
+                                      onClick={() => {
+                                        markSignalInteraction()
+                                        setSignalPressureLevel((prev) => (prev === value ? null : value))
+                                      }}
+                                    >
+                                      {label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
 
-                        {signalState.error ? (
-                          <p className="type-note text-[var(--status-severe)] m-0">{signalState.error}</p>
-                        ) : null}
-                        {signalState.ok ? (
-                          <p className="type-note text-[var(--status-clear)] m-0">{signalState.ok}</p>
-                        ) : null}
+                              <Field id="track-signal-note" label="Short note" meta="Optional">
+                                <textarea
+                                  id="track-signal-note"
+                                  className="input resize-y"
+                                  style={{ minHeight: 96 }}
+                                  placeholder="e.g. Refill took 6 days and agency said stock was slow this week."
+                                  value={signalNote}
+                                  onFocus={markSignalInteraction}
+                                  onChange={(e) => {
+                                    markSignalInteraction()
+                                    setSignalNote(e.target.value)
+                                  }}
+                                />
+                              </Field>
 
-                        <LiquidGlassBtn
-                          className="w-full justify-center"
-                          onClick={handleSignalSubmit}
-                          disabled={!canSubmitSignal || signalSubmitting}
-                        >
-                          {signalSubmitting ? 'Saving...' : 'Save verified signal'}
-                        </LiquidGlassBtn>
-                      </>
-                    )}
-                  </CardBody>
-                </Card>
+                              {signalState.error ? (
+                                <p className="type-note text-[var(--status-severe)] m-0">{signalState.error}</p>
+                              ) : null}
+                              {signalState.ok ? (
+                                <p className="type-note text-[var(--status-clear)] m-0">{signalState.ok}</p>
+                              ) : null}
+
+                              <LiquidGlassBtn
+                                className="w-full justify-center"
+                                onClick={handleSignalSubmit}
+                                disabled={!canSubmitSignal || signalSubmitting}
+                              >
+                                {signalSubmitting ? 'Saving...' : 'Save local signal'}
+                              </LiquidGlassBtn>
+                            </>
+                          )}
+                        </CardBody>
+                      </Card>
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      key="signal-toggle"
+                      type="button"
+                      className="track-contribute-toggle mb-4"
+                      aria-expanded="false"
+                      onClick={() => {
+                        clearSignalPanelDismiss(signalDismissKey)
+                        setSignalPanelOpen(true)
+                        setSignalPanelInteracted(hasSignalDraft)
+                      }}
+                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+                      transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
+                    >
+                      <span className="track-contribute-toggle__icon" aria-hidden="true">
+                        <Target size={16} />
+                      </span>
+                      <span className="track-contribute-toggle__copy">
+                        <span className="track-contribute-toggle__eyebrow">Community input</span>
+                        <span className="track-contribute-toggle__title">Add a local signal</span>
+                        <span className="track-contribute-toggle__note">
+                          {signalState.ok || 'Help sharpen delivery and supply pressure around this PIN.'}
+                        </span>
+                      </span>
+                    </motion.button>
+                  )}
+                </AnimatePresence>
 
                 {pinData.urgencyScore !== undefined && (
                   <Card className="mb-4 text-center">

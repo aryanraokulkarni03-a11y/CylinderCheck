@@ -87,6 +87,8 @@ CREATE TABLE IF NOT EXISTS pin_user_signals (
   area            TEXT,
   user_id         UUID NOT NULL,
   user_email      TEXT,
+  trust_tier      TEXT DEFAULT 'signed_in_user',
+  source_weight   NUMERIC(4,2) DEFAULT 1.00,
   delivery_days   INT,
   pressure_level  TEXT,
   note            TEXT,
@@ -98,6 +100,8 @@ CREATE TABLE IF NOT EXISTS pin_user_signals (
     CHECK (pin ~ '^[0-9]{6}$'),
   CONSTRAINT pin_user_signals_delivery_days_check
     CHECK (delivery_days IS NULL OR (delivery_days >= 1 AND delivery_days <= 30)),
+  CONSTRAINT pin_user_signals_trust_tier_check
+    CHECK (trust_tier IN ('signed_in_user', 'repeat_local_contributor', 'trusted_contributor', 'verified_local_contributor')),
   CONSTRAINT pin_user_signals_pressure_check
     CHECK (pressure_level IS NULL OR pressure_level IN ('low', 'building', 'active', 'severe')),
   CONSTRAINT pin_user_signals_payload_check
@@ -109,6 +113,35 @@ CREATE POLICY "Authenticated users can insert own track signals"
   ON pin_user_signals FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Authenticated users can read own track signals"
   ON pin_user_signals FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE OR REPLACE FUNCTION public.enforce_pin_user_signal_guardrails()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM public.pin_user_signals existing
+    WHERE existing.user_id = NEW.user_id
+      AND existing.pin = NEW.pin
+      AND existing.created_at >= NOW() - INTERVAL '12 hours'
+  ) THEN
+    RAISE EXCEPTION 'track_signal_cooldown'
+      USING HINT = 'You can add another local signal for this PIN after the cooldown window.';
+  END IF;
+
+  NEW.updated_at := NOW();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS pin_user_signals_guardrails_before_insert
+  ON public.pin_user_signals;
+
+CREATE TRIGGER pin_user_signals_guardrails_before_insert
+  BEFORE INSERT ON public.pin_user_signals
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_pin_user_signal_guardrails();
 
 -- 4. LPG Prices table
 CREATE TABLE IF NOT EXISTS lpg_prices (

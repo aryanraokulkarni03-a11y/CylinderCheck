@@ -31,7 +31,7 @@ export default function CommercialHero() {
           <h1 className="commercial-hero__title hero-title text-[var(--text-primary)]">
             <span className="commercial-hero__title-row">
               <span className="commercial-hero__title-icon" aria-hidden="true">
-                <Store size={30} className="text-[var(--accent)]" />
+                <Store size={24} className="text-[var(--accent)]" />
               </span>
               <span>Private LPG suppliers</span>
             </span>

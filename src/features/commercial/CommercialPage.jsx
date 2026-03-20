@@ -81,6 +81,11 @@ function getPricesFreshness(value) {
   }
 }
 
+function isSameTrackedPrice(a, b) {
+  if (!a || !b) return false
+  return a.city === b.city && a.state === b.state && a.price === b.price
+}
+
 export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUpdatedAt = null, productType }) {
   const shouldReduceMotion = useReducedMotion()
 
@@ -198,8 +203,8 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
                 : `${LPG_PRODUCT_LABELS[productType]} prices will appear here after the next trusted scrape.`}
             </p>
             <p className="kicker commercial-market-band__trust">
-              {lowestInActiveState
-                ? `In ${activeState}: ${lowestInActiveState.city} ${RUPEE}${lowestInActiveState.price}.`
+              {lowestInActiveState && !isSameTrackedPrice(lowestInActiveState, lowestCommercial)
+                ? `Lowest in ${activeState}: ${lowestInActiveState.city} ${RUPEE}${lowestInActiveState.price}.`
                 : 'Published city LPG rates.'}
             </p>
           </div>

@@ -608,7 +608,7 @@ body::before {
 
 .commercial-hero__title-row {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   flex-wrap: wrap;
 }
@@ -647,6 +647,7 @@ body::before {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    padding-top: 8px;
   }
 }
 

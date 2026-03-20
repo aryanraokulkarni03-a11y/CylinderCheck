@@ -224,6 +224,57 @@ function pluralize(count, singular, plural = `${singular}s`) {
   return count === 1 ? singular : plural
 }
 
+function freshnessCopy(status) {
+  if (status === 'fresh') return 'updated recently'
+  if (status === 'aging') return 'updated within the last month'
+  return 'based on older history'
+}
+
+export function buildDeliveryEstimateFromSnapshot(snapshot) {
+  if (!snapshot) return null
+
+  const sampleSize = Number(snapshot.sample_size_30d) || 0
+  const low = Number(snapshot.delivery_days_p25)
+  const typical = Number(snapshot.delivery_days_median)
+  const high = Number(snapshot.delivery_days_p75)
+  const historical = Number(snapshot.historical_avg_days)
+  const freshness = freshnessCopy(snapshot.delivery_freshness_status)
+
+  if (Number.isFinite(low) && Number.isFinite(high) && Number.isFinite(typical)) {
+    const lowDays = Math.max(1, Math.floor(low))
+    const highDays = Math.max(lowDays, Math.ceil(high))
+    return {
+      kind: 'snapshot',
+      summary: lowDays === highDays ? `About ${lowDays} ${pluralize(lowDays, 'day')}` : `Usually ${lowDays}-${highDays} days`,
+      note: sampleSize > 0
+        ? `Based on ${sampleSize} local delivery ${pluralize(sampleSize, 'report')} and ${freshness}.`
+        : `Based on local delivery evidence and ${freshness}.`,
+      bookingCopy:
+        lowDays === highDays
+          ? `a local delivery estimate of about ${lowDays} ${pluralize(lowDays, 'day')}`
+          : `a local delivery estimate of ${lowDays}-${highDays} days`,
+      typicalDays: Math.max(1, Math.round(typical)),
+      sampleSize,
+      confidence: snapshot.delivery_confidence_level || 'medium',
+    }
+  }
+
+  if (Number.isFinite(historical)) {
+    const typicalDays = Math.max(1, Math.round(historical))
+    return {
+      kind: 'historical',
+      summary: `About ${typicalDays} ${pluralize(typicalDays, 'day')}`,
+      note: `Based on historical PIN-level delivery data and ${freshness}.`,
+      bookingCopy: `a historical delivery estimate of about ${typicalDays} ${pluralize(typicalDays, 'day')}`,
+      typicalDays,
+      sampleSize,
+      confidence: snapshot.delivery_confidence_level || 'low',
+    }
+  }
+
+  return null
+}
+
 export function buildDeliveryEstimate({ avgDays, deliverySignals = [] }) {
   const cleanSignals = deliverySignals
     .map((value) => Number(value))
@@ -276,7 +327,7 @@ export function buildDeliveryEstimate({ avgDays, deliverySignals = [] }) {
 
   return {
     kind: 'unknown',
-    summary: 'Not enough local signals yet',
+    summary: 'Local evidence is still building',
     note: 'We do not have enough recent delivery data for this PIN yet.',
     bookingCopy: 'current local delivery signals',
     typicalDays: null,
@@ -292,10 +343,10 @@ export function buildSupplyPressure({ reportCount = 0, last7 = 0, prior7 = 0, de
   if (reportCount === 0 && !hasDeliverySignal) {
     return {
       level: 'limited',
-      label: 'Limited signal',
+      label: 'Evidence still building',
       note: 'Not enough recent local reports yet to judge supply pressure confidently.',
       status: 'early',
-      badgeLabel: 'Limited signal',
+      badgeLabel: 'Limited evidence',
     }
   }
 
@@ -343,6 +394,65 @@ export function buildSupplyPressure({ reportCount = 0, last7 = 0, prior7 = 0, de
       reportCount > 0
         ? 'Recent local reports are present, but pressure still looks low for now.'
         : 'Recent delivery signals look steady and we have not seen local shortage reports.',
+    status: 'clear',
+    badgeLabel: 'Low pressure',
+  }
+}
+
+export function buildSupplyPressureFromSnapshot(snapshot) {
+  if (!snapshot?.pressure_level) return null
+
+  const level = snapshot.pressure_level
+  const last7 = Number(snapshot.report_count_7d) || 0
+  const last30 = Number(snapshot.report_count_30d) || 0
+  const trend = snapshot.trend_direction || 'steady'
+
+  if (level === 'limited') {
+    return {
+      level: 'limited',
+      label: 'Evidence still building',
+      note: 'Not enough recent local reports yet to judge supply pressure confidently.',
+      status: 'early',
+      badgeLabel: 'Limited evidence',
+    }
+  }
+
+  if (level === 'severe') {
+    return {
+      level: 'severe',
+      label: 'Severe',
+      note: `Recent local reports are elevated${trend === 'rising' ? ' and still rising' : ''} around this PIN.`,
+      status: 'severe',
+      badgeLabel: 'Severe pressure',
+    }
+  }
+
+  if (level === 'active') {
+    return {
+      level: 'active',
+      label: 'Active',
+      note: `Recent local reports suggest supply pressure is active around this PIN${trend === 'rising' ? ' and getting stronger' : ''}.`,
+      status: 'active',
+      badgeLabel: 'Active pressure',
+    }
+  }
+
+  if (level === 'building') {
+    return {
+      level: 'building',
+      label: 'Building',
+      note: `There are early local pressure signals${last7 > 0 ? ` from ${last7} recent ${pluralize(last7, 'report')}` : ''}, so it is worth checking before you book.`,
+      status: 'early',
+      badgeLabel: 'Building',
+    }
+  }
+
+  return {
+    level: 'low',
+    label: 'Low',
+    note: last30 > 0
+      ? 'Recent local reports are present, but pressure still looks low for now.'
+      : 'Recent delivery signals look steady and we have not seen local shortage reports.',
     status: 'clear',
     badgeLabel: 'Low pressure',
   }

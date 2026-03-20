@@ -399,6 +399,11 @@ serve(async (req: Request) => {
       }
     }
 
+    const { error: refreshError } = await supabase.rpc("refresh_track_confidence_snapshots");
+    if (refreshError) {
+      console.error("refresh_track_confidence_snapshots failed:", refreshError.message);
+    }
+
     const successful = results.filter((r) => r.status === "ok").length;
     const partial = results.filter((r) => r.status === "partial").length;
     const held = results.filter((r) => r.status === "held").length;

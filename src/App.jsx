@@ -18,7 +18,9 @@ import {
   LPG_PRODUCT_TYPES,
   addDays,
   buildDeliveryEstimate,
+  buildDeliveryEstimateFromSnapshot,
   buildSupplyPressure,
+  buildSupplyPressureFromSnapshot,
   computeUrgency,
   daysUntil,
   lookupPIN,
@@ -339,17 +341,21 @@ export default function App() {
     setBookingResult(null)
 
     const [
+      trackSummaryResult,
       { data: dbData },
       location,
       { data: recentReports },
       { data: rpcAvgData },
     ] = await Promise.all([
+      supabase.from('pin_track_summary_v1').select('*').eq('pin', pin).maybeSingle(),
       supabase.from('pin_data').select('*').eq('pin', pin).single(),
       lookupPIN(pin),
       supabase.from('reports').select('id, created_at, delivery_days').eq('pin', pin)
         .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString()),
       supabase.rpc('get_avg_delivery_days', { p_pin: pin }),
     ])
+
+    const trackSummary = trackSummaryResult?.error ? null : trackSummaryResult?.data
 
     const reportCount = recentReports?.length || 0
     const last7 = (recentReports || []).filter(
@@ -365,34 +371,49 @@ export default function App() {
       .map((report) => report.delivery_days)
       .filter((value) => Number.isFinite(value))
 
-    const deliveryEstimate = buildDeliveryEstimate({
-      avgDays,
-      deliverySignals,
-    })
+    const deliveryEstimate =
+      buildDeliveryEstimateFromSnapshot(trackSummary) ||
+      buildDeliveryEstimate({
+        avgDays,
+        deliverySignals,
+      })
 
-    const supplyPressure = buildSupplyPressure({
-      reportCount,
-      last7,
-      prior7,
-      deliveryEstimate,
-    })
+    const supplyPressure =
+      buildSupplyPressureFromSnapshot(trackSummary) ||
+      buildSupplyPressure({
+        reportCount,
+        last7,
+        prior7,
+        deliveryEstimate,
+      })
+
+    const verifiedDistributorLabel =
+      trackSummary?.distributor_verification_status === 'verified'
+        ? trackSummary?.distributor_name
+        : null
+
+    const cityLabel = location
+      ? `${location.city}, ${location.state}`
+      : trackSummary?.city
+        ? `${trackSummary.city}, ${trackSummary.state}`
+        : dbData?.city || `PIN ${pin}`
 
     const builtPinData = dbData
       ? {
           ...dbData,
           avg_days: avgDays ?? '—',
-          city: location ? `${location.city}, ${location.state}` : dbData.city,
+          city: cityLabel,
           area: location?.area || '',
           reportCount,
           last7ReportCount: last7,
           prior7ReportCount: prior7,
           deliveryEstimate,
           supplyPressure,
-          verifiedAgencyLabel: null,
+          verifiedAgencyLabel: verifiedDistributorLabel,
         }
       : {
           pin,
-          city: location ? `${location.city}, ${location.state}` : `PIN ${pin}`,
+          city: cityLabel,
           area: location?.area || '',
           agency: 'Check with local agency',
           avg_days: avgDays ?? '—',
@@ -401,7 +422,7 @@ export default function App() {
           prior7ReportCount: prior7,
           deliveryEstimate,
           supplyPressure,
-          verifiedAgencyLabel: null,
+          verifiedAgencyLabel: verifiedDistributorLabel,
         }
 
     // Compute urgency score when cylinder level is known

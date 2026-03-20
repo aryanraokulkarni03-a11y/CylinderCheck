@@ -32,7 +32,7 @@ const CYLINDER_LEVELS = [
 function pressurePill(supplyPressure) {
   if (!supplyPressure) {
     return {
-      label: 'Limited signal',
+      label: 'Limited evidence',
       className:
         'text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]',
     }
@@ -275,31 +275,31 @@ export function TrackTab({
                   </CardHeader>
 
                   <CardBody className="divide-y divide-[var(--divider)]">
-                    <div className="flex flex-col gap-2 py-3 md:flex-row md:items-start md:justify-between">
-                      <div className="min-w-0">
+                    <div className="track-signal-row">
+                      <div className="track-signal-row__copy">
                         <span className="type-meta">Delivery estimate</span>
-                        <p className="type-note mt-2 mb-0 max-w-[38ch]">
+                        <p className="type-note mt-2 mb-0">
                           {deliveryEstimate?.note}
                         </p>
                       </div>
-                      <span className="text-left md:text-right">
-                        <span className="type-data-label text-[var(--text-data)]">
+                      <span className="track-signal-row__value">
+                        <span className="track-signal-row__summary">
                           {deliveryEstimate?.summary}
                         </span>
                       </span>
                     </div>
 
                     {supplyPressure && (
-                      <div className="flex flex-col gap-2 py-3 md:flex-row md:items-start md:justify-between">
-                        <div className="min-w-0">
+                      <div className="track-signal-row">
+                        <div className="track-signal-row__copy">
                           <span className="type-meta">Supply pressure</span>
-                          <p className="type-note mt-2 mb-0 max-w-[38ch]">
+                          <p className="type-note mt-2 mb-0">
                             {supplyPressure.note}
                           </p>
                         </div>
-                        <span className="flex items-center justify-start gap-2 md:justify-end">
+                        <span className="track-signal-row__value track-signal-row__value--status">
                           <StatusDot status={supplyPressure.status} size={7} />
-                          <span className="type-data-label text-[var(--text-data)]">
+                          <span className="track-signal-row__summary">
                             {supplyPressure.label}
                           </span>
                         </span>
@@ -307,15 +307,17 @@ export function TrackTab({
                     )}
 
                     {pinData?.verifiedAgencyLabel ? (
-                      <div className="flex flex-col gap-2 py-3 md:flex-row md:items-start md:justify-between">
-                        <div className="min-w-0">
+                      <div className="track-signal-row">
+                        <div className="track-signal-row__copy">
                           <span className="type-meta">Verified distributor</span>
-                          <p className="type-note mt-2 mb-0 max-w-[38ch]">
+                          <p className="type-note mt-2 mb-0">
                             Confirm booking status and delivery timing directly with the verified distributor.
                           </p>
                         </div>
-                        <span className="type-data-label text-[var(--text-data)] text-left md:text-right">
-                          {pinData.verifiedAgencyLabel}
+                        <span className="track-signal-row__value">
+                          <span className="track-signal-row__summary">
+                            {pinData.verifiedAgencyLabel}
+                          </span>
                         </span>
                       </div>
                     ) : null}

@@ -2336,16 +2336,15 @@ body::before {
   background: var(--status-severe-soft);
 }
 
-.account-theme-grid,
 .account-essentials {
   display: grid;
   gap: var(--space-3);
 }
 
-.account-theme-option,
+.account-theme-toggle,
 .account-link-card {
   width: 100%;
-  min-height: 64px;
+  min-height: 72px;
   padding: 14px 16px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
@@ -2353,7 +2352,7 @@ body::before {
   color: var(--text-secondary);
   text-decoration: none;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-3);
   text-align: left;
   transition:
@@ -2363,14 +2362,6 @@ body::before {
     transform var(--dur-fast) var(--ease-out);
 }
 
-.account-theme-option[aria-pressed="true"] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent-glow);
-  color: var(--text-primary);
-}
-
-.account-theme-option__icon,
 .account-link-card__icon {
   width: 36px;
   min-width: 36px;
@@ -2384,12 +2375,106 @@ body::before {
   justify-content: center;
 }
 
-.account-theme-option__copy,
+.account-theme-toggle__copy,
 .account-link-card__copy {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.account-theme-toggle {
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.account-theme-toggle__switch {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  width: 100%;
+  min-width: 188px;
+  flex: 0 0 min(100%, 244px);
+  padding: 5px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-raised) 86%, var(--accent-soft));
+  color: var(--text-secondary);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.account-theme-toggle__note {
+  max-width: 28ch;
+}
+
+.account-theme-toggle__label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+}
+
+.account-theme-toggle__thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-glow);
+  box-shadow: 0 10px 24px rgba(241, 139, 31, 0.16);
+  transition: transform var(--dur-med) var(--ease-out);
+}
+
+.account-theme-toggle__switch.is-dark .account-theme-toggle__thumb {
+  transform: translateX(100%);
+}
+
+.track-signal-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 0;
+}
+
+.track-signal-row__copy {
+  min-width: 0;
+}
+
+.track-signal-row__value {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.track-signal-row__value--status {
+  gap: 10px;
+}
+
+.track-signal-row__summary {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-data);
+  text-wrap: pretty;
+  max-width: 22ch;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -2409,11 +2494,16 @@ body::before {
     background: color-mix(in srgb, var(--accent-soft) 70%, var(--bg-raised));
   }
 
-  .account-theme-option:hover,
+  .account-theme-toggle:hover,
   .account-link-card:hover {
     border-color: var(--accent);
     color: var(--text-primary);
     transform: translateY(-1px);
+  }
+
+  .account-theme-toggle__switch:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-glow);
   }
 
   .account-action--danger:hover {
@@ -2427,9 +2517,23 @@ body::before {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .account-theme-grid,
   .account-essentials {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-theme-toggle {
+    align-items: center;
+  }
+
+  .track-signal-row {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+    align-items: start;
+    gap: 18px;
+  }
+
+  .track-signal-row__value {
+    justify-content: flex-end;
+    text-align: right;
   }
 
   .support-grid > .card,

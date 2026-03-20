@@ -5,7 +5,6 @@ import {
   LifeBuoy,
   LogOut,
   Moon,
-  Palette,
   ShieldCheck,
   Sun,
   Waypoints,
@@ -15,21 +14,6 @@ import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import { getTheme, setTheme } from '../../theme'
-
-const THEME_OPTIONS = [
-  {
-    value: 'dark',
-    label: 'Dark mode',
-    note: 'Cinematic contrast for late-night tracking and calmer glare control.',
-    icon: Moon,
-  },
-  {
-    value: 'light',
-    label: 'Light mode',
-    note: 'Sunlight-first reading for outdoor use and fast scanning on the move.',
-    icon: Sun,
-  },
-]
 
 const ESSENTIAL_LINKS = [
   {
@@ -67,6 +51,8 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
     setTheme(nextTheme)
     setThemeMode(nextTheme)
   }
+
+  const isDarkMode = themeMode === 'dark'
 
   return (
     <div className="page-root account-page">
@@ -118,36 +104,39 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
           <CardHeader
             kicker="Appearance"
             title="Theme preference"
-            meta={
-              <span className="reading-meta inline-flex items-center gap-2">
-                <Palette size={14} />
-                Visual comfort
-              </span>
-            }
+            meta={<span className="reading-meta">Light by default</span>}
           />
           <CardBody className="stack-copy">
-            <p className="type-reading-copy m-0">
-              Pick the mode that feels best on your device. Light mode stays stronger in sunlight, while dark mode keeps
-              glare calmer in low light.
-            </p>
-            <div className="account-theme-grid" role="group" aria-label="Theme preference">
-              {THEME_OPTIONS.map(({ value, label, note, icon: Icon }) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={themeMode === value}
-                  className="account-theme-option"
-                  onClick={() => handleThemeChange(value)}
-                >
-                  <span className="account-theme-option__icon" aria-hidden="true">
-                    <Icon size={18} />
-                  </span>
-                  <span className="account-theme-option__copy">
-                    <span className="type-card-title">{label}</span>
-                    <span className="type-note">{note}</span>
-                  </span>
-                </button>
-              ))}
+            <div className="account-theme-toggle" role="group" aria-label="Theme preference">
+              <div className="account-theme-toggle__copy">
+                <p className="type-card-title mb-0">
+                  {isDarkMode ? 'Dark' : 'Light'}
+                </p>
+                <p className="type-note account-theme-toggle__note mb-0">
+                  {isDarkMode
+                    ? 'Lower glare for night use.'
+                    : 'Clearer for daylight and quick scanning.'}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isDarkMode}
+                aria-label="Toggle theme"
+                className={`account-theme-toggle__switch${isDarkMode ? ' is-dark' : ''}`}
+                onClick={() => handleThemeChange(isDarkMode ? 'light' : 'dark')}
+              >
+                <span className="account-theme-toggle__label">
+                  <Sun size={15} />
+                  <span>Light</span>
+                </span>
+                <span className="account-theme-toggle__label">
+                  <Moon size={15} />
+                  <span>Dark</span>
+                </span>
+                <span className="account-theme-toggle__thumb" aria-hidden="true" />
+              </button>
             </div>
           </CardBody>
         </Card>

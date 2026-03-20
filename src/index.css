@@ -249,7 +249,7 @@ body {
 
 .app-main__frame {
   padding-top: var(--space-6);
-  padding-bottom: var(--space-8);
+  padding-bottom: var(--space-10);
 }
 
 .page-root {
@@ -312,7 +312,7 @@ body {
 
   .app-main__frame {
     padding-top: var(--space-8);
-    padding-bottom: var(--space-10);
+    padding-bottom: var(--space-12);
   }
 
   .page-root {
@@ -1908,13 +1908,13 @@ body::before {
 
 /* Footer: shell-owned, compact ledger rhythm. */
 .app-footer-shell {
-  padding-top: var(--space-6);
+  padding-top: var(--space-8);
   padding-bottom: calc(var(--bottomnav-height) + 18px + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 768px) {
   .app-footer-shell {
-    padding-top: var(--space-8);
+    padding-top: var(--space-10);
     padding-bottom: var(--space-8);
   }
 }
@@ -1934,6 +1934,26 @@ body::before {
   max-width: 62ch;
   margin-inline: auto;
   text-align: center;
+}
+
+.reports-layout {
+  align-items: start;
+}
+
+.reports-feed {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.reports-feed__header {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-inline: 2px;
 }
 
 .footer-ledger__label {
@@ -2030,6 +2050,18 @@ body::before {
 
   .footer-ledger__links {
     justify-content: flex-end;
+  }
+
+  .reports-feed {
+    padding-top: var(--space-3);
+  }
+}
+
+@media (max-width: 767px) {
+  .reports-feed__header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    min-height: 0;
   }
 }
 

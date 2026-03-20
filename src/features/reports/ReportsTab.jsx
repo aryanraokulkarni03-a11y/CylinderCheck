@@ -210,7 +210,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
   )
 
   return (
-    <div className="page-root">
+    <div className="page-root reports-page">
       <PageHeader
         markerShowStatus={false}
         markerStatus="early"
@@ -220,7 +220,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
         description="Report delivery delays, shortage pressure, and agency issues in your area."
       />
 
-      <div className="page-grid-form-feed">
+      <div className="page-section page-grid-form-feed reports-layout">
         <Card className="page-sticky-lg">
           <CardHeader
             kicker="Submit a report"
@@ -338,8 +338,8 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
           )}
         </Card>
 
-        <div className="min-w-0">
-          <div className="flex items-center justify-between gap-4 mb-4">
+        <div className="reports-feed min-w-0">
+          <div className="reports-feed__header">
             <div className="flex items-center gap-2">
               <AlertCircle size={14} className="text-[var(--accent)]" />
                 <span className="kicker">
@@ -352,7 +352,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                 Most upvoted
               </span>
             </div>
-            <div className="type-note">
+            <div className="type-note shrink-0">
               {loading ? 'Loading...' : `${reports.length} shown`}
             </div>
           </div>

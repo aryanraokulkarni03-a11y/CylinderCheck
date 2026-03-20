@@ -79,20 +79,21 @@ export const staggerRules = {
 };
 
 export const floatingAssistMotion = {
-  passiveEntryDelayMs: 5000,
+  passiveEntryDelayMs: 9000,
   passiveVisibleMs: 15000,
-  panelEnter: { opacity: 0, y: 18, scale: 0.992 },
+  panelEnter: { opacity: 0, y: 14, scale: 0.996 },
   panelActive: { opacity: 1, y: 0, scale: 1 },
-  panelExit: { opacity: 0, y: 12, scale: 0.996 },
+  panelExit: { opacity: 0, y: 8, scale: 0.998 },
   panelTransition: {
-    duration: 0.56,
+    duration: 0.64,
     ease: easing.float,
   },
-  collapsedEnter: { opacity: 0, y: 10, scale: 0.992 },
+  collapsedEnter: { opacity: 0, y: 6, scale: 0.996 },
   collapsedActive: { opacity: 1, y: 0, scale: 1 },
-  collapsedExit: { opacity: 0, y: 8, scale: 0.996 },
+  collapsedDormant: { opacity: 0.22, y: 4, scale: 0.992 },
+  collapsedExit: { opacity: 0, y: 4, scale: 0.998 },
   collapsedTransition: {
-    duration: 0.34,
+    duration: 0.48,
     ease: easing.float,
   },
 }

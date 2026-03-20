@@ -506,187 +506,198 @@ export function TrackTab({
                   </CardBody>
                 </Card>
 
-                <AnimatePresence initial={false} mode="wait">
-                  {signalPanelOpen ? (
-                    <div key="signal-panel" className="track-contribute-float">
-                      <motion.div
-                        className="track-contribute-float__surface"
-                        initial={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.panelEnter}
-                        animate={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.panelActive}
-                        exit={shouldReduceMotion ? { opacity: 0 } : floatingAssistMotion.panelExit}
-                        transition={
-                          shouldReduceMotion
-                            ? { duration: 0.01 }
-                            : floatingAssistMotion.panelTransition
-                        }
-                      >
-                        <Card className="track-contribute-panel">
-                        <CardHeader
-                          kicker="Signed-in local signal"
-                          title="Add a local signal"
-                          titleAs="h2"
-                          actions={
-                            <button
-                              type="button"
-                              className="track-contribute-dismiss"
-                              aria-label="Close local signal panel"
-                              onClick={closeSignalPanel}
-                            >
-                              <X size={18} />
-                            </button>
+                <div className="track-contribute-stage mb-4">
+                  <AnimatePresence initial={false}>
+                    {signalPanelOpen ? (
+                      <div key="signal-panel" className="track-contribute-float">
+                        <motion.div
+                          className="track-contribute-float__surface"
+                          initial={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.panelEnter}
+                          animate={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.panelActive}
+                          exit={shouldReduceMotion ? { opacity: 0 } : floatingAssistMotion.panelExit}
+                          transition={
+                            shouldReduceMotion
+                              ? { duration: 0.01 }
+                              : floatingAssistMotion.panelTransition
                           }
                         >
-                          <p className="type-card-copy mt-3 mb-0 max-w-[44ch]">
-                            Share what you actually saw near this PIN. We use it to strengthen local delivery and supply signals without overstating certainty.
-                          </p>
-                        </CardHeader>
-                        <CardBody className="stack-copy">
-                          {!authLoading && !user ? (
-                            <div className="stack-copy--tight">
-                              <p className="type-note m-0">
-                                Sign in to add a local delivery or supply signal.
-                              </p>
-                              <GoogleSignInButton
-                                className="w-full justify-center"
-                                onClick={() => onGoogleSignIn?.('/track')}
+                          <Card className="track-contribute-panel">
+                          <CardHeader
+                            kicker="Signed-in local signal"
+                            title="Add a local signal"
+                            titleAs="h2"
+                            actions={
+                              <button
+                                type="button"
+                                className="track-contribute-dismiss"
+                                aria-label="Close local signal panel"
+                                onClick={closeSignalPanel}
                               >
-                                Sign in with Google
-                              </GoogleSignInButton>
-                            </div>
-                          ) : (
-                            <>
-                              <Field id="track-signal-delivery" label="Delivery days" meta="Optional">
-                                <input
-                                  id="track-signal-delivery"
-                                  className="input"
-                                  placeholder="e.g. 5"
-                                  inputMode="numeric"
-                                  pattern="[0-9]*"
-                                  value={signalDeliveryDays}
-                                  onFocus={markSignalInteraction}
-                                  onChange={(e) => {
-                                    markSignalInteraction()
-                                    setSignalDeliveryDays(e.target.value.replace(/\D/g, ''))
-                                  }}
-                                />
-                              </Field>
-
-                              <div className="field">
-                                <div className="field__top">
-                                  <div className="field__label">Supply pressure</div>
-                                  <div className="field__meta">Optional</div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                  {[
-                                    ['low', 'Low'],
-                                    ['building', 'Building'],
-                                    ['active', 'Active'],
-                                    ['severe', 'Severe'],
-                                  ].map(([value, label]) => (
-                                    <button
-                                      key={value}
-                                      type="button"
-                                      className={`chip transition-colors ${
-                                        signalPressureLevel === value
-                                          ? 'border-[var(--accent)] bg-[color:color-mix(in_srgb,var(--accent)_12%,var(--bg-raised))] text-[var(--accent)] shadow-[0_10px_28px_rgba(241,139,31,0.14)]'
-                                          : ''
-                                      }`}
-                                      aria-pressed={signalPressureLevel === value}
-                                      onClick={() => {
-                                        markSignalInteraction()
-                                        setSignalPressureLevel((prev) => (prev === value ? null : value))
-                                      }}
-                                    >
-                                      {label}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <Field id="track-signal-note" label="Short note" meta="Optional">
-                                <textarea
-                                  id="track-signal-note"
-                                  className="input resize-y"
-                                  style={{ minHeight: 96 }}
-                                  placeholder="e.g. Refill took 6 days and agency said stock was slow this week."
-                                  value={signalNote}
-                                  onFocus={markSignalInteraction}
-                                  onChange={(e) => {
-                                    markSignalInteraction()
-                                    setSignalNote(e.target.value)
-                                  }}
-                                />
-                              </Field>
-
-                              {signalState.error ? (
-                                <p className="type-note text-[var(--status-severe)] m-0">{signalState.error}</p>
-                              ) : null}
-                              {signalState.ok ? (
-                                <p className="type-note text-[var(--status-clear)] m-0">{signalState.ok}</p>
-                              ) : null}
-
-                              <LiquidGlassBtn
-                                className="w-full justify-center"
-                                onClick={handleSignalSubmit}
-                                disabled={!canSubmitSignal || signalSubmitting}
-                              >
-                                {signalSubmitting ? 'Saving...' : 'Save local signal'}
-                              </LiquidGlassBtn>
-                            </>
-                          )}
-                        </CardBody>
-                        </Card>
-                      </motion.div>
-                    </div>
-                  ) : (
-                    <motion.div
-                      key="signal-toggle"
-                      className="track-contribute-toggle mb-4"
-                      initial={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.collapsedEnter}
-                      animate={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.collapsedActive}
-                      exit={shouldReduceMotion ? { opacity: 0 } : floatingAssistMotion.collapsedExit}
-                      transition={
-                        shouldReduceMotion
-                          ? { duration: 0.01 }
-                          : floatingAssistMotion.collapsedTransition
-                      }
-                    >
-                      <button
-                        type="button"
-                        className="track-contribute-toggle__hit"
-                        aria-expanded="false"
-                        onClick={() => openSignalPanel('manual')}
-                      >
-                        <span className="track-contribute-toggle__icon" aria-hidden="true">
-                          <Target size={16} />
-                        </span>
-                        <span className="track-contribute-toggle__copy">
-                          <span className="track-contribute-toggle__eyebrow">
-                            {!user ? 'Google sign-in' : 'Community input'}
-                          </span>
-                          <span className="track-contribute-toggle__title">
-                            {!user ? 'Sign in to add a local signal' : 'Add a local signal'}
-                          </span>
-                          <span className="track-contribute-toggle__note">
-                            {signalState.ok || (!user
-                              ? 'Use Google sign-in to share a trusted local delivery or supply signal.'
-                              : 'Help sharpen delivery and supply pressure around this PIN.')}
-                          </span>
-                        </span>
-                      </button>
-                      {!user && !authLoading ? (
-                        <div className="track-contribute-toggle__actions">
-                          <GoogleSignInButton
-                            className="w-full justify-center"
-                            onClick={() => onGoogleSignIn?.('/track')}
+                                <X size={18} />
+                              </button>
+                            }
                           >
-                            Sign in with Google
-                          </GoogleSignInButton>
-                        </div>
-                      ) : null}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                            <p className="type-card-copy mt-3 mb-0 max-w-[44ch]">
+                              Share what you actually saw near this PIN. We use it to strengthen local delivery and supply signals without overstating certainty.
+                            </p>
+                          </CardHeader>
+                          <CardBody className="stack-copy">
+                            {!authLoading && !user ? (
+                              <div className="stack-copy--tight">
+                                <p className="type-note m-0">
+                                  Sign in to add a local delivery or supply signal.
+                                </p>
+                                <GoogleSignInButton
+                                  className="w-full justify-center"
+                                  onClick={() => onGoogleSignIn?.('/track')}
+                                >
+                                  Sign in with Google
+                                </GoogleSignInButton>
+                              </div>
+                            ) : (
+                              <>
+                                <Field id="track-signal-delivery" label="Delivery days" meta="Optional">
+                                  <input
+                                    id="track-signal-delivery"
+                                    className="input"
+                                    placeholder="e.g. 5"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={signalDeliveryDays}
+                                    onFocus={markSignalInteraction}
+                                    onChange={(e) => {
+                                      markSignalInteraction()
+                                      setSignalDeliveryDays(e.target.value.replace(/\D/g, ''))
+                                    }}
+                                  />
+                                </Field>
+
+                                <div className="field">
+                                  <div className="field__top">
+                                    <div className="field__label">Supply pressure</div>
+                                    <div className="field__meta">Optional</div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                    {[
+                                      ['low', 'Low'],
+                                      ['building', 'Building'],
+                                      ['active', 'Active'],
+                                      ['severe', 'Severe'],
+                                    ].map(([value, label]) => (
+                                      <button
+                                        key={value}
+                                        type="button"
+                                        className={`chip transition-colors ${
+                                          signalPressureLevel === value
+                                            ? 'border-[var(--accent)] bg-[color:color-mix(in_srgb,var(--accent)_12%,var(--bg-raised))] text-[var(--accent)] shadow-[0_10px_28px_rgba(241,139,31,0.14)]'
+                                            : ''
+                                        }`}
+                                        aria-pressed={signalPressureLevel === value}
+                                        onClick={() => {
+                                          markSignalInteraction()
+                                          setSignalPressureLevel((prev) => (prev === value ? null : value))
+                                        }}
+                                      >
+                                        {label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <Field id="track-signal-note" label="Short note" meta="Optional">
+                                  <textarea
+                                    id="track-signal-note"
+                                    className="input resize-y"
+                                    style={{ minHeight: 96 }}
+                                    placeholder="e.g. Refill took 6 days and agency said stock was slow this week."
+                                    value={signalNote}
+                                    onFocus={markSignalInteraction}
+                                    onChange={(e) => {
+                                      markSignalInteraction()
+                                      setSignalNote(e.target.value)
+                                    }}
+                                  />
+                                </Field>
+
+                                {signalState.error ? (
+                                  <p className="type-note text-[var(--status-severe)] m-0">{signalState.error}</p>
+                                ) : null}
+                                {signalState.ok ? (
+                                  <p className="type-note text-[var(--status-clear)] m-0">{signalState.ok}</p>
+                                ) : null}
+
+                                <LiquidGlassBtn
+                                  className="w-full justify-center"
+                                  onClick={handleSignalSubmit}
+                                  disabled={!canSubmitSignal || signalSubmitting}
+                                >
+                                  {signalSubmitting ? 'Saving...' : 'Save local signal'}
+                                </LiquidGlassBtn>
+                              </>
+                            )}
+                          </CardBody>
+                          </Card>
+                        </motion.div>
+                      </div>
+                    ) : null}
+                  </AnimatePresence>
+
+                  <motion.div
+                    layout="position"
+                    className="track-contribute-toggle"
+                    aria-hidden={signalPanelOpen}
+                    initial={false}
+                    animate={
+                      shouldReduceMotion
+                        ? { opacity: signalPanelOpen ? 0 : 1 }
+                        : signalPanelOpen
+                          ? floatingAssistMotion.collapsedDormant
+                          : floatingAssistMotion.collapsedActive
+                    }
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0.01 }
+                        : floatingAssistMotion.collapsedTransition
+                    }
+                    style={{ pointerEvents: signalPanelOpen ? 'none' : 'auto' }}
+                  >
+                    <button
+                      type="button"
+                      className="track-contribute-toggle__hit"
+                      aria-expanded="false"
+                      tabIndex={signalPanelOpen ? -1 : 0}
+                      onClick={() => openSignalPanel('manual')}
+                    >
+                      <span className="track-contribute-toggle__icon" aria-hidden="true">
+                        <Target size={16} />
+                      </span>
+                      <span className="track-contribute-toggle__copy">
+                        <span className="track-contribute-toggle__eyebrow">
+                          {!user ? 'Google sign-in' : 'Community input'}
+                        </span>
+                        <span className="track-contribute-toggle__title">
+                          {!user ? 'Sign in to add a local signal' : 'Add a local signal'}
+                        </span>
+                        <span className="track-contribute-toggle__note">
+                          {signalState.ok || (!user
+                            ? 'Use Google sign-in to share a trusted local delivery or supply signal.'
+                            : 'Help sharpen delivery and supply pressure around this PIN.')}
+                        </span>
+                      </span>
+                    </button>
+                    {!user && !authLoading ? (
+                      <div className="track-contribute-toggle__actions">
+                        <GoogleSignInButton
+                          className="w-full justify-center"
+                          onClick={() => onGoogleSignIn?.('/track')}
+                          tabIndex={signalPanelOpen ? -1 : 0}
+                        >
+                          Sign in with Google
+                        </GoogleSignInButton>
+                      </div>
+                    ) : null}
+                  </motion.div>
+                </div>
 
                 {pinData.urgencyScore !== undefined && (
                   <Card className="mb-4 text-center">

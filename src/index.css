@@ -2491,6 +2491,10 @@ body::before {
     0 10px 30px rgba(241, 139, 31, 0.08);
 }
 
+.track-contribute-stage {
+  position: relative;
+}
+
 .track-contribute-float {
   position: fixed;
   left: calc(16px + env(safe-area-inset-left));
@@ -2505,6 +2509,8 @@ body::before {
 .track-contribute-float__surface {
   width: 100%;
   max-width: 440px;
+  transform-origin: center bottom;
+  will-change: transform, opacity;
 }
 
 .track-contribute-float__surface > .track-contribute-panel {
@@ -2559,6 +2565,8 @@ body::before {
     background-color var(--dur-fast) var(--ease-out),
     transform var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) var(--ease-out);
+  transform-origin: center top;
+  will-change: transform, opacity;
 }
 
 .track-contribute-toggle:hover {

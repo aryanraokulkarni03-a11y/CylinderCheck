@@ -27,9 +27,19 @@ CREATE TABLE IF NOT EXISTS public.pin_contributor_profiles (
     CHECK (trust_tier IN ('signed_in_user', 'repeat_local_contributor', 'trusted_contributor', 'verified_local_contributor'))
 );
 
-ALTER TABLE public.pin_user_signals
-  ALTER COLUMN trust_tier SET DEFAULT 'signed_in_user',
-  ALTER COLUMN source_weight SET DEFAULT 0.55;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'pin_user_signals'
+  ) THEN
+    ALTER TABLE public.pin_user_signals
+      ALTER COLUMN trust_tier SET DEFAULT 'signed_in_user',
+      ALTER COLUMN source_weight SET DEFAULT 0.55;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS pin_contributor_profiles_trust_tier_idx
   ON public.pin_contributor_profiles (trust_tier);

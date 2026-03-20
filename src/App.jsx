@@ -83,6 +83,15 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
 const NOTIFY_TIMEOUT_MS = 4000
 
+function formatTrackLocationLabel(city, state) {
+  const cityPart = String(city || '').trim()
+  const statePart = String(state || '').trim()
+  if (cityPart && statePart) return `${cityPart}, ${statePart}`
+  if (cityPart) return cityPart
+  if (statePart) return statePart
+  return ''
+}
+
 export default function App() {
   const shouldReduceMotion = useReducedMotion()
   const navigate = useNavigate()
@@ -406,17 +415,15 @@ export default function App() {
         : null
 
     const cityLabel = location
-      ? `${location.city}, ${location.state}`
-      : trackSummary?.city
-        ? `${trackSummary.city}, ${trackSummary.state}`
-        : dbData?.city || `PIN ${pin}`
+      ? formatTrackLocationLabel(location.city, location.state)
+      : formatTrackLocationLabel(trackSummary?.city, trackSummary?.state) || dbData?.city || `PIN ${pin}`
 
     const builtPinData = dbData
       ? {
           ...dbData,
           avg_days: avgDays ?? '—',
           city: cityLabel,
-          area: location?.area || '',
+          area: location?.area || trackSummary?.area || '',
           reportCount,
           last7ReportCount: last7,
           prior7ReportCount: prior7,
@@ -427,7 +434,7 @@ export default function App() {
       : {
           pin,
           city: cityLabel,
-          area: location?.area || '',
+          area: location?.area || trackSummary?.area || '',
           agency: 'Check with local agency',
           avg_days: avgDays ?? '—',
           reportCount,

@@ -5,6 +5,7 @@
 --   2026-03-20_verified-track-signals.sql
 --   2026-03-20_track-signal-propagation-columns.sql
 --   2026-03-20_track-trust-ladder-and-neighbor-graph.sql
+--   2026-03-20_pin-profiles-normalization.sql
 --
 -- Rebuild strategy:
 --   1. Refresh contributor trust profiles and nearby-pin edges first.
@@ -19,43 +20,20 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+  PERFORM public.refresh_pin_profiles();
   PERFORM public.refresh_pin_contributor_profiles();
   PERFORM public.refresh_pin_neighbor_edges();
 
   WITH base_pins AS (
     SELECT
-      pin_rows.pin,
-      LEFT(pin_rows.pin, 3) AS pin_prefix3,
-      MAX(pin_rows.city) FILTER (WHERE pin_rows.city IS NOT NULL AND pin_rows.city <> '') AS city,
-      MAX(pin_rows.state) FILTER (WHERE pin_rows.state IS NOT NULL AND pin_rows.state <> '') AS state,
-      MAX(pin_rows.avg_days) AS avg_days
-    FROM (
-      SELECT pd.pin, pd.city, pd.state, pd.avg_days
-      FROM public.pin_data pd
-      UNION ALL
-      SELECT DISTINCT
-        r.pin,
-        NULLIF(r.city, '') AS city,
-        pd.state,
-        NULL::NUMERIC AS avg_days
-      FROM public.reports r
-      LEFT JOIN public.pin_data pd
-        ON pd.pin = r.pin
-      WHERE r.pin ~ '^[0-9]{6}$'
-        AND r.is_hidden IS NOT TRUE
-      UNION ALL
-      SELECT DISTINCT
-        pus.pin,
-        NULLIF(pus.city, '') AS city,
-        COALESCE(NULLIF(pus.state, ''), pd.state) AS state,
-        NULL::NUMERIC AS avg_days
-      FROM public.pin_user_signals pus
-      LEFT JOIN public.pin_data pd
-        ON pd.pin = pus.pin
-      WHERE pus.pin ~ '^[0-9]{6}$'
-        AND pus.active = true
-    ) AS pin_rows
-    GROUP BY pin_rows.pin
+      pp.pin,
+      pp.pin_prefix3,
+      pp.canonical_city AS city,
+      pp.canonical_state AS state,
+      pd.avg_days
+    FROM public.pin_profiles pp
+    LEFT JOIN public.pin_data pd
+      ON pd.pin = pp.pin
   ),
   active_signals AS (
     SELECT
@@ -321,38 +299,14 @@ BEGIN
 
   WITH base_pins AS (
     SELECT
-      pin_rows.pin,
-      LEFT(pin_rows.pin, 3) AS pin_prefix3,
-      MAX(pin_rows.city) FILTER (WHERE pin_rows.city IS NOT NULL AND pin_rows.city <> '') AS city,
-      MAX(pin_rows.state) FILTER (WHERE pin_rows.state IS NOT NULL AND pin_rows.state <> '') AS state,
-      MAX(pin_rows.avg_days) AS avg_days
-    FROM (
-      SELECT pd.pin, pd.city, pd.state, pd.avg_days
-      FROM public.pin_data pd
-      UNION ALL
-      SELECT DISTINCT
-        r.pin,
-        NULLIF(r.city, '') AS city,
-        pd.state,
-        NULL::NUMERIC AS avg_days
-      FROM public.reports r
-      LEFT JOIN public.pin_data pd
-        ON pd.pin = r.pin
-      WHERE r.pin ~ '^[0-9]{6}$'
-        AND r.is_hidden IS NOT TRUE
-      UNION ALL
-      SELECT DISTINCT
-        pus.pin,
-        NULLIF(pus.city, '') AS city,
-        COALESCE(NULLIF(pus.state, ''), pd.state) AS state,
-        NULL::NUMERIC AS avg_days
-      FROM public.pin_user_signals pus
-      LEFT JOIN public.pin_data pd
-        ON pd.pin = pus.pin
-      WHERE pus.pin ~ '^[0-9]{6}$'
-        AND pus.active = true
-    ) AS pin_rows
-    GROUP BY pin_rows.pin
+      pp.pin,
+      pp.pin_prefix3,
+      pp.canonical_city AS city,
+      pp.canonical_state AS state,
+      pd.avg_days
+    FROM public.pin_profiles pp
+    LEFT JOIN public.pin_data pd
+      ON pd.pin = pp.pin
   ),
   active_signals AS (
     SELECT
@@ -685,4 +639,4 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.refresh_track_confidence_snapshots IS
-  'Rebuilds pin_delivery_confidence and pin_supply_pressure from reports, trust-scored user signals, and weighted nearby-pin edges.';
+  'Rebuilds pin_delivery_confidence and pin_supply_pressure from normalized pin profiles, reports, trust-scored user signals, and weighted nearby-pin edges.';

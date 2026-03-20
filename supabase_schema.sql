@@ -114,6 +114,36 @@ CREATE POLICY "Authenticated users can insert own track signals"
 CREATE POLICY "Authenticated users can read own track signals"
   ON pin_user_signals FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
+-- 3e. Canonical PIN profiles
+--     Normalized city/state/area for all-India Track reads.
+CREATE TABLE IF NOT EXISTS pin_profiles (
+  pin                 TEXT PRIMARY KEY,
+  pin_prefix3         TEXT GENERATED ALWAYS AS (left(pin, 3)) STORED,
+  canonical_city      TEXT,
+  canonical_state     TEXT,
+  canonical_area      TEXT,
+  city_source         TEXT DEFAULT 'unknown',
+  state_source        TEXT DEFAULT 'unknown',
+  area_source         TEXT DEFAULT 'unknown',
+  profile_confidence  TEXT DEFAULT 'low',
+  last_report_at      TIMESTAMPTZ,
+  last_signal_at      TIMESTAMPTZ,
+  updated_at          TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT pin_profiles_pin_check
+    CHECK (pin ~ '^[0-9]{6}$'),
+  CONSTRAINT pin_profiles_city_source_check
+    CHECK (city_source IN ('seed', 'report', 'signal', 'prefix_seed', 'unknown')),
+  CONSTRAINT pin_profiles_state_source_check
+    CHECK (state_source IN ('seed', 'report', 'signal', 'prefix_seed', 'unknown')),
+  CONSTRAINT pin_profiles_area_source_check
+    CHECK (area_source IN ('seed', 'report', 'signal', 'derived', 'unknown')),
+  CONSTRAINT pin_profiles_confidence_check
+    CHECK (profile_confidence IN ('low', 'medium', 'high'))
+);
+
+ALTER TABLE pin_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read pin profiles" ON pin_profiles FOR SELECT USING (true);
+
 CREATE OR REPLACE FUNCTION public.enforce_pin_user_signal_guardrails()
 RETURNS TRIGGER
 LANGUAGE plpgsql

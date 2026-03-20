@@ -40,7 +40,9 @@ BEGIN
   END IF;
 END $$;
 
-CREATE OR REPLACE VIEW public.pin_track_summary_v1 AS
+DROP VIEW IF EXISTS public.pin_track_summary_v1;
+
+CREATE VIEW public.pin_track_summary_v1 AS
 SELECT
   pd.pin,
   COALESCE(pdc.city, pd.city) AS city,

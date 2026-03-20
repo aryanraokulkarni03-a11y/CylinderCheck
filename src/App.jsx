@@ -17,6 +17,7 @@ import {
   CITY_STATE_LABELS,
   LPG_PRODUCT_TYPES,
   addDays,
+  buildCommunityInsight,
   buildDeliveryEstimate,
   buildDeliveryEstimateFromSnapshot,
   buildSupplyPressure,
@@ -413,6 +414,10 @@ export default function App() {
       trackSummary?.distributor_verification_status === 'verified'
         ? trackSummary?.distributor_name
         : null
+    const communityInsight = buildCommunityInsight({
+      signals: verifiedSignals || [],
+      snapshot: trackSummary,
+    })
 
     const cityLabel = location
       ? formatTrackLocationLabel(location.city, location.state)
@@ -427,10 +432,11 @@ export default function App() {
           reportCount,
           last7ReportCount: last7,
           prior7ReportCount: prior7,
-          deliveryEstimate,
-          supplyPressure,
-          verifiedAgencyLabel: verifiedDistributorLabel,
-        }
+            deliveryEstimate,
+            supplyPressure,
+            communityInsight,
+            verifiedAgencyLabel: verifiedDistributorLabel,
+          }
       : {
           pin,
           city: cityLabel,
@@ -442,6 +448,7 @@ export default function App() {
           prior7ReportCount: prior7,
           deliveryEstimate,
           supplyPressure,
+          communityInsight,
           verifiedAgencyLabel: verifiedDistributorLabel,
         }
 

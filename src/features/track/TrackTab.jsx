@@ -129,6 +129,7 @@ export function TrackTab({
 
   const deliveryEstimate = pinData?.deliveryEstimate || null
   const supplyPressure = pinData?.supplyPressure || null
+  const communityInsight = pinData?.communityInsight || null
   const pressure = pressurePill(supplyPressure)
   const hasSignalDraft =
     !!signalDeliveryDays || !!signalPressureLevel || signalNote.trim().length > 0
@@ -487,6 +488,27 @@ export function TrackTab({
                         </span>
                       </div>
                     )}
+
+                    {communityInsight ? (
+                      <div className="track-signal-row">
+                        <div className="track-signal-row__copy">
+                          <span className="type-meta">Community signals</span>
+                          <p className="type-note mt-2 mb-0">
+                            {communityInsight.note}
+                          </p>
+                          {communityInsight.quote ? (
+                            <p className="type-note mt-2 mb-0 italic text-[var(--text-secondary)]">
+                              {communityInsight.quote}
+                            </p>
+                          ) : null}
+                        </div>
+                        <span className="track-signal-row__value">
+                          <span className="track-signal-row__summary">
+                            {communityInsight.summary}
+                          </span>
+                        </span>
+                      </div>
+                    ) : null}
 
                     {pinData?.verifiedAgencyLabel ? (
                       <div className="track-signal-row">

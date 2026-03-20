@@ -224,6 +224,23 @@ function pluralize(count, singular, plural = `${singular}s`) {
   return count === 1 ? singular : plural
 }
 
+function relativeSignalAge(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  const time = date.getTime()
+  if (!Number.isFinite(time)) return ''
+
+  const diffMs = Math.max(0, Date.now() - time)
+  const diffHours = Math.round(diffMs / 3600000)
+  if (diffHours < 24) return `${Math.max(diffHours, 1)}h ago`
+
+  const diffDays = Math.round(diffMs / 86400000)
+  if (diffDays < 30) return `${Math.max(diffDays, 1)}d ago`
+
+  const diffWeeks = Math.round(diffDays / 7)
+  return `${Math.max(diffWeeks, 1)}w ago`
+}
+
 function freshnessCopy(status) {
   if (status === 'fresh') return 'updated recently'
   if (status === 'aging') return 'updated within the last month'
@@ -495,5 +512,53 @@ export function buildSupplyPressureFromSnapshot(snapshot) {
       : 'Recent delivery signals look steady and we have not seen local shortage reports.',
     status: 'clear',
     badgeLabel: 'Low pressure',
+  }
+}
+
+export function buildCommunityInsight({ signals = [], snapshot }) {
+  const deliveryExactCount = Number(snapshot?.delivery_exact_signal_count_30d) || 0
+  const deliveryNearbyCount = Number(snapshot?.delivery_nearby_signal_count_30d) || 0
+  const pressureExactCount = Number(snapshot?.pressure_exact_signal_count_30d) || 0
+  const pressureNearbyCount = Number(snapshot?.pressure_nearby_signal_count_30d) || 0
+
+  const exactCount = Math.max(deliveryExactCount, pressureExactCount, signals.length)
+  const nearbyCount = Math.max(deliveryNearbyCount, pressureNearbyCount)
+  const latestSignal = [...signals]
+    .filter((signal) => signal?.created_at)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+
+  if (exactCount === 0 && nearbyCount === 0) return null
+
+  if (exactCount > 0) {
+    const notes = signals
+      .map((signal) => String(signal?.note || '').trim())
+      .filter(Boolean)
+    const deliveryCount = signals.filter((signal) => Number.isFinite(Number(signal?.delivery_days))).length
+    const pressureCount = signals.filter((signal) => Boolean(signal?.pressure_level)).length
+
+    const fragments = []
+    if (deliveryCount > 0) {
+      fragments.push(`${deliveryCount} delivery ${pluralize(deliveryCount, 'signal')}`)
+    }
+    if (pressureCount > 0) {
+      fragments.push(`${pressureCount} supply ${pluralize(pressureCount, 'update')}`)
+    }
+    if (nearbyCount > 0) {
+      fragments.push(`${nearbyCount} nearby corroborating ${pluralize(nearbyCount, 'signal')}`)
+    }
+
+    return {
+      summary: `${exactCount} signed-in local ${pluralize(exactCount, 'signal')}`,
+      note: fragments.length
+        ? `We already blend ${fragments.join(', ')} into this PIN's planning read${latestSignal?.created_at ? `, most recently ${relativeSignalAge(latestSignal.created_at)}` : ''}.`
+        : `Signed-in local signals are already shaping this PIN's planning read${latestSignal?.created_at ? `, most recently ${relativeSignalAge(latestSignal.created_at)}` : ''}.`,
+      quote: notes[0] ? `"${notes[0]}"` : '',
+    }
+  }
+
+  return {
+    summary: `${nearbyCount} nearby corroborating ${pluralize(nearbyCount, 'signal')}`,
+    note: `Nearby signed-in signals are strengthening this PIN's delivery and supply model even though no exact-PIN community input has landed yet.`,
+    quote: '',
   }
 }

@@ -441,68 +441,6 @@ body::before {
   z-index: 1;
 }
 
-.commercial-hero__wash {
-  inset: -6% auto -12% -6%;
-  width: min(64%, 780px);
-  background:
-    radial-gradient(ellipse 68% 62% at 18% 24%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 74%),
-    radial-gradient(ellipse 52% 48% at 34% 18%, color-mix(in srgb, var(--k-terracotta) 18%, transparent), transparent 72%),
-    radial-gradient(ellipse 62% 54% at 28% 58%, color-mix(in srgb, var(--accent-soft) 10%, transparent), transparent 78%);
-  mask-image: linear-gradient(90deg, black 0%, black 54%, transparent 94%);
-  -webkit-mask-image: linear-gradient(90deg, black 0%, black 54%, transparent 94%);
-}
-
-.commercial-hero__glow {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(148px);
-  opacity: 0.28;
-  transform: translateZ(0);
-}
-
-.commercial-hero__glow--primary {
-  top: -160px;
-  left: -150px;
-  width: 560px;
-  height: 560px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 46%, transparent) 0%, transparent 68%);
-}
-
-.commercial-hero__glow--secondary {
-  top: -90px;
-  left: 14%;
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--k-terracotta) 30%, transparent) 0%, transparent 70%);
-}
-
-@media (max-width: 768px) {
-  .commercial-hero__wash {
-    inset: -10% auto -10% -10%;
-    width: min(100%, 420px);
-    background:
-      radial-gradient(ellipse 72% 62% at 14% 14%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 74%),
-      radial-gradient(ellipse 48% 42% at 44% 12%, color-mix(in srgb, var(--k-terracotta) 16%, transparent), transparent 68%),
-      radial-gradient(ellipse 64% 54% at 18% 44%, color-mix(in srgb, var(--accent-soft) 8%, transparent), transparent 78%);
-    mask-image: linear-gradient(180deg, black 0%, black 76%, transparent 100%);
-    -webkit-mask-image: linear-gradient(180deg, black 0%, black 76%, transparent 100%);
-  }
-
-  .commercial-hero__glow--primary {
-    top: -110px;
-    left: -120px;
-    width: 300px;
-    height: 300px;
-  }
-
-  .commercial-hero__glow--secondary {
-    top: -60px;
-    left: 24%;
-    width: 220px;
-    height: 220px;
-  }
-}
-
 @media (min-width: 768px) {
   .commercial-market-band__meta {
     flex-direction: row;

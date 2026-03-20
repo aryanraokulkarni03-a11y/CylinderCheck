@@ -23,11 +23,6 @@ export default function CommercialHero({ hasAnyVendors = null }) {
 
   return (
     <section className="commercial-hero relative pt-10 md:pt-16 pb-10 md:pb-14 w-full overflow-hidden">
-      <div className="commercial-hero__wash pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="commercial-hero__glow commercial-hero__glow--primary" />
-        <div className="commercial-hero__glow commercial-hero__glow--secondary" />
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 18 }}
         animate={{ opacity: 1, y: 0 }}

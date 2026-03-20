@@ -24,7 +24,6 @@ import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import { supabase } from '../../supabaseClient'
 
 const ARROW = '\u2192'
-const SIGNAL_PANEL_DISMISS_MS = 24 * 60 * 60 * 1000
 const SIGNAL_SUBMISSION_COOLDOWN_MS = 12 * 60 * 60 * 1000
 
 const CYLINDER_LEVELS = [
@@ -105,6 +104,7 @@ export function TrackTab({
   error,
   cylinderLevel,
   setCylinderLevel,
+  trackResultToken,
   handleTrack,
   resultRef,
   shortageSummary,
@@ -132,7 +132,6 @@ export function TrackTab({
   const pressure = pressurePill(supplyPressure)
   const hasSignalDraft =
     !!signalDeliveryDays || !!signalPressureLevel || signalNote.trim().length > 0
-  const signalDismissKey = pinData?.pin ? `cc-track-signal-dismissed:${pinData.pin}` : ''
 
   const canSubmitSignal =
     !!user &&
@@ -141,51 +140,6 @@ export function TrackTab({
       (signalDeliveryDays && Number(signalDeliveryDays) >= 1 && Number(signalDeliveryDays) <= 30) ||
       !!signalPressureLevel
     )
-
-  const wasSignalPanelDismissedRecently = (dismissKey) => {
-    if (!dismissKey || typeof window === 'undefined') return false
-
-    try {
-      const rawValue = window.localStorage.getItem(dismissKey)
-      if (!rawValue) return false
-
-      const parsed = JSON.parse(rawValue)
-      const dismissedAt = Number(parsed?.dismissedAt)
-      if (!Number.isFinite(dismissedAt)) return false
-
-      if (Date.now() - dismissedAt > SIGNAL_PANEL_DISMISS_MS) {
-        window.localStorage.removeItem(dismissKey)
-        return false
-      }
-
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  const rememberSignalPanelDismiss = (dismissKey) => {
-    if (!dismissKey || typeof window === 'undefined') return
-
-    try {
-      window.localStorage.setItem(
-        dismissKey,
-        JSON.stringify({ dismissedAt: Date.now() }),
-      )
-    } catch {
-      // Ignore storage issues.
-    }
-  }
-
-  const clearSignalPanelDismiss = (dismissKey) => {
-    if (!dismissKey || typeof window === 'undefined') return
-
-    try {
-      window.localStorage.removeItem(dismissKey)
-    } catch {
-      // Ignore storage issues.
-    }
-  }
 
   const clearPendingSignalPanelEntry = () => {
     if (panelEntryTimeoutRef.current) {
@@ -197,20 +151,13 @@ export function TrackTab({
   useEffect(() => {
     clearPendingSignalPanelEntry()
 
-    if (!pinData?.pin) return
+    if (!pinData?.pin || !trackResultToken) return
 
     if (skipNextPanelAutoOpenRef.current) {
       skipNextPanelAutoOpenRef.current = false
       setSignalPanelOpen(false)
       setSignalPanelInteracted(false)
       setSignalPanelMode('closed')
-      return
-    }
-
-    if (wasSignalPanelDismissedRecently(signalDismissKey)) {
-      setSignalPanelOpen(false)
-      setSignalPanelMode('closed')
-      setSignalPanelInteracted(false)
       return
     }
 
@@ -225,7 +172,7 @@ export function TrackTab({
     setSignalPanelInteracted(false)
 
     return () => clearPendingSignalPanelEntry()
-  }, [pinData, signalDismissKey])
+  }, [pinData?.pin, trackResultToken])
 
   useEffect(() => {
     if (!pinData?.pin || !signalPanelOpen || signalPanelInteracted || signalPanelMode !== 'passive') {
@@ -237,28 +184,27 @@ export function TrackTab({
     }, floatingAssistMotion.passiveVisibleMs)
 
     return () => window.clearTimeout(timeoutId)
-  }, [pinData?.pin, signalPanelOpen, signalPanelInteracted, signalPanelMode, signalDismissKey])
+  }, [pinData?.pin, signalPanelOpen, signalPanelInteracted, signalPanelMode])
 
   useEffect(() => {
     if (!signalPanelOpen) return undefined
 
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
-        closeSignalPanel({ remember: true })
+        closeSignalPanel()
       }
     }
 
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [signalPanelOpen, signalDismissKey])
+  }, [signalPanelOpen])
 
   const markSignalInteraction = () => {
     if (!signalPanelInteracted) setSignalPanelInteracted(true)
   }
 
-  const closeSignalPanel = ({ remember = false } = {}) => {
+  const closeSignalPanel = () => {
     clearPendingSignalPanelEntry()
-    if (remember) rememberSignalPanelDismiss(signalDismissKey)
     setSignalPanelOpen(false)
     setSignalPanelInteracted(false)
     setSignalPanelMode('closed')
@@ -266,7 +212,6 @@ export function TrackTab({
 
   const openSignalPanel = (mode = 'manual') => {
     clearPendingSignalPanelEntry()
-    clearSignalPanelDismiss(signalDismissKey)
     setSignalPanelOpen(true)
     setSignalPanelMode(mode)
     setSignalPanelInteracted(mode === 'manual' ? hasSignalDraft : false)
@@ -344,7 +289,6 @@ export function TrackTab({
     setSignalNote('')
     setSignalState({ ok: 'Verified signal saved for this PIN.', error: '' })
     skipNextPanelAutoOpenRef.current = true
-    clearSignalPanelDismiss(signalDismissKey)
     setSignalPanelOpen(false)
     setSignalPanelInteracted(false)
     setSignalPanelMode('closed')
@@ -586,7 +530,7 @@ export function TrackTab({
                               type="button"
                               className="track-contribute-dismiss"
                               aria-label="Close local signal panel"
-                              onClick={() => closeSignalPanel({ remember: true })}
+                              onClick={closeSignalPanel}
                             >
                               <X size={18} />
                             </button>

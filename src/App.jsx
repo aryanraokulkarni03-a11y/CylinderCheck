@@ -96,6 +96,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [cylinderLevel, setCylinderLevel] = useState(null)
+  const [trackResultToken, setTrackResultToken] = useState(0)
   const resultRef = useRef(null)
 
   // Prices + national summary (used on Track tab)
@@ -449,6 +450,7 @@ export default function App() {
     }
 
     setPinData(builtPinData)
+    setTrackResultToken((token) => token + 1)
 
     if (lastBooking) {
       const nw = addDays(new Date(lastBooking), 25)
@@ -532,6 +534,7 @@ export default function App() {
     error,
     cylinderLevel,
     setCylinderLevel,
+    trackResultToken,
     handleTrack,
     resultRef,
     shortageSummary,

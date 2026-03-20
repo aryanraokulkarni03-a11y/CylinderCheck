@@ -214,9 +214,6 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
       <div id="commercial-vendors" className="mt-8 md:mt-10 w-full">
         <PageHeader
           as="h2"
-          markerStatus="active"
-          markerLabel="Commercial Alternatives"
-          markerShowStatus={false}
           icon={Store}
           title="Private suppliers"
           description="Choose your state to see listings as they go live. If your state is empty today, join the list and we will notify you."
@@ -232,6 +229,7 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
           productType={productType}
           ariaLabel="Commercial LPG prices ticker"
           className="commercial-market-band__ticker"
+          edgeFadeClassName="commercial-market-band__ticker-edge"
         />
         <div className="commercial-market-band__meta">
           <div className="commercial-market-band__details">
@@ -240,14 +238,10 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
                 ? `Lowest tracked 19kg refill today: ${RUPEE}${lowestCommercial.price} in ${lowestCommercial.city}${lowestCommercial.state ? `, ${lowestCommercial.state}` : ''}`
                 : `${LPG_PRODUCT_LABELS[productType]} prices will appear here after the next trusted scrape.`}
             </p>
-            {lowestInActiveState ? (
-              <p className="kicker commercial-market-band__state-note">
-                In {activeState}: {lowestInActiveState.city} {RUPEE}
-                {lowestInActiveState.price}
-              </p>
-            ) : null}
             <p className="kicker commercial-market-band__trust">
-              Tracked from published city LPG rates. Confirm final dealer quote before ordering.
+              {lowestInActiveState
+                ? `In ${activeState}: ${lowestInActiveState.city} ${RUPEE}${lowestInActiveState.price}. Confirm final dealer quote before ordering.`
+                : 'Tracked from published city LPG rates. Confirm final dealer quote before ordering.'}
             </p>
           </div>
           {pricesFreshness.label ? (

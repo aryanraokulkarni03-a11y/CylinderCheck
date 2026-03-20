@@ -16,6 +16,7 @@ export function PriceTicker({
   ariaLabel = 'LPG prices ticker',
   className = '',
   mobileBehavior = 'marquee',
+  edgeFadeClassName = '',
 }) {
   const prefersReduced = useReducedMotion()
   const duration = prefersReduced ? 60 : 24
@@ -95,12 +96,8 @@ export function PriceTicker({
       aria-label={ariaLabel}
     >
       {/* Edge fade masks */}
-      <div className="absolute left-0 top-0 w-8 h-full z-10
-                      bg-gradient-to-r from-[var(--bg-inset)] to-transparent
-                      pointer-events-none" />
-      <div className="absolute right-0 top-0 w-8 h-full z-10
-                      bg-gradient-to-l from-[var(--bg-inset)] to-transparent
-                      pointer-events-none" />
+      <div className={`price-ticker__edge price-ticker__edge--left ${edgeFadeClassName}`.trim()} />
+      <div className={`price-ticker__edge price-ticker__edge--right ${edgeFadeClassName}`.trim()} />
 
       <motion.div
         className="flex whitespace-nowrap"

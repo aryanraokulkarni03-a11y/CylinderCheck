@@ -527,7 +527,15 @@ export function buildCommunityInsight({ signals = [], snapshot }) {
     .filter((signal) => signal?.created_at)
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
 
-  if (exactCount === 0 && nearbyCount === 0) return null
+  if (exactCount === 0 && nearbyCount === 0) {
+    return {
+      summary: 'First local signal',
+      note: 'This PIN still needs its first signed-in local read.',
+      quote: '',
+      isEmpty: true,
+      ctaLabel: 'Add the first signal',
+    }
+  }
 
   if (exactCount > 0) {
     const notes = signals
@@ -553,6 +561,8 @@ export function buildCommunityInsight({ signals = [], snapshot }) {
         ? `We already blend ${fragments.join(', ')} into this PIN's planning read${latestSignal?.created_at ? `, most recently ${relativeSignalAge(latestSignal.created_at)}` : ''}.`
         : `Signed-in local signals are already shaping this PIN's planning read${latestSignal?.created_at ? `, most recently ${relativeSignalAge(latestSignal.created_at)}` : ''}.`,
       quote: notes[0] ? `"${notes[0]}"` : '',
+      isEmpty: false,
+      ctaLabel: '',
     }
   }
 
@@ -560,5 +570,7 @@ export function buildCommunityInsight({ signals = [], snapshot }) {
     summary: `${nearbyCount} nearby corroborating ${pluralize(nearbyCount, 'signal')}`,
     note: `Nearby signed-in signals are strengthening this PIN's delivery and supply model even though no exact-PIN community input has landed yet.`,
     quote: '',
+    isEmpty: false,
+    ctaLabel: '',
   }
 }

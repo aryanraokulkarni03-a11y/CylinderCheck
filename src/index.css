@@ -2479,6 +2479,37 @@ body::before {
   max-width: 24ch;
 }
 
+.track-signal-row__inline-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.track-signal-row__inline-action:hover {
+  color: color-mix(in srgb, var(--accent) 82%, var(--text-primary));
+}
+
+.track-signal-row__inline-action:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
 .track-contribute-panel {
   position: relative;
   overflow: hidden;

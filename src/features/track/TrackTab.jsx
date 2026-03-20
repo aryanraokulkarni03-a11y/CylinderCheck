@@ -496,6 +496,15 @@ export function TrackTab({
                           <p className="type-note mt-2 mb-0">
                             {communityInsight.note}
                           </p>
+                          {communityInsight.isEmpty ? (
+                            <button
+                              type="button"
+                              className="track-signal-row__inline-action mt-3"
+                              onClick={() => openSignalPanel('manual')}
+                            >
+                              {communityInsight.ctaLabel}
+                            </button>
+                          ) : null}
                           {communityInsight.quote ? (
                             <p className="type-note mt-2 mb-0 italic text-[var(--text-secondary)]">
                               {communityInsight.quote}

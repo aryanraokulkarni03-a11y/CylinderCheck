@@ -249,6 +249,8 @@ export function buildDeliveryEstimateFromSnapshot(snapshot) {
     const note =
       sourceScope === 'nearby'
         ? `Based on ${Math.max(nearbySignalCount, sampleSize)} nearby verified delivery ${pluralize(Math.max(nearbySignalCount, sampleSize), 'signal')} and ${freshness}.`
+        : sourceScope === 'local' && exactSignalCount > 0 && nearbySignalCount > 0
+          ? `Based on local delivery reports, ${exactSignalCount} exact-PIN ${pluralize(exactSignalCount, 'signal')}, nearby corroboration, and ${freshness}.`
         : exactSignalCount > 0
           ? `Based on local delivery reports, ${exactSignalCount} verified ${pluralize(exactSignalCount, 'signal')}, and ${freshness}.`
           : sampleSize > 0
@@ -449,6 +451,8 @@ export function buildSupplyPressureFromSnapshot(snapshot) {
       label: 'Severe',
       note: sourceScope === 'nearby'
         ? `Nearby verified signals suggest strong supply strain${trend === 'rising' ? ' and rising pressure' : ''} around this PIN cluster.`
+        : sourceScope === 'mixed'
+          ? `Local reports and nearby corroboration both point to strong supply strain${trend === 'rising' ? ' and rising pressure' : ''} around this PIN.`
         : `Recent local reports${exactSignalCount > 0 ? ` and ${exactSignalCount} verified ${pluralize(exactSignalCount, 'signal')}` : ''} are elevated${trend === 'rising' ? ' and still rising' : ''} around this PIN.`,
       status: 'severe',
       badgeLabel: 'Severe pressure',
@@ -461,6 +465,8 @@ export function buildSupplyPressureFromSnapshot(snapshot) {
       label: 'Active',
       note: sourceScope === 'nearby'
         ? `Nearby verified signals suggest supply pressure is active around this PIN cluster${trend === 'rising' ? ' and getting stronger' : ''}.`
+        : sourceScope === 'mixed'
+          ? `Local reports and nearby corroboration suggest supply pressure is active around this PIN${trend === 'rising' ? ' and getting stronger' : ''}.`
         : `Recent local reports${exactSignalCount > 0 ? ` and ${exactSignalCount} verified ${pluralize(exactSignalCount, 'signal')}` : ''} suggest supply pressure is active around this PIN${trend === 'rising' ? ' and getting stronger' : ''}.`,
       status: 'active',
       badgeLabel: 'Active pressure',
@@ -473,6 +479,8 @@ export function buildSupplyPressureFromSnapshot(snapshot) {
       label: 'Building',
       note: sourceScope === 'nearby'
         ? `Nearby verified signals${nearbySignalCount > 0 ? ` from ${nearbySignalCount} similar ${pluralize(nearbySignalCount, 'PIN')}` : ''} suggest pressure may be building around this PIN.`
+        : sourceScope === 'mixed'
+          ? `Light local strain and nearby corroboration suggest pressure may be building around this PIN.`
         : `There are early local pressure signals${last7 > 0 ? ` from ${last7} recent ${pluralize(last7, 'report')}` : exactSignalCount > 0 ? ` from ${exactSignalCount} verified ${pluralize(exactSignalCount, 'signal')}` : ''}, so it is worth checking before you book.`,
       status: 'early',
       badgeLabel: 'Building',

@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS pin_user_signals (
   user_id         UUID NOT NULL,
   user_email      TEXT,
   trust_tier      TEXT DEFAULT 'signed_in_user',
-  source_weight   NUMERIC(4,2) DEFAULT 1.00,
+  source_weight   NUMERIC(4,2) DEFAULT 0.55,
   delivery_days   INT,
   pressure_level  TEXT,
   note            TEXT,
@@ -142,6 +142,57 @@ CREATE TRIGGER pin_user_signals_guardrails_before_insert
   BEFORE INSERT ON public.pin_user_signals
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_pin_user_signal_guardrails();
+
+-- 3c. Contributor trust profiles for Track signals
+CREATE TABLE IF NOT EXISTS pin_contributor_profiles (
+  user_id                   UUID PRIMARY KEY,
+  home_pin                  TEXT,
+  home_city                 TEXT,
+  home_state                TEXT,
+  manual_verification_tier  TEXT DEFAULT 'none',
+  trust_tier                TEXT DEFAULT 'signed_in_user',
+  source_weight             NUMERIC(4,2) DEFAULT 0.55,
+  reputation_score          INT DEFAULT 0,
+  signal_count_90d          INT DEFAULT 0,
+  corroborated_count_90d    INT DEFAULT 0,
+  distinct_pin_count_90d    INT DEFAULT 0,
+  last_signal_at            TIMESTAMPTZ,
+  created_at                TIMESTAMPTZ DEFAULT NOW(),
+  updated_at                TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT pin_contributor_profiles_home_pin_check
+    CHECK (home_pin IS NULL OR home_pin ~ '^[0-9]{6}$'),
+  CONSTRAINT pin_contributor_profiles_manual_tier_check
+    CHECK (manual_verification_tier IN ('none', 'trusted_contributor', 'verified_local_contributor')),
+  CONSTRAINT pin_contributor_profiles_trust_tier_check
+    CHECK (trust_tier IN ('signed_in_user', 'repeat_local_contributor', 'trusted_contributor', 'verified_local_contributor'))
+);
+
+ALTER TABLE pin_contributor_profiles ENABLE ROW LEVEL SECURITY;
+
+-- 3d. Nearby-PIN graph for safer propagation
+CREATE TABLE IF NOT EXISTS pin_neighbor_edges (
+  pin            TEXT NOT NULL,
+  nearby_pin     TEXT NOT NULL,
+  relation_type  TEXT NOT NULL,
+  edge_weight    NUMERIC(4,2) NOT NULL,
+  city           TEXT,
+  state          TEXT,
+  active         BOOLEAN DEFAULT true,
+  created_at     TIMESTAMPTZ DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (pin, nearby_pin),
+  CONSTRAINT pin_neighbor_edges_pin_check
+    CHECK (pin ~ '^[0-9]{6}$' AND nearby_pin ~ '^[0-9]{6}$'),
+  CONSTRAINT pin_neighbor_edges_relation_check
+    CHECK (relation_type IN ('same_area_cluster', 'same_subcluster', 'same_city', 'same_prefix3')),
+  CONSTRAINT pin_neighbor_edges_weight_check
+    CHECK (edge_weight > 0 AND edge_weight <= 1),
+  CONSTRAINT pin_neighbor_edges_no_self_check
+    CHECK (pin <> nearby_pin)
+);
+
+ALTER TABLE pin_neighbor_edges ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read pin neighbor edges" ON pin_neighbor_edges FOR SELECT USING (true);
 
 -- 4. LPG Prices table
 CREATE TABLE IF NOT EXISTS lpg_prices (

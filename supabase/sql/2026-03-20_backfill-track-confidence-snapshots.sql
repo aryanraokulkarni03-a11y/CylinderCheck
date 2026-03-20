@@ -4,13 +4,13 @@
 --   2026-03-20_track-confidence-and-distributor-model.sql
 --   2026-03-20_verified-track-signals.sql
 --   2026-03-20_track-signal-propagation-columns.sql
+--   2026-03-20_track-trust-ladder-and-neighbor-graph.sql
 --
 -- Rebuild strategy:
---   1. Prefer exact-PIN reports and verified user delivery signals.
---   2. Fall back to nearby verified delivery signals inside the same
---      3-digit prefix cluster when direct delivery evidence is thin.
---   3. Blend same-PIN reports, exact verified pressure signals, and
---      lower-weight nearby verified pressure signals for pressure.
+--   1. Refresh contributor trust profiles and nearby-pin edges first.
+--   2. Prefer exact-PIN reports and exact trusted signals.
+--   3. Use neighbor edges instead of blunt prefix-only spillover.
+--   4. Expand beyond seeded pin_data whenever reports/signals exist.
 -- ============================================
 
 CREATE OR REPLACE FUNCTION public.refresh_track_confidence_snapshots()
@@ -19,35 +19,96 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+  PERFORM public.refresh_pin_contributor_profiles();
+  PERFORM public.refresh_pin_neighbor_edges();
+
   WITH base_pins AS (
     SELECT
-      pd.pin,
-      LEFT(pd.pin, 3) AS pin_prefix3,
-      pd.city,
-      pd.state,
-      pd.avg_days
-    FROM public.pin_data pd
+      pin_rows.pin,
+      LEFT(pin_rows.pin, 3) AS pin_prefix3,
+      MAX(pin_rows.city) FILTER (WHERE pin_rows.city IS NOT NULL AND pin_rows.city <> '') AS city,
+      MAX(pin_rows.state) FILTER (WHERE pin_rows.state IS NOT NULL AND pin_rows.state <> '') AS state,
+      MAX(pin_rows.avg_days) AS avg_days
+    FROM (
+      SELECT pd.pin, pd.city, pd.state, pd.avg_days
+      FROM public.pin_data pd
+      UNION ALL
+      SELECT DISTINCT
+        r.pin,
+        NULLIF(r.city, '') AS city,
+        pd.state,
+        NULL::NUMERIC AS avg_days
+      FROM public.reports r
+      LEFT JOIN public.pin_data pd
+        ON pd.pin = r.pin
+      WHERE r.pin ~ '^[0-9]{6}$'
+        AND r.is_hidden IS NOT TRUE
+      UNION ALL
+      SELECT DISTINCT
+        pus.pin,
+        NULLIF(pus.city, '') AS city,
+        COALESCE(NULLIF(pus.state, ''), pd.state) AS state,
+        NULL::NUMERIC AS avg_days
+      FROM public.pin_user_signals pus
+      LEFT JOIN public.pin_data pd
+        ON pd.pin = pus.pin
+      WHERE pus.pin ~ '^[0-9]{6}$'
+        AND pus.active = true
+    ) AS pin_rows
+    GROUP BY pin_rows.pin
   ),
   active_signals AS (
     SELECT
       pus.pin,
-      pus.pin_prefix3,
       pus.city,
       pus.state,
       pus.delivery_days,
       pus.pressure_level,
-      pus.created_at
+      pus.created_at,
+      pus.trust_tier,
+      pus.source_weight,
+      CASE
+        WHEN pus.created_at >= NOW() - INTERVAL '7 days' THEN 1.00
+        WHEN pus.created_at >= NOW() - INTERVAL '14 days' THEN 0.85
+        WHEN pus.created_at >= NOW() - INTERVAL '21 days' THEN 0.72
+        ELSE 0.58
+      END::NUMERIC(4,2) AS age_weight,
+      ROUND(
+        pus.source_weight * CASE
+          WHEN pus.created_at >= NOW() - INTERVAL '7 days' THEN 1.00
+          WHEN pus.created_at >= NOW() - INTERVAL '14 days' THEN 0.85
+          WHEN pus.created_at >= NOW() - INTERVAL '21 days' THEN 0.72
+          ELSE 0.58
+        END,
+        2
+      )::NUMERIC(4,2) AS effective_weight
     FROM public.pin_user_signals pus
     WHERE pus.active = true
       AND pus.expires_at > NOW()
       AND pus.created_at >= NOW() - INTERVAL '30 days'
   ),
+  exact_signal_counts AS (
+    SELECT
+      b.pin,
+      COUNT(*) FILTER (
+        WHERE s.delivery_days IS NOT NULL
+          AND s.effective_weight >= 0.55
+      ) AS delivery_signal_count_30d,
+      COUNT(*) FILTER (
+        WHERE s.pressure_level IS NOT NULL
+          AND s.effective_weight >= 0.55
+      ) AS pressure_signal_count_30d
+    FROM base_pins b
+    LEFT JOIN active_signals s
+      ON s.pin = b.pin
+    GROUP BY b.pin
+  ),
   local_delivery_values AS (
     SELECT
       b.pin AS base_pin,
-      COALESCE(r.city, b.city) AS city,
+      COALESCE(NULLIF(r.city, ''), b.city) AS city,
       b.state AS state,
-      r.delivery_days AS delivery_days,
+      r.delivery_days::NUMERIC(6,2) AS delivery_days,
       r.created_at AS observed_at
     FROM base_pins b
     JOIN public.reports r
@@ -58,14 +119,15 @@ BEGIN
     UNION ALL
     SELECT
       b.pin AS base_pin,
-      COALESCE(s.city, b.city) AS city,
-      COALESCE(s.state, b.state) AS state,
-      s.delivery_days,
-      s.created_at
+      COALESCE(NULLIF(s.city, ''), b.city) AS city,
+      COALESCE(NULLIF(s.state, ''), b.state) AS state,
+      s.delivery_days::NUMERIC(6,2) AS delivery_days,
+      s.created_at AS observed_at
     FROM base_pins b
     JOIN active_signals s
       ON s.pin = b.pin
      AND s.delivery_days IS NOT NULL
+     AND s.effective_weight >= 0.55
   ),
   local_delivery_stats AS (
     SELECT
@@ -81,26 +143,19 @@ BEGIN
     FROM local_delivery_values
     GROUP BY base_pin
   ),
-  exact_signal_counts AS (
-    SELECT
-      b.pin,
-      COUNT(*) FILTER (WHERE s.delivery_days IS NOT NULL) AS delivery_signal_count_30d,
-      COUNT(*) FILTER (WHERE s.pressure_level IS NOT NULL) AS pressure_signal_count_30d
-    FROM base_pins b
-    LEFT JOIN active_signals s
-      ON s.pin = b.pin
-    GROUP BY b.pin
-  ),
   nearby_delivery_values AS (
     SELECT
       b.pin AS base_pin,
-      s.delivery_days,
+      s.delivery_days::NUMERIC(6,2) AS delivery_days,
       s.created_at AS observed_at
     FROM base_pins b
+    JOIN public.pin_neighbor_edges pne
+      ON pne.pin = b.pin
+     AND pne.active = true
     JOIN active_signals s
-      ON s.pin_prefix3 = b.pin_prefix3
-     AND s.pin <> b.pin
+      ON s.pin = pne.nearby_pin
      AND s.delivery_days IS NOT NULL
+     AND (s.effective_weight * pne.edge_weight) >= 0.42
   ),
   nearby_delivery_stats AS (
     SELECT
@@ -138,15 +193,16 @@ BEGIN
     SELECT
       b.pin,
       COUNT(*) FILTER (WHERE s.pressure_level IS NOT NULL) AS signal_count_30d,
-      COALESCE(SUM(
+      COUNT(DISTINCT s.pressure_level) FILTER (WHERE s.pressure_level IS NOT NULL) AS distinct_level_count,
+      ROUND(COALESCE(SUM(
         CASE s.pressure_level
           WHEN 'severe' THEN 20
           WHEN 'active' THEN 14
           WHEN 'building' THEN 8
           WHEN 'low' THEN 2
           ELSE 0
-        END
-      ), 0)::INT AS pressure_score
+        END * s.effective_weight
+      ), 0))::INT AS pressure_score
     FROM base_pins b
     LEFT JOIN active_signals s
       ON s.pin = b.pin
@@ -156,6 +212,7 @@ BEGIN
     SELECT
       b.pin,
       COUNT(*) FILTER (WHERE s.pressure_level IS NOT NULL) AS signal_count_30d,
+      COUNT(DISTINCT s.pressure_level) FILTER (WHERE s.pressure_level IS NOT NULL) AS distinct_level_count,
       ROUND(COALESCE(SUM(
         CASE s.pressure_level
           WHEN 'severe' THEN 20
@@ -163,15 +220,18 @@ BEGIN
           WHEN 'building' THEN 8
           WHEN 'low' THEN 2
           ELSE 0
-        END
-      ), 0) * 0.45)::INT AS pressure_score
+        END * s.effective_weight * pne.edge_weight
+      ), 0))::INT AS pressure_score
     FROM base_pins b
+    LEFT JOIN public.pin_neighbor_edges pne
+      ON pne.pin = b.pin
+     AND pne.active = true
     LEFT JOIN active_signals s
-      ON s.pin_prefix3 = b.pin_prefix3
-     AND s.pin <> b.pin
+      ON s.pin = pne.nearby_pin
+     AND s.pressure_level IS NOT NULL
+     AND (s.effective_weight * pne.edge_weight) >= 0.32
     GROUP BY b.pin
   )
-  -- Delivery confidence snapshot
   INSERT INTO public.pin_delivery_confidence (
     pin,
     city,
@@ -259,25 +319,56 @@ BEGIN
     last_observed_at = EXCLUDED.last_observed_at,
     updated_at = EXCLUDED.updated_at;
 
-  -- Supply pressure snapshot
   WITH base_pins AS (
     SELECT
-      pd.pin,
-      LEFT(pd.pin, 3) AS pin_prefix3,
-      pd.city,
-      pd.state,
-      pd.avg_days
-    FROM public.pin_data pd
+      pin_rows.pin,
+      LEFT(pin_rows.pin, 3) AS pin_prefix3,
+      MAX(pin_rows.city) FILTER (WHERE pin_rows.city IS NOT NULL AND pin_rows.city <> '') AS city,
+      MAX(pin_rows.state) FILTER (WHERE pin_rows.state IS NOT NULL AND pin_rows.state <> '') AS state,
+      MAX(pin_rows.avg_days) AS avg_days
+    FROM (
+      SELECT pd.pin, pd.city, pd.state, pd.avg_days
+      FROM public.pin_data pd
+      UNION ALL
+      SELECT DISTINCT
+        r.pin,
+        NULLIF(r.city, '') AS city,
+        pd.state,
+        NULL::NUMERIC AS avg_days
+      FROM public.reports r
+      LEFT JOIN public.pin_data pd
+        ON pd.pin = r.pin
+      WHERE r.pin ~ '^[0-9]{6}$'
+        AND r.is_hidden IS NOT TRUE
+      UNION ALL
+      SELECT DISTINCT
+        pus.pin,
+        NULLIF(pus.city, '') AS city,
+        COALESCE(NULLIF(pus.state, ''), pd.state) AS state,
+        NULL::NUMERIC AS avg_days
+      FROM public.pin_user_signals pus
+      LEFT JOIN public.pin_data pd
+        ON pd.pin = pus.pin
+      WHERE pus.pin ~ '^[0-9]{6}$'
+        AND pus.active = true
+    ) AS pin_rows
+    GROUP BY pin_rows.pin
   ),
   active_signals AS (
     SELECT
       pus.pin,
-      pus.pin_prefix3,
-      pus.city,
-      pus.state,
       pus.delivery_days,
       pus.pressure_level,
-      pus.created_at
+      pus.created_at,
+      ROUND(
+        pus.source_weight * CASE
+          WHEN pus.created_at >= NOW() - INTERVAL '7 days' THEN 1.00
+          WHEN pus.created_at >= NOW() - INTERVAL '14 days' THEN 0.85
+          WHEN pus.created_at >= NOW() - INTERVAL '21 days' THEN 0.72
+          ELSE 0.58
+        END,
+        2
+      )::NUMERIC(4,2) AS effective_weight
     FROM public.pin_user_signals pus
     WHERE pus.active = true
       AND pus.expires_at > NOW()
@@ -286,7 +377,7 @@ BEGIN
   local_delivery_values AS (
     SELECT
       b.pin AS base_pin,
-      r.delivery_days AS delivery_days,
+      r.delivery_days::NUMERIC(6,2) AS delivery_days,
       r.created_at AS observed_at
     FROM base_pins b
     JOIN public.reports r
@@ -297,12 +388,13 @@ BEGIN
     UNION ALL
     SELECT
       b.pin AS base_pin,
-      s.delivery_days,
-      s.created_at
+      s.delivery_days::NUMERIC(6,2) AS delivery_days,
+      s.created_at AS observed_at
     FROM base_pins b
     JOIN active_signals s
       ON s.pin = b.pin
      AND s.delivery_days IS NOT NULL
+     AND s.effective_weight >= 0.55
   ),
   local_delivery_stats AS (
     SELECT
@@ -315,13 +407,16 @@ BEGIN
   nearby_delivery_values AS (
     SELECT
       b.pin AS base_pin,
-      s.delivery_days,
+      s.delivery_days::NUMERIC(6,2) AS delivery_days,
       s.created_at AS observed_at
     FROM base_pins b
+    JOIN public.pin_neighbor_edges pne
+      ON pne.pin = b.pin
+     AND pne.active = true
     JOIN active_signals s
-      ON s.pin_prefix3 = b.pin_prefix3
-     AND s.pin <> b.pin
+      ON s.pin = pne.nearby_pin
      AND s.delivery_days IS NOT NULL
+     AND (s.effective_weight * pne.edge_weight) >= 0.42
   ),
   nearby_delivery_stats AS (
     SELECT
@@ -356,15 +451,16 @@ BEGIN
     SELECT
       b.pin,
       COUNT(*) FILTER (WHERE s.pressure_level IS NOT NULL) AS signal_count_30d,
-      COALESCE(SUM(
+      COUNT(DISTINCT s.pressure_level) FILTER (WHERE s.pressure_level IS NOT NULL) AS distinct_level_count,
+      ROUND(COALESCE(SUM(
         CASE s.pressure_level
           WHEN 'severe' THEN 20
           WHEN 'active' THEN 14
           WHEN 'building' THEN 8
           WHEN 'low' THEN 2
           ELSE 0
-        END
-      ), 0)::INT AS pressure_score
+        END * s.effective_weight
+      ), 0))::INT AS pressure_score
     FROM base_pins b
     LEFT JOIN active_signals s
       ON s.pin = b.pin
@@ -374,6 +470,7 @@ BEGIN
     SELECT
       b.pin,
       COUNT(*) FILTER (WHERE s.pressure_level IS NOT NULL) AS signal_count_30d,
+      COUNT(DISTINCT s.pressure_level) FILTER (WHERE s.pressure_level IS NOT NULL) AS distinct_level_count,
       ROUND(COALESCE(SUM(
         CASE s.pressure_level
           WHEN 'severe' THEN 20
@@ -381,12 +478,16 @@ BEGIN
           WHEN 'building' THEN 8
           WHEN 'low' THEN 2
           ELSE 0
-        END
-      ), 0) * 0.45)::INT AS pressure_score
+        END * s.effective_weight * pne.edge_weight
+      ), 0))::INT AS pressure_score
     FROM base_pins b
+    LEFT JOIN public.pin_neighbor_edges pne
+      ON pne.pin = b.pin
+     AND pne.active = true
     LEFT JOIN active_signals s
-      ON s.pin_prefix3 = b.pin_prefix3
-     AND s.pin <> b.pin
+      ON s.pin = pne.nearby_pin
+     AND s.pressure_level IS NOT NULL
+     AND (s.effective_weight * pne.edge_weight) >= 0.32
     GROUP BY b.pin
   )
   INSERT INTO public.pin_supply_pressure (
@@ -415,94 +516,130 @@ BEGIN
       WHEN COALESCE(rps.report_count_7d, 0) < COALESCE(rps.prior_7d_count, 0) THEN 'easing'
       ELSE 'steady'
     END AS trend_direction,
-    LEAST(
-      100,
-      (COALESCE(rps.report_count_7d, 0) * 16)
-      +
-      (GREATEST(COALESCE(rps.report_count_30d, 0) - COALESCE(rps.report_count_7d, 0), 0) * 6)
-      +
-      LEAST(COALESCE(eps.pressure_score, 0), 24)
-      +
-      LEAST(COALESCE(nps.pressure_score, 0), 12)
-      +
-      CASE
-        WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 10 THEN 12
-        WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 7 THEN 10
-        ELSE 0
-      END
-      +
-      CASE
-        WHEN COALESCE(rps.report_count_7d, 0) > COALESCE(rps.prior_7d_count, 0) + 1 THEN 12
-        ELSE 0
-      END
+    GREATEST(
+      0,
+      LEAST(
+        100,
+        (COALESCE(rps.report_count_7d, 0) * 16)
+        +
+        (GREATEST(COALESCE(rps.report_count_30d, 0) - COALESCE(rps.report_count_7d, 0), 0) * 6)
+        +
+        LEAST(COALESCE(eps.pressure_score, 0), 22)
+        +
+        LEAST(COALESCE(nps.pressure_score, 0), 10)
+        +
+        CASE
+          WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 10 THEN 12
+          WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 7 THEN 9
+          ELSE 0
+        END
+        +
+        CASE
+          WHEN COALESCE(rps.report_count_7d, 0) > COALESCE(rps.prior_7d_count, 0) + 1 THEN 10
+          ELSE 0
+        END
+        -
+        CASE
+          WHEN COALESCE(eps.distinct_level_count, 0) >= 3 THEN 8
+          WHEN COALESCE(nps.distinct_level_count, 0) >= 3 THEN 4
+          ELSE 0
+        END
+      )
     )::INT AS pressure_score,
     CASE
       WHEN COALESCE(rps.report_count_30d, 0) = 0
         AND COALESCE(eps.signal_count_30d, 0) = 0
         AND COALESCE(nps.signal_count_30d, 0) = 0
         AND COALESCE(lds.last_observed_at, nds.last_observed_at) IS NULL THEN 'limited'
-      WHEN LEAST(
-        100,
-        (COALESCE(rps.report_count_7d, 0) * 16)
-        +
-        (GREATEST(COALESCE(rps.report_count_30d, 0) - COALESCE(rps.report_count_7d, 0), 0) * 6)
-        +
-        LEAST(COALESCE(eps.pressure_score, 0), 24)
-        +
-        LEAST(COALESCE(nps.pressure_score, 0), 12)
-        +
-        CASE
-          WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 10 THEN 12
-          WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 7 THEN 10
-          ELSE 0
-        END
-        +
-        CASE
-          WHEN COALESCE(rps.report_count_7d, 0) > COALESCE(rps.prior_7d_count, 0) + 1 THEN 12
-          ELSE 0
-        END
+      WHEN GREATEST(
+        0,
+        LEAST(
+          100,
+          (COALESCE(rps.report_count_7d, 0) * 16)
+          +
+          (GREATEST(COALESCE(rps.report_count_30d, 0) - COALESCE(rps.report_count_7d, 0), 0) * 6)
+          +
+          LEAST(COALESCE(eps.pressure_score, 0), 22)
+          +
+          LEAST(COALESCE(nps.pressure_score, 0), 10)
+          +
+          CASE
+            WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 10 THEN 12
+            WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 7 THEN 9
+            ELSE 0
+          END
+          +
+          CASE
+            WHEN COALESCE(rps.report_count_7d, 0) > COALESCE(rps.prior_7d_count, 0) + 1 THEN 10
+            ELSE 0
+          END
+          -
+          CASE
+            WHEN COALESCE(eps.distinct_level_count, 0) >= 3 THEN 8
+            WHEN COALESCE(nps.distinct_level_count, 0) >= 3 THEN 4
+            ELSE 0
+          END
+        )
       ) >= 70 THEN 'severe'
-      WHEN LEAST(
-        100,
-        (COALESCE(rps.report_count_7d, 0) * 16)
-        +
-        (GREATEST(COALESCE(rps.report_count_30d, 0) - COALESCE(rps.report_count_7d, 0), 0) * 6)
-        +
-        LEAST(COALESCE(eps.pressure_score, 0), 24)
-        +
-        LEAST(COALESCE(nps.pressure_score, 0), 12)
-        +
-        CASE
-          WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 10 THEN 12
-          WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 7 THEN 10
-          ELSE 0
-        END
-        +
-        CASE
-          WHEN COALESCE(rps.report_count_7d, 0) > COALESCE(rps.prior_7d_count, 0) + 1 THEN 12
-          ELSE 0
-        END
+      WHEN GREATEST(
+        0,
+        LEAST(
+          100,
+          (COALESCE(rps.report_count_7d, 0) * 16)
+          +
+          (GREATEST(COALESCE(rps.report_count_30d, 0) - COALESCE(rps.report_count_7d, 0), 0) * 6)
+          +
+          LEAST(COALESCE(eps.pressure_score, 0), 22)
+          +
+          LEAST(COALESCE(nps.pressure_score, 0), 10)
+          +
+          CASE
+            WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 10 THEN 12
+            WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 7 THEN 9
+            ELSE 0
+          END
+          +
+          CASE
+            WHEN COALESCE(rps.report_count_7d, 0) > COALESCE(rps.prior_7d_count, 0) + 1 THEN 10
+            ELSE 0
+          END
+          -
+          CASE
+            WHEN COALESCE(eps.distinct_level_count, 0) >= 3 THEN 8
+            WHEN COALESCE(nps.distinct_level_count, 0) >= 3 THEN 4
+            ELSE 0
+          END
+        )
       ) >= 42 THEN 'active'
-      WHEN LEAST(
-        100,
-        (COALESCE(rps.report_count_7d, 0) * 16)
-        +
-        (GREATEST(COALESCE(rps.report_count_30d, 0) - COALESCE(rps.report_count_7d, 0), 0) * 6)
-        +
-        LEAST(COALESCE(eps.pressure_score, 0), 24)
-        +
-        LEAST(COALESCE(nps.pressure_score, 0), 12)
-        +
-        CASE
-          WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 10 THEN 12
-          WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 7 THEN 10
-          ELSE 0
-        END
-        +
-        CASE
-          WHEN COALESCE(rps.report_count_7d, 0) > COALESCE(rps.prior_7d_count, 0) + 1 THEN 12
-          ELSE 0
-        END
+      WHEN GREATEST(
+        0,
+        LEAST(
+          100,
+          (COALESCE(rps.report_count_7d, 0) * 16)
+          +
+          (GREATEST(COALESCE(rps.report_count_30d, 0) - COALESCE(rps.report_count_7d, 0), 0) * 6)
+          +
+          LEAST(COALESCE(eps.pressure_score, 0), 22)
+          +
+          LEAST(COALESCE(nps.pressure_score, 0), 10)
+          +
+          CASE
+            WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 10 THEN 12
+            WHEN COALESCE(lds.delivery_days_median, nds.delivery_days_median, b.avg_days) >= 7 THEN 9
+            ELSE 0
+          END
+          +
+          CASE
+            WHEN COALESCE(rps.report_count_7d, 0) > COALESCE(rps.prior_7d_count, 0) + 1 THEN 10
+            ELSE 0
+          END
+          -
+          CASE
+            WHEN COALESCE(eps.distinct_level_count, 0) >= 3 THEN 8
+            WHEN COALESCE(nps.distinct_level_count, 0) >= 3 THEN 4
+            ELSE 0
+          END
+        )
       ) >= 20 THEN 'building'
       ELSE 'low'
     END AS pressure_level,
@@ -548,4 +685,4 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.refresh_track_confidence_snapshots IS
-  'Rebuilds pin_delivery_confidence and pin_supply_pressure from reports, pin_data, and verified user signals with nearby prefix spillover.';
+  'Rebuilds pin_delivery_confidence and pin_supply_pressure from reports, trust-scored user signals, and weighted nearby-pin edges.';

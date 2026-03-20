@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.pin_user_signals (
   user_id         UUID NOT NULL,
   user_email      TEXT,
   trust_tier      TEXT NOT NULL DEFAULT 'signed_in_user',
-  source_weight   NUMERIC(4,2) NOT NULL DEFAULT 1.00,
+  source_weight   NUMERIC(4,2) NOT NULL DEFAULT 0.55,
   delivery_days   INT,
   pressure_level  TEXT,
   note            TEXT,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.pin_user_signals (
 
 ALTER TABLE public.pin_user_signals
   ADD COLUMN IF NOT EXISTS trust_tier TEXT NOT NULL DEFAULT 'signed_in_user',
-  ADD COLUMN IF NOT EXISTS source_weight NUMERIC(4,2) NOT NULL DEFAULT 1.00;
+  ADD COLUMN IF NOT EXISTS source_weight NUMERIC(4,2) NOT NULL DEFAULT 0.55;
 
 DO $$
 BEGIN

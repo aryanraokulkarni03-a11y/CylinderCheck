@@ -76,3 +76,22 @@ export const staggerRules = {
   list:    0.06,   // list items
   chars:   0.03,   // character-by-character text
 };
+
+export const floatingAssistMotion = {
+  passiveEntryDelayMs: 2500,
+  passiveVisibleMs: 10000,
+  panelEnter: { opacity: 0, y: 24, scale: 0.985 },
+  panelActive: { opacity: 1, y: 0, scale: 1 },
+  panelExit: { opacity: 0, y: 18, scale: 0.99 },
+  panelTransition: {
+    duration: timing.slow,
+    ease: easing.out,
+  },
+  collapsedEnter: { opacity: 0, y: 12 },
+  collapsedActive: { opacity: 1, y: 0 },
+  collapsedExit: { opacity: 0, y: 10 },
+  collapsedTransition: {
+    duration: timing.base,
+    ease: easing.out,
+  },
+}

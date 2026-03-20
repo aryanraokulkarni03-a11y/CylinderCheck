@@ -13,7 +13,7 @@ import { SlideUp } from '../../components/motion/SlideUp'
 import { KalamkariDivider } from '../../components/shared/KalamkariDivider'
 import { StatusDot } from '../../components/shared/StatusDot'
 import BookingDatePicker from './BookingDatePicker'
-import { easing, springs, timing } from '../../lib/springs'
+import { floatingAssistMotion, springs } from '../../lib/springs'
 import { addDays, fmt } from '../../lib/utils'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
@@ -26,8 +26,6 @@ import { supabase } from '../../supabaseClient'
 const ARROW = '\u2192'
 const SIGNAL_PANEL_DISMISS_MS = 24 * 60 * 60 * 1000
 const SIGNAL_SUBMISSION_COOLDOWN_MS = 12 * 60 * 60 * 1000
-const SIGNAL_PANEL_ENTRY_DELAY_MS = 1000
-const SIGNAL_PANEL_VISIBLE_MS = 10000
 
 const CYLINDER_LEVELS = [
   { value: 'full', label: 'Full', emoji: '\u{1F7E2}', hint: '> 75%' }, // green circle
@@ -221,7 +219,7 @@ export function TrackTab({
       setSignalPanelInteracted(false)
       setSignalPanelMode('passive')
       panelEntryTimeoutRef.current = null
-    }, SIGNAL_PANEL_ENTRY_DELAY_MS)
+    }, floatingAssistMotion.passiveEntryDelayMs)
 
     setSignalPanelOpen(false)
     setSignalPanelInteracted(false)
@@ -236,7 +234,7 @@ export function TrackTab({
 
     const timeoutId = window.setTimeout(() => {
       closeSignalPanel()
-    }, SIGNAL_PANEL_VISIBLE_MS)
+    }, floatingAssistMotion.passiveVisibleMs)
 
     return () => window.clearTimeout(timeoutId)
   }, [pinData?.pin, signalPanelOpen, signalPanelInteracted, signalPanelMode, signalDismissKey])
@@ -569,15 +567,13 @@ export function TrackTab({
                     <div key="signal-panel" className="track-contribute-float">
                       <motion.div
                         className="track-contribute-float__surface"
-                        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 26, scale: 0.985 }}
-                        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-                        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.99 }}
+                        initial={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.panelEnter}
+                        animate={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.panelActive}
+                        exit={shouldReduceMotion ? { opacity: 0 } : floatingAssistMotion.panelExit}
                         transition={
                           shouldReduceMotion
                             ? { duration: 0.01 }
-                            : signalPanelMode === 'passive'
-                              ? { duration: timing.slow, ease: easing.out }
-                              : { duration: timing.base, ease: easing.out }
+                            : floatingAssistMotion.panelTransition
                         }
                       >
                         <Card className="track-contribute-panel">
@@ -702,13 +698,13 @@ export function TrackTab({
                     <motion.div
                       key="signal-toggle"
                       className="track-contribute-toggle mb-4"
-                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
-                      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                      initial={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.collapsedEnter}
+                      animate={shouldReduceMotion ? { opacity: 1 } : floatingAssistMotion.collapsedActive}
+                      exit={shouldReduceMotion ? { opacity: 0 } : floatingAssistMotion.collapsedExit}
                       transition={
                         shouldReduceMotion
                           ? { duration: 0.01 }
-                          : { duration: timing.base, ease: easing.out }
+                          : floatingAssistMotion.collapsedTransition
                       }
                     >
                       <button

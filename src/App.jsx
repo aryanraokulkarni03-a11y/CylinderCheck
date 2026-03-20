@@ -345,6 +345,7 @@ export default function App() {
       { data: dbData },
       location,
       { data: recentReports },
+      { data: verifiedSignals },
       { data: rpcAvgData },
     ] = await Promise.all([
       supabase.from('pin_track_summary_v1').select('*').eq('pin', pin).maybeSingle(),
@@ -352,6 +353,11 @@ export default function App() {
       lookupPIN(pin),
       supabase.from('reports').select('id, created_at, delivery_days').eq('pin', pin)
         .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString()),
+      supabase.from('pin_user_signals')
+        .select('created_at, delivery_days, pressure_level')
+        .eq('pin', pin)
+        .eq('active', true)
+        .gt('expires_at', new Date().toISOString()),
       supabase.rpc('get_avg_delivery_days', { p_pin: pin }),
     ])
 
@@ -362,13 +368,18 @@ export default function App() {
       (r) => new Date(r.created_at) > new Date(Date.now() - 7 * 86400000)
     ).length
     const prior7 = reportCount - last7
+    const verifiedPressureSignals = (verifiedSignals || [])
+      .map((signal) => signal.pressure_level)
+      .filter(Boolean)
 
     const avgDays = typeof dbData?.avg_days === 'number'
       ? dbData.avg_days
       : (typeof rpcAvgData === 'number' ? rpcAvgData : null)
 
-    const deliverySignals = (recentReports || [])
-      .map((report) => report.delivery_days)
+    const deliverySignals = [
+      ...(recentReports || []).map((report) => report.delivery_days),
+      ...(verifiedSignals || []).map((signal) => signal.delivery_days),
+    ]
       .filter((value) => Number.isFinite(value))
 
     const deliveryEstimate =
@@ -385,6 +396,7 @@ export default function App() {
         last7,
         prior7,
         deliveryEstimate,
+        verifiedPressureSignals,
       })
 
     const verifiedDistributorLabel =
@@ -525,6 +537,9 @@ export default function App() {
     shortageSummary,
     mapPrices,
     pricesUpdatedAt,
+    user,
+    authLoading,
+    onGoogleSignIn: handleGoogleSignIn,
     onCommercialClick: () => navigate(TAB_ROUTES.commercial),
   }
 

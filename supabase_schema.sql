@@ -76,6 +76,40 @@ CREATE TABLE IF NOT EXISTS alert_subscriptions (
 ALTER TABLE alert_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public can insert subscription" ON alert_subscriptions FOR INSERT WITH CHECK (true);
 
+-- 3b. Verified Track signals
+--     Structured delivery / supply inputs from signed-in users.
+CREATE TABLE IF NOT EXISTS pin_user_signals (
+  id              BIGSERIAL PRIMARY KEY,
+  pin             TEXT NOT NULL,
+  pin_prefix3     TEXT GENERATED ALWAYS AS (left(pin, 3)) STORED,
+  city            TEXT,
+  state           TEXT,
+  area            TEXT,
+  user_id         UUID NOT NULL,
+  user_email      TEXT,
+  delivery_days   INT,
+  pressure_level  TEXT,
+  note            TEXT,
+  active          BOOLEAN DEFAULT true,
+  expires_at      TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '21 days'),
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT pin_user_signals_pin_check
+    CHECK (pin ~ '^[0-9]{6}$'),
+  CONSTRAINT pin_user_signals_delivery_days_check
+    CHECK (delivery_days IS NULL OR (delivery_days >= 1 AND delivery_days <= 30)),
+  CONSTRAINT pin_user_signals_pressure_check
+    CHECK (pressure_level IS NULL OR pressure_level IN ('low', 'building', 'active', 'severe')),
+  CONSTRAINT pin_user_signals_payload_check
+    CHECK (delivery_days IS NOT NULL OR pressure_level IS NOT NULL)
+);
+
+ALTER TABLE pin_user_signals ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users can insert own track signals"
+  ON pin_user_signals FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Authenticated users can read own track signals"
+  ON pin_user_signals FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
 -- 4. LPG Prices table
 CREATE TABLE IF NOT EXISTS lpg_prices (
   id          BIGSERIAL PRIMARY KEY,

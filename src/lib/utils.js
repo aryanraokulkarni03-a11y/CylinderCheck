@@ -234,6 +234,9 @@ export function buildDeliveryEstimateFromSnapshot(snapshot) {
   if (!snapshot) return null
 
   const sampleSize = Number(snapshot.sample_size_30d) || 0
+  const sourceScope = snapshot.delivery_source_scope || snapshot.source_scope || 'none'
+  const exactSignalCount = Number(snapshot.delivery_exact_signal_count_30d ?? snapshot.exact_signal_count_30d) || 0
+  const nearbySignalCount = Number(snapshot.delivery_nearby_signal_count_30d ?? snapshot.nearby_signal_count_30d) || 0
   const low = Number(snapshot.delivery_days_p25)
   const typical = Number(snapshot.delivery_days_median)
   const high = Number(snapshot.delivery_days_p75)
@@ -243,12 +246,18 @@ export function buildDeliveryEstimateFromSnapshot(snapshot) {
   if (Number.isFinite(low) && Number.isFinite(high) && Number.isFinite(typical)) {
     const lowDays = Math.max(1, Math.floor(low))
     const highDays = Math.max(lowDays, Math.ceil(high))
+    const note =
+      sourceScope === 'nearby'
+        ? `Based on ${Math.max(nearbySignalCount, sampleSize)} nearby verified delivery ${pluralize(Math.max(nearbySignalCount, sampleSize), 'signal')} and ${freshness}.`
+        : exactSignalCount > 0
+          ? `Based on local delivery reports, ${exactSignalCount} verified ${pluralize(exactSignalCount, 'signal')}, and ${freshness}.`
+          : sampleSize > 0
+            ? `Based on ${sampleSize} local delivery ${pluralize(sampleSize, 'report')} and ${freshness}.`
+            : `Based on local delivery evidence and ${freshness}.`
     return {
       kind: 'snapshot',
       summary: lowDays === highDays ? `About ${lowDays} ${pluralize(lowDays, 'day')}` : `Usually ${lowDays}-${highDays} days`,
-      note: sampleSize > 0
-        ? `Based on ${sampleSize} local delivery ${pluralize(sampleSize, 'report')} and ${freshness}.`
-        : `Based on local delivery evidence and ${freshness}.`,
+      note,
       bookingCopy:
         lowDays === highDays
           ? `a local delivery estimate of about ${lowDays} ${pluralize(lowDays, 'day')}`
@@ -336,11 +345,24 @@ export function buildDeliveryEstimate({ avgDays, deliverySignals = [] }) {
   }
 }
 
-export function buildSupplyPressure({ reportCount = 0, last7 = 0, prior7 = 0, deliveryEstimate }) {
+export function buildSupplyPressure({
+  reportCount = 0,
+  last7 = 0,
+  prior7 = 0,
+  deliveryEstimate,
+  verifiedPressureSignals = [],
+}) {
   const deliveryDays = Number(deliveryEstimate?.typicalDays) || 0
   const hasDeliverySignal = deliveryEstimate?.kind && deliveryEstimate.kind !== 'unknown'
+  const verifiedSignalScore = verifiedPressureSignals.reduce((total, level) => {
+    if (level === 'severe') return total + 20
+    if (level === 'active') return total + 14
+    if (level === 'building') return total + 8
+    if (level === 'low') return total + 2
+    return total
+  }, 0)
 
-  if (reportCount === 0 && !hasDeliverySignal) {
+  if (reportCount === 0 && !hasDeliverySignal && verifiedSignalScore === 0) {
     return {
       level: 'limited',
       label: 'Evidence still building',
@@ -352,6 +374,7 @@ export function buildSupplyPressure({ reportCount = 0, last7 = 0, prior7 = 0, de
 
   let score = Math.min(42, last7 * 16)
   score += Math.min(18, Math.max(0, reportCount - last7) * 6)
+  score += Math.min(20, verifiedSignalScore)
 
   if (last7 > prior7 + 1) score += 12
   if (deliveryDays >= 7) score += 10
@@ -406,6 +429,9 @@ export function buildSupplyPressureFromSnapshot(snapshot) {
   const last7 = Number(snapshot.report_count_7d) || 0
   const last30 = Number(snapshot.report_count_30d) || 0
   const trend = snapshot.trend_direction || 'steady'
+  const sourceScope = snapshot.pressure_source_scope || snapshot.source_scope || 'none'
+  const exactSignalCount = Number(snapshot.pressure_exact_signal_count_30d ?? snapshot.exact_signal_count_30d) || 0
+  const nearbySignalCount = Number(snapshot.pressure_nearby_signal_count_30d ?? snapshot.nearby_signal_count_30d) || 0
 
   if (level === 'limited') {
     return {
@@ -421,7 +447,9 @@ export function buildSupplyPressureFromSnapshot(snapshot) {
     return {
       level: 'severe',
       label: 'Severe',
-      note: `Recent local reports are elevated${trend === 'rising' ? ' and still rising' : ''} around this PIN.`,
+      note: sourceScope === 'nearby'
+        ? `Nearby verified signals suggest strong supply strain${trend === 'rising' ? ' and rising pressure' : ''} around this PIN cluster.`
+        : `Recent local reports${exactSignalCount > 0 ? ` and ${exactSignalCount} verified ${pluralize(exactSignalCount, 'signal')}` : ''} are elevated${trend === 'rising' ? ' and still rising' : ''} around this PIN.`,
       status: 'severe',
       badgeLabel: 'Severe pressure',
     }
@@ -431,7 +459,9 @@ export function buildSupplyPressureFromSnapshot(snapshot) {
     return {
       level: 'active',
       label: 'Active',
-      note: `Recent local reports suggest supply pressure is active around this PIN${trend === 'rising' ? ' and getting stronger' : ''}.`,
+      note: sourceScope === 'nearby'
+        ? `Nearby verified signals suggest supply pressure is active around this PIN cluster${trend === 'rising' ? ' and getting stronger' : ''}.`
+        : `Recent local reports${exactSignalCount > 0 ? ` and ${exactSignalCount} verified ${pluralize(exactSignalCount, 'signal')}` : ''} suggest supply pressure is active around this PIN${trend === 'rising' ? ' and getting stronger' : ''}.`,
       status: 'active',
       badgeLabel: 'Active pressure',
     }
@@ -441,7 +471,9 @@ export function buildSupplyPressureFromSnapshot(snapshot) {
     return {
       level: 'building',
       label: 'Building',
-      note: `There are early local pressure signals${last7 > 0 ? ` from ${last7} recent ${pluralize(last7, 'report')}` : ''}, so it is worth checking before you book.`,
+      note: sourceScope === 'nearby'
+        ? `Nearby verified signals${nearbySignalCount > 0 ? ` from ${nearbySignalCount} similar ${pluralize(nearbySignalCount, 'PIN')}` : ''} suggest pressure may be building around this PIN.`
+        : `There are early local pressure signals${last7 > 0 ? ` from ${last7} recent ${pluralize(last7, 'report')}` : exactSignalCount > 0 ? ` from ${exactSignalCount} verified ${pluralize(exactSignalCount, 'signal')}` : ''}, so it is worth checking before you book.`,
       status: 'early',
       badgeLabel: 'Building',
     }

@@ -3,6 +3,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { CalendarRange, Clock3, MapPin, Target } from 'lucide-react'
+import { useState } from 'react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { UrgencyScore } from './UrgencyScore'
 import { Ring } from '../../components/shared/Ring'
@@ -19,6 +20,8 @@ import { Field } from '../../components/ui/Field'
 import { Callout } from '../../components/ui/Callout'
 import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
+import { supabase } from '../../supabaseClient'
 
 const ARROW = '\u2192'
 
@@ -105,13 +108,75 @@ export function TrackTab({
   shortageSummary,
   mapPrices,
   pricesUpdatedAt,
+  user,
+  authLoading,
+  onGoogleSignIn,
   onCommercialClick,
 }) {
   const shouldReduceMotion = useReducedMotion()
+  const [signalDeliveryDays, setSignalDeliveryDays] = useState('')
+  const [signalPressureLevel, setSignalPressureLevel] = useState(null)
+  const [signalNote, setSignalNote] = useState('')
+  const [signalSubmitting, setSignalSubmitting] = useState(false)
+  const [signalState, setSignalState] = useState({ ok: '', error: '' })
 
   const deliveryEstimate = pinData?.deliveryEstimate || null
   const supplyPressure = pinData?.supplyPressure || null
   const pressure = pressurePill(supplyPressure)
+
+  const canSubmitSignal =
+    !!user &&
+    !!pinData?.pin &&
+    (
+      (signalDeliveryDays && Number(signalDeliveryDays) >= 1 && Number(signalDeliveryDays) <= 30) ||
+      !!signalPressureLevel
+    )
+
+  const handleSignalSubmit = async () => {
+    if (!user || !pinData?.pin) return
+
+    const deliveryDays = signalDeliveryDays ? Number.parseInt(signalDeliveryDays, 10) : null
+    if (signalDeliveryDays && (!Number.isFinite(deliveryDays) || deliveryDays < 1 || deliveryDays > 30)) {
+      setSignalState({ ok: '', error: 'Enter delivery days between 1 and 30.' })
+      return
+    }
+    if (!deliveryDays && !signalPressureLevel) {
+      setSignalState({ ok: '', error: 'Add delivery days, supply pressure, or both.' })
+      return
+    }
+
+    setSignalSubmitting(true)
+    setSignalState({ ok: '', error: '' })
+
+    const { error: insertError } = await supabase
+      .from('pin_user_signals')
+      .insert([
+        {
+          pin: pinData.pin,
+          city: pinData.city?.split(',')[0]?.trim() || null,
+          state: pinData.city?.split(',')[1]?.trim() || null,
+          area: pinData.area || null,
+          user_id: user.id,
+          user_email: user.email,
+          delivery_days: deliveryDays,
+          pressure_level: signalPressureLevel,
+          note: signalNote.trim() || null,
+        },
+      ])
+
+    setSignalSubmitting(false)
+
+    if (insertError) {
+      setSignalState({ ok: '', error: 'Could not save your verified signal right now.' })
+      return
+    }
+
+    setSignalDeliveryDays('')
+    setSignalPressureLevel(null)
+    setSignalNote('')
+    setSignalState({ ok: 'Verified signal saved for this PIN.', error: '' })
+    await handleTrack()
+  }
 
   return (
     <div className="page-root">
@@ -321,6 +386,102 @@ export function TrackTab({
                         </span>
                       </div>
                     ) : null}
+                  </CardBody>
+                </Card>
+
+                <Card className="mb-4">
+                  <CardHeader
+                    kicker="Verified user input"
+                    title="Help strengthen this area"
+                    titleAs="h2"
+                  >
+                    <p className="type-card-copy mt-3 mb-0">
+                      Verified inputs strengthen this PIN first and build a cleaner local planning signal over time. Add what you actually saw near this PIN.
+                    </p>
+                  </CardHeader>
+                  <CardBody className="stack-copy">
+                    {!authLoading && !user ? (
+                      <div className="stack-copy--tight">
+                        <p className="type-note m-0">
+                          Sign in to add a verified delivery or pressure signal.
+                        </p>
+                        <GoogleSignInButton
+                          className="w-full justify-center"
+                          onClick={() => onGoogleSignIn?.('/track')}
+                        >
+                          Sign in with Google
+                        </GoogleSignInButton>
+                      </div>
+                    ) : (
+                      <>
+                        <Field id="track-signal-delivery" label="Delivery days" meta="Optional">
+                          <input
+                            id="track-signal-delivery"
+                            className="input"
+                            placeholder="e.g. 5"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={signalDeliveryDays}
+                            onChange={(e) => setSignalDeliveryDays(e.target.value.replace(/\D/g, ''))}
+                          />
+                        </Field>
+
+                        <div className="field">
+                          <div className="field__top">
+                            <div className="field__label">Supply pressure</div>
+                            <div className="field__meta">Optional</div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            {[
+                              ['low', 'Low'],
+                              ['building', 'Building'],
+                              ['active', 'Active'],
+                              ['severe', 'Severe'],
+                            ].map(([value, label]) => (
+                              <button
+                                key={value}
+                                type="button"
+                                className={`chip transition-colors ${
+                                  signalPressureLevel === value
+                                    ? 'border-[var(--accent)] bg-[color:color-mix(in_srgb,var(--accent)_12%,var(--bg-raised))] text-[var(--accent)] shadow-[0_10px_28px_rgba(241,139,31,0.14)]'
+                                    : ''
+                                }`}
+                                aria-pressed={signalPressureLevel === value}
+                                onClick={() => setSignalPressureLevel((prev) => (prev === value ? null : value))}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <Field id="track-signal-note" label="Short note" meta="Optional">
+                          <textarea
+                            id="track-signal-note"
+                            className="input resize-y"
+                            style={{ minHeight: 96 }}
+                            placeholder="e.g. Refill took 6 days and agency said stock was slow this week."
+                            value={signalNote}
+                            onChange={(e) => setSignalNote(e.target.value)}
+                          />
+                        </Field>
+
+                        {signalState.error ? (
+                          <p className="type-note text-[var(--status-severe)] m-0">{signalState.error}</p>
+                        ) : null}
+                        {signalState.ok ? (
+                          <p className="type-note text-[var(--status-clear)] m-0">{signalState.ok}</p>
+                        ) : null}
+
+                        <LiquidGlassBtn
+                          className="w-full justify-center"
+                          onClick={handleSignalSubmit}
+                          disabled={!canSubmitSignal || signalSubmitting}
+                        >
+                          {signalSubmitting ? 'Saving...' : 'Save verified signal'}
+                        </LiquidGlassBtn>
+                      </>
+                    )}
                   </CardBody>
                 </Card>
 

@@ -66,7 +66,7 @@ BEGIN
       WHEN COUNT(*) FILTER (
         WHERE r.delivery_days IS NOT NULL
           AND r.created_at >= NOW() - INTERVAL '30 days'
-      ) >= 1 OR pd.avg_days IS NOT NULL THEN 'low'
+      ) >= 1 THEN 'low'
       ELSE 'limited'
     END AS confidence_level,
     CASE

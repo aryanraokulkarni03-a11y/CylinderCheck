@@ -562,7 +562,7 @@ export function buildCommunityInsight({ signals = [], snapshot }) {
         : `Signed-in local signals are already shaping this PIN's planning read${latestSignal?.created_at ? `, most recently ${relativeSignalAge(latestSignal.created_at)}` : ''}.`,
       quote: notes[0] ? `"${notes[0]}"` : '',
       isEmpty: false,
-      ctaLabel: '',
+      ctaLabel: 'Add your signal',
     }
   }
 
@@ -571,6 +571,6 @@ export function buildCommunityInsight({ signals = [], snapshot }) {
     note: `Nearby signed-in signals are strengthening this PIN's delivery and supply model even though no exact-PIN community input has landed yet.`,
     quote: '',
     isEmpty: false,
-    ctaLabel: '',
+    ctaLabel: 'Add your signal',
   }
 }

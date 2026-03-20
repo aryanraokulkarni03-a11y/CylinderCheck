@@ -496,7 +496,7 @@ export function TrackTab({
                           <p className="type-note mt-2 mb-0">
                             {communityInsight.note}
                           </p>
-                          {communityInsight.isEmpty ? (
+                          {communityInsight.ctaLabel ? (
                             <button
                               type="button"
                               className="track-signal-row__inline-action mt-3"
@@ -672,62 +672,6 @@ export function TrackTab({
                       </div>
                     ) : null}
                   </AnimatePresence>
-
-                  <motion.div
-                    layout="position"
-                    className="track-contribute-toggle"
-                    aria-hidden={signalPanelOpen}
-                    initial={false}
-                    animate={
-                      shouldReduceMotion
-                        ? { opacity: signalPanelOpen ? 0 : 1 }
-                        : signalPanelOpen
-                          ? floatingAssistMotion.collapsedDormant
-                          : floatingAssistMotion.collapsedActive
-                    }
-                    transition={
-                      shouldReduceMotion
-                        ? { duration: 0.01 }
-                        : floatingAssistMotion.collapsedTransition
-                    }
-                    style={{ pointerEvents: signalPanelOpen ? 'none' : 'auto' }}
-                  >
-                    <button
-                      type="button"
-                      className="track-contribute-toggle__hit"
-                      aria-expanded="false"
-                      tabIndex={signalPanelOpen ? -1 : 0}
-                      onClick={() => openSignalPanel('manual')}
-                    >
-                      <span className="track-contribute-toggle__icon" aria-hidden="true">
-                        <Target size={16} />
-                      </span>
-                      <span className="track-contribute-toggle__copy">
-                        <span className="track-contribute-toggle__eyebrow">
-                          {!user ? 'Google sign-in' : 'Community input'}
-                        </span>
-                        <span className="track-contribute-toggle__title">
-                          {!user ? 'Sign in to add a local signal' : 'Add a local signal'}
-                        </span>
-                        <span className="track-contribute-toggle__note">
-                          {signalState.ok || (!user
-                            ? 'Use Google sign-in to share a trusted local delivery or supply signal.'
-                            : 'Help sharpen delivery and supply pressure around this PIN.')}
-                        </span>
-                      </span>
-                    </button>
-                    {!user && !authLoading ? (
-                      <div className="track-contribute-toggle__actions">
-                        <GoogleSignInButton
-                          className="w-full justify-center"
-                          onClick={() => onGoogleSignIn?.('/track')}
-                          tabIndex={signalPanelOpen ? -1 : 0}
-                        >
-                          Sign in with Google
-                        </GoogleSignInButton>
-                      </div>
-                    ) : null}
-                  </motion.div>
                 </div>
 
                 {pinData.urgencyScore !== undefined && (

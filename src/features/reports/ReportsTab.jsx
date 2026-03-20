@@ -8,7 +8,8 @@ import EmptyState from '../../components/shared/EmptyState'
 import { AlertCircle, ArrowUp, Edit2, Loader2, MessageSquare, Send, Trash2 } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { FadeIn } from '../../components/motion/FadeIn'
-import { springs } from '../../lib/springs'
+import { springs, staggerRules } from '../../lib/springs'
+import { fadeUp, staggerContainer } from '../../lib/animations'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Field } from '../../components/ui/Field'
 import { Callout } from '../../components/ui/Callout'
@@ -454,7 +455,12 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
             <EmptyState title="No reports yet" description="No one has reported an issue here yet." />
           ) : (
             <FadeIn delay={0.08}>
-              <List>
+              <List
+                as={motion.div}
+                initial={shouldReduceMotion ? false : 'hidden'}
+                animate={shouldReduceMotion ? undefined : 'visible'}
+                variants={shouldReduceMotion ? undefined : staggerContainer(staggerRules.cards)}
+              >
                 {reports.map((r) => {
                   const area = displayArea(r)
                   const company = r.company ? companyMeta.get(r.company) : null
@@ -464,10 +470,13 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                   return (
                     <ListRow
                       key={r.id}
-                      as="article"
+                      as={motion.article}
                       className="reports-row"
                       status={rowStatus}
                       interactive={true}
+                      initial={shouldReduceMotion ? false : 'hidden'}
+                      animate={shouldReduceMotion ? undefined : 'visible'}
+                      variants={shouldReduceMotion ? undefined : fadeUp}
                       style={{ contentVisibility: 'auto' }}
                       badges={
                         <>
@@ -488,7 +497,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                       }
                       meta={fmtDate(r.created_at)}
                       title={
-                        <h3 className="type-list-title m-0">
+                        <h3 className="type-list-title reports-row__title-text m-0">
                           {area || `PIN ${r.pin}`}
                         </h3>
                       }
@@ -545,7 +554,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                           </div>
                         </div>
                       ) : (
-                        <p className="type-card-copy whitespace-pre-wrap mb-0">
+                        <p className="type-card-copy reports-row__body-copy whitespace-pre-wrap mb-0">
                           {r.issue}
                         </p>
                       )}

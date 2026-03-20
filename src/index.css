@@ -2037,10 +2037,28 @@ body::before {
 
 .reports-row .list-row__top {
   margin-bottom: 12px;
+  gap: var(--space-3);
 }
 
 .reports-row .list-row__body {
   margin-top: 14px;
+}
+
+.reports-row .list-row__meta {
+  color: var(--text-secondary);
+}
+
+.reports-row__title-text {
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.reports-row__body-copy {
+  max-width: 56ch;
+  color: var(--text-secondary);
+  line-height: 1.62;
+  text-wrap: pretty;
 }
 
 .reports-row.row--interactive:hover {
@@ -2055,13 +2073,29 @@ body::before {
 }
 
 .reports-row__footer {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
   margin-top: var(--space-4);
   padding-top: var(--space-4);
-  border-top: 1px solid var(--divider);
+}
+
+.reports-row__footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--divider) 0%, transparent),
+    color-mix(in srgb, var(--divider) 92%, transparent) 16%,
+    color-mix(in srgb, var(--divider) 92%, transparent) 84%,
+    color-mix(in srgb, var(--divider) 0%, transparent)
+  );
 }
 
 .reports-row__vote {
@@ -2790,6 +2824,10 @@ body::before {
     padding-inline: 16px;
   }
 
+  .reports-row {
+    padding: calc(var(--space-4) + 2px);
+  }
+
   .support-grid > .card,
   .support-faq > .card {
     height: 100%;
@@ -2823,6 +2861,10 @@ body::before {
 
   .reports-row__footer {
     align-items: flex-start;
+  }
+
+  .reports-row {
+    padding: var(--space-4);
   }
 
   .reports-row__vote-copy {

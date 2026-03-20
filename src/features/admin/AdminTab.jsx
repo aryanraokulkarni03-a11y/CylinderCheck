@@ -90,7 +90,7 @@ export default function AdminTab({ data, loading, onLock }) {
               <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
                 {loading ? EM_DASH : freeAlertCount}
               </div>
-              <div className="type-note mt-2">WhatsApp-first free reminder signups</div>
+              <div className="type-note mt-2">Email-first free reminder signups</div>
             </CardBody>
           </Card>
         </StaggerItem>
@@ -124,7 +124,7 @@ export default function AdminTab({ data, loading, onLock }) {
               <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
                 {loading ? EM_DASH : sentTodayCount}
               </div>
-              <div className="type-note mt-2">WhatsApp reminders delivered today</div>
+              <div className="type-note mt-2">Reminder emails sent today</div>
             </CardBody>
           </Card>
         </StaggerItem>

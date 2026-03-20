@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS alert_subscriptions (
   pin             TEXT,
   last_booking    DATE,
   alert_type      TEXT DEFAULT 'free',  -- free / plus / annual
-  channel         TEXT DEFAULT 'whatsapp',
+  channel         TEXT DEFAULT 'email',
   plan_code       TEXT DEFAULT 'free',
   delivery_status TEXT DEFAULT 'pending',
   next_send_at    TIMESTAMPTZ,

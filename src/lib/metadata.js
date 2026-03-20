@@ -169,9 +169,9 @@ export const ROUTE_METADATA = {
   },
   '/alerts': {
     path: '/alerts',
-    title: 'LPG Alerts | Free WhatsApp booking reminders',
+    title: 'LPG Alerts | Free email booking reminders',
     description:
-      'Save a free WhatsApp reminder 2 days before your next LPG booking date. Plus stays dark until delivery goes live reliably.',
+      'Save a free email reminder 2 days before your next LPG booking date. Plus stays dark until delivery goes live reliably.',
     indexable: true,
     schema: [
       webPageSchema({

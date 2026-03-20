@@ -31,4 +31,4 @@
 - landing page click-through rate
 - commercial page visits
 - supplier calls or messages generated
-- free WhatsApp reminder signups
+- free email reminder signups

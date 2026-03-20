@@ -1,7 +1,7 @@
 -- Alert delivery fields for free WhatsApp reminders
 
 ALTER TABLE public.alert_subscriptions
-  ADD COLUMN IF NOT EXISTS channel TEXT DEFAULT 'whatsapp',
+  ADD COLUMN IF NOT EXISTS channel TEXT DEFAULT 'email',
   ADD COLUMN IF NOT EXISTS plan_code TEXT DEFAULT 'free',
   ADD COLUMN IF NOT EXISTS delivery_status TEXT DEFAULT 'pending',
   ADD COLUMN IF NOT EXISTS next_send_at TIMESTAMPTZ,
@@ -11,7 +11,7 @@ ALTER TABLE public.alert_subscriptions
 
 UPDATE public.alert_subscriptions
 SET
-  channel = COALESCE(channel, 'whatsapp'),
+  channel = COALESCE(channel, 'email'),
   plan_code = COALESCE(plan_code, CASE WHEN alert_type = 'free' THEN 'free' ELSE 'plus' END),
   delivery_status = COALESCE(delivery_status, 'pending'),
   reminder_type = COALESCE(reminder_type, 'booking_d_minus_2');

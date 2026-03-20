@@ -29,6 +29,10 @@ Hi, I run CylinderCheck. We track LPG market prices and are building a simple su
 - City-level commercial LPG prices are already live on the site
 - The commercial page is now a browse-first supplier directory, not a waitlist
 
+## Reminder product note
+- Public reminders are email-first in v1
+- Paid Plus stays dark until reminder delivery is reliable
+
 ## Ask on the first call
 - Which Bangalore areas do you serve?
 - Do you currently supply 19kg commercial LPG?

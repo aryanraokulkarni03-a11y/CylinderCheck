@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   calculateNextSendAt,
-  formatBookingReminderMessage,
-  normalizeWhatsAppNumber,
+  formatBookingReminderEmail,
+  normalizeReminderEmail,
 } from "../_shared/alerts.ts";
 
 const CORS = {
@@ -12,40 +12,46 @@ const CORS = {
   "Content-Type": "application/json",
 };
 
-async function sendWhatsApp({
-  accessToken,
-  phoneNumberId,
+const RESEND_API_URL = "https://api.resend.com/emails";
+
+async function sendReminderEmail({
+  apiKey,
+  from,
+  replyTo,
   to,
-  body,
+  subject,
+  html,
+  text,
 }: {
-  accessToken: string;
-  phoneNumberId: string;
+  apiKey: string;
+  from: string;
+  replyTo: string;
   to: string;
-  body: string;
+  subject: string;
+  html: string;
+  text: string;
 }) {
-  const response = await fetch(
-    `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to,
-        type: "text",
-        text: {
-          preview_url: false,
-          body,
-        },
-      }),
+  const response = await fetch(RESEND_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      from,
+      to: [to],
+      reply_to: replyTo,
+      subject,
+      html,
+      text,
+    }),
+  });
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(payload?.error?.message || "WhatsApp send failed");
+    throw new Error(
+      payload?.message || payload?.error?.message || "Email send failed",
+    );
   }
 }
 
@@ -60,13 +66,14 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const accessToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN") ?? "";
-    const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") ?? "";
-    if (!accessToken || !phoneNumberId) {
+    const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
+    const resendFrom = Deno.env.get("RESEND_FROM_EMAIL") ?? "CylinderCheck <hello@cylindercheck.in>";
+    const replyTo = Deno.env.get("SUPPORT_REPLY_TO") ?? "xisch.co@gmail.com";
+    if (!resendApiKey) {
       return new Response(
         JSON.stringify({
           ok: false,
-          error: "WhatsApp Cloud API credentials are missing",
+          error: "Resend credentials are missing",
         }),
         { status: 500, headers: CORS },
       );
@@ -80,7 +87,7 @@ serve(async (req) => {
       .from("alert_subscriptions")
       .select("id, contact, last_booking, next_send_at, last_sent_at, delivery_status")
       .eq("active", true)
-      .eq("channel", "whatsapp")
+      .eq("channel", "email")
       .eq("plan_code", "free")
       .eq("reminder_type", "booking_d_minus_2")
       .or(`next_send_at.is.null,next_send_at.lte.${nowIso}`);
@@ -105,14 +112,14 @@ serve(async (req) => {
         continue;
       }
 
-      const to = normalizeWhatsAppNumber(subscription.contact);
+      const to = normalizeReminderEmail(subscription.contact);
       if (!to) {
         failed += 1;
         await supabase
           .from("alert_subscriptions")
           .update({
             delivery_status: "failed",
-            last_error: "Contact is not a valid WhatsApp number",
+            last_error: "Contact is not a valid email address",
             next_send_at: dueAt,
           })
           .eq("id", subscription.id);
@@ -120,11 +127,15 @@ serve(async (req) => {
       }
 
       try {
-        await sendWhatsApp({
-          accessToken,
-          phoneNumberId,
+        const email = formatBookingReminderEmail(subscription.last_booking);
+        await sendReminderEmail({
+          apiKey: resendApiKey,
+          from: resendFrom,
+          replyTo,
           to,
-          body: formatBookingReminderMessage(subscription.last_booking),
+          subject: email.subject,
+          html: email.html,
+          text: email.text,
         });
 
         sent += 1;

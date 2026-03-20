@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Bell, Loader2, MessageCircleMore } from 'lucide-react'
+import { Bell, Loader2, Mail } from 'lucide-react'
 
 import { supabase } from '../../supabaseClient'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -43,11 +43,8 @@ function computeReminderSendAt(lastBooking) {
   return booking.toISOString()
 }
 
-function normalizeWhatsAppContact(value) {
-  const digits = String(value || '').replace(/\D/g, '')
-  if (!digits) return ''
-  if (digits.length === 10) return `91${digits}`
-  return digits
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim())
 }
 
 export default function AlertsTab() {
@@ -62,15 +59,15 @@ export default function AlertsTab() {
   const canSubmit = useMemo(() => !!contact.trim() && !saving, [contact, saving])
 
   const handleFreeAlertSubmit = useCallback(async () => {
-    const normalizedContact = normalizeWhatsAppContact(contact)
+    const normalizedContact = contact.trim().toLowerCase()
 
     if (!normalizedContact) {
-      setError('Enter your WhatsApp number to continue.')
+      setError('Enter your email address to continue.')
       return
     }
 
-    if (normalizedContact.length < 12) {
-      setError('Enter a valid WhatsApp number with country code or a 10-digit Indian mobile number.')
+    if (!isValidEmail(normalizedContact)) {
+      setError('Enter a valid email address.')
       return
     }
 
@@ -91,7 +88,7 @@ export default function AlertsTab() {
         pin: alertPin || null,
         last_booking: alertDate || null,
         alert_type: 'free',
-        channel: 'whatsapp',
+        channel: 'email',
         plan_code: 'free',
         delivery_status: nextSendAt ? 'pending' : 'needs_booking_date',
         next_send_at: nextSendAt,
@@ -115,18 +112,18 @@ export default function AlertsTab() {
       <PageHeader
         icon={Bell}
         title="Alerts"
-        description="Save a free WhatsApp reminder 2 days before your next booking date. Plus stays dark until delivery goes live reliably."
+        description="Save a free email reminder 2 days before your next booking date. Plus stays dark until delivery goes live reliably."
       />
 
       <div className="page-grid-dual">
         <Card>
           <CardHeader
             kicker="Free reminder"
-            title="Get a free WhatsApp reminder"
+            title="Get a free email reminder"
             titleAs="h2"
           >
             <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
-              Add your last booking date and we&apos;ll queue a WhatsApp reminder 2 days before your next sensible booking date.
+              Add your last booking date and we&apos;ll queue an email reminder 2 days before your next sensible booking date.
             </p>
           </CardHeader>
 
@@ -154,10 +151,10 @@ export default function AlertsTab() {
             </div>
 
             <div className="mb-4">
-              <Field id="free-contact" label="WhatsApp number" required>
+              <Field id="free-contact" label="Email address" required>
                 <input
                   className="input"
-                  placeholder="98xxxxxxxx or 9198xxxxxxxx"
+                  placeholder="you@example.com"
                   value={contact}
                   onChange={(e) => {
                     setContact(e.target.value)
@@ -176,7 +173,7 @@ export default function AlertsTab() {
             {saved ? (
               <Callout tone="clear" className="mb-4" edge={false}>
                 <div className="type-note text-[var(--status-clear)] font-medium">
-                  Reminder saved. We&apos;ll send a WhatsApp reminder 2 days before your next booking date.
+                  Reminder saved. We&apos;ll send an email reminder 2 days before your next booking date.
                 </div>
               </Callout>
             ) : null}
@@ -200,7 +197,7 @@ export default function AlertsTab() {
             </button>
 
             <p className="type-note mt-4 mb-0">
-              WhatsApp delivery is the first live channel. Reply STOP anytime after delivery goes live.
+              Email is the first live channel. We&apos;ll add richer delivery options only after reminders are sending reliably.
             </p>
           </CardBody>
         </Card>
@@ -234,13 +231,13 @@ export default function AlertsTab() {
               ))}
             </div>
 
-            <Callout tone="accent" edge={false}>
+              <Callout tone="accent" edge={false}>
               <div className="flex items-start gap-3">
-                <MessageCircleMore size={18} className="mt-0.5 text-[var(--accent)]" />
+                <Mail size={18} className="mt-0.5 text-[var(--accent)]" />
                 <div>
                   <p className="type-card-title mb-1">Free alerts come first</p>
                   <p className="type-note mb-0">
-                    Once WhatsApp reminders are sending reliably, we can turn on a paid Plus plan with more notice and additional alert types.
+                    Once email reminders are sending reliably, we can turn on a paid Plus plan with more notice and additional alert types.
                   </p>
                 </div>
               </div>

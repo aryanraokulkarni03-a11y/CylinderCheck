@@ -67,6 +67,7 @@ export const easing = {
   in:     [0.4, 0, 1, 1],      // things disappearing
   bounce: [0.34, 1.2, 0.64, 1], // delightful moments
   data:   [0.25, 0.1, 0.25, 1], // count-up animations
+  float:  [0.16, 1, 0.3, 1],    // floating panels settling into place
 };
 
 export const staggerRules = {
@@ -78,20 +79,20 @@ export const staggerRules = {
 };
 
 export const floatingAssistMotion = {
-  passiveEntryDelayMs: 2500,
-  passiveVisibleMs: 10000,
-  panelEnter: { opacity: 0, y: 24, scale: 0.985 },
+  passiveEntryDelayMs: 5000,
+  passiveVisibleMs: 15000,
+  panelEnter: { opacity: 0, y: 18, scale: 0.992 },
   panelActive: { opacity: 1, y: 0, scale: 1 },
-  panelExit: { opacity: 0, y: 18, scale: 0.99 },
+  panelExit: { opacity: 0, y: 12, scale: 0.996 },
   panelTransition: {
-    duration: timing.slow,
-    ease: easing.out,
+    duration: 0.56,
+    ease: easing.float,
   },
-  collapsedEnter: { opacity: 0, y: 12 },
-  collapsedActive: { opacity: 1, y: 0 },
-  collapsedExit: { opacity: 0, y: 10 },
+  collapsedEnter: { opacity: 0, y: 10, scale: 0.992 },
+  collapsedActive: { opacity: 1, y: 0, scale: 1 },
+  collapsedExit: { opacity: 0, y: 8, scale: 0.996 },
   collapsedTransition: {
-    duration: timing.base,
-    ease: easing.out,
+    duration: 0.34,
+    ease: easing.float,
   },
 }

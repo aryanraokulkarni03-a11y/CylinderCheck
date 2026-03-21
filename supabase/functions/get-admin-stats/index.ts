@@ -18,6 +18,8 @@ serve(async (req) => {
     const expectedPassword = Deno.env.get("ADMIN_PASSWORD");
 
     if (!expectedPassword || admin_password !== expectedPassword) {
+      // Basic rate limit / brute-force mitigation
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: CORS }

@@ -154,6 +154,7 @@ export default function AlertsTab() {
               <Field id="free-contact" label="Email address" required>
                 <input
                   className="input"
+                  maxLength={255}
                   placeholder="you@example.com"
                   value={contact}
                   onChange={(e) => {

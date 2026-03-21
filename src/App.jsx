@@ -81,7 +81,6 @@ const CONTENT_ROUTES = {
 
 const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/functions/v1`
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
 const NOTIFY_TIMEOUT_MS = 4000
 
 function formatTrackLocationLabel(city, state) {
@@ -487,10 +486,6 @@ export default function App() {
   }, [logoClicks])
 
   const handleAdminUnlock = useCallback(async (password) => {
-    if (password !== ADMIN_PASSWORD) return false
-    setShowAdminPrompt(false)
-    setAdminUnlocked(true)
-    navigate(TAB_ROUTES.admin)
     setAdminLoading(true)
     try {
       const res = await fetch(`${SUPABASE_FUNC_URL}/get-admin-stats`, {
@@ -502,12 +497,19 @@ export default function App() {
         body: JSON.stringify({ admin_password: password }),
       })
       const data = await res.json()
-      if (data.ok) setAdminData(data)
+      if (res.ok && data.ok) {
+        setShowAdminPrompt(false)
+        setAdminUnlocked(true)
+        navigate(TAB_ROUTES.admin)
+        setAdminData(data)
+        setAdminLoading(false)
+        return true
+      }
     } catch {
       // silent
     }
     setAdminLoading(false)
-    return true
+    return false
   }, [navigate])
 
   const visibleTabs = adminUnlocked

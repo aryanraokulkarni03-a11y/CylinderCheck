@@ -46,7 +46,9 @@ CREATE TABLE IF NOT EXISTS reports (
   user_email    TEXT,            -- for admin reference
   delivery_days INT,             -- optional: how many days delivery took (1–30)
   is_hidden     BOOLEAN DEFAULT false,  -- admin soft-delete
-  company       TEXT             -- IndianOil / HP Gas / Bharat Gas (Task 8)
+  company       TEXT,            -- IndianOil / HP Gas / Bharat Gas (Task 8)
+  CONSTRAINT reports_issue_length CHECK (char_length(issue) <= 1000),
+  CONSTRAINT reports_city_length CHECK (char_length(city) <= 100)
 );
 
 -- Allow public read (exclude hidden) + auth insert
@@ -86,7 +88,8 @@ CREATE TABLE IF NOT EXISTS alert_subscriptions (
   last_error      TEXT,
   reminder_type   TEXT DEFAULT 'booking_d_minus_2',
   active          BOOLEAN DEFAULT true,
-  created_at      TIMESTAMPTZ DEFAULT NOW()
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT alert_subscriptions_contact_length CHECK (char_length(contact) <= 255)
 );
 
 -- Only the service role can read subscriptions (keep contacts private)
@@ -309,7 +312,9 @@ CREATE TABLE IF NOT EXISTS commercial_leads (
   need_type       TEXT NOT NULL,
   cylinders_week  INT,
   message         TEXT,
-  created_at      TIMESTAMPTZ DEFAULT NOW()
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT commercial_leads_business_name_length CHECK (char_length(business_name) <= 200),
+  CONSTRAINT commercial_leads_message_length CHECK (char_length(message) <= 2000)
 );
 
 ALTER TABLE commercial_leads ENABLE ROW LEVEL SECURITY;

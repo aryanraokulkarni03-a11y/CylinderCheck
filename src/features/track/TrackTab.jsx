@@ -639,6 +639,7 @@ export function TrackTab({
                                   <textarea
                                     id="track-signal-note"
                                     className="input resize-y"
+                                    maxLength={300}
                                     style={{ minHeight: 96 }}
                                     placeholder="e.g. Refill took 6 days and agency said stock was slow this week."
                                     value={signalNote}

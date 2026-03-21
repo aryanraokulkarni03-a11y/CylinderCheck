@@ -347,6 +347,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                 <Field id="report-area" label="Area / colony" meta="Optional">
                   <input
                     className="input"
+                    maxLength={100}
                     placeholder={`e.g. Vizag ${DOT} Gajuwaka`}
                     value={reportCity}
                     onChange={(e) => setReportCity(e.target.value)}
@@ -364,6 +365,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
                 <Field id="report-issue" label="What is happening?" required>
                   <textarea
                     className="input resize-y"
+                    maxLength={1000}
                     style={{ minHeight: 110 }}
                     placeholder={`e.g. No delivery in 12 days, driver demanding \u20B9100 extra\u2026`}
                     value={reportText}

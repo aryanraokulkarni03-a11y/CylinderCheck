@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Bell, Loader2, Mail } from 'lucide-react'
 
 import { supabase } from '../../supabaseClient'
@@ -47,8 +47,18 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim())
 }
 
-export default function AlertsTab() {
-  const [contact, setContact] = useState('')
+export default function AlertsTab({ user, authLoading }) {
+  const isGmail = typeof user?.email === 'string' && user.email.toLowerCase().endsWith('@gmail.com')
+  const verifiedGmail = isGmail ? user.email : null
+
+  const [contact, setContact] = useState(verifiedGmail || '')
+
+  useEffect(() => {
+    if (verifiedGmail) {
+      setContact(verifiedGmail)
+      setError('')
+    }
+  }, [verifiedGmail])
   const [alertPin, setAlertPin] = useState('')
   const [alertDate, setAlertDate] = useState('')
 
@@ -68,6 +78,11 @@ export default function AlertsTab() {
 
     if (!isValidEmail(normalizedContact)) {
       setError('Enter a valid email address.')
+      return
+    }
+
+    if (!normalizedContact.endsWith('@gmail.com')) {
+      setError('Incorrect format. Only @gmail.com addresses are accepted.')
       return
     }
 
@@ -151,13 +166,16 @@ export default function AlertsTab() {
             </div>
 
             <div className="mb-4">
-              <Field id="free-contact" label="Email address" required>
+              <Field id="free-contact" label="Email address" meta={verifiedGmail ? "Verified" : null} required>
                 <input
                   className="input"
                   maxLength={255}
-                  placeholder="you@example.com"
+                  placeholder="you@gmail.com"
                   value={contact}
+                  readOnly={!!verifiedGmail}
+                  disabled={authLoading}
                   onChange={(e) => {
+                    if (verifiedGmail) return
                     setContact(e.target.value)
                     setError('')
                   }}

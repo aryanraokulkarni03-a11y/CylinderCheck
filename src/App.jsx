@@ -607,7 +607,7 @@ export default function App() {
                 }
               />
               <Route path={TAB_ROUTES.news} element={<NewsTab />} />
-              <Route path={TAB_ROUTES.alerts} element={<AlertsTab />} />
+              <Route path={TAB_ROUTES.alerts} element={<AlertsTab user={user} authLoading={authLoading} />} />
               <Route
                 path={TAB_ROUTES.commercial}
                 element={

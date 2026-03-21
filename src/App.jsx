@@ -48,6 +48,7 @@ import AuthCallbackPage from './features/auth/AuthCallbackPage'
 import AccountPage from './features/account/AccountPage'
 import SeoHead from './components/seo/SeoHead'
 import { getRouteMetadata } from './lib/metadata'
+import { identifyUser, resetIdentity, trackEvent, trackPageView } from './lib/analytics.js'
 
 const TABS = [
   { id: 'track', label: 'Track', icon: Target },
@@ -96,6 +97,11 @@ export default function App() {
   const shouldReduceMotion = useReducedMotion()
   const navigate = useNavigate()
   const routerLocation = useLocation()
+
+  // Track page views on route change
+  useEffect(() => {
+    trackPageView(routerLocation.pathname)
+  }, [routerLocation.pathname])
 
   // Track tab state
   const [pin, setPin] = useState('')
@@ -169,6 +175,7 @@ export default function App() {
 
   const handleGoogleSignIn = useCallback(async (fallbackPath) => {
     setAuthError('')
+    trackEvent('Sign In Initiated', { provider: 'google' })
 
     const currentPath = `${routerLocation.pathname || ''}${routerLocation.search || ''}`
     const requestedPath =
@@ -197,6 +204,7 @@ export default function App() {
 
       if (error) {
         console.error('Supabase OAuth error:', error)
+        trackEvent('Sign In Failed', { provider: 'google', reason: 'supabase_error', message: error.message })
         setAuthError(
           'Google sign-in is not available right now. Check the provider setup and try again shortly.',
         )
@@ -204,6 +212,7 @@ export default function App() {
       }
 
       if (!data?.url) {
+        trackEvent('Sign In Failed', { provider: 'google', reason: 'no_url_returned' })
         setAuthError(
           'Google sign-in is not available right now. Check the provider setup and try again shortly.',
         )
@@ -214,6 +223,7 @@ export default function App() {
       return true
     } catch (error) {
       console.error('Sign in failed:', error)
+      trackEvent('Sign In Failed', { provider: 'google', reason: 'exception', message: error.message })
       setAuthError(
         'Google sign-in is not available right now. Check the provider setup and try again shortly.',
       )
@@ -227,6 +237,7 @@ export default function App() {
     } finally {
       lastNotifiedUserRef.current = ''
       setAuthError('')
+      resetIdentity()
       navigate(TAB_ROUTES.track, { replace: true })
     }
   }, [navigate])
@@ -240,15 +251,22 @@ export default function App() {
       setAuthSession(session ?? null)
       setUser(session?.user ?? null)
       setAuthLoading(false)
-      if (session?.user) setAuthError('')
+      if (session?.user) {
+        setAuthError('')
+        identifyUser(session.user.id, { email: session.user.email })
+      }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!alive) return
       setAuthSession(session ?? null)
       setUser(session?.user ?? null)
-      if (session?.user) setAuthError('')
+      if (session?.user) {
+        setAuthError('')
+        identifyUser(session.user.id, { email: session.user.email })
+      }
       if (event === 'SIGNED_IN' && session) {
+        trackEvent('Sign In Success', { provider: 'google', email: session.user.email })
         void notifyFirstSignIn(session)
       }
     })
@@ -343,6 +361,7 @@ export default function App() {
   const handleTrack = useCallback(async () => {
     if (!pin || pin.length !== 6) {
       setError('Enter a valid 6-digit PIN code.')
+      trackEvent('Track PIN Attempt', { pin, success: false, reason: 'invalid_format' })
       return
     }
     setError('')
@@ -462,6 +481,12 @@ export default function App() {
       })
     }
 
+    trackEvent('Track PIN Attempt', { 
+      pin, 
+      success: !trackSummaryResult?.error, 
+      city: cityLabel 
+    })
+
     setPinData(builtPinData)
     setTrackResultToken((token) => token + 1)
 
@@ -500,6 +525,7 @@ export default function App() {
       if (res.ok && data.ok) {
         setShowAdminPrompt(false)
         setAdminUnlocked(true)
+        trackEvent('Admin Easter Egg Unlocked')
         navigate(TAB_ROUTES.admin)
         setAdminData(data)
         setAdminLoading(false)
@@ -535,6 +561,7 @@ export default function App() {
   const seoMetadata = getRouteMetadata(routerLocation.pathname || '/')
 
   const handleTabChange = useCallback((nextTab) => {
+    trackEvent('Tab Navigated', { tab: nextTab })
     const to = TAB_ROUTES[nextTab]
     if (to) navigate(to)
   }, [navigate])

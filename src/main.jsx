@@ -7,7 +7,9 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import './index.css'
 import { getTheme, setTheme } from './theme.js'
+import { initAnalytics } from './lib/analytics.js'
 
+initAnalytics()
 setTheme(getTheme())
 
 class ErrorBoundary extends React.Component {

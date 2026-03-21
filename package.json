@@ -11,6 +11,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "leaflet": "^1.9.4",
+    "posthog-js": "^1.363.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.13.1"

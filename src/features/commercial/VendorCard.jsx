@@ -6,6 +6,7 @@ import { StaggerItem } from '../../components/motion/StaggerContainer'
 import { springs } from '../../lib/springs'
 import { useHoverCapable } from '../../lib/useHoverCapable'
 import { commercialStateForCity } from '../../lib/utils'
+import { trackEvent } from '../../lib/analytics.js'
 
 const DOT = '\u00B7'
 
@@ -131,6 +132,11 @@ export default function VendorCard({ vendor }) {
             <LiquidGlassBtn
               as="a"
               href={waHref || undefined}
+              onClick={() => {
+                if (waHref) {
+                  trackEvent('Commercial Vendor Contacted', { method: 'whatsapp', vendorId: vendor?.id, vendorName: vendor?.name })
+                }
+              }}
               target="_blank"
               rel="noopener noreferrer"
               disabled={!waHref}
@@ -153,6 +159,11 @@ export default function VendorCard({ vendor }) {
 
             <a
               href={telHref || undefined}
+              onClick={() => {
+                if (telHref) {
+                  trackEvent('Commercial Vendor Contacted', { method: 'call', vendorId: vendor?.id, vendorName: vendor?.name })
+                }
+              }}
               aria-disabled={!telHref || undefined}
               className={`btn-ghost ${
                 telHref ? '' : 'opacity-50 pointer-events-none'
@@ -165,6 +176,9 @@ export default function VendorCard({ vendor }) {
             {vendor?.website && (
               <a
                 href={vendor.website}
+                onClick={() => {
+                  trackEvent('Commercial Vendor Contacted', { method: 'website', vendorId: vendor?.id, vendorName: vendor?.name })
+                }}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="icon-btn"

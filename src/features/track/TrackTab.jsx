@@ -323,7 +323,7 @@ export function TrackTab({
               title="Check your area before you book"
               titleAs="h2"
             >
-              <p className="type-card-copy mt-3 mb-0">
+              <p className="type-card-copy mt-2 mb-0">
                 Use your PIN to see a local delivery estimate, supply pressure signal, and the next sensible booking date.
               </p>
             </CardHeader>
@@ -807,8 +807,8 @@ export function TrackTab({
                 >
                   <CardHeader
                     kicker="Before you check"
-                      title="What you'll get after you enter your PIN"
-                      titleAs="h3"
+                    title="What you'll get after you enter your PIN"
+                    titleAs="h3"
                   >
                     <p className="type-card-copy mt-3 mb-0 max-w-[38ch]">
                       You'll get a local delivery estimate, supply pressure signal, and a practical booking date for your area.

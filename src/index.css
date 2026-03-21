@@ -682,7 +682,7 @@ body::before {
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-4);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 .card-header__meta {
   min-width: 0;
@@ -710,7 +710,7 @@ body::before {
   letter-spacing: var(--ls-snug);
   font-size: var(--fs-h4);
   font-weight: 600;
-  max-width: 18ch;
+  max-width: 24ch;
   text-wrap: balance;
 }
 .card-body {

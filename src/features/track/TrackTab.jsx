@@ -319,7 +319,6 @@ export function TrackTab({
         <div className="space-y-4 min-w-0">
           <Card>
             <CardHeader
-              kicker="Local check"
               title="Check your area before you book"
               titleAs="h2"
             >
@@ -329,7 +328,7 @@ export function TrackTab({
             </CardHeader>
 
             <CardBody>
-            <div className="mb-5">
+            <div className="mb-6">
               <Field id="pin-input" label="Your 6-digit PIN" required>
                 <input
                   className="input type-data-input min-h-[52px]"

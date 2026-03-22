@@ -74,9 +74,8 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
     >
       <Card variant="inset" className="card--spacious national-snapshot-card">
         <CardHeader
-          kicker="India today"
           title="Domestic LPG across India"
-          titleAs="h3"
+          titleAs="h2"
           actions={(
             <span className="type-note text-[var(--text-muted)]">
               {formatSnapshotUpdated(pricesUpdatedAt)}
@@ -90,14 +89,14 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
 
         <CardBody className="pt-2">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
-            <div className="national-snapshot-hero">
-              <div className="flex items-center gap-2">
+            <div className="national-snapshot-hero flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-4">
                 <StatusDot status="clear" size={7} />
                 <span className="kicker text-[var(--accent)]">Lowest tracked 14.2kg refill</span>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-1">
-                <span className="type-data-value type-data-value--hero">
+              <div className="flex flex-col gap-1">
+                <span className="type-data-value type-data-value--hero leading-none">
                   {lowestTracked ? `${RUPEE}${lowestTracked.price}` : '—'}
                 </span>
                 <span className="type-card-title text-[var(--text-secondary)]">
@@ -113,34 +112,36 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="national-snapshot-stat">
-                <div className="flex items-center gap-2">
+              <div className="national-snapshot-stat justify-center">
+                <div className="flex items-center gap-2 mb-4">
                   <StatusDot status={overallStatus} size={7} />
                   <span className="kicker">Areas under pressure</span>
                 </div>
-                <div className="mt-3 flex items-end gap-2">
-                  <span className="type-data-value">
+                <div className="flex flex-col gap-1">
+                  <span className="type-data-value type-data-value--hero leading-none">
                     {activeClusters}
                   </span>
-                  <span className="type-note mb-1">
+                  <span className="type-card-title text-[var(--text-secondary)]">
                     {activeClusters === 1 ? 'area under strain' : 'areas under strain'}
                   </span>
                 </div>
               </div>
 
-              <div className="national-snapshot-stat">
-                <div className="flex items-center gap-2">
+              <div className="national-snapshot-stat justify-center">
+                <div className="flex items-center gap-2 mb-4">
                   <StatusDot status={hotspotTone} size={7} />
                   <span className="kicker">Most reported city</span>
                 </div>
-                <p className="type-card-title mt-3 mb-1">
-                  {hotspot || 'No hotspot yet'}
-                </p>
-                <p className="type-note mb-0">
-                  {hotspot
-                    ? `${hotspotReports} report${hotspotReports === 1 ? '' : 's'} in the last 30 days.`
-                    : 'No active shortage cluster is standing out right now.'}
-                </p>
+                <div className="flex flex-col gap-1">
+                  <span className="type-data-value type-data-value--hero leading-none truncate">
+                    {hotspot || 'No hotspot yet'}
+                  </span>
+                  <span className="type-note text-[var(--text-muted)]">
+                    {hotspot
+                      ? `${hotspotReports} report${hotspotReports === 1 ? '' : 's'} in the last 30 days.`
+                      : 'No active shortage cluster is standing out right now.'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

@@ -315,37 +315,24 @@ export default function App() {
           }
         }
 
-        const since = new Date(Date.now() - 30 * 86400000).toISOString()
-        const { data: reports30d } = await supabase
-          .from('reports')
-          .select('pin, city, created_at')
-          .gte('created_at', since)
+        const { data: pressureData } = await supabase
+          .from('pin_track_summary_v1')
+          .select('pin, city, pressure_level, pressure_score, report_count_30d')
+          .in('pressure_level', ['active', 'severe', 'building'])
 
         if (!cancelled) {
-          if (!reports30d?.length) {
+          if (!pressureData?.length) {
             setShortageSummary(null)
             return
           }
 
-          const pinCounts = {}
-          const pinCities = {}
-          reports30d.forEach((r) => {
-            pinCounts[r.pin] = (pinCounts[r.pin] || 0) + 1
-            if (r.city) pinCities[r.pin] = r.city
-          })
-
-          const active = Object.entries(pinCounts).filter(([, n]) => n >= 2)
-          if (!active.length) {
-            setShortageSummary(null)
-            return
-          }
-
-          const hot = active.sort((a, b) => b[1] - a[1])[0]
+          const hot = [...pressureData].sort((a, b) => b.pressure_score - a.pressure_score)[0]
+          
           setShortageSummary({
-            activePinCount: active.length,
-            totalReports: reports30d.length,
-            hotspot: pinCities[hot[0]] || `PIN ${hot[0]}`,
-            hotspotReports: hot[1],
+            activePinCount: pressureData.length,
+            totalReports: pressureData.reduce((acc, row) => acc + (row.report_count_30d || 0), 0),
+            hotspot: hot.city || `PIN ${hot.pin}`,
+            hotspotReports: hot.report_count_30d || Math.max(1, Math.floor(hot.pressure_score / 10)),
           })
         }
       } catch {

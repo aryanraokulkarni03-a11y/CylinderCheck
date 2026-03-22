@@ -254,9 +254,9 @@ export function buildDeliveryEstimateFromSnapshot(snapshot) {
   const sourceScope = snapshot.delivery_source_scope || snapshot.source_scope || 'none'
   const exactSignalCount = Number(snapshot.delivery_exact_signal_count_30d ?? snapshot.exact_signal_count_30d) || 0
   const nearbySignalCount = Number(snapshot.delivery_nearby_signal_count_30d ?? snapshot.nearby_signal_count_30d) || 0
-  const low = Number(snapshot.delivery_days_p25)
-  const typical = Number(snapshot.delivery_days_median)
-  const high = Number(snapshot.delivery_days_p75)
+  const low = snapshot.delivery_days_p25 != null ? Number(snapshot.delivery_days_p25) : null
+  const typical = snapshot.delivery_days_median != null ? Number(snapshot.delivery_days_median) : null
+  const high = snapshot.delivery_days_p75 != null ? Number(snapshot.delivery_days_p75) : null
   const historical = Number(snapshot.historical_avg_days)
   const freshness = freshnessCopy(snapshot.delivery_freshness_status)
 

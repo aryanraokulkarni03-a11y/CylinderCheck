@@ -10,13 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping dispatch-alerts monitor start
-        if: ${{ secrets.HC_DISPATCH_ALERTS_START_URL != '' }}
         continue-on-error: true
         env:
           HC_START_URL: ${{ secrets.HC_DISPATCH_ALERTS_START_URL }}
         run: |
           HC_START_URL=$(printf '%s' "$HC_START_URL" | tr -d '\r\n' | xargs)
-          test -n "$HC_START_URL"
+          if [ -z "$HC_START_URL" ]; then exit 0; fi
           curl -fsS -m 15 "$HC_START_URL"
 
       - name: Invoke dispatch-alerts
@@ -40,21 +39,21 @@ jobs:
           jq -e '.ok == true' response.json > /dev/null
 
       - name: Ping dispatch-alerts monitor success
-        if: ${{ success() && secrets.HC_DISPATCH_ALERTS_SUCCESS_URL != '' }}
+        if: ${{ success() }}
         continue-on-error: true
         env:
           HC_SUCCESS_URL: ${{ secrets.HC_DISPATCH_ALERTS_SUCCESS_URL }}
         run: |
           HC_SUCCESS_URL=$(printf '%s' "$HC_SUCCESS_URL" | tr -d '\r\n' | xargs)
-          test -n "$HC_SUCCESS_URL"
+          if [ -z "$HC_SUCCESS_URL" ]; then exit 0; fi
           curl -fsS -m 15 "$HC_SUCCESS_URL"
 
       - name: Ping dispatch-alerts monitor failure
-        if: ${{ failure() && secrets.HC_DISPATCH_ALERTS_FAIL_URL != '' }}
+        if: ${{ failure() }}
         continue-on-error: true
         env:
           HC_FAIL_URL: ${{ secrets.HC_DISPATCH_ALERTS_FAIL_URL }}
         run: |
           HC_FAIL_URL=$(printf '%s' "$HC_FAIL_URL" | tr -d '\r\n' | xargs)
-          test -n "$HC_FAIL_URL"
+          if [ -z "$HC_FAIL_URL" ]; then exit 0; fi
           curl -fsS -m 15 "$HC_FAIL_URL"

@@ -23,7 +23,7 @@
 - Commercial LPG fit for restaurants, caterers, cloud kitchens, or hotels
 
 ## Direct-call opener
-Hi, I run CylinderCheck. We track LPG market prices and are building a simple supplier directory for businesses that need 19kg LPG. I’d like to list verified suppliers in Bangalore and send direct buyer calls to you.
+Hi, I run CylinderCheck. We track LPG market prices and are building a simple supplier directory for businesses that need 19kg LPG. I'd like to list verified suppliers in Bangalore and send direct buyer calls to you.
 
 ## Proof point
 - City-level commercial LPG prices are already live on the site
@@ -40,7 +40,7 @@ Hi, I run CylinderCheck. We track LPG market prices and are building a simple su
 - Would you like a free founding listing for 60 days?
 
 ## WhatsApp follow-up
-Hi, this is {{your_name}} from CylinderCheck. We track commercial LPG prices and are listing verified Bangalore suppliers for business buyers. I’d like to add your business as a free founding listing for 60 days and send direct buyer calls to you. Site: https://www.cylindercheck.in/commercial
+Hi, this is {{your_name}} from CylinderCheck. We track commercial LPG prices and are listing verified Bangalore suppliers for business buyers. I'd like to add your business as a free founding listing for 60 days and send direct buyer calls to you. Site: https://www.cylindercheck.in/business
 
 ## Cadence
 - Day 0: first call

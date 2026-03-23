@@ -65,7 +65,7 @@ const TAB_ROUTES = {
   community: '/reports',
   news: '/news',
   alerts: '/alerts',
-  commercial: '/commercial',
+  commercial: '/business',
   admin: '/admin',
   support: '/support',
   privacy: '/privacy',
@@ -544,7 +544,7 @@ export default function App() {
     if (p.startsWith('/reports')) return 'reports'
     if (p.startsWith('/news')) return 'news'
     if (p.startsWith('/alerts')) return 'alerts'
-    if (p.startsWith('/commercial')) return 'commercial'
+    if (p.startsWith('/business') || p.startsWith('/commercial')) return 'commercial'
     if (p.startsWith('/admin')) return 'admin'
     return null
   })()
@@ -639,6 +639,7 @@ export default function App() {
                   />
                 }
               />
+              <Route path="/commercial" element={<Navigate to={TAB_ROUTES.commercial} replace />} />
               <Route
                 path={CONTENT_ROUTES.bangalorePrice}
                 element={<BangaloreGuidePage {...BANGALORE_GUIDES[CONTENT_ROUTES.bangalorePrice]} mapPrices={mapPrices} />}

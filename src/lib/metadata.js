@@ -182,20 +182,28 @@ export const ROUTE_METADATA = {
       }),
     ],
   },
-  '/commercial': {
-    path: '/commercial',
+  '/business': {
+    path: '/business',
     title: 'Commercial LPG Suppliers | Track 19kg prices and browse verified suppliers',
     description:
       'Compare tracked 19kg LPG prices and browse verified private LPG suppliers by state for restaurants, caterers, hotels, and other business use.',
     indexable: true,
     schema: [
       collectionPageSchema({
-        path: '/commercial',
+        path: '/business',
         title: 'CylinderCheck Commercial LPG Suppliers',
         description:
           'Compare tracked 19kg LPG prices and browse verified private LPG suppliers by state.',
       }),
     ],
+  },
+  '/commercial': {
+    path: '/business',
+    title: 'Commercial LPG Suppliers | Track 19kg prices and browse verified suppliers',
+    description:
+      'Compare tracked 19kg LPG prices and browse verified private LPG suppliers by state for restaurants, caterers, hotels, and other business use.',
+    indexable: false,
+    schema: [],
   },
   '/support': {
     path: '/support',

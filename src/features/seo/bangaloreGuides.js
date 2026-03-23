@@ -27,7 +27,7 @@ export const BANGALORE_GUIDES = {
       label: 'Check your area before you book',
     },
     secondaryLink: {
-      to: '/commercial',
+      to: '/business',
       label: 'Browse commercial suppliers',
     },
   },
@@ -87,7 +87,7 @@ export const BANGALORE_GUIDES = {
     callout:
       'CylinderCheck lists supplier details and tracked market prices. Final commercial terms always come from the supplier.',
     primaryLink: {
-      to: '/commercial',
+      to: '/business',
       label: 'Browse commercial suppliers',
     },
     secondaryLink: {

@@ -2073,6 +2073,13 @@ body::before {
   color: var(--text-secondary);
 }
 
+.reports-prefill-callout {
+  border-radius: calc(var(--radius-xl) - 2px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 92%, transparent), transparent 60%),
+    color-mix(in srgb, var(--accent) 5%, var(--bg-raised));
+}
+
 .reports-row__title-text {
   line-height: 1.18;
   letter-spacing: -0.02em;
@@ -2720,6 +2727,59 @@ body::before {
   position: relative;
 }
 
+.track-evidence-callout {
+  display: grid;
+  gap: var(--space-4);
+  border-radius: calc(var(--radius-xl) - 2px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 94%, transparent), transparent 60%),
+    color-mix(in srgb, var(--accent) 5%, var(--callout-bg, var(--bg-inset)));
+}
+
+.track-evidence-callout__copy {
+  min-width: 0;
+}
+
+.track-evidence-callout__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.track-evidence-callout__button {
+  width: 100%;
+}
+
+.track-evidence-callout__link,
+.reports-prefill-callout__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+  transition: color 160ms ease;
+}
+
+.track-evidence-callout__link:hover,
+.reports-prefill-callout__link:hover {
+  color: color-mix(in srgb, var(--accent) 82%, var(--text-primary));
+}
+
+.track-evidence-callout__link:focus-visible,
+.reports-prefill-callout__link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
 .track-contribute-float {
   position: fixed;
   left: calc(16px + env(safe-area-inset-left));
@@ -2843,6 +2903,21 @@ body::before {
     right: 0;
     bottom: 24px;
     padding-inline: 24px;
+  }
+
+  .track-evidence-callout {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--space-5);
+  }
+
+  .track-evidence-callout__actions {
+    align-items: flex-end;
+  }
+
+  .track-evidence-callout__button {
+    width: auto;
+    min-width: 184px;
   }
 
   .reports-row__vote {

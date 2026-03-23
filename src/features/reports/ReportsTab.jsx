@@ -1,6 +1,7 @@
 // src/features/reports/ReportsTab.jsx
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabaseClient'
 import CompanyPicker, { COMPANY_PICKER_OPTS } from '../../components/shared/CompanyPicker'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
@@ -24,6 +25,7 @@ const DOT = '\u00B7'
 
 const CC_USER_VERSION = 'v1'
 const CC_LS_KEY = `cc-user:${CC_USER_VERSION}`
+const TRACK_REPORT_PREFILL_KEY = 'cc-track-report-prefill:v1'
 
 function safeJsonParse(s) {
   try {
@@ -49,8 +51,11 @@ function displayArea(r) {
   return city
 }
 
-export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
+export default function ReportsTab({ user, authLoading, onGoogleSignIn, onTrackBack }) {
   const shouldReduceMotion = useReducedMotion()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const hydratedTrackPrefillRef = useRef(false)
 
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
@@ -76,6 +81,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
 
   const [editingReportId, setEditingReportId] = useState(null)
   const [editingText, setEditingText] = useState('')
+  const [trackPrefillContext, setTrackPrefillContext] = useState(null)
 
   const companyMeta = useMemo(() => {
     const m = new Map()
@@ -143,6 +149,35 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
     }
   }, [reportCompany])
 
+  useEffect(() => {
+    if (hydratedTrackPrefillRef.current) return
+
+    const statePrefill = location.state?.reportPrefill
+    let storedPrefill = null
+    try {
+      storedPrefill = safeJsonParse(sessionStorage.getItem(TRACK_REPORT_PREFILL_KEY) || '')
+    } catch {
+      storedPrefill = null
+    }
+    const prefill = statePrefill?.source === 'track'
+      ? statePrefill
+      : storedPrefill?.source === 'track'
+        ? storedPrefill
+        : null
+
+    if (!prefill) return
+
+    setReportPin(String(prefill.pin || '').slice(0, 6))
+    setReportCity(String(prefill.city || ''))
+    setTrackPrefillContext({
+      pin: String(prefill.pin || '').slice(0, 6),
+      contextLabel: String(prefill.contextLabel || '').trim(),
+    })
+    hydratedTrackPrefillRef.current = true
+
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.pathname, location.state, navigate])
+
   const handleReport = async () => {
     const pin = reportPin.trim()
     const issue = reportText.trim()
@@ -197,6 +232,12 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
       setReportPin('')
       setReportCity('')
       setReportDeliveryDays('')
+      setTrackPrefillContext(null)
+      try {
+        sessionStorage.removeItem(TRACK_REPORT_PREFILL_KEY)
+      } catch {
+        // Ignore private mode / storage failures.
+      }
 
       setSubmitOk(true)
       window.setTimeout(() => setSubmitOk(false), 3000)
@@ -287,7 +328,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
       />
 
       <div className="page-section page-grid-form-feed reports-layout">
-        <Card className="page-sticky-lg">
+          <Card className="page-sticky-lg">
           <CardHeader
             kicker="Submit a report"
             title="Report an issue in your area"
@@ -304,6 +345,40 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn }) {
               Keep it factual. Add delivery days, agency name, or extra charges if you know them.
             </p>
           </CardHeader>
+
+          {trackPrefillContext ? (
+            <Callout tone="accent" className="mb-4 reports-prefill-callout" edge={false}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="kicker mb-2 text-[var(--accent)]">
+                    From Booking Tracker
+                  </p>
+                  <p className="type-card-copy mb-1 text-[var(--text-primary)]">
+                    Reporting for {trackPrefillContext.contextLabel || `PIN ${trackPrefillContext.pin}`}.
+                  </p>
+                  <p className="type-note mb-0">
+                    We prefilled the area details from your Track check. Add only what you personally saw.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="reports-prefill-callout__link"
+                  onClick={() => {
+                    setTrackPrefillContext(null)
+                    try {
+                      sessionStorage.removeItem(TRACK_REPORT_PREFILL_KEY)
+                    } catch {
+                      // Ignore private mode / storage failures.
+                    }
+                    onTrackBack?.()
+                  }}
+                >
+                  Back to tracker
+                </button>
+              </div>
+            </Callout>
+          ) : null}
 
           {!authLoading && !user ? (
             <div className="text-center py-6">

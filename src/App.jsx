@@ -578,6 +578,7 @@ export default function App() {
     authLoading,
     onGoogleSignIn: handleGoogleSignIn,
     onCommercialClick: () => navigate(TAB_ROUTES.commercial),
+    onReportIssue: (prefill) => navigate(TAB_ROUTES.reports, { state: { reportPrefill: prefill } }),
   }
 
   return (
@@ -621,6 +622,7 @@ export default function App() {
                     user={user}
                     authLoading={authLoading}
                     onGoogleSignIn={handleGoogleSignIn}
+                    onTrackBack={() => navigate(TAB_ROUTES.track)}
                   />
                 }
               />

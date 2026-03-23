@@ -25,6 +25,7 @@ import { supabase } from '../../supabaseClient'
 
 const ARROW = '\u2192'
 const SIGNAL_SUBMISSION_COOLDOWN_MS = 12 * 60 * 60 * 1000
+const TRACK_REPORT_PREFILL_KEY = 'cc-track-report-prefill:v1'
 
 const CYLINDER_LEVELS = [
   { value: 'full', label: 'Full', emoji: '\u{1F7E2}', hint: '> 75%' }, // green circle
@@ -114,6 +115,7 @@ export function TrackTab({
   authLoading,
   onGoogleSignIn,
   onCommercialClick,
+  onReportIssue,
 }) {
   const shouldReduceMotion = useReducedMotion()
   const [signalDeliveryDays, setSignalDeliveryDays] = useState('')
@@ -133,6 +135,13 @@ export function TrackTab({
   const pressure = pressurePill(supplyPressure)
   const hasSignalDraft =
     !!signalDeliveryDays || !!signalPressureLevel || signalNote.trim().length > 0
+  const weakEvidenceRead =
+    communityInsight?.isEmpty ||
+    deliveryEstimate?.confidence === 'limited' ||
+    supplyPressure?.level === 'limited' ||
+    (deliveryEstimate?.confidence === 'low' && (pinData?.reportCount || 0) < 2)
+  const evidencePromptTone =
+    communityInsight?.isEmpty || supplyPressure?.level === 'limited' ? 'early' : 'accent'
 
   const canSubmitSignal =
     !!user &&
@@ -154,6 +163,13 @@ export function TrackTab({
 
     if (!pinData?.pin || !trackResultToken) return
 
+    if (weakEvidenceRead) {
+      setSignalPanelOpen(false)
+      setSignalPanelInteracted(false)
+      setSignalPanelMode('closed')
+      return
+    }
+
     if (skipNextPanelAutoOpenRef.current) {
       skipNextPanelAutoOpenRef.current = false
       setSignalPanelOpen(false)
@@ -173,7 +189,7 @@ export function TrackTab({
     setSignalPanelInteracted(false)
 
     return () => clearPendingSignalPanelEntry()
-  }, [pinData?.pin, trackResultToken])
+  }, [pinData?.pin, trackResultToken, weakEvidenceRead])
 
   useEffect(() => {
     if (!pinData?.pin || !signalPanelOpen || signalPanelInteracted || signalPanelMode !== 'passive') {
@@ -294,6 +310,27 @@ export function TrackTab({
     setSignalPanelInteracted(false)
     setSignalPanelMode('closed')
     await handleTrack()
+  }
+
+  const handleReportIssue = () => {
+    if (!pinData?.pin) return
+
+    const area = String(pinData.area || '').trim()
+    const city = String(pinData.city || '').split(',')[0].trim()
+    const prefill = {
+      source: 'track',
+      pin: pinData.pin,
+      city: area || city || '',
+      contextLabel: area || city || `PIN ${pinData.pin}`,
+    }
+
+    try {
+      sessionStorage.setItem(TRACK_REPORT_PREFILL_KEY, JSON.stringify(prefill))
+    } catch {
+      // Ignore private mode / storage failures.
+    }
+
+    onReportIssue?.(prefill)
   }
 
   return (
@@ -537,6 +574,44 @@ export function TrackTab({
                 </Card>
 
                 <div className="track-contribute-stage mb-4">
+                  {weakEvidenceRead ? (
+                    <Callout
+                      tone={evidencePromptTone}
+                      className="track-evidence-callout mb-4"
+                    >
+                      <div className="track-evidence-callout__copy">
+                        <p className="kicker mb-2 text-[var(--accent)]">
+                          Help sharpen this PIN
+                        </p>
+                        <p className="type-card-title mb-2">
+                          This area still needs stronger local evidence
+                        </p>
+                        <p className="type-note mb-0">
+                          {communityInsight?.isEmpty
+                            ? 'A quick signed-in signal or a fuller area report will make this read more useful for the next person checking this PIN.'
+                            : 'We already have some signal here, but another grounded local update will make the planning read stronger and less guess-based.'}
+                        </p>
+                      </div>
+
+                      <div className="track-evidence-callout__actions">
+                        <LiquidGlassBtn
+                          className="track-evidence-callout__button justify-center"
+                          onClick={() => openSignalPanel('manual')}
+                        >
+                          {communityInsight?.isEmpty ? 'Add quick signal' : 'Add your signal'}
+                        </LiquidGlassBtn>
+
+                        <button
+                          type="button"
+                          className="track-evidence-callout__link"
+                          onClick={handleReportIssue}
+                        >
+                          Report an issue instead {ARROW}
+                        </button>
+                      </div>
+                    </Callout>
+                  ) : null}
+
                   <AnimatePresence initial={false}>
                     {signalPanelOpen ? (
                       <div key="signal-panel" className="track-contribute-float">

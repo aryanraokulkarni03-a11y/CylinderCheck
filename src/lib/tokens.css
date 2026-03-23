@@ -66,6 +66,9 @@
   --shadow-dark:  #07060A;
   --shadow-glow:  rgba(224, 120, 48, 0.08);
   --shadow-modal: rgba(0, 0, 0, 0.35);
+  --motif-color: color-mix(in srgb, var(--k-indigo) 78%, transparent);
+  --motif-opacity: 0.018;
+  --motif-size: 188px;
 
   /* Spacing */
   --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
@@ -131,4 +134,7 @@
   --divider:      rgba(180, 140, 80, 0.08);
   --shadow-glow:  rgba(196, 100, 26, 0.06);
   --shadow-modal: rgba(0, 0, 0, 0.18);
+  --motif-color: color-mix(in srgb, var(--k-terracotta) 52%, transparent);
+  --motif-opacity: 0.026;
+  --motif-size: 204px;
 }

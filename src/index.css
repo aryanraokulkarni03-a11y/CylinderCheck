@@ -384,18 +384,20 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cpath d='M20 60 C20 40 40 20 60 20 C80 20 100 40 100 60 C100 80 80 100 60 100 C40 100 20 80 20 60Z' fill='none' stroke='currentColor' stroke-width='0.5' opacity='0.4'/%3E%3Cpath d='M60 10 C60 10 50 30 60 50 C70 30 60 10 60 10Z' fill='currentColor' opacity='0.3'/%3E%3Ccircle cx='60' cy='60' r='3' fill='currentColor' opacity='0.3'/%3E%3Cpath d='M10 60 C30 50 50 55 60 60 C50 65 30 70 10 60Z' fill='currentColor' opacity='0.25'/%3E%3Cpath d='M110 60 C90 50 70 55 60 60 C70 65 90 70 110 60Z' fill='currentColor' opacity='0.25'/%3E%3C/svg%3E");
-  background-size: 120px 120px;
-  /* Dark mode max 4%, light mode override to 5% */
-  opacity: 0.04;
+  background-image:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--fog-highlight) 70%, transparent), transparent 42%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='144' height='144' viewBox='0 0 144 144'%3E%3Cg fill='none' stroke='currentColor' stroke-width='0.55' opacity='0.24'%3E%3Cpath d='M36 72c0-20 16-36 36-36s36 16 36 36-16 36-36 36-36-16-36-36Z'/%3E%3Cpath d='M72 28c0 0-10 16-6 28 3 8 6 13 6 13s3-5 6-13c4-12-6-28-6-28Z' fill='currentColor' opacity='0.12' stroke='none'/%3E%3Cpath d='M24 72c18-8 34-7 48 0-14 7-30 8-48 0Z' fill='currentColor' opacity='0.08' stroke='none'/%3E%3Cpath d='M120 72c-18-8-34-7-48 0 14 7 30 8 48 0Z' fill='currentColor' opacity='0.08' stroke='none'/%3E%3Ccircle cx='72' cy='72' r='2.4' fill='currentColor' opacity='0.16' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: cover, var(--motif-size) var(--motif-size);
+  background-position: center, center;
   pointer-events: none;
   z-index: 0;
-  color: var(--k-indigo);
+  color: var(--motif-color);
+  opacity: var(--motif-opacity);
+  filter: saturate(0.82) blur(0.15px);
 }
 
 [data-theme="light"] body::before {
-  opacity: 0.05;
-  color: var(--k-terracotta);
+  filter: saturate(0.74) blur(0.1px);
 }
 
 /* ============================================================

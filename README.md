@@ -35,18 +35,32 @@ The live operational model relies on standard Node and GitHub Actions flows:
 - **Alerts Dispatch:** Driven by `.github/workflows/dispatch-alerts.yml` running hourly. Alert delivery is currently email-first through the existing Supabase dispatch function.
 - **Price Scraping:** Driven by `.github/workflows/scrape-prices.yml` running twice daily (06:00 and 18:00 IST).
 - **Scrape Sandbox:** `.github/workflows/scrape-prices-sandbox.yml` provides a manual dry-run lane for concurrency, jitter, retry, and proxy experiments without publishing live prices.
+- **Dead-man monitoring:** Both scheduled workflows can emit start / success / fail pings to Healthchecks.io so GitHub cron inactivity does not fail silently.
 - **Commercial Verification:** Supplier listings are manually verified and inserted through the existing vendor flow.
 
 **Workflow secrets:**
 - `dispatch-alerts.yml`
   - `SUPABASE_FUNCTIONS_BASE_URL`
   - `SUPABASE_ANON_KEY`
+  - `HC_DISPATCH_ALERTS_START_URL`
+  - `HC_DISPATCH_ALERTS_SUCCESS_URL`
+  - `HC_DISPATCH_ALERTS_FAIL_URL`
 - `scrape-prices.yml`
   - `SUPABASE_FUNCTIONS_BASE_URL`
   - `SUPABASE_CRON_SECRET`
+  - `HC_SCRAPE_PRICES_START_URL`
+  - `HC_SCRAPE_PRICES_SUCCESS_URL`
+  - `HC_SCRAPE_PRICES_FAIL_URL`
 - `scrape-prices-sandbox.yml`
   - `SUPABASE_SANDBOX_FUNCTIONS_BASE_URL`
   - `SUPABASE_SANDBOX_CRON_SECRET`
+
+**Healthchecks.io setup:**
+- Create one check for `scrape-prices` and one check for `dispatch-alerts`
+- Set the expected schedule to match each workflow
+- Use a dead-man window of 25 hours for the twice-daily `scrape-prices` workflow
+- Use the corresponding start / success / fail URLs from each check as the GitHub secrets above
+- Heartbeat pings are non-blocking: monitor downtime will not stop the underlying job from running
 
 **Scraper environment role:**
 - Production function should set `SCRAPE_ENV=production`

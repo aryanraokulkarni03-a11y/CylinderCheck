@@ -38,6 +38,14 @@ jobs:
           RETRY_LIMIT: ${{ github.event.inputs.retry_limit }}
           RETRY_BASE_DELAY_MS: ${{ github.event.inputs.retry_base_delay_ms }}
         run: |
+          FUNCTIONS_BASE_URL=$(printf '%s' "$FUNCTIONS_BASE_URL" | tr -d '\r\n' | xargs)
+          CRON_SECRET=$(printf '%s' "$CRON_SECRET" | tr -d '\r\n' | xargs)
+          MAX_CONCURRENCY=$(printf '%s' "${MAX_CONCURRENCY:-2}" | tr -d '\r\n' | xargs)
+          REQUEST_JITTER_MS=$(printf '%s' "${REQUEST_JITTER_MS:-1500}" | tr -d '\r\n' | xargs)
+          RETRY_LIMIT=$(printf '%s' "${RETRY_LIMIT:-1}" | tr -d '\r\n' | xargs)
+          RETRY_BASE_DELAY_MS=$(printf '%s' "${RETRY_BASE_DELAY_MS:-2000}" | tr -d '\r\n' | xargs)
+          CITIES=$(printf '%s' "$CITIES" | tr -d '\r')
+
           test -n "$FUNCTIONS_BASE_URL"
           test -n "$CRON_SECRET"
 

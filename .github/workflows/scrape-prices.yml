@@ -14,6 +14,9 @@ jobs:
           FUNCTIONS_BASE_URL: ${{ secrets.SUPABASE_FUNCTIONS_BASE_URL }}
           CRON_SECRET: ${{ secrets.SUPABASE_CRON_SECRET }}
         run: |
+          FUNCTIONS_BASE_URL=$(printf '%s' "$FUNCTIONS_BASE_URL" | tr -d '\r\n' | xargs)
+          CRON_SECRET=$(printf '%s' "$CRON_SECRET" | tr -d '\r\n' | xargs)
+
           test -n "$FUNCTIONS_BASE_URL"
           test -n "$CRON_SECRET"
 

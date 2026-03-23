@@ -54,10 +54,8 @@ export default function AlertsTab({ user, authLoading }) {
   const [contact, setContact] = useState(verifiedGmail || '')
 
   useEffect(() => {
-    if (verifiedGmail) {
-      setContact(verifiedGmail)
-      setError('')
-    }
+    setContact(verifiedGmail || '')
+    setError('')
   }, [verifiedGmail])
   const [alertPin, setAlertPin] = useState('')
   const [alertDate, setAlertDate] = useState('')
@@ -78,11 +76,6 @@ export default function AlertsTab({ user, authLoading }) {
 
     if (!isValidEmail(normalizedContact)) {
       setError('Enter a valid email address.')
-      return
-    }
-
-    if (!normalizedContact.endsWith('@gmail.com')) {
-      setError('Incorrect format. Only @gmail.com addresses are accepted.')
       return
     }
 
@@ -166,11 +159,11 @@ export default function AlertsTab({ user, authLoading }) {
             </div>
 
             <div className="mb-4">
-              <Field id="free-contact" label="Email address" meta={verifiedGmail ? "Verified" : null} required>
+              <Field id="free-contact" label="Email address" meta={verifiedGmail ? "Verified Gmail" : null} required>
                 <input
                   className="input"
                   maxLength={255}
-                  placeholder="you@gmail.com"
+                  placeholder="you@example.com"
                   value={contact}
                   readOnly={!!verifiedGmail}
                   disabled={authLoading}
@@ -216,7 +209,7 @@ export default function AlertsTab({ user, authLoading }) {
             </button>
 
             <p className="type-note mt-4 mb-0">
-              Email is the first live channel. We&apos;ll add richer delivery options only after reminders are sending reliably.
+              Email is the first live channel. Gmail accounts are auto-verified when you sign in, but any valid email can save a reminder.
             </p>
           </CardBody>
         </Card>

@@ -100,8 +100,8 @@ export default function App() {
 
   // Track page views on route change
   useEffect(() => {
-    trackPageView(routerLocation.pathname)
-  }, [routerLocation.pathname])
+    trackPageView(`${routerLocation.pathname || '/'}${routerLocation.search || ''}`)
+  }, [routerLocation.pathname, routerLocation.search])
 
   // Track tab state
   const [pin, setPin] = useState('')
@@ -248,12 +248,14 @@ export default function App() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!alive) return
-      setAuthSession(session ?? null)
-      setUser(session?.user ?? null)
-      setAuthLoading(false)
-      if (session?.user) {
-        setAuthError('')
-        identifyUser(session.user.id, { email: session.user.email })
+        setAuthSession(session ?? null)
+        setUser(session?.user ?? null)
+        setAuthLoading(false)
+        if (session?.user) {
+          setAuthError('')
+          identifyUser(session.user.id)
+      } else {
+        resetIdentity()
       }
     })
 
@@ -263,10 +265,12 @@ export default function App() {
       setUser(session?.user ?? null)
       if (session?.user) {
         setAuthError('')
-        identifyUser(session.user.id, { email: session.user.email })
+        identifyUser(session.user.id)
+      } else {
+        resetIdentity()
       }
       if (event === 'SIGNED_IN' && session) {
-        trackEvent('Sign In Success', { provider: 'google', email: session.user.email })
+        trackEvent('Sign In Success', { provider: 'google' })
         void notifyFirstSignIn(session)
       }
     })
@@ -332,7 +336,7 @@ export default function App() {
             activePinCount: pressureData.length,
             totalReports: pressureData.reduce((acc, row) => acc + (row.report_count_30d || 0), 0),
             hotspot: hot.city || `PIN ${hot.pin}`,
-            hotspotReports: hot.report_count_30d || Math.max(1, Math.floor(hot.pressure_score / 10)),
+            hotspotReports: hot.report_count_30d || 0,
           })
         }
       } catch {
@@ -468,10 +472,10 @@ export default function App() {
       })
     }
 
-    trackEvent('Track PIN Attempt', { 
-      pin, 
-      success: !trackSummaryResult?.error, 
-      city: cityLabel 
+    trackEvent('Track PIN Attempt', {
+      pinPrefix3: pin.slice(0, 3),
+      success: !trackSummaryResult?.error,
+      city: cityLabel,
     })
 
     setPinData(builtPinData)

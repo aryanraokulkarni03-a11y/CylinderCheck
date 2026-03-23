@@ -41,8 +41,12 @@ export const trackEvent = (eventName, properties = {}) => {
  */
 export const trackPageView = (url) => {
   if (isInitialized) {
+    const currentUrl = typeof url === 'string' && url.trim()
+      ? new URL(url, window.location.origin).toString()
+      : window.location.href
+
     posthog.capture('$pageview', {
-      $current_url: url === '/' ? window.location.href : url
+      $current_url: currentUrl,
     })
   }
 }

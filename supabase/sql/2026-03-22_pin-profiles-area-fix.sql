@@ -226,13 +226,34 @@ INSERT INTO public.pin_profiles (
   ('560064', 'Bengaluru', 'Karnataka', 'Yelahanka', 'seed', 'seed', 'seed', 'high', NOW()),
   ('226006', 'Lucknow', 'Uttar Pradesh', 'Nishatganj', 'seed', 'seed', 'seed', 'high', NOW())
 ON CONFLICT (pin) DO UPDATE SET
-  canonical_city = EXCLUDED.canonical_city,
-  canonical_state = EXCLUDED.canonical_state,
-  canonical_area = EXCLUDED.canonical_area,
-  city_source = EXCLUDED.city_source,
-  state_source = EXCLUDED.state_source,
-  area_source = EXCLUDED.area_source,
-  profile_confidence = EXCLUDED.profile_confidence,
+  canonical_city = CASE
+    WHEN public.pin_profiles.area_source = 'seed' THEN public.pin_profiles.canonical_city
+    ELSE EXCLUDED.canonical_city
+  END,
+  canonical_state = CASE
+    WHEN public.pin_profiles.area_source = 'seed' THEN public.pin_profiles.canonical_state
+    ELSE EXCLUDED.canonical_state
+  END,
+  canonical_area = CASE
+    WHEN public.pin_profiles.area_source = 'seed' THEN public.pin_profiles.canonical_area
+    ELSE EXCLUDED.canonical_area
+  END,
+  city_source = CASE
+    WHEN public.pin_profiles.area_source = 'seed' THEN public.pin_profiles.city_source
+    ELSE EXCLUDED.city_source
+  END,
+  state_source = CASE
+    WHEN public.pin_profiles.area_source = 'seed' THEN public.pin_profiles.state_source
+    ELSE EXCLUDED.state_source
+  END,
+  area_source = CASE
+    WHEN public.pin_profiles.area_source = 'seed' THEN public.pin_profiles.area_source
+    ELSE EXCLUDED.area_source
+  END,
+  profile_confidence = CASE
+    WHEN public.pin_profiles.area_source = 'seed' THEN public.pin_profiles.profile_confidence
+    ELSE EXCLUDED.profile_confidence
+  END,
   updated_at = NOW();
 
 -- ─────────────────────────────────────────────────────────────────────────────

@@ -8,8 +8,7 @@
 -- Sections:
 --   1. pin_data             — base avg_days, shortage flag, trend
 --   2. pin_profiles         — canonical city / state / area  (seed confidence: high)
---   3. pin_neighbor_edges   — same-city bidirectional pairs for pressure propagation
---   4. snapshot refresh     — rebuilds pin_delivery_confidence + pin_supply_pressure
+--   3. snapshot refresh     — rebuilds pin_delivery_confidence + pin_supply_pressure
 --                             → feeds pin_track_summary_v1 → Booking Tracker UI
 -- ============================================
 
@@ -136,111 +135,7 @@ ON CONFLICT (pin) DO UPDATE SET
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- SECTION 3 — pin_neighbor_edges
---   Bidirectional same-city pairs so the confidence snapshot refresh can
---   propagate nearby-PIN pressure when a PIN has no direct signal/report.
---
---   Edge weights follow schema rules:
---     same_area_cluster : 0.86  (same area within same city — not applicable here,
---                                 areas are distinct; used when area labels match)
---     same_subcluster   : 0.68  (same prefix-4 within same city)
---     same_city         : 0.42  (different prefix-4, same city)
---
---   All edges are inserted as bidirectional pairs (A→B and B→A).
--- ─────────────────────────────────────────────────────────────────────────────
-
-INSERT INTO public.pin_neighbor_edges (
-  pin,
-  nearby_pin,
-  relation_type,
-  edge_weight,
-  city,
-  state,
-  active,
-  created_at,
-  updated_at
-) VALUES
-
-  -- ── Kolkata pairs (all same_city — different prefix-4 or prefix-3) ────────
-  -- 700091 ↔ 700156
-  ('700091', '700156', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  ('700156', '700091', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  -- 700091 ↔ 700019
-  ('700091', '700019', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  ('700019', '700091', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  -- 700091 ↔ 700032
-  ('700091', '700032', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  ('700032', '700091', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  -- 700156 ↔ 700019
-  ('700156', '700019', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  ('700019', '700156', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  -- 700156 ↔ 700032
-  ('700156', '700032', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  ('700032', '700156', 'same_city', 0.42, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  -- 700019 ↔ 700032 — same district (South Kolkata) → same_subcluster (prefix-4: 7000)
-  ('700019', '700032', 'same_subcluster', 0.68, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-  ('700032', '700019', 'same_subcluster', 0.68, 'Kolkata', 'West Bengal', true, NOW(), NOW()),
-
-  -- ── Pune pairs ────────────────────────────────────────────────────────────
-  -- 4110xx cluster (Kothrud, Hadapsar, Baner, Wakad, Sangvi — all same prefix-3: 411)
-  --   Same prefix-4 pairs (same_subcluster 0.68):
-  --     411027 / 411028 share prefix-4 "4110"
-  ('411027', '411028', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411028', '411027', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  --     411038 / 411045 / 411057 share prefix-4 "4110" too — all same_subcluster
-  ('411038', '411028', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411028', '411038', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411038', '411027', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411027', '411038', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411038', '411045', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411045', '411038', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411038', '411057', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411057', '411038', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411045', '411057', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411057', '411045', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411045', '411028', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411028', '411045', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411045', '411027', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411027', '411045', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411057', '411028', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411028', '411057', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411057', '411027', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-  ('411027', '411057', 'same_subcluster', 0.68, 'Pune', 'Maharashtra', true, NOW(), NOW()),
-
-  -- ── Jaipur pairs ──────────────────────────────────────────────────────────
-  -- 302017 / 302020 / 302021  — all prefix-3: 302, different prefix-4
-  ('302017', '302021', 'same_city', 0.42, 'Jaipur', 'Rajasthan', true, NOW(), NOW()),
-  ('302021', '302017', 'same_city', 0.42, 'Jaipur', 'Rajasthan', true, NOW(), NOW()),
-  ('302017', '302020', 'same_city', 0.42, 'Jaipur', 'Rajasthan', true, NOW(), NOW()),
-  ('302020', '302017', 'same_city', 0.42, 'Jaipur', 'Rajasthan', true, NOW(), NOW()),
-  -- 302020 / 302021 share prefix-4 "3020" → same_subcluster
-  ('302020', '302021', 'same_subcluster', 0.68, 'Jaipur', 'Rajasthan', true, NOW(), NOW()),
-  ('302021', '302020', 'same_subcluster', 0.68, 'Jaipur', 'Rajasthan', true, NOW(), NOW()),
-
-  -- ── Bengaluru pairs ───────────────────────────────────────────────────────
-  -- 560102 / 560038 / 560066 / 560064  — all prefix-3: 560, different prefix-4
-  ('560102', '560038', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560038', '560102', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560102', '560066', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560066', '560102', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560102', '560064', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560064', '560102', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560038', '560066', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560066', '560038', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560038', '560064', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560064', '560038', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560066', '560064', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW()),
-  ('560064', '560066', 'same_city', 0.42, 'Bengaluru', 'Karnataka', true, NOW(), NOW())
-
-  -- Lucknow: only one PIN seeded (226006 / Nishatganj).
-  -- No intra-city pairs needed. refresh_track_confidence_snapshots() will cross-link
-  -- it with any Lucknow PINs found in future reports/signals automatically.
-
-ON CONFLICT (pin, nearby_pin) DO NOTHING;
-
-
--- ─────────────────────────────────────────────────────────────────────────────
--- SECTION 4 + 3.5 — Ordering note
+-- SECTION 3 + 3.5 — Ordering note
 --   Section 4 (refresh) runs FIRST to establish base snapshot rows.
 --   Section 3.5 (below) runs AFTER to correct supply pressure for pins the
 --   refresh cannot source from live signals. See Section 3.5 after the refresh.
@@ -248,7 +143,7 @@ ON CONFLICT (pin, nearby_pin) DO NOTHING;
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- SECTION 4 — Snapshot refresh
+-- SECTION 3 — Snapshot refresh
 --   Calls refresh_track_confidence_snapshots() which:
 --   1. refresh_pin_profiles()           — canonical city/state/area for all pins
 --   2. refresh_pin_contributor_profiles() — trust ladder
@@ -264,7 +159,7 @@ SELECT public.refresh_track_confidence_snapshots();
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- SECTION 3.5 — Direct supply pressure correction  (runs AFTER Section 4)
+-- SECTION 3.5 — Bootstrap supply pressure correction  (runs AFTER Section 4)
 --
 -- WHY: refresh_track_confidence_snapshots() sets pressure_level = 'limited'
 -- for every PIN with zero live reports/signals. It never reads pin_data.shortage
@@ -272,9 +167,13 @@ SELECT public.refresh_track_confidence_snapshots();
 -- Baner/Wakad/Sangvi, Jaipur Jagatpura) show "Evidence still building" in the
 -- UI — actively wrong given the DRL community intelligence.
 --
--- GUARD: ON CONFLICT ... WHERE pressure_level = 'limited' only overwrites rows
--- the refresh could not populate. If real user signals have already raised the
--- level beyond 'limited', those rows are left untouched.
+-- GUARD: this only updates rows that still have no current signal/report basis:
+--   - pressure_level = 'limited'
+--   - report_count_30d = 0
+--   - exact_signal_count_30d = 0
+--   - nearby_signal_count_30d = 0
+-- This keeps seeded bootstrap pressure from competing with live evidence once
+-- the normal scoring pipeline starts receiving reports/signals.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO public.pin_supply_pressure (
@@ -326,9 +225,11 @@ ON CONFLICT (pin) DO UPDATE SET
   pressure_level           = EXCLUDED.pressure_level,
   source_scope             = EXCLUDED.source_scope,
   updated_at               = NOW()
-WHERE public.pin_supply_pressure.pressure_level = 'limited';
--- ^ Guard: only overwrite if the refresh left pressure_level = 'limited'
---   (no live signals). Real community upgrades are preserved.
+WHERE public.pin_supply_pressure.pressure_level = 'limited'
+  AND COALESCE(public.pin_supply_pressure.report_count_30d, 0) = 0
+  AND COALESCE(public.pin_supply_pressure.exact_signal_count_30d, 0) = 0
+  AND COALESCE(public.pin_supply_pressure.nearby_signal_count_30d, 0) = 0;
+-- ^ Guard: only bootstrap rows with no live evidence footprint yet.
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -375,4 +276,3 @@ WHERE public.pin_supply_pressure.pressure_level = 'limited';
 --   560102 → historical_avg_days=5.0,  pressure_level='low'
 
 -- ── END OF MIGRATION ────────────────────────────────────────────────────────
-

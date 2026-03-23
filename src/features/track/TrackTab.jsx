@@ -529,6 +529,9 @@ export function TrackTab({
                       <div className="track-signal-row">
                         <div className="track-signal-row__copy">
                           <span className="type-meta">Community signals</span>
+                          <span className="track-signal-row__summary track-signal-row__summary--inline">
+                            {communityInsight.summary}
+                          </span>
                           <p className="type-note mt-2 mb-0">
                             {communityInsight.note}
                           </p>
@@ -547,11 +550,6 @@ export function TrackTab({
                             </p>
                           ) : null}
                         </div>
-                        <span className="track-signal-row__value">
-                          <span className="track-signal-row__summary">
-                            {communityInsight.summary}
-                          </span>
-                        </span>
                       </div>
                     ) : null}
 

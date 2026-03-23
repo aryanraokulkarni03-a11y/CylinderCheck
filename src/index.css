@@ -2680,6 +2680,12 @@ body::before {
   max-width: 24ch;
 }
 
+.track-signal-row__summary--inline {
+  display: block;
+  max-width: none;
+  margin-top: 10px;
+}
+
 .track-signal-row__inline-action {
   display: inline-flex;
   align-items: center;

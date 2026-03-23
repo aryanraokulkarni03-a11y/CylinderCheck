@@ -247,6 +247,32 @@ function freshnessCopy(status) {
   return 'based on older history'
 }
 
+function buildSoftHistoricalEstimate(days, freshness, confidence = 'low') {
+  const roundedDays = Math.max(1, Math.round(days))
+
+  if (confidence === 'low' && roundedDays < 2) {
+    return {
+      kind: 'historical_soft',
+      summary: 'Evidence still building',
+      note: 'Older PIN-level history hints at quick delivery, but we do not have enough recent local evidence for a reliable day count yet.',
+      bookingCopy: 'older PIN-level delivery history',
+      typicalDays: null,
+      sampleSize: 0,
+      confidence,
+    }
+  }
+
+  return {
+    kind: 'historical',
+    summary: `About ${roundedDays} ${pluralize(roundedDays, 'day')}`,
+    note: `Based on historical PIN-level delivery data and ${freshness}.`,
+    bookingCopy: `a historical delivery estimate of about ${roundedDays} ${pluralize(roundedDays, 'day')}`,
+    typicalDays: roundedDays,
+    sampleSize: 0,
+    confidence,
+  }
+}
+
 export function buildDeliveryEstimateFromSnapshot(snapshot) {
   if (!snapshot) return null
 
@@ -288,15 +314,13 @@ export function buildDeliveryEstimateFromSnapshot(snapshot) {
   }
 
   if (Number.isFinite(historical)) {
-    const typicalDays = Math.max(1, Math.round(historical))
     return {
-      kind: 'historical',
-      summary: `About ${typicalDays} ${pluralize(typicalDays, 'day')}`,
-      note: `Based on historical PIN-level delivery data and ${freshness}.`,
-      bookingCopy: `a historical delivery estimate of about ${typicalDays} ${pluralize(typicalDays, 'day')}`,
-      typicalDays,
+      ...buildSoftHistoricalEstimate(
+        historical,
+        freshness,
+        snapshot.delivery_confidence_level || 'low',
+      ),
       sampleSize,
-      confidence: snapshot.delivery_confidence_level || 'low',
     }
   }
 
@@ -341,16 +365,7 @@ export function buildDeliveryEstimate({ avgDays, deliverySignals = [] }) {
   }
 
   if (Number.isFinite(avgDays)) {
-    const typicalDays = Math.max(1, Math.round(avgDays))
-    return {
-      kind: 'historical',
-      summary: `About ${typicalDays} ${pluralize(typicalDays, 'day')}`,
-      note: 'Based on historical PIN-level delivery data.',
-      bookingCopy: `a historical delivery estimate of about ${typicalDays} ${pluralize(typicalDays, 'day')}`,
-      typicalDays,
-      sampleSize: 0,
-      confidence: 'low',
-    }
+    return buildSoftHistoricalEstimate(avgDays, 'based on older history', 'low')
   }
 
   return {

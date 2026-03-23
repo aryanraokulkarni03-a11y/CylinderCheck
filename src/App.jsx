@@ -500,7 +500,8 @@ export default function App() {
       setLogoClicks(0)
       setShowAdminPrompt(true)
     }
-  }, [logoClicks])
+    navigate('/', { replace: routerLocation.pathname === '/' })
+  }, [logoClicks, navigate, routerLocation.pathname])
 
   const handleAdminUnlock = useCallback(async (password) => {
     setAdminLoading(true)

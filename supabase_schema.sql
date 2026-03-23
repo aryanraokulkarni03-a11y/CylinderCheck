@@ -280,6 +280,54 @@ CREATE TABLE IF NOT EXISTS lpg_price_scrape_log (
 
 ALTER TABLE lpg_price_scrape_log ENABLE ROW LEVEL SECURITY;
 
+CREATE TABLE IF NOT EXISTS scrape_runs (
+  id                 BIGSERIAL PRIMARY KEY,
+  scraper_name       TEXT NOT NULL,
+  scrape_mode        TEXT NOT NULL DEFAULT 'production',
+  source_host        TEXT NOT NULL,
+  publish_enabled    BOOLEAN NOT NULL DEFAULT true,
+  target_count       INT NOT NULL DEFAULT 0,
+  max_concurrency    INT NOT NULL DEFAULT 1,
+  request_jitter_ms  INT NOT NULL DEFAULT 0,
+  retry_limit        INT NOT NULL DEFAULT 0,
+  proxy_label        TEXT,
+  status             TEXT NOT NULL DEFAULT 'running',
+  config_snapshot    JSONB NOT NULL DEFAULT '{}'::jsonb,
+  summary            JSONB NOT NULL DEFAULT '{}'::jsonb,
+  started_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at       TIMESTAMPTZ,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT scrape_runs_mode_check CHECK (scrape_mode IN ('production', 'sandbox')),
+  CONSTRAINT scrape_runs_status_check CHECK (status IN ('running', 'completed', 'failed'))
+);
+
+ALTER TABLE scrape_runs ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS scrape_request_log (
+  id                 BIGSERIAL PRIMARY KEY,
+  run_id             BIGINT REFERENCES scrape_runs(id) ON DELETE CASCADE,
+  scraper_name       TEXT NOT NULL,
+  scrape_mode        TEXT NOT NULL DEFAULT 'production',
+  source_host        TEXT NOT NULL,
+  target_key         TEXT NOT NULL,
+  target_url         TEXT NOT NULL,
+  request_url        TEXT NOT NULL,
+  proxy_label        TEXT,
+  attempt            INT NOT NULL DEFAULT 1,
+  status_code        INT,
+  request_status     TEXT NOT NULL,
+  latency_ms         INT,
+  error_message      TEXT,
+  rate_limited       BOOLEAN NOT NULL DEFAULT false,
+  blocked_suspected  BOOLEAN NOT NULL DEFAULT false,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT scrape_request_log_mode_check CHECK (scrape_mode IN ('production', 'sandbox')),
+  CONSTRAINT scrape_request_log_status_check CHECK (request_status IN ('success', 'timeout', 'rate_limited', 'blocked', 'http_error', 'network_error'))
+);
+
+ALTER TABLE scrape_request_log ENABLE ROW LEVEL SECURITY;
+
 -- 5. Paid subscriptions
 --    Written by verify-payment edge function, read by admin stats.
 CREATE TABLE IF NOT EXISTS subscriptions (

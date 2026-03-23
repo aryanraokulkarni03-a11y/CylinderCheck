@@ -34,11 +34,24 @@ The live operational model relies on standard Node and GitHub Actions flows:
 - **Builds:** Running `npm run build` executes the prebuild script to generate the sitemap, then runs the Vite build.
 - **Alerts Dispatch:** Driven by `.github/workflows/dispatch-alerts.yml` running hourly. Alert delivery is currently email-first through the existing Supabase dispatch function.
 - **Price Scraping:** Driven by `.github/workflows/scrape-prices.yml` running twice daily (06:00 and 18:00 IST).
+- **Scrape Sandbox:** `.github/workflows/scrape-prices-sandbox.yml` provides a manual dry-run lane for concurrency, jitter, retry, and proxy experiments without publishing live prices.
 - **Commercial Verification:** Supplier listings are manually verified and inserted through the existing vendor flow.
 
-**Required Actions Secrets for scheduling:**
-- `SUPABASE_FUNCTIONS_BASE_URL`
-- `SUPABASE_ANON_KEY`
+**Workflow secrets:**
+- `dispatch-alerts.yml`
+  - `SUPABASE_FUNCTIONS_BASE_URL`
+  - `SUPABASE_ANON_KEY`
+- `scrape-prices.yml`
+  - `SUPABASE_FUNCTIONS_BASE_URL`
+  - `SUPABASE_CRON_SECRET`
+- `scrape-prices-sandbox.yml`
+  - `SUPABASE_SANDBOX_FUNCTIONS_BASE_URL`
+  - `SUPABASE_SANDBOX_CRON_SECRET`
+
+**Scraper environment role:**
+- Production function should set `SCRAPE_ENV=production`
+- Sandbox function should set `SCRAPE_ENV=sandbox`
+- Sandbox mode is dry-run only and will refuse live publishing
 
 ## Setup
 

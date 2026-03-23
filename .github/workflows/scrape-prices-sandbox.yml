@@ -1,0 +1,78 @@
+name: Scrape Prices Sandbox
+
+on:
+  workflow_dispatch:
+    inputs:
+      cities:
+        description: "Comma-separated city names or slugs to test (blank = all configured cities)"
+        required: false
+        default: ""
+      max_concurrency:
+        description: "Concurrent outbound requests for this sandbox run"
+        required: false
+        default: "2"
+      request_jitter_ms:
+        description: "Random jitter ceiling per request in milliseconds"
+        required: false
+        default: "1500"
+      retry_limit:
+        description: "Retry count for timeout/rate-limit/block candidates"
+        required: false
+        default: "1"
+      retry_base_delay_ms:
+        description: "Base backoff in milliseconds between retries"
+        required: false
+        default: "2000"
+
+jobs:
+  scrape-prices-sandbox:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invoke sandbox scrape-prices
+        env:
+          FUNCTIONS_BASE_URL: ${{ secrets.SUPABASE_SANDBOX_FUNCTIONS_BASE_URL }}
+          CRON_SECRET: ${{ secrets.SUPABASE_SANDBOX_CRON_SECRET }}
+          CITIES: ${{ github.event.inputs.cities }}
+          MAX_CONCURRENCY: ${{ github.event.inputs.max_concurrency }}
+          REQUEST_JITTER_MS: ${{ github.event.inputs.request_jitter_ms }}
+          RETRY_LIMIT: ${{ github.event.inputs.retry_limit }}
+          RETRY_BASE_DELAY_MS: ${{ github.event.inputs.retry_base_delay_ms }}
+        run: |
+          test -n "$FUNCTIONS_BASE_URL"
+          test -n "$CRON_SECRET"
+
+          if [ -n "$CITIES" ]; then
+            city_json=$(printf '%s' "$CITIES" | jq -Rc 'split(",") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))')
+          else
+            city_json='[]'
+          fi
+
+          payload=$(jq -n \
+            --argjson cities "$city_json" \
+            --arg mode "sandbox" \
+            --argjson publish false \
+            --argjson maxConcurrency "${MAX_CONCURRENCY:-2}" \
+            --argjson requestJitterMs "${REQUEST_JITTER_MS:-1500}" \
+            --argjson retryLimit "${RETRY_LIMIT:-1}" \
+            --argjson retryBaseDelayMs "${RETRY_BASE_DELAY_MS:-2000}" \
+            '{
+              mode: $mode,
+              publish: $publish,
+              cities: $cities,
+              maxConcurrency: $maxConcurrency,
+              requestJitterMs: $requestJitterMs,
+              retryLimit: $retryLimit,
+              retryBaseDelayMs: $retryBaseDelayMs
+            }')
+
+          http_code=$(curl -sS -o response.json -w "%{http_code}" \
+            -X POST "${FUNCTIONS_BASE_URL}/scrape-prices" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+
+          cat response.json
+
+          test "$http_code" -ge 200
+          test "$http_code" -lt 300
+          jq -e '.ok == true' response.json > /dev/null

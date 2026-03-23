@@ -21,7 +21,7 @@ jobs:
             -X POST "${FUNCTIONS_BASE_URL}/scrape-prices" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             -H "Content-Type: application/json" \
-            -d '{}')
+            -d '{"mode":"production","publish":true}')
 
           cat response.json
 

@@ -115,11 +115,19 @@ const DEFAULT_SCHEMA = [
 export const ROUTE_METADATA = {
   '/': {
     path: '/',
-    title: 'CylinderCheck | Check LPG delivery, shortage pressure, and tracked prices',
+    title: 'CylinderCheck | Check before you book LPG in your area',
     description:
-      'CylinderCheck helps Indian households and businesses check before they book: delivery timing, shortage pressure, tracked LPG prices, and commercial supplier signals.',
+      'Use your PIN to check LPG delivery timing, shortage pressure, and the next sensible booking date before you book. CylinderCheck also tracks city prices and a separate business supplier path.',
     indexable: true,
-    schema: DEFAULT_SCHEMA,
+    schema: [
+      webPageSchema({
+        path: '/',
+        title: 'CylinderCheck',
+        description:
+          'Use your PIN to check LPG delivery timing, shortage pressure, and the next sensible booking date before you book.',
+      }),
+      ...DEFAULT_SCHEMA,
+    ],
   },
   '/track': {
     path: '/track',

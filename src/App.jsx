@@ -33,6 +33,7 @@ import { BottomNav } from './components/layout/BottomNav'
 import { Footer } from './components/layout/Footer'
 
 import TrackTab from './features/track/TrackTab'
+import HomePage from './features/home/HomePage'
 import ReportsTab from './features/reports/ReportsTab'
 import NewsTab from './features/news/NewsTab'
 import AlertsTab from './features/alerts/AlertsTab'
@@ -540,7 +541,8 @@ export default function App() {
 
   const activeTab = (() => {
     const p = routerLocation.pathname || '/'
-    if (p === '/' || p.startsWith('/track')) return 'track'
+    if (p === '/') return null
+    if (p.startsWith('/track')) return 'track'
     if (p.startsWith('/reports')) return 'reports'
     if (p.startsWith('/news')) return 'news'
     if (p.startsWith('/alerts')) return 'alerts'
@@ -581,6 +583,27 @@ export default function App() {
     onReportIssue: (prefill) => navigate(TAB_ROUTES.reports, { state: { reportPrefill: prefill } }),
   }
 
+  const homeProps = {
+    pin,
+    setPin,
+    lastBooking,
+    setLastBooking,
+    mapPrices,
+    pricesUpdatedAt,
+    shortageSummary,
+    onPrimaryCheck: () => navigate(TAB_ROUTES.track, { state: { autoRunTrack: true } }),
+  }
+
+  useEffect(() => {
+    if (routerLocation.pathname !== TAB_ROUTES.track || !routerLocation.state?.autoRunTrack) return
+
+    navigate(TAB_ROUTES.track, { replace: true, state: {} })
+
+    if (pin && pin.length === 6) {
+      void handleTrack()
+    }
+  }, [routerLocation.pathname, routerLocation.state, navigate, pin, handleTrack])
+
   return (
     <>
       <SeoHead metadata={seoMetadata} />
@@ -613,7 +636,7 @@ export default function App() {
             transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
           >
             <Routes location={routerLocation}>
-              <Route path="/" element={<Navigate to={TAB_ROUTES.track} replace />} />
+              <Route path="/" element={<HomePage {...homeProps} />} />
               <Route path={TAB_ROUTES.track} element={<TrackTab {...trackProps} />} />
               <Route
                 path={TAB_ROUTES.reports}

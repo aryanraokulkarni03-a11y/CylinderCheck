@@ -2,7 +2,7 @@
 // Booking tracker + shortage pressure by PIN.
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { CalendarRange, Clock3, MapPin, Target, X } from 'lucide-react'
+import { MapPin, Target, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import { UrgencyScore } from './UrgencyScore'
@@ -12,6 +12,7 @@ import { PriceTicker } from '../../components/shared/PriceTicker'
 import { SlideUp } from '../../components/motion/SlideUp'
 import { KalamkariDivider } from '../../components/shared/KalamkariDivider'
 import { StatusDot } from '../../components/shared/StatusDot'
+import BeforeYouCheckSection from '../../components/shared/BeforeYouCheckSection'
 import BookingDatePicker from './BookingDatePicker'
 import { floatingAssistMotion, springs } from '../../lib/springs'
 import { addDays, fmt } from '../../lib/utils'
@@ -873,77 +874,10 @@ export function TrackTab({
                 transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                 className="hidden md:block"
               >
-                <Card
-                  variant="inset"
+                <BeforeYouCheckSection
                   className="card--spacious min-h-[300px] w-full border-[var(--border)]"
-                >
-                  <CardHeader
-                    kicker="Before you check"
-                    title="What you'll get after you enter your PIN"
-                    titleAs="h3"
-                  >
-                    <p className="type-card-copy mt-3 mb-0 max-w-[38ch]">
-                      You'll get a local delivery estimate, supply pressure signal, and a practical booking date for your area.
-                    </p>
-                  </CardHeader>
-
-                  <CardBody className="pt-2">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {[
-                        {
-                          icon: Clock3,
-                          eyebrow: 'Delivery estimate',
-                          title: 'How refills are moving near your PIN',
-                          note: 'See the strongest local delivery signal we currently have, with evidence level built in.',
-                        },
-                        {
-                          icon: MapPin,
-                          eyebrow: 'Supply pressure',
-                          title: 'Whether local strain is building',
-                          note: 'See whether recent local reports suggest calm conditions, early pressure, or active strain.',
-                        },
-                        {
-                          icon: CalendarRange,
-                          eyebrow: 'Booking date',
-                          title: 'When you can book again',
-                          note: 'Use your last booking date to judge whether to book now or wait.',
-                        },
-                      ].map(({ icon: Icon, eyebrow, title, note }, index) => (
-                        <div
-                          key={title}
-                          className={`rounded-[22px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-4 ${
-                            index === 2 ? 'md:col-span-2' : ''
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <span className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[color:color-mix(in_srgb,var(--accent)_12%,var(--bg-inset))] text-[var(--accent)] shadow-[0_12px_30px_rgba(241,139,31,0.12)]">
-                              <Icon size={18} />
-                            </span>
-                            <div className="min-w-0">
-                              <p className="kicker mb-2 text-[var(--accent)]">{eyebrow}</p>
-                              <p className="type-card-title mb-1">{title}</p>
-                              <p className="type-note mb-0 max-w-[40ch]">{note}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-4 rounded-[22px] border border-[var(--divider)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent)_6%,var(--bg-raised))_0%,var(--bg-raised)_100%)] px-4 py-4">
-                      <div className="flex items-start gap-3">
-                        <span className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-inset)] text-[var(--accent)]">
-                          <Target size={18} />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="type-card-title mb-1">Optional details help</p>
-                          <p className="type-note mb-0">
-                            Add your last booking date and cylinder level for a more accurate booking priority read.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
+                  titleAs="h3"
+                />
               </motion.div>
             )}
           </AnimatePresence>

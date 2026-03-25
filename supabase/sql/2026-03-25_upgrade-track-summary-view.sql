@@ -44,7 +44,56 @@ CREATE TABLE IF NOT EXISTS public.pin_supply_pressure (
   CONSTRAINT pin_supply_pressure_pin_check CHECK (pin ~ '^[0-9]{6}$')
 );
 
--- 2. Initialize missing tracking schema dependencies (distributors + coverage)
+-- 2. Initialize core platform tracking schema dependencies (pin_data, reports, user_signals)
+CREATE TABLE IF NOT EXISTS public.pin_data (
+  pin           TEXT PRIMARY KEY,
+  region        TEXT,
+  state         TEXT,
+  city          TEXT,
+  area_name     TEXT,
+  source        TEXT,
+  is_active     BOOLEAN DEFAULT true,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT pin_data_pin_check CHECK (pin ~ '^[0-9]{6}$')
+);
+
+CREATE TABLE IF NOT EXISTS public.reports (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID NOT NULL,
+  pin             TEXT NOT NULL,
+  city            TEXT,
+  state           TEXT,
+  product_type    TEXT NOT NULL DEFAULT 'domestic_14_2kg',
+  delivery_days   INT,
+  provider        TEXT,
+  note            TEXT,
+  source          TEXT NOT NULL DEFAULT 'web',
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT reports_pin_check CHECK (pin ~ '^[0-9]{6}$')
+);
+
+CREATE TABLE IF NOT EXISTS public.pin_user_signals (
+  id              BIGSERIAL PRIMARY KEY,
+  pin             TEXT NOT NULL,
+  city            TEXT,
+  state           TEXT,
+  area            TEXT,
+  user_id         UUID NOT NULL,
+  user_email      TEXT,
+  trust_tier      TEXT NOT NULL DEFAULT 'signed_in_user',
+  source_weight   NUMERIC(4,2) NOT NULL DEFAULT 0.55,
+  delivery_days   INT,
+  pressure_level  TEXT,
+  note            TEXT,
+  active          BOOLEAN NOT NULL DEFAULT true,
+  expires_at      TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '21 days'),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT pin_user_signals_pin_check CHECK (pin ~ '^[0-9]{6}$')
+);
+
+-- 3. Initialize missing backend coverage schemas (distributors + coverage)
 CREATE TABLE IF NOT EXISTS public.distributors (
   id                  BIGSERIAL PRIMARY KEY,
   company             TEXT NOT NULL,

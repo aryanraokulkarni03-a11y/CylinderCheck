@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Bell, Loader2, Mail } from 'lucide-react'
+import { Bell, Loader2, Sparkles } from 'lucide-react'
 
 import { supabase } from '../../supabaseClient'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -213,45 +213,51 @@ export default function AlertsTab({ user, authLoading }) {
           </CardBody>
         </Card>
 
-        <Card id="plus-card" variant="featured" className="card--utility-tight">
+        <Card id="plus-card" className="card--utility-tight alerts-plus-card">
           <CardHeader
-            title="A calmer planning layer for regular LPG households"
+            title="CylinderCheck PLUS"
             titleAs="h2"
             actions={(
-              <span className="badge bg-[var(--bg-inset)] text-[var(--text-muted)] border border-[var(--border)]">
-                Preview
+              <span className="badge alerts-plus-card__badge">
+                Plus Preview
               </span>
             )}
           >
-            <p className="card-header__description type-card-copy mb-0 max-w-[70ch]">
-              Plus is designed for households that want earlier signals, steadier planning, and fewer last-minute booking surprises.
+            <p className="card-header__description type-card-copy mb-0 alerts-plus-card__lede">
+              A calmer planning layer for regular LPG households.
+            </p>
+            <p className="type-note mb-0 alerts-plus-card__support">
+              CylinderCheck PLUS is designed for households that want earlier signals, steadier planning, and fewer last-minute booking surprises.
             </p>
           </CardHeader>
 
-          <CardBody>
-            <div className="space-y-2 pb-6 border-b border-[var(--divider)] mb-6">
-              {PLUS_PREVIEW.map(({ title, text }) => (
+          <CardBody className="alerts-plus-card__body">
+            <div className="alerts-plus-card__features">
+              {PLUS_PREVIEW.map(({ title, text }, index) => (
                 <div
                   key={title}
-                  className="rounded-[18px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-3"
+                  className={`alerts-plus-card__feature ${index === 2 ? 'alerts-plus-card__feature--wide' : ''}`}
                 >
-                  <p className="type-card-title mb-1">{title}</p>
-                  <p className="type-card-copy mb-0 text-[var(--text-primary)]">{text}</p>
+                  <span className="alerts-plus-card__feature-index" aria-hidden="true">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="type-card-title mb-1 alerts-plus-card__feature-title">{title}</p>
+                    <p className="type-card-copy mb-0 alerts-plus-card__feature-copy">{text}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <Callout tone="accent" edge={false}>
-              <div className="flex items-start gap-3">
-                <Mail size={18} className="mt-0.5 text-[var(--accent)]" />
-                <div>
-                  <p className="type-card-title mb-1">Built carefully, not rushed</p>
-                  <p className="type-note mb-0">
-                    Free reminders stay first in line. Once delivery is dependable enough to support a premium layer well, Plus can open with earlier notice and richer alert types.
-                  </p>
-                </div>
+            <div className="alerts-plus-card__seal">
+              <Sparkles size={18} className="alerts-plus-card__seal-icon" />
+              <div className="min-w-0">
+                <p className="type-card-title mb-1 alerts-plus-card__seal-title">Built carefully, not rushed</p>
+                <p className="type-note mb-0 alerts-plus-card__seal-copy">
+                  Free reminders stay first in line. Once delivery is dependable enough to support a premium layer well, CylinderCheck PLUS can open with earlier notice and richer alert types.
+                </p>
               </div>
-            </Callout>
+            </div>
           </CardBody>
         </Card>
       </div>

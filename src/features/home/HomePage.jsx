@@ -127,9 +127,9 @@ export function HomePage({
             transition={shouldReduceMotion ? { duration: 0.01 } : { ...springs.arrival, delay: 0.08 }}
           className="home-hero__panel-wrap"
         >
-          <Card className="home-hero__panel" variant="inset">
+          <Card className="home-hero__panel card--utility-tight" variant="inset">
             <CardHeader title="Open the booking tracker" titleAs="h2">
-              <p className="type-card-copy mt-2 mb-0">
+              <p className="type-card-copy mt-1 mb-0">
                 Enter your area once here and we&apos;ll carry it into the tracker. Add your last
                 booking date too if you want a sharper read.
                 </p>

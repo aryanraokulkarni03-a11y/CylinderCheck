@@ -355,12 +355,12 @@ export function TrackTab({
 
       <div className="page-grid-form-feed">
         <div className="space-y-4 min-w-0">
-          <Card>
+          <Card className="card--utility-tight">
             <CardHeader
               title="Check your area before you book"
               titleAs="h2"
             >
-              <p className="type-card-copy mt-2 mb-0">
+              <p className="type-card-copy mt-1 mb-0">
                 Use your PIN to see a local delivery estimate, supply pressure signal, and the next sensible booking date.
               </p>
             </CardHeader>

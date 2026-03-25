@@ -32,15 +32,15 @@ export function BeforeYouCheckSection({
   return (
     <Card
       variant="inset"
-      className={`before-you-check ${compact ? 'before-you-check--compact' : ''} ${className}`.trim()}
+      className={`before-you-check card--utility-tight ${compact ? 'before-you-check--compact' : ''} ${className}`.trim()}
     >
       <CardHeader title={title} titleAs={titleAs}>
-        <p className="type-card-copy mt-3 mb-0 max-w-[38ch]">
+        <p className="type-card-copy mt-1 mb-0 max-w-[38ch]">
           {description}
         </p>
       </CardHeader>
 
-      <CardBody className="pt-2">
+      <CardBody className="pt-1">
         <div className="before-you-check__grid">
           {BEFORE_YOU_CHECK_ITEMS.map(({ icon: Icon, title: itemTitle, note }, index) => (
             <div

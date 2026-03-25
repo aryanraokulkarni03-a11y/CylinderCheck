@@ -72,7 +72,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
       transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
       className="mt-4"
     >
-      <Card variant="inset" className="card--spacious national-snapshot-card">
+      <Card variant="inset" className="card--utility-tight national-snapshot-card">
         <CardHeader
           title="Domestic LPG across India"
           titleAs="h2"
@@ -82,12 +82,12 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
             </span>
           )}
         >
-          <p className="type-card-copy mt-3 mb-0 max-w-[42ch]">
+          <p className="type-card-copy mt-1 mb-0 max-w-[42ch]">
             Current city prices and recent shortage reporting, kept separate from your local result.
           </p>
         </CardHeader>
 
-        <CardBody className="pt-2">
+        <CardBody className="pt-1">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
             <div className="national-snapshot-hero flex flex-col">
               <div className="flex items-center gap-2 mb-4">

@@ -328,7 +328,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn, onTrackB
       />
 
       <div className="page-section page-grid-form-feed reports-layout">
-        <Card className="page-sticky-lg">
+        <Card className="page-sticky-lg card--utility-tight">
           <CardHeader
             title="Submit a report"
             titleAs="h2"
@@ -340,7 +340,7 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn, onTrackB
               ) : null
             }
           >
-            <p className="type-card-copy mt-3 mb-0">
+            <p className="type-card-copy mt-1 mb-0">
               Keep it factual. Add delivery days, agency name, or extra charges if you know them.
             </p>
           </CardHeader>

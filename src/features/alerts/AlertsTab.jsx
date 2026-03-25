@@ -124,12 +124,12 @@ export default function AlertsTab({ user, authLoading }) {
       />
 
       <div className="page-grid-dual">
-        <Card>
+        <Card className="card--utility-tight">
           <CardHeader
             title="Get a free email reminder"
             titleAs="h2"
           >
-            <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
+            <p className="type-card-copy mt-1 mb-0 max-w-[70ch]">
               Add your last booking date and we&apos;ll queue an email reminder 2 days before your next sensible booking date.
             </p>
           </CardHeader>
@@ -213,7 +213,7 @@ export default function AlertsTab({ user, authLoading }) {
           </CardBody>
         </Card>
 
-        <Card id="plus-card" variant="featured">
+        <Card id="plus-card" variant="featured" className="card--utility-tight">
           <CardHeader
             title="A calmer planning layer for regular LPG households"
             titleAs="h2"
@@ -223,7 +223,7 @@ export default function AlertsTab({ user, authLoading }) {
               </span>
             )}
           >
-            <p className="type-card-copy mt-4 mb-0 max-w-[70ch]">
+            <p className="type-card-copy mt-1 mb-0 max-w-[70ch]">
               Plus is designed for households that want earlier signals, steadier planning, and fewer last-minute booking surprises.
             </p>
           </CardHeader>

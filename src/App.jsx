@@ -323,6 +323,7 @@ export default function App() {
         const { data: pressureData } = await supabase
           .from('pin_track_summary_v1')
           .select('pin, city, pressure_level, pressure_score, report_count_30d')
+          .eq('pressure_product_type', 'domestic_14_2kg')
           .in('pressure_level', ['active', 'severe', 'building'])
 
         if (!cancelled) {
@@ -369,7 +370,7 @@ export default function App() {
       { data: verifiedSignals },
       { data: rpcAvgData },
     ] = await Promise.all([
-      supabase.from('pin_track_summary_v1').select('*').eq('pin', pin).maybeSingle(),
+      supabase.from('pin_track_summary_v1').select('*').eq('pin', pin).eq('delivery_product_type', 'domestic_14_2kg').maybeSingle(),
       supabase.from('pin_data').select('*').eq('pin', pin).single(),
       lookupPIN(pin),
       supabase.from('reports').select('id, created_at, delivery_days').eq('pin', pin)

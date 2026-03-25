@@ -6,18 +6,60 @@
 
 BEGIN;
 
--- 1. Structurally append product_type to ensure schema parity.
+-- 1. Initialize standalone schemas if completely missing (e.g. fresh DB wipes)
+CREATE TABLE IF NOT EXISTS public.pin_delivery_confidence (
+  pin                   TEXT NOT NULL,
+  city                  TEXT,
+  state                 TEXT,
+  sample_size_7d        INT NOT NULL DEFAULT 0,
+  sample_size_30d       INT NOT NULL DEFAULT 0,
+  delivery_days_p25     NUMERIC(4,1),
+  delivery_days_median  NUMERIC(4,1),
+  delivery_days_p75     NUMERIC(4,1),
+  historical_avg_days   NUMERIC(4,1),
+  confidence_level      TEXT NOT NULL DEFAULT 'limited',
+  freshness_status      TEXT NOT NULL DEFAULT 'stale',
+  source_scope          TEXT NOT NULL DEFAULT 'none',
+  exact_signal_count_30d INT NOT NULL DEFAULT 0,
+  nearby_signal_count_30d INT NOT NULL DEFAULT 0,
+  last_observed_at      TIMESTAMPTZ,
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT pin_delivery_confidence_pin_check CHECK (pin ~ '^[0-9]{6}$')
+);
+
+CREATE TABLE IF NOT EXISTS public.pin_supply_pressure (
+  pin                TEXT NOT NULL,
+  city               TEXT,
+  state              TEXT,
+  report_count_7d    INT NOT NULL DEFAULT 0,
+  report_count_30d   INT NOT NULL DEFAULT 0,
+  trend_direction    TEXT NOT NULL DEFAULT 'steady',
+  pressure_score     INT NOT NULL DEFAULT 0,
+  pressure_level     TEXT NOT NULL DEFAULT 'limited',
+  source_scope       TEXT NOT NULL DEFAULT 'none',
+  exact_signal_count_30d INT NOT NULL DEFAULT 0,
+  nearby_signal_count_30d INT NOT NULL DEFAULT 0,
+  last_report_at     TIMESTAMPTZ,
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT pin_supply_pressure_pin_check CHECK (pin ~ '^[0-9]{6}$')
+);
+
+-- 2. Structurally append product_type to ensure schema parity (Works on both legacy & fresh definitions)
 ALTER TABLE public.pin_supply_pressure 
   ADD COLUMN IF NOT EXISTS product_type TEXT NOT NULL DEFAULT 'domestic_14_2kg';
 ALTER TABLE public.pin_delivery_confidence 
   ADD COLUMN IF NOT EXISTS product_type TEXT NOT NULL DEFAULT 'domestic_14_2kg';
 
--- Upgrade Primary Keys to composite (pin, product_type) to support split tracking
+-- Upgrade Primary Keys to composite (pin, product_type) to support split tracking safely
 ALTER TABLE public.pin_supply_pressure DROP CONSTRAINT IF EXISTS pin_supply_pressure_pkey;
-ALTER TABLE public.pin_supply_pressure ADD PRIMARY KEY (pin, product_type);
+DO $$ BEGIN
+  ALTER TABLE public.pin_supply_pressure ADD PRIMARY KEY (pin, product_type);
+EXCEPTION WHEN OTHERS THEN END $$;
 
 ALTER TABLE public.pin_delivery_confidence DROP CONSTRAINT IF EXISTS pin_delivery_confidence_pkey;
-ALTER TABLE public.pin_delivery_confidence ADD PRIMARY KEY (pin, product_type);
+DO $$ BEGIN
+  ALTER TABLE public.pin_delivery_confidence ADD PRIMARY KEY (pin, product_type);
+EXCEPTION WHEN OTHERS THEN END $$;
 
 -- Safely drop dependencies (if required) or drop directly.
 DROP VIEW IF EXISTS public.pin_track_summary_v1;

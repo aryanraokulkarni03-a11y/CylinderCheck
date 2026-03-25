@@ -7,6 +7,19 @@
 BEGIN;
 
 -- 1. Register base PIN profiles to unlock Foreign Keys
+CREATE TABLE IF NOT EXISTS public.pin_profiles (
+  pin                TEXT PRIMARY KEY,
+  region             TEXT,
+  city               TEXT,
+  state              TEXT,
+  area_name          TEXT,
+  is_hotspot         BOOLEAN NOT NULL DEFAULT false,
+  rural_flag         BOOLEAN NOT NULL DEFAULT false,
+  commercial_flag    BOOLEAN NOT NULL DEFAULT false,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 INSERT INTO public.pin_profiles (pin, city, area_name, is_hotspot) VALUES
   ('226010', 'Lucknow', 'Lucknow Area', false),
   ('700086', 'Kolkata', 'Baghajatin', true),

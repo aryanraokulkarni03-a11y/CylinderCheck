@@ -44,7 +44,46 @@ CREATE TABLE IF NOT EXISTS public.pin_supply_pressure (
   CONSTRAINT pin_supply_pressure_pin_check CHECK (pin ~ '^[0-9]{6}$')
 );
 
--- 2. Structurally append product_type to ensure schema parity (Works on both legacy & fresh definitions)
+-- 2. Initialize missing tracking schema dependencies (distributors + coverage)
+CREATE TABLE IF NOT EXISTS public.distributors (
+  id                  BIGSERIAL PRIMARY KEY,
+  company             TEXT NOT NULL,
+  display_name        TEXT NOT NULL,
+  service_phone       TEXT,
+  support_phone       TEXT,
+  website_url         TEXT,
+  source_type         TEXT NOT NULL DEFAULT 'official',
+  source_url          TEXT,
+  verification_status TEXT NOT NULL DEFAULT 'unverified',
+  verification_notes  TEXT,
+  last_verified_at    TIMESTAMPTZ,
+  active              BOOLEAN NOT NULL DEFAULT true,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT distributors_company_check CHECK (company IN ('IndianOil', 'HP Gas', 'Bharat Gas')),
+  CONSTRAINT distributors_verification_status_check CHECK (verification_status IN ('unverified', 'likely', 'verified', 'stale'))
+);
+
+CREATE TABLE IF NOT EXISTS public.pin_distributor_coverage (
+  id                 BIGSERIAL PRIMARY KEY,
+  pin                TEXT NOT NULL,
+  distributor_id     BIGINT NOT NULL REFERENCES public.distributors(id) ON DELETE CASCADE,
+  coverage_type      TEXT NOT NULL DEFAULT 'exact_pin',
+  confidence_level   TEXT NOT NULL DEFAULT 'low',
+  source_type        TEXT NOT NULL DEFAULT 'official',
+  source_url         TEXT,
+  is_primary         BOOLEAN NOT NULL DEFAULT false,
+  last_verified_at   TIMESTAMPTZ,
+  active             BOOLEAN NOT NULL DEFAULT true,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT pin_distributor_coverage_pin_check CHECK (pin ~ '^[0-9]{6}$'),
+  CONSTRAINT pin_distributor_coverage_type_check CHECK (coverage_type IN ('exact_pin', 'pin_cluster', 'district')),
+  CONSTRAINT pin_distributor_coverage_confidence_check CHECK (confidence_level IN ('low', 'medium', 'high')),
+  CONSTRAINT pin_distributor_coverage_source_check CHECK (source_type IN ('official', 'community_confirmed', 'manual'))
+);
+
+-- 3. Structurally append product_type to ensure schema parity
 ALTER TABLE public.pin_supply_pressure 
   ADD COLUMN IF NOT EXISTS product_type TEXT NOT NULL DEFAULT 'domestic_14_2kg';
 ALTER TABLE public.pin_delivery_confidence 

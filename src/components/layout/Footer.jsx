@@ -37,6 +37,12 @@ export function Footer() {
           <span className="footer-ledger__dot" aria-hidden="true">
             {DOT}
           </span>
+          <NavLink to="/cities" className={linkClassName}>
+            Cities
+          </NavLink>
+          <span className="footer-ledger__dot" aria-hidden="true">
+            {DOT}
+          </span>
           <NavLink to="/privacy" className={linkClassName}>
             Privacy
           </NavLink>

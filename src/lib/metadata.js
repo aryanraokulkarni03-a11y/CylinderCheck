@@ -306,6 +306,19 @@ export const ROUTE_METADATA = {
       BANGALORE_COMMERCIAL_FAQ,
     ],
   },
+  '/cities': {
+    path: '/cities',
+    title: 'LPG Prices & Delivery Tracking by City | CylinderCheck',
+    description: 'Find today\'s 14.2kg domestic and 19kg commercial LPG cylinder rates, tracking trends, and exact delivery estimates by city across India.',
+    indexable: true,
+    schema: [
+      collectionPageSchema({
+        path: '/cities',
+        title: 'Check LPG Prices by City',
+        description: 'Find today\'s domestic and commercial LPG cylinder rates by city across India.'
+      })
+    ]
+  },
   '/account': {
     path: '/account',
     title: 'Account | CylinderCheck',

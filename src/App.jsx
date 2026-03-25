@@ -42,6 +42,7 @@ import BangaloreGuidePage from './features/seo/BangaloreGuidePage'
 import { BANGALORE_GUIDES } from './features/seo/bangaloreGuides'
 import AdminTab from './features/admin/AdminTab'
 import CitySEOPage from './features/seo/CitySEOPage'
+import CitiesDirectoryPage from './features/seo/CitiesDirectoryPage'
 import AdminModal from './features/admin/AdminModal'
 import SupportPage from './features/support/SupportPage'
 import PrivacyPage from './features/legal/PrivacyPage'
@@ -737,6 +738,7 @@ export default function App() {
               />
               <Route path="/commercial" element={<Navigate to={TAB_ROUTES.commercial} replace />} />
               <Route path="/lpg-price-in-:citySlug" element={<CitySEOPage />} />
+              <Route path="/cities" element={<CitiesDirectoryPage />} />
               <Route
                 path={CONTENT_ROUTES.bangalorePrice}
                 element={<BangaloreGuidePage {...BANGALORE_GUIDES[CONTENT_ROUTES.bangalorePrice]} mapPrices={mapPrices} />}

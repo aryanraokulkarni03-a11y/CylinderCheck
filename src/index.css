@@ -655,6 +655,10 @@ body::before {
     justify-content: center;
     padding-top: 8px;
   }
+
+  .commercial-hero__title-row {
+    flex-wrap: nowrap;
+  }
 }
 
 /* Interior structure: makes cards feel designed, not "just padded rectangles". */
@@ -3438,12 +3442,26 @@ body::before {
   }
 
   .home-hero__title {
-    max-width: 12.5ch;
+    max-width: 15.5ch;
     font-size: clamp(3.25rem, 6.2vw, 5.1rem);
   }
 
   .home-hero__copy {
     gap: 26px;
+  }
+
+  .card-header__title {
+    max-width: none;
+    text-wrap: pretty;
+  }
+
+  .card--utility-tight .card-header__title {
+    max-width: none;
+  }
+
+  .home-section-heading__title {
+    max-width: 30ch;
+    text-wrap: pretty;
   }
 
   .home-proof-grid {
@@ -3467,5 +3485,15 @@ body::before {
 
   .home-business-rail__actions {
     width: min(280px, 100%);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-hero__title {
+    max-width: 16.75ch;
+  }
+
+  .home-section-heading__title {
+    max-width: 34ch;
   }
 }

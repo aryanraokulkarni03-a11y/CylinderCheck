@@ -27,7 +27,7 @@ export default function CommercialHero() {
         transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
         className="commercial-hero__grid grid md:grid-cols-12 gap-6 md:gap-8 items-start"
       >
-        <div className="commercial-hero__copy md:col-span-7">
+        <div className="commercial-hero__copy md:col-span-8">
           <h1 className="commercial-hero__title hero-title text-[var(--text-primary)]">
             <span className="commercial-hero__title-row">
               <span className="commercial-hero__title-icon" aria-hidden="true">
@@ -49,7 +49,7 @@ export default function CommercialHero() {
 
         </div>
 
-        <div className="commercial-hero__panel md:col-span-5">
+        <div className="commercial-hero__panel md:col-span-4">
           <div className="glass-mid rounded-[var(--radius-lg)] p-6 md:p-7">
             <div className="kicker">
               How to use this page

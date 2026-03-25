@@ -1,5 +1,5 @@
 ﻿// src/App.jsx
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -133,6 +133,28 @@ async function fetchDomesticTrackSummary(pin) {
     : result.data[0]
 
   return { data, error: null }
+}
+
+function RouteScrollManager({ pathname, search, hash }) {
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('scrollRestoration' in window.history)) return undefined
+
+    const previous = window.history.scrollRestoration
+    window.history.scrollRestoration = 'manual'
+
+    return () => {
+      window.history.scrollRestoration = previous
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return
+    if (hash) return
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [pathname, search, hash])
+
+  return null
 }
 
 export default function App() {
@@ -651,6 +673,11 @@ export default function App() {
 
   return (
     <>
+      <RouteScrollManager
+        pathname={routerLocation.pathname}
+        search={routerLocation.search}
+        hash={routerLocation.hash}
+      />
       <SeoHead metadata={seoMetadata} />
       <AppShell
         topbar={

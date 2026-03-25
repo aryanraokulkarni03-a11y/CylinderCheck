@@ -8,34 +8,37 @@ BEGIN;
 
 -- 1. Register base PIN profiles to unlock Foreign Keys
 CREATE TABLE IF NOT EXISTS public.pin_profiles (
-  pin                TEXT PRIMARY KEY,
-  region             TEXT,
-  city               TEXT,
-  state              TEXT,
-  area_name          TEXT,
-  is_hotspot         BOOLEAN NOT NULL DEFAULT false,
-  rural_flag         BOOLEAN NOT NULL DEFAULT false,
-  commercial_flag    BOOLEAN NOT NULL DEFAULT false,
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  pin                 TEXT PRIMARY KEY,
+  pin_prefix3         TEXT GENERATED ALWAYS AS (left(pin, 3)) STORED,
+  canonical_city      TEXT,
+  canonical_state     TEXT,
+  canonical_area      TEXT,
+  city_source         TEXT NOT NULL DEFAULT 'unknown',
+  state_source        TEXT NOT NULL DEFAULT 'unknown',
+  area_source         TEXT NOT NULL DEFAULT 'unknown',
+  profile_confidence  TEXT NOT NULL DEFAULT 'low',
+  last_report_at      TIMESTAMPTZ,
+  last_signal_at      TIMESTAMPTZ,
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT pin_profiles_pin_check CHECK (pin ~ '^[0-9]{6}$')
 );
 
-INSERT INTO public.pin_profiles (pin, city, area_name, is_hotspot) VALUES
-  ('226010', 'Lucknow', 'Lucknow Area', false),
-  ('700086', 'Kolkata', 'Baghajatin', true),
-  ('700032', 'Kolkata', 'Jadavpur', true),
-  ('700019', 'Kolkata', 'Ballygunge', true),
-  ('700084', 'Kolkata', 'Garia', false),
-  ('700103', 'Kolkata', 'Hiland Park', false),
-  ('700034', 'Kolkata', 'Behala', true),
-  ('700033', 'Kolkata', 'Tollygunge', true),
-  ('700008', 'Kolkata', 'Barisha', true),
-  ('700060', 'Kolkata', 'Parnasree', false),
-  ('700053', 'Kolkata', 'New Alipore', false),
-  ('411057', 'Pune',    'Wakad', true)
+INSERT INTO public.pin_profiles (pin, canonical_city, canonical_state, canonical_area, city_source, state_source, area_source, profile_confidence) VALUES
+  ('226010', 'Lucknow', 'Uttar Pradesh', 'Lucknow Area', 'seed', 'seed', 'seed', 'high'),
+  ('700086', 'Kolkata', 'West Bengal', 'Baghajatin',   'seed', 'seed', 'seed', 'high'),
+  ('700032', 'Kolkata', 'West Bengal', 'Jadavpur',     'seed', 'seed', 'seed', 'high'),
+  ('700019', 'Kolkata', 'West Bengal', 'Ballygunge',   'seed', 'seed', 'seed', 'high'),
+  ('700084', 'Kolkata', 'West Bengal', 'Garia',        'seed', 'seed', 'seed', 'high'),
+  ('700103', 'Kolkata', 'West Bengal', 'Hiland Park',  'seed', 'seed', 'seed', 'high'),
+  ('700034', 'Kolkata', 'West Bengal', 'Behala',       'seed', 'seed', 'seed', 'high'),
+  ('700033', 'Kolkata', 'West Bengal', 'Tollygunge',   'seed', 'seed', 'seed', 'high'),
+  ('700008', 'Kolkata', 'West Bengal', 'Barisha',      'seed', 'seed', 'seed', 'high'),
+  ('700060', 'Kolkata', 'West Bengal', 'Parnasree',    'seed', 'seed', 'seed', 'high'),
+  ('700053', 'Kolkata', 'West Bengal', 'New Alipore',  'seed', 'seed', 'seed', 'high'),
+  ('411057', 'Pune',    'Maharashtra',   'Wakad',        'seed', 'seed', 'seed', 'high')
 ON CONFLICT (pin) DO UPDATE SET 
-  area_name = EXCLUDED.area_name,
-  is_hotspot = EXCLUDED.is_hotspot;
+  canonical_area = EXCLUDED.canonical_area,
+  updated_at = NOW();
 
 -- 2. Inject Delivery Confidence Models (Historical Days Pipeline)
 INSERT INTO public.pin_delivery_confidence (pin, city, state, product_type, historical_avg_days, confidence_level, freshness_status, source_scope) VALUES

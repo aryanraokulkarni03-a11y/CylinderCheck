@@ -360,7 +360,7 @@ export function TrackTab({
               title="Check your area before you book"
               titleAs="h2"
             >
-              <p className="type-card-copy mt-1 mb-0">
+              <p className="card-header__description type-card-copy mb-0">
                 Use your PIN to see a local delivery estimate, supply pressure signal, and the next sensible booking date.
               </p>
             </CardHeader>
@@ -641,7 +641,7 @@ export function TrackTab({
                               </button>
                             }
                           >
-                            <p className="type-card-copy mt-3 mb-0 max-w-[44ch]">
+                            <p className="card-header__description type-card-copy mb-0 max-w-[44ch]">
                               Share what you actually saw near this PIN. We use it to strengthen local delivery and supply signals without overstating certainty.
                             </p>
                           </CardHeader>

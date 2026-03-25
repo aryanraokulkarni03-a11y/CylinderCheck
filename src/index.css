@@ -605,7 +605,7 @@ body::before {
 .commercial-hero__copy {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
 }
 
 .commercial-hero__title {
@@ -719,6 +719,9 @@ body::before {
   font-weight: 600;
   max-width: 24ch;
   text-wrap: balance;
+}
+.card-header__description {
+  margin: clamp(10px, 1.7vw, 14px) 0 0;
 }
 .card-body {
   min-width: 0;
@@ -1971,7 +1974,7 @@ body::before {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .page-header__title {
@@ -3237,7 +3240,7 @@ body::before {
 .home-hero__copy {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 22px;
 }
 
 .home-hero__title {
@@ -3437,6 +3440,10 @@ body::before {
   .home-hero__title {
     max-width: 12.5ch;
     font-size: clamp(3.25rem, 6.2vw, 5.1rem);
+  }
+
+  .home-hero__copy {
+    gap: 26px;
   }
 
   .home-proof-grid {

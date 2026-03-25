@@ -129,7 +129,7 @@ export default function AlertsTab({ user, authLoading }) {
             title="Get a free email reminder"
             titleAs="h2"
           >
-            <p className="type-card-copy mt-1 mb-0 max-w-[70ch]">
+            <p className="card-header__description type-card-copy mb-0 max-w-[70ch]">
               Add your last booking date and we&apos;ll queue an email reminder 2 days before your next sensible booking date.
             </p>
           </CardHeader>
@@ -223,7 +223,7 @@ export default function AlertsTab({ user, authLoading }) {
               </span>
             )}
           >
-            <p className="type-card-copy mt-1 mb-0 max-w-[70ch]">
+            <p className="card-header__description type-card-copy mb-0 max-w-[70ch]">
               Plus is designed for households that want earlier signals, steadier planning, and fewer last-minute booking surprises.
             </p>
           </CardHeader>

@@ -35,7 +35,7 @@ export function BeforeYouCheckSection({
       className={`before-you-check card--utility-tight ${compact ? 'before-you-check--compact' : ''} ${className}`.trim()}
     >
       <CardHeader title={title} titleAs={titleAs}>
-        <p className="type-card-copy mt-1 mb-0 max-w-[38ch]">
+        <p className="card-header__description type-card-copy mb-0 max-w-[38ch]">
           {description}
         </p>
       </CardHeader>

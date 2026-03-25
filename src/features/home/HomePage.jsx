@@ -129,11 +129,11 @@ export function HomePage({
         >
           <Card className="home-hero__panel card--utility-tight" variant="inset">
             <CardHeader title="Open the booking tracker" titleAs="h2">
-              <p className="type-card-copy mt-1 mb-0">
+              <p className="card-header__description type-card-copy mb-0">
                 Enter your area once here and we&apos;ll carry it into the tracker. Add your last
                 booking date too if you want a sharper read.
-                </p>
-              </CardHeader>
+              </p>
+            </CardHeader>
 
               <CardBody>
                 <div className="home-hero__form">

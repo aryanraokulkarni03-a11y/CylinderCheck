@@ -82,7 +82,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
             </span>
           )}
         >
-          <p className="type-card-copy mt-1 mb-0 max-w-[42ch]">
+          <p className="card-header__description type-card-copy mb-0 max-w-[42ch]">
             Current city prices and recent shortage reporting, kept separate from your local result.
           </p>
         </CardHeader>

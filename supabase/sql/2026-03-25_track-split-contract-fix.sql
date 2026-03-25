@@ -1,24 +1,84 @@
 -- ============================================
--- CylinderCheck - Backfill / refresh Track confidence snapshots
--- Depends on:
---   2026-03-20_track-confidence-and-distributor-model.sql
---   2026-03-20_verified-track-signals.sql
---   2026-03-20_track-signal-propagation-columns.sql
---   2026-03-20_track-trust-ladder-and-neighbor-graph.sql
---   2026-03-20_pin-profiles-normalization.sql
---
--- Rebuild strategy:
---   1. Refresh contributor trust profiles and nearby-pin edges first.
---   2. Prefer exact-PIN reports and exact trusted signals.
---   3. Use neighbor edges instead of blunt prefix-only spillover.
---   4. Expand beyond seeded pin_data whenever reports/signals exist.
+-- CylinderCheck - Track split contract fix
+-- Date: 2026-03-25
+-- Purpose:
+--   1. Repair the unified Track view against the real canonical schema.
+--   2. Preserve domestic/commercial split rows safely.
+--   3. Update snapshot refreshes to write domestic rows by (pin, product_type).
 -- ============================================
+
+BEGIN;
+
+DO $$
+BEGIN
+  IF to_regclass('public.pin_data') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.pin_data. Apply the base schema first.';
+  END IF;
+
+  IF to_regclass('public.reports') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.reports. Apply the base schema first.';
+  END IF;
+
+  IF to_regclass('public.pin_user_signals') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.pin_user_signals. Apply the base schema first.';
+  END IF;
+
+  IF to_regclass('public.pin_profiles') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.pin_profiles. Apply the pin profile migrations first.';
+  END IF;
+
+  IF to_regclass('public.pin_delivery_confidence') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.pin_delivery_confidence. Apply the track model migrations first.';
+  END IF;
+
+  IF to_regclass('public.pin_supply_pressure') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.pin_supply_pressure. Apply the track model migrations first.';
+  END IF;
+
+  IF to_regclass('public.distributors') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.distributors. Apply the track model migrations first.';
+  END IF;
+
+  IF to_regclass('public.pin_distributor_coverage') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.pin_distributor_coverage. Apply the track model migrations first.';
+  END IF;
+END $$;
+
+ALTER TABLE public.pin_supply_pressure
+  ADD COLUMN IF NOT EXISTS product_type TEXT NOT NULL DEFAULT 'domestic_14_2kg';
+
+ALTER TABLE public.pin_delivery_confidence
+  ADD COLUMN IF NOT EXISTS product_type TEXT NOT NULL DEFAULT 'domestic_14_2kg';
+
+ALTER TABLE public.pin_supply_pressure
+  DROP CONSTRAINT IF EXISTS pin_supply_pressure_pkey;
+
+DO $$
+BEGIN
+  ALTER TABLE public.pin_supply_pressure
+    ADD PRIMARY KEY (pin, product_type);
+EXCEPTION
+  WHEN duplicate_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE public.pin_delivery_confidence
+  DROP CONSTRAINT IF EXISTS pin_delivery_confidence_pkey;
+
+DO $$
+BEGIN
+  ALTER TABLE public.pin_delivery_confidence
+    ADD PRIMARY KEY (pin, product_type);
+EXCEPTION
+  WHEN duplicate_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE OR REPLACE FUNCTION public.refresh_track_confidence_snapshots()
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 BEGIN
   PERFORM public.refresh_pin_profiles();
   PERFORM public.refresh_pin_contributor_profiles();
@@ -640,7 +700,126 @@ BEGIN
     last_report_at = EXCLUDED.last_report_at,
     updated_at = EXCLUDED.updated_at;
 END;
-$$;
+$function$;
+
+DROP VIEW IF EXISTS public.pin_track_summary_v1;
+
+CREATE VIEW public.pin_track_summary_v1 AS
+WITH pin_universe AS (
+  SELECT
+    pp.pin,
+    pp.canonical_city AS city,
+    pp.canonical_state AS state,
+    pp.canonical_area AS area
+  FROM public.pin_profiles pp
+  WHERE pp.pin ~ '^[0-9]{6}$'
+  UNION
+  SELECT
+    pd.pin,
+    pd.city,
+    pd.state,
+    NULL::TEXT AS area
+  FROM public.pin_data pd
+  WHERE pd.pin ~ '^[0-9]{6}$'
+  UNION
+  SELECT DISTINCT
+    r.pin,
+    COALESCE(NULLIF(r.city, ''), pp.canonical_city, pd.city) AS city,
+    COALESCE(pp.canonical_state, pd.state, '') AS state,
+    COALESCE(pp.canonical_area, '') AS area
+  FROM public.reports r
+  LEFT JOIN public.pin_profiles pp
+    ON pp.pin = r.pin
+  LEFT JOIN public.pin_data pd
+    ON pd.pin = r.pin
+  WHERE r.pin ~ '^[0-9]{6}$'
+  UNION
+  SELECT DISTINCT
+    pus.pin,
+    COALESCE(NULLIF(pus.city, ''), pp.canonical_city, pd.city) AS city,
+    COALESCE(NULLIF(pus.state, ''), pp.canonical_state, pd.state, '') AS state,
+    COALESCE(NULLIF(pus.area, ''), pp.canonical_area, '') AS area
+  FROM public.pin_user_signals pus
+  LEFT JOIN public.pin_profiles pp
+    ON pp.pin = pus.pin
+  LEFT JOIN public.pin_data pd
+    ON pd.pin = pus.pin
+  WHERE pus.pin ~ '^[0-9]{6}$'
+  UNION
+  SELECT DISTINCT
+    pdc.pin,
+    COALESCE(NULLIF(pdc.city, ''), pp.canonical_city, '') AS city,
+    COALESCE(NULLIF(pdc.state, ''), pp.canonical_state, '') AS state,
+    COALESCE(pp.canonical_area, '') AS area
+  FROM public.pin_delivery_confidence pdc
+  LEFT JOIN public.pin_profiles pp
+    ON pp.pin = pdc.pin
+  WHERE pdc.pin ~ '^[0-9]{6}$'
+  UNION
+  SELECT DISTINCT
+    psp.pin,
+    COALESCE(NULLIF(psp.city, ''), pp.canonical_city, '') AS city,
+    COALESCE(NULLIF(psp.state, ''), pp.canonical_state, '') AS state,
+    COALESCE(pp.canonical_area, '') AS area
+  FROM public.pin_supply_pressure psp
+  LEFT JOIN public.pin_profiles pp
+    ON pp.pin = psp.pin
+  WHERE psp.pin ~ '^[0-9]{6}$'
+),
+product_types AS (
+  SELECT unnest(ARRAY['domestic_14_2kg', 'commercial_19kg']) AS product_type
+)
+SELECT
+  pu.pin,
+  COALESCE(NULLIF(pdc.city, ''), NULLIF(psp.city, ''), pu.city) AS city,
+  COALESCE(NULLIF(pdc.state, ''), NULLIF(psp.state, ''), pu.state) AS state,
+  pu.area AS area,
+  pt.product_type AS pressure_product_type,
+  pt.product_type AS delivery_product_type,
+  pdc.sample_size_7d,
+  pdc.sample_size_30d,
+  pdc.delivery_days_p25,
+  pdc.delivery_days_median,
+  pdc.delivery_days_p75,
+  pdc.historical_avg_days,
+  pdc.confidence_level AS delivery_confidence_level,
+  pdc.freshness_status AS delivery_freshness_status,
+  pdc.last_observed_at,
+  pdc.source_scope AS delivery_source_scope,
+  pdc.exact_signal_count_30d AS delivery_exact_signal_count_30d,
+  pdc.nearby_signal_count_30d AS delivery_nearby_signal_count_30d,
+  psp.report_count_7d,
+  psp.report_count_30d,
+  psp.trend_direction,
+  psp.pressure_score,
+  psp.pressure_level,
+  psp.last_report_at,
+  psp.source_scope AS pressure_source_scope,
+  psp.exact_signal_count_30d AS pressure_exact_signal_count_30d,
+  psp.nearby_signal_count_30d AS pressure_nearby_signal_count_30d,
+  d.id AS distributor_id,
+  d.company AS distributor_company,
+  d.display_name AS distributor_name,
+  d.verification_status AS distributor_verification_status,
+  d.last_verified_at AS distributor_last_verified_at
+FROM pin_universe pu
+CROSS JOIN product_types pt
+LEFT JOIN public.pin_delivery_confidence pdc
+  ON pdc.pin = pu.pin
+ AND pdc.product_type = pt.product_type
+LEFT JOIN public.pin_supply_pressure psp
+  ON psp.pin = pu.pin
+ AND psp.product_type = pt.product_type
+LEFT JOIN public.pin_distributor_coverage coverage
+  ON coverage.pin = pu.pin
+ AND coverage.is_primary = true
+ AND coverage.active = true
+LEFT JOIN public.distributors d
+  ON d.id = coverage.distributor_id
+ AND d.active = true
+WHERE pdc.pin IS NOT NULL OR psp.pin IS NOT NULL OR pt.product_type = 'domestic_14_2kg';
 
 COMMENT ON FUNCTION public.refresh_track_confidence_snapshots IS
-  'Rebuilds pin_delivery_confidence and pin_supply_pressure from normalized pin profiles, reports, trust-scored user signals, and weighted nearby-pin edges.';
+  'Rebuilds domestic 14.2kg track snapshots by (pin, product_type) while preserving separately seeded product splits.';
+
+COMMIT;

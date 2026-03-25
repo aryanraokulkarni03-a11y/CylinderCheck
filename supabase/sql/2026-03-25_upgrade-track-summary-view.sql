@@ -122,15 +122,15 @@ WITH pin_universe AS (
     pd.pin,
     pd.city,
     pd.state,
-    pd.area_name AS area
+    NULL::TEXT AS area
   FROM public.pin_data pd
   WHERE pd.pin ~ '^[0-9]{6}$'
   UNION
   SELECT DISTINCT
     r.pin,
     COALESCE(NULLIF(r.city, ''), pp.canonical_city, pd.city) AS city,
-    COALESCE(NULLIF(r.state, ''), pp.canonical_state, pd.state, '') AS state,
-    COALESCE(pp.canonical_area, pd.area_name, '') AS area
+    COALESCE(pp.canonical_state, pd.state, '') AS state,
+    COALESCE(pp.canonical_area, '') AS area
   FROM public.reports r
   LEFT JOIN public.pin_profiles pp
     ON pp.pin = r.pin
@@ -142,7 +142,7 @@ WITH pin_universe AS (
     pus.pin,
     COALESCE(NULLIF(pus.city, ''), pp.canonical_city, pd.city) AS city,
     COALESCE(NULLIF(pus.state, ''), pp.canonical_state, pd.state, '') AS state,
-    COALESCE(NULLIF(pus.area, ''), pp.canonical_area, pd.area_name, '') AS area
+    COALESCE(NULLIF(pus.area, ''), pp.canonical_area, '') AS area
   FROM public.pin_user_signals pus
   LEFT JOIN public.pin_profiles pp
     ON pp.pin = pus.pin

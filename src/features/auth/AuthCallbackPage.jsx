@@ -123,7 +123,6 @@ export function AuthCallbackPage({ user }) {
     <div className="reading-page">
       <Card variant="raised" className="max-w-[640px] mx-auto">
         <CardHeader
-          kicker="Sign-in"
           title={error ? 'Sign-in needs another try' : 'Finishing sign-in'}
           meta={<span className="reading-meta">CylinderCheck</span>}
         />

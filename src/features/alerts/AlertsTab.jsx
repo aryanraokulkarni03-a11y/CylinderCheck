@@ -13,15 +13,15 @@ const ARROW = '\u2192'
 
 const PLUS_PREVIEW = [
   {
-    eyebrow: 'Refill timing',
+    title: 'Refill timing',
     text: 'Get earlier nudges when your home is moving toward the next sensible refill window.',
   },
   {
-    eyebrow: 'Pressure shifts',
+    title: 'Pressure shifts',
     text: 'See local supply pressure turn sooner, with more room to plan before a routine refill becomes urgent.',
   },
   {
-    eyebrow: 'Price moves',
+    title: 'Price moves',
     text: 'Stay ahead of price changes that matter to your next booking instead of finding out after the fact.',
   },
 ]
@@ -126,7 +126,6 @@ export default function AlertsTab({ user, authLoading }) {
       <div className="page-grid-dual">
         <Card>
           <CardHeader
-            kicker="Free reminder"
             title="Get a free email reminder"
             titleAs="h2"
           >
@@ -216,7 +215,6 @@ export default function AlertsTab({ user, authLoading }) {
 
         <Card id="plus-card" variant="featured">
           <CardHeader
-            kicker="Plus preview"
             title="A calmer planning layer for regular LPG households"
             titleAs="h2"
             actions={(
@@ -232,12 +230,12 @@ export default function AlertsTab({ user, authLoading }) {
 
           <CardBody>
             <div className="space-y-2 pb-6 border-b border-[var(--divider)] mb-6">
-              {PLUS_PREVIEW.map(({ eyebrow, text }) => (
+              {PLUS_PREVIEW.map(({ title, text }) => (
                 <div
-                  key={eyebrow}
+                  key={title}
                   className="rounded-[18px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-3"
                 >
-                  <p className="kicker mb-2 text-[var(--accent)]">{eyebrow}</p>
+                  <p className="type-card-title mb-1">{title}</p>
                   <p className="type-card-copy mb-0 text-[var(--text-primary)]">{text}</p>
                 </div>
               ))}

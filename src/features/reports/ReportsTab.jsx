@@ -328,10 +328,9 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn, onTrackB
       />
 
       <div className="page-section page-grid-form-feed reports-layout">
-          <Card className="page-sticky-lg">
+        <Card className="page-sticky-lg">
           <CardHeader
-            kicker="Submit a report"
-            title="Report an issue in your area"
+            title="Submit a report"
             titleAs="h2"
             actions={
               user ? (
@@ -350,9 +349,6 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn, onTrackB
             <Callout tone="accent" className="mb-4 reports-prefill-callout" edge={false}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="kicker mb-2 text-[var(--accent)]">
-                    From Booking Tracker
-                  </p>
                   <p className="type-card-copy mb-1 text-[var(--text-primary)]">
                     Reporting for {trackPrefillContext.contextLabel || `PIN ${trackPrefillContext.pin}`}.
                   </p>
@@ -382,9 +378,6 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn, onTrackB
 
           {!authLoading && !user ? (
             <div className="text-center py-6">
-                <div className="kicker text-[var(--text-muted)] mb-3">
-                  Sign in required
-                </div>
               <h2 className="type-card-title mb-2 m-0">
                 Sign in to post a report
               </h2>
@@ -485,9 +478,9 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn, onTrackB
           <div className="reports-feed__header">
             <div className="flex items-center gap-2">
               <AlertCircle size={14} className="text-[var(--accent)]" />
-                <span className="kicker">
-                  Recent reports
-                </span>
+              <span className="type-card-title">
+                Recent reports
+              </span>
               <span className="text-[var(--divider)] type-note" aria-hidden="true">
                 {DOT}
               </span>
@@ -521,7 +514,6 @@ export default function ReportsTab({ user, authLoading, onGoogleSignIn, onTrackB
                   className="opacity-60 motion-safe:animate-pulse"
                   aria-hidden="true"
                 >
-                  <div className="kicker mb-3">Loading report</div>
                   <div className="h-4 w-40 rounded bg-[var(--bg-inset)] mb-3" />
                   <div className="h-3 w-3/4 rounded bg-[var(--bg-inset)] mb-2" />
                   <div className="h-3 w-2/3 rounded bg-[var(--bg-inset)]" />

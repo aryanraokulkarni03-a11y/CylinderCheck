@@ -18,21 +18,18 @@ import { getTheme, setTheme } from '../../theme'
 const ESSENTIAL_LINKS = [
   {
     to: '/support',
-    kicker: 'Help',
     title: 'Support',
     note: 'Billing, corrections, commercial help, and account questions.',
     icon: LifeBuoy,
   },
   {
     to: '/privacy',
-    kicker: 'Privacy',
     title: 'Privacy Policy',
     note: 'How CylinderCheck and Xisch.Co collect, use, and protect data.',
     icon: ShieldCheck,
   },
   {
     to: '/terms',
-    kicker: 'Terms',
     title: 'Terms of Use',
     note: 'Rules, responsibilities, and paid-feature expectations.',
     icon: Waypoints,
@@ -68,7 +65,6 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
       <div className="page-section page-grid-account account-grid">
         <Card variant="featured">
           <CardHeader
-            kicker="Identity"
             title={user ? 'Signed in' : 'Sign in when needed'}
             meta={<span className="reading-meta">{signedInLabel}</span>}
           />
@@ -102,7 +98,6 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
 
         <Card variant="raised">
           <CardHeader
-            kicker="Appearance"
             title="Theme preference"
             meta={<span className="reading-meta">Light by default</span>}
           />
@@ -145,19 +140,17 @@ export function AccountPage({ user, authLoading, onGoogleSignIn, onSignOut }) {
       <div className="page-section">
         <Card variant="raised">
           <CardHeader
-            kicker="Essentials"
             title="Support, privacy, and legal"
             meta={<span className="reading-meta">Core product links</span>}
           />
           <CardBody>
             <div className="account-essentials">
-              {ESSENTIAL_LINKS.map(({ to, kicker, title, note, icon: Icon }) => (
+              {ESSENTIAL_LINKS.map(({ to, title, note, icon: Icon }) => (
                 <Link key={to} to={to} className="account-link-card">
                   <span className="account-link-card__icon" aria-hidden="true">
                     <Icon size={18} />
                   </span>
                   <span className="account-link-card__copy">
-                    <span className="kicker">{kicker}</span>
                     <span className="type-card-title">{title}</span>
                     <span className="type-note">{note}</span>
                   </span>

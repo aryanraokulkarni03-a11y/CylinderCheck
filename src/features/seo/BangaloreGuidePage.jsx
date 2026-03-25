@@ -14,10 +14,10 @@ const ICONS = {
   commercial: Store,
 }
 
-function InsightCard({ eyebrow, title, body }) {
+function InsightCard({ title, body }) {
   return (
     <Card variant="inset" className="h-full">
-      <CardHeader kicker={eyebrow} title={title} titleAs="h2" />
+      <CardHeader title={title} titleAs="h2" />
       <CardBody>
         <p className="type-card-copy mb-0">{body}</p>
       </CardBody>
@@ -51,7 +51,6 @@ export default function BangaloreGuidePage({
       <div className="page-grid-dual">
         <Card>
           <CardHeader
-            kicker="Bangalore first"
             title="What this page helps you decide"
             titleAs="h2"
           />
@@ -61,7 +60,6 @@ export default function BangaloreGuidePage({
               {insights.map((item) => (
                 <InsightCard
                   key={item.title}
-                  eyebrow={item.eyebrow}
                   title={item.title}
                   body={item.body}
                 />
@@ -72,20 +70,19 @@ export default function BangaloreGuidePage({
 
         <Card variant="inset">
           <CardHeader
-            kicker="Tracked market reference"
             title="Live Bangalore price signal"
             titleAs="h2"
           />
           <CardBody>
             <div className="space-y-4">
               <div className="rounded-[18px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-4">
-                <div className="kicker mb-2">Domestic 14.2kg</div>
+                <div className="type-card-title mb-2">Domestic 14.2kg</div>
                 <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
                   {bangaloreDomestic ? `${RUPEE}${bangaloreDomestic}` : 'Waiting for latest scrape'}
                 </div>
               </div>
               <div className="rounded-[18px] border border-[var(--divider)] bg-[var(--bg-raised)] px-4 py-4">
-                <div className="kicker mb-2">Commercial 19kg</div>
+                <div className="type-card-title mb-2">Commercial 19kg</div>
                 <div className="type-data-value type-data-value--hero text-[var(--text-primary)]">
                   {bangaloreCommercial ? `${RUPEE}${bangaloreCommercial}` : 'Waiting for latest scrape'}
                 </div>

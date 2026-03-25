@@ -39,19 +39,16 @@ export function HomePage({
 
   const proofCards = [
     {
-      eyebrow: 'Live reference',
       title: 'Bangalore domestic 14.2kg',
       value: formatTrackedPrice(bangaloreDomestic),
       note: 'Latest trusted city price',
     },
     {
-      eyebrow: 'Business signal',
       title: 'Bangalore commercial 19kg',
       value: formatTrackedPrice(bangaloreCommercial),
       note: 'Separate business-side reference',
     },
     {
-      eyebrow: 'Local proof',
       title: 'Pressure coverage',
       value: liveSignalsLabel,
       note: shortageSummary?.hotspot
@@ -98,14 +95,13 @@ export function HomePage({
         <div className="home-hero__grid">
           <motion.div
             initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
-            className="home-hero__copy"
-          >
-            <div className="kicker home-hero__kicker">Check before you book</div>
-            <h1 className="home-hero__title hero-title">
-              Read your area before the refill turns urgent.
-            </h1>
+          animate={{ opacity: 1, y: 0 }}
+          transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
+          className="home-hero__copy"
+        >
+          <h1 className="home-hero__title hero-title">
+            Read your area before the refill turns urgent.
+          </h1>
             <p className="type-page-desc home-hero__desc">
               Enter your PIN once and get a clearer household planning read: delivery timing, local
               pressure, and the next sensible booking window. Business LPG stays on its own separate
@@ -129,13 +125,13 @@ export function HomePage({
             initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={shouldReduceMotion ? { duration: 0.01 } : { ...springs.arrival, delay: 0.08 }}
-            className="home-hero__panel-wrap"
-          >
-            <Card className="home-hero__panel" variant="inset">
-              <CardHeader kicker="Start with your PIN" title="Open the booking tracker" titleAs="h2">
-                <p className="type-card-copy mt-2 mb-0">
-                  Enter your area once here and we&apos;ll carry it into the tracker. Add your last
-                  booking date too if you want a sharper read.
+          className="home-hero__panel-wrap"
+        >
+          <Card className="home-hero__panel" variant="inset">
+            <CardHeader title="Open the booking tracker" titleAs="h2">
+              <p className="type-card-copy mt-2 mb-0">
+                Enter your area once here and we&apos;ll carry it into the tracker. Add your last
+                booking date too if you want a sharper read.
                 </p>
               </CardHeader>
 
@@ -198,8 +194,7 @@ export function HomePage({
           {proofCards.map((card) => (
             <Card key={card.title} variant="inset" className="home-proof-card">
               <CardBody className="home-proof-card__body">
-                <div className="kicker mb-2">{card.eyebrow}</div>
-                <p className="type-card-title mb-2">{card.title}</p>
+                <p className="type-card-title mb-1">{card.title}</p>
                 <div className="home-proof-card__value">{card.value}</div>
                 <p className="type-note mb-0">{card.note}</p>
               </CardBody>
@@ -221,7 +216,6 @@ export function HomePage({
 
       <section className="home-planning-strip">
         <div className="home-section-heading">
-          <div className="kicker">Built for planning</div>
           <h2 className="type-section-title home-section-heading__title">
             Useful before the booking gets messy, not after it already feels late.
           </h2>
@@ -246,7 +240,6 @@ export function HomePage({
         <Card className="home-business-rail__card" variant="inset">
           <CardBody className="home-business-rail__body">
             <div className="home-business-rail__copy">
-              <div className="kicker">For business buyers</div>
               <h2 className="type-section-title mb-2">Need commercial LPG instead?</h2>
               <p className="type-card-copy mb-0">
                 Compare tracked 19kg market references and browse supplier listings without mixing

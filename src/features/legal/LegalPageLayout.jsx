@@ -78,7 +78,6 @@ export function LegalPageLayout({
       <div className="page-section page-grid-reading reading-page__intro-grid">
         <Card variant="raised">
           <CardHeader
-            kicker="Overview"
             title="Overview"
             meta={<span className="reading-meta">Effective {effectiveDate}</span>}
           />
@@ -89,7 +88,6 @@ export function LegalPageLayout({
 
         <Card variant="inset" className="reading-page__toc page-sticky-lg">
           <CardHeader
-            kicker="On this page"
             title="Contents"
             meta={<span className="reading-meta">Jump to</span>}
           />
@@ -104,9 +102,6 @@ export function LegalPageLayout({
                   transition={shouldReduceMotion ? { duration: 0.01 } : springs.smooth}
                   aria-current={activeSection === section.id ? 'true' : undefined}
                 >
-                  <span className="reading-link-list__eyebrow">
-                    {section.kicker || 'Section'}
-                  </span>
                   <span className="reading-link-list__title">{section.title}</span>
                   {activeSection === section.id ? (
                     <motion.span
@@ -126,7 +121,6 @@ export function LegalPageLayout({
         {sections.map((section) => (
           <Card key={section.id} id={section.id} variant="raised" className="reading-section">
             <CardHeader
-              kicker={section.kicker || 'Section'}
               title={section.title}
               meta={section.meta ? <span className="reading-meta">{section.meta}</span> : null}
             />

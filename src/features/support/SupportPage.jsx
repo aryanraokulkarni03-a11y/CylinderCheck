@@ -31,7 +31,6 @@ function buildGmailCompose(subject, body) {
 const SUPPORT_STREAMS = [
   {
     icon: Receipt,
-    kicker: 'Billing',
     title: 'Billing and paid alerts',
     copy: 'Use this for payment verification, duplicate charges, missing activation, or billing questions about paid alerts.',
     subject: 'CylinderCheck billing support',
@@ -39,7 +38,6 @@ const SUPPORT_STREAMS = [
   },
   {
     icon: TriangleAlert,
-    kicker: 'Corrections',
     title: 'Wrong prices or broken pages',
     copy: 'Report wrong prices, missing agency context, misleading shortage flags, or pages that are not working properly on mobile or desktop.',
     subject: 'CylinderCheck data correction',
@@ -47,7 +45,6 @@ const SUPPORT_STREAMS = [
   },
   {
     icon: Store,
-    kicker: 'Commercial',
     title: 'Vendor listings and business leads',
     copy: 'Use this for vendor verification, listing edits, lead quality issues, or onboarding questions about business use of CylinderCheck.',
     subject: 'CylinderCheck commercial support',
@@ -55,7 +52,6 @@ const SUPPORT_STREAMS = [
   },
   {
     icon: ShieldCheck,
-    kicker: 'Account',
     title: 'Sign-in and account access',
     copy: 'Reach out here if sign-in fails, your access flow is stuck, or you need help with account-linked features.',
     subject: 'CylinderCheck account support',
@@ -143,7 +139,6 @@ export function SupportPage() {
       <div className="page-section page-grid-reading support-page__intro">
         <Card variant="featured">
           <CardHeader
-            kicker="Contact"
             title="Email Xisch.Co support"
             meta={<span className="reading-meta">Effective {EFFECTIVE_DATE}</span>}
           />
@@ -190,7 +185,7 @@ export function SupportPage() {
         </Card>
 
         <Card variant="inset">
-          <CardHeader kicker="Before you write" title="What to include" meta={<span className="reading-meta">Checklist</span>} />
+          <CardHeader title="What to include" meta={<span className="reading-meta">Checklist</span>} />
           <CardBody>
             <ul className="reading-list">
               <li>Tell us which page or workflow you were using.</li>
@@ -203,7 +198,7 @@ export function SupportPage() {
       </div>
 
       <div className="page-section page-grid-dual support-grid">
-        {SUPPORT_STREAMS.map(({ icon: Icon, kicker, title, copy, subject, note }) => {
+        {SUPPORT_STREAMS.map(({ icon: Icon, title, copy, subject, note }) => {
           const body = [
             'Hello Xisch.Co team,',
             '',
@@ -219,7 +214,6 @@ export function SupportPage() {
           return (
           <Card key={title} variant="raised">
             <CardHeader
-              kicker={kicker}
               meta={<span className="reading-meta">Subject line</span>}
               title={
                 <span className="support-card__title">
@@ -273,14 +267,13 @@ export function SupportPage() {
       <div className="page-section">
         <Card variant="raised">
           <CardHeader
-            kicker="FAQ"
             title="Common questions"
             meta={<span className="reading-meta">Email support</span>}
           />
           <CardBody className="page-grid-dual support-faq">
                 {FAQ_ITEMS.map(({ question, answer }) => (
               <Card key={question} variant="inset" size="compact">
-                <CardHeader kicker="Question" titleAs="h3" title={question} />
+                <CardHeader titleAs="h3" title={question} />
                 <CardBody>
                   <p className="type-card-copy m-0">{answer}</p>
                 </CardBody>

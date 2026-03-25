@@ -6,19 +6,16 @@ import { CardBody, CardHeader } from '../ui/CardParts'
 const BEFORE_YOU_CHECK_ITEMS = [
   {
     icon: Clock3,
-    eyebrow: 'Delivery estimate',
     title: 'How refills are moving near your PIN',
     note: 'See the strongest local delivery signal we currently have, with evidence level built in.',
   },
   {
     icon: MapPin,
-    eyebrow: 'Supply pressure',
     title: 'Whether local strain is building',
     note: 'See whether recent local reports suggest calm conditions, early pressure, or active strain.',
   },
   {
     icon: CalendarRange,
-    eyebrow: 'Booking date',
     title: 'When you can book again',
     note: 'Use your last booking date to judge whether to book now or wait.',
   },
@@ -37,7 +34,7 @@ export function BeforeYouCheckSection({
       variant="inset"
       className={`before-you-check ${compact ? 'before-you-check--compact' : ''} ${className}`.trim()}
     >
-      <CardHeader kicker="Before you check" title={title} titleAs={titleAs}>
+      <CardHeader title={title} titleAs={titleAs}>
         <p className="type-card-copy mt-3 mb-0 max-w-[38ch]">
           {description}
         </p>
@@ -45,7 +42,7 @@ export function BeforeYouCheckSection({
 
       <CardBody className="pt-2">
         <div className="before-you-check__grid">
-          {BEFORE_YOU_CHECK_ITEMS.map(({ icon: Icon, eyebrow, title: itemTitle, note }, index) => (
+          {BEFORE_YOU_CHECK_ITEMS.map(({ icon: Icon, title: itemTitle, note }, index) => (
             <div
               key={itemTitle}
               className={`before-you-check__item ${index === 2 ? 'before-you-check__item--wide' : ''}`}
@@ -55,7 +52,6 @@ export function BeforeYouCheckSection({
                   <Icon size={18} />
                 </span>
                 <div className="min-w-0">
-                  <p className="kicker before-you-check__eyebrow">{eyebrow}</p>
                   <p className="type-card-title mb-1">{itemTitle}</p>
                   <p className="type-note mb-0 max-w-[40ch]">{note}</p>
                 </div>

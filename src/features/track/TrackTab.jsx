@@ -477,7 +477,6 @@ export function TrackTab({
               <SlideUp key="result">
                 <Card className="mb-4">
                   <CardHeader
-                    kicker={pinData.area || `PIN ${pinData.pin}`}
                     title={pinData.city}
                     titleAs="h2"
                     actions={
@@ -490,7 +489,9 @@ export function TrackTab({
                   >
                     <div className="flex items-center gap-2 mt-3 text-[var(--accent)]">
                       <MapPin size={12} />
-                      <span className="kicker text-[inherit]">Local planning signal</span>
+                      <span className="type-note text-[inherit]">
+                        {pinData.area || `PIN ${pinData.pin}`} · Local planning signal
+                      </span>
                     </div>
                   </CardHeader>
 
@@ -627,7 +628,6 @@ export function TrackTab({
                         >
                           <Card className="track-contribute-panel">
                           <CardHeader
-                            kicker="Signed-in local signal"
                             title="Add a local signal"
                             titleAs="h2"
                             actions={
@@ -750,11 +750,7 @@ export function TrackTab({
 
                 {pinData.urgencyScore !== undefined && (
                   <Card className="mb-4 text-center">
-                    <CardHeader
-                      kicker="Based on your details"
-                      title="Booking priority"
-                      titleAs="h2"
-                    />
+                    <CardHeader title="Booking priority" titleAs="h2" />
                     <CardBody>
                       <UrgencyScore score={pinData.urgencyScore} />
                     </CardBody>
@@ -770,7 +766,6 @@ export function TrackTab({
                     }`}
                   >
                     <CardHeader
-                      kicker="Booking date"
                       title={bookingResult.daysLeft <= 0 ? 'You can book now' : 'Next booking date'}
                       titleAs="h2"
                     />

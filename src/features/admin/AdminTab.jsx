@@ -47,7 +47,6 @@ export default function AdminTab({ data, loading, onLock }) {
         <StaggerItem>
           <Card variant="inset" edge status="active" className="h-full">
             <CardHeader
-              kicker="Operations"
               title="Total reports"
               titleAs="h3"
               meta={<AlertTriangle size={14} className="text-[var(--accent)]" aria-hidden="true" />}
@@ -64,7 +63,6 @@ export default function AdminTab({ data, loading, onLock }) {
         <StaggerItem>
           <Card variant="inset" edge status="clear" className="h-full">
             <CardHeader
-              kicker="Monitoring"
               title="All alerts"
               titleAs="h3"
               meta={<Bell size={14} className="text-[var(--status-clear)]" aria-hidden="true" />}
@@ -81,7 +79,6 @@ export default function AdminTab({ data, loading, onLock }) {
         <StaggerItem>
           <Card variant="inset" edge status="early" className="h-full">
             <CardHeader
-              kicker="Free flow"
               title="Free reminders"
               titleAs="h3"
               meta={<Users size={14} className="text-[var(--status-early)]" aria-hidden="true" />}
@@ -98,7 +95,6 @@ export default function AdminTab({ data, loading, onLock }) {
         <StaggerItem>
           <Card variant="inset" edge status="active" className="h-full">
             <CardHeader
-              kicker="Dispatch queue"
               title="Pending sends"
               titleAs="h3"
               meta={<Bell size={14} className="text-[var(--status-active)]" aria-hidden="true" />}
@@ -115,7 +111,6 @@ export default function AdminTab({ data, loading, onLock }) {
         <StaggerItem>
           <Card variant="inset" edge status="clear" className="h-full">
             <CardHeader
-              kicker="Delivery"
               title="Sent today"
               titleAs="h3"
               meta={<Bell size={14} className="text-[var(--status-clear)]" aria-hidden="true" />}
@@ -132,7 +127,6 @@ export default function AdminTab({ data, loading, onLock }) {
         <StaggerItem>
           <Card variant="inset" edge status="severe" className="h-full">
             <CardHeader
-              kicker="Failures"
               title="Failed sends"
               titleAs="h3"
               meta={<AlertTriangle size={14} className="text-[var(--status-severe)]" aria-hidden="true" />}
@@ -149,7 +143,6 @@ export default function AdminTab({ data, loading, onLock }) {
         <StaggerItem>
           <Card variant="inset" edge status="early" className="h-full">
             <CardHeader
-              kicker="Revenue"
               title="Plus subscriptions"
               titleAs="h3"
               meta={<Users size={14} className="text-[var(--status-early)]" aria-hidden="true" />}
@@ -166,7 +159,6 @@ export default function AdminTab({ data, loading, onLock }) {
 
       <FadeIn delay={0.4} className="mt-8">
         <div className="mb-4">
-          <div className="kicker mb-1">Access ledger</div>
           <h2 className="type-list-title m-0">
             Subscribers directory
           </h2>

@@ -89,7 +89,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
 
         <CardBody className="pt-2">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
-            <div className="national-snapshot-hero flex flex-col justify-center">
+            <div className="national-snapshot-hero flex flex-col">
               <div className="flex items-center gap-2 mb-4">
                 <StatusDot status="clear" size={7} />
                 <span className="kicker text-[var(--accent)]">Lowest tracked 14.2kg refill</span>
@@ -97,7 +97,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
 
               <div className="flex flex-col gap-1">
                 <span className="type-data-value type-data-value--hero leading-none">
-                  {lowestTracked ? `${RUPEE}${lowestTracked.price}` : '—'}
+                  {lowestTracked ? `${RUPEE}${lowestTracked.price}` : '\u2014'}
                 </span>
                 <span className="type-card-title text-[var(--text-secondary)]">
                   {lowestTracked
@@ -112,7 +112,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="national-snapshot-stat justify-center">
+              <div className="national-snapshot-stat">
                 <div className="flex items-center gap-2 mb-4">
                   <StatusDot status={overallStatus} size={7} />
                   <span className="kicker">Areas under pressure</span>
@@ -127,7 +127,7 @@ export function SignalRoom({ shortageSummary, mapPrices, pricesUpdatedAt }) {
                 </div>
               </div>
 
-              <div className="national-snapshot-stat justify-center">
+              <div className="national-snapshot-stat">
                 <div className="flex items-center gap-2 mb-4">
                   <StatusDot status={hotspotTone} size={7} />
                   <span className="kicker">Most reported city</span>

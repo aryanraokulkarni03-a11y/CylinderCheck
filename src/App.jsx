@@ -1,4 +1,4 @@
-// src/App.jsx
+﻿// src/App.jsx
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
@@ -92,6 +92,47 @@ function formatTrackLocationLabel(city, state) {
   if (cityPart) return cityPart
   if (statePart) return statePart
   return ''
+}
+
+async function fetchDomesticPressureSummaryRows() {
+  const result = await supabase
+    .from('pin_track_summary_v1')
+    .select('*')
+    .in('pressure_level', ['active', 'severe', 'building'])
+
+  if (result.error || !Array.isArray(result.data)) {
+    return result
+  }
+
+  const hasProductSplit = result.data.some((row) => Object.hasOwn(row, 'pressure_product_type'))
+  const data = hasProductSplit
+    ? result.data.filter((row) => row.pressure_product_type === LPG_PRODUCT_TYPES.domestic_14_2kg)
+    : result.data
+
+  return { data, error: null }
+}
+
+async function fetchDomesticTrackSummary(pin) {
+  const result = await supabase
+    .from('pin_track_summary_v1')
+    .select('*')
+    .eq('pin', pin)
+    .limit(4)
+
+  if (result.error || !Array.isArray(result.data)) {
+    return result
+  }
+
+  if (!result.data.length) {
+    return { data: null, error: null }
+  }
+
+  const hasProductSplit = result.data.some((row) => Object.hasOwn(row, 'delivery_product_type'))
+  const data = hasProductSplit
+    ? result.data.find((row) => row.delivery_product_type === LPG_PRODUCT_TYPES.domestic_14_2kg) || result.data[0]
+    : result.data[0]
+
+  return { data, error: null }
 }
 
 export default function App() {
@@ -320,11 +361,7 @@ export default function App() {
           }
         }
 
-        const { data: pressureData } = await supabase
-          .from('pin_track_summary_v1')
-          .select('pin, city, pressure_level, pressure_score, report_count_30d')
-          .eq('pressure_product_type', 'domestic_14_2kg')
-          .in('pressure_level', ['active', 'severe', 'building'])
+        const { data: pressureData } = await fetchDomesticPressureSummaryRows()
 
         if (!cancelled) {
           if (!pressureData?.length) {
@@ -332,13 +369,19 @@ export default function App() {
             return
           }
 
-          const hot = [...pressureData].sort((a, b) => b.pressure_score - a.pressure_score)[0]
-          
+          const rowsWithReports = pressureData.filter((row) => (row.report_count_30d || 0) > 0)
+          const hot = [...(rowsWithReports.length ? rowsWithReports : pressureData)]
+            .sort((a, b) => {
+              const reportDelta = (b.report_count_30d || 0) - (a.report_count_30d || 0)
+              if (reportDelta !== 0) return reportDelta
+              return (b.pressure_score || 0) - (a.pressure_score || 0)
+            })[0]
+
           setShortageSummary({
             activePinCount: pressureData.length,
             totalReports: pressureData.reduce((acc, row) => acc + (row.report_count_30d || 0), 0),
-            hotspot: hot.city || `PIN ${hot.pin}`,
-            hotspotReports: hot.report_count_30d || 0,
+            hotspot: rowsWithReports.length ? (hot.city || `PIN ${hot.pin}`) : '',
+            hotspotReports: rowsWithReports.length ? (hot.report_count_30d || 0) : 0,
           })
         }
       } catch {
@@ -370,8 +413,8 @@ export default function App() {
       { data: verifiedSignals },
       { data: rpcAvgData },
     ] = await Promise.all([
-      supabase.from('pin_track_summary_v1').select('*').eq('pin', pin).eq('delivery_product_type', 'domestic_14_2kg').maybeSingle(),
-      supabase.from('pin_data').select('*').eq('pin', pin).single(),
+      fetchDomesticTrackSummary(pin),
+      supabase.from('pin_data').select('*').eq('pin', pin).maybeSingle(),
       lookupPIN(pin),
       supabase.from('reports').select('id, created_at, delivery_days').eq('pin', pin)
         .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString()),
@@ -437,7 +480,7 @@ export default function App() {
     const builtPinData = dbData
       ? {
           ...dbData,
-          avg_days: avgDays ?? '—',
+          avg_days: avgDays ?? '\u2014',
           city: cityLabel,
           area: location?.area || trackSummary?.area || '',
           reportCount,
@@ -453,7 +496,7 @@ export default function App() {
           city: cityLabel,
           area: location?.area || trackSummary?.area || '',
           agency: 'Check with local agency',
-          avg_days: avgDays ?? '—',
+          avg_days: avgDays ?? '\u2014',
           reportCount,
           last7ReportCount: last7,
           prior7ReportCount: prior7,
@@ -725,3 +768,4 @@ export default function App() {
     </>
   )
 }
+

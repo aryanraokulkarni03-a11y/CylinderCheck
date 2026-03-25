@@ -35,6 +35,7 @@ INSERT INTO public.pin_profiles (pin, canonical_city, canonical_state, canonical
   ('700008', 'Kolkata', 'West Bengal', 'Barisha',      'seed', 'seed', 'seed', 'high'),
   ('700060', 'Kolkata', 'West Bengal', 'Parnasree',    'seed', 'seed', 'seed', 'high'),
   ('700053', 'Kolkata', 'West Bengal', 'New Alipore',  'seed', 'seed', 'seed', 'high'),
+  ('411045', 'Pune',    'Maharashtra', 'Baner',         'seed', 'seed', 'seed', 'high'),
   ('411057', 'Pune',    'Maharashtra',   'Wakad',        'seed', 'seed', 'seed', 'high')
 ON CONFLICT (pin) DO UPDATE SET 
   canonical_area = EXCLUDED.canonical_area,

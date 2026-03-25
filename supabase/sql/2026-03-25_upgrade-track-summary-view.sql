@@ -44,93 +44,48 @@ CREATE TABLE IF NOT EXISTS public.pin_supply_pressure (
   CONSTRAINT pin_supply_pressure_pin_check CHECK (pin ~ '^[0-9]{6}$')
 );
 
--- 2. Initialize core platform tracking schema dependencies (pin_data, reports, user_signals)
-CREATE TABLE IF NOT EXISTS public.pin_data (
-  pin           TEXT PRIMARY KEY,
-  region        TEXT,
-  state         TEXT,
-  city          TEXT,
-  area_name     TEXT,
-  source        TEXT,
-  is_active     BOOLEAN DEFAULT true,
-  created_at    TIMESTAMPTZ DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ DEFAULT NOW(),
-  CONSTRAINT pin_data_pin_check CHECK (pin ~ '^[0-9]{6}$')
-);
-
-CREATE TABLE IF NOT EXISTS public.reports (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id         UUID NOT NULL,
-  pin             TEXT NOT NULL,
-  city            TEXT,
-  state           TEXT,
-  product_type    TEXT NOT NULL DEFAULT 'domestic_14_2kg',
-  delivery_days   INT,
-  provider        TEXT,
-  note            TEXT,
-  source          TEXT NOT NULL DEFAULT 'web',
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT reports_pin_check CHECK (pin ~ '^[0-9]{6}$')
-);
-
-CREATE TABLE IF NOT EXISTS public.pin_user_signals (
-  id              BIGSERIAL PRIMARY KEY,
-  pin             TEXT NOT NULL,
-  city            TEXT,
-  state           TEXT,
-  area            TEXT,
-  user_id         UUID NOT NULL,
-  user_email      TEXT,
-  trust_tier      TEXT NOT NULL DEFAULT 'signed_in_user',
-  source_weight   NUMERIC(4,2) NOT NULL DEFAULT 0.55,
-  delivery_days   INT,
-  pressure_level  TEXT,
-  note            TEXT,
-  active          BOOLEAN NOT NULL DEFAULT true,
-  expires_at      TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '21 days'),
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT pin_user_signals_pin_check CHECK (pin ~ '^[0-9]{6}$')
-);
-
--- 3. Initialize missing backend coverage schemas (distributors + coverage)
-CREATE TABLE IF NOT EXISTS public.distributors (
-  id                  BIGSERIAL PRIMARY KEY,
-  company             TEXT NOT NULL,
-  display_name        TEXT NOT NULL,
-  service_phone       TEXT,
-  support_phone       TEXT,
-  website_url         TEXT,
-  source_type         TEXT NOT NULL DEFAULT 'official',
-  source_url          TEXT,
-  verification_status TEXT NOT NULL DEFAULT 'unverified',
-  verification_notes  TEXT,
-  last_verified_at    TIMESTAMPTZ,
-  active              BOOLEAN NOT NULL DEFAULT true,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+CREATE TABLE IF NOT EXISTS public.pin_profiles (
+  pin                 TEXT PRIMARY KEY,
+  pin_prefix3         TEXT GENERATED ALWAYS AS (left(pin, 3)) STORED,
+  canonical_city      TEXT,
+  canonical_state     TEXT,
+  canonical_area      TEXT,
+  city_source         TEXT NOT NULL DEFAULT 'unknown',
+  state_source        TEXT NOT NULL DEFAULT 'unknown',
+  area_source         TEXT NOT NULL DEFAULT 'unknown',
+  profile_confidence  TEXT NOT NULL DEFAULT 'low',
+  last_report_at      TIMESTAMPTZ,
+  last_signal_at      TIMESTAMPTZ,
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT distributors_company_check CHECK (company IN ('IndianOil', 'HP Gas', 'Bharat Gas')),
-  CONSTRAINT distributors_verification_status_check CHECK (verification_status IN ('unverified', 'likely', 'verified', 'stale'))
+  CONSTRAINT pin_profiles_pin_check CHECK (pin ~ '^[0-9]{6}$')
 );
 
-CREATE TABLE IF NOT EXISTS public.pin_distributor_coverage (
-  id                 BIGSERIAL PRIMARY KEY,
-  pin                TEXT NOT NULL,
-  distributor_id     BIGINT NOT NULL REFERENCES public.distributors(id) ON DELETE CASCADE,
-  coverage_type      TEXT NOT NULL DEFAULT 'exact_pin',
-  confidence_level   TEXT NOT NULL DEFAULT 'low',
-  source_type        TEXT NOT NULL DEFAULT 'official',
-  source_url         TEXT,
-  is_primary         BOOLEAN NOT NULL DEFAULT false,
-  last_verified_at   TIMESTAMPTZ,
-  active             BOOLEAN NOT NULL DEFAULT true,
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT pin_distributor_coverage_pin_check CHECK (pin ~ '^[0-9]{6}$'),
-  CONSTRAINT pin_distributor_coverage_type_check CHECK (coverage_type IN ('exact_pin', 'pin_cluster', 'district')),
-  CONSTRAINT pin_distributor_coverage_confidence_check CHECK (confidence_level IN ('low', 'medium', 'high')),
-  CONSTRAINT pin_distributor_coverage_source_check CHECK (source_type IN ('official', 'community_confirmed', 'manual'))
-);
+-- 2. Guard against partial environments.
+-- This migration depends on the real core schema already existing. Do not
+-- fabricate simplified stand-ins here, because that leaves Track looking
+-- deployed while other product flows still break.
+DO $$
+BEGIN
+  IF to_regclass('public.pin_data') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.pin_data. Apply the base schema before running 2026-03-25_upgrade-track-summary-view.sql.';
+  END IF;
+
+  IF to_regclass('public.reports') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.reports. Apply the base schema before running 2026-03-25_upgrade-track-summary-view.sql.';
+  END IF;
+
+  IF to_regclass('public.pin_user_signals') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.pin_user_signals. Apply the base schema before running 2026-03-25_upgrade-track-summary-view.sql.';
+  END IF;
+
+  IF to_regclass('public.distributors') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.distributors. Apply the base schema before running 2026-03-25_upgrade-track-summary-view.sql.';
+  END IF;
+
+  IF to_regclass('public.pin_distributor_coverage') IS NULL THEN
+    RAISE EXCEPTION 'Missing required table: public.pin_distributor_coverage. Apply the base schema before running 2026-03-25_upgrade-track-summary-view.sql.';
+  END IF;
+END $$;
 
 -- 3. Structurally append product_type to ensure schema parity
 ALTER TABLE public.pin_supply_pressure 
@@ -155,34 +110,74 @@ DROP VIEW IF EXISTS public.pin_track_summary_v1;
 -- 2. Re-architect the View to compute permutations per PIN.
 CREATE VIEW public.pin_track_summary_v1 AS
 WITH pin_universe AS (
-  SELECT pd.pin, pd.city, pd.state
+  SELECT
+    pp.pin,
+    pp.canonical_city AS city,
+    pp.canonical_state AS state,
+    pp.canonical_area AS area
+  FROM public.pin_profiles pp
+  WHERE pp.pin ~ '^[0-9]{6}$'
+  UNION
+  SELECT
+    pd.pin,
+    pd.city,
+    pd.state,
+    pd.area_name AS area
   FROM public.pin_data pd
+  WHERE pd.pin ~ '^[0-9]{6}$'
   UNION
   SELECT DISTINCT
     r.pin,
-    COALESCE(NULLIF(r.city, ''), pd.city) AS city,
-    COALESCE(pd.state, '') AS state
+    COALESCE(NULLIF(r.city, ''), pp.canonical_city, pd.city) AS city,
+    COALESCE(NULLIF(r.state, ''), pp.canonical_state, pd.state, '') AS state,
+    COALESCE(pp.canonical_area, pd.area_name, '') AS area
   FROM public.reports r
+  LEFT JOIN public.pin_profiles pp
+    ON pp.pin = r.pin
   LEFT JOIN public.pin_data pd
     ON pd.pin = r.pin
   WHERE r.pin ~ '^[0-9]{6}$'
   UNION
   SELECT DISTINCT
     pus.pin,
-    COALESCE(NULLIF(pus.city, ''), pd.city) AS city,
-    COALESCE(NULLIF(pus.state, ''), pd.state, '') AS state
+    COALESCE(NULLIF(pus.city, ''), pp.canonical_city, pd.city) AS city,
+    COALESCE(NULLIF(pus.state, ''), pp.canonical_state, pd.state, '') AS state,
+    COALESCE(NULLIF(pus.area, ''), pp.canonical_area, pd.area_name, '') AS area
   FROM public.pin_user_signals pus
+  LEFT JOIN public.pin_profiles pp
+    ON pp.pin = pus.pin
   LEFT JOIN public.pin_data pd
     ON pd.pin = pus.pin
   WHERE pus.pin ~ '^[0-9]{6}$'
+  UNION
+  SELECT DISTINCT
+    pdc.pin,
+    COALESCE(NULLIF(pdc.city, ''), pp.canonical_city, '') AS city,
+    COALESCE(NULLIF(pdc.state, ''), pp.canonical_state, '') AS state,
+    COALESCE(pp.canonical_area, '') AS area
+  FROM public.pin_delivery_confidence pdc
+  LEFT JOIN public.pin_profiles pp
+    ON pp.pin = pdc.pin
+  WHERE pdc.pin ~ '^[0-9]{6}$'
+  UNION
+  SELECT DISTINCT
+    psp.pin,
+    COALESCE(NULLIF(psp.city, ''), pp.canonical_city, '') AS city,
+    COALESCE(NULLIF(psp.state, ''), pp.canonical_state, '') AS state,
+    COALESCE(pp.canonical_area, '') AS area
+  FROM public.pin_supply_pressure psp
+  LEFT JOIN public.pin_profiles pp
+    ON pp.pin = psp.pin
+  WHERE psp.pin ~ '^[0-9]{6}$'
 ),
 product_types AS (
   SELECT unnest(ARRAY['domestic_14_2kg', 'commercial_19kg']) AS product_type
 )
 SELECT
   pu.pin,
-  COALESCE(pdc.city, pu.city) AS city,
-  COALESCE(pdc.state, pu.state) AS state,
+  COALESCE(NULLIF(pdc.city, ''), NULLIF(psp.city, ''), pu.city) AS city,
+  COALESCE(NULLIF(pdc.state, ''), NULLIF(psp.state, ''), pu.state) AS state,
+  pu.area AS area,
 
   -- We unify the product_type output
   pt.product_type AS pressure_product_type,

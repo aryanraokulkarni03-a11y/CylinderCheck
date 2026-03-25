@@ -42,13 +42,13 @@ export function HomePage({
       eyebrow: 'Live reference',
       title: 'Bangalore domestic 14.2kg',
       value: formatTrackedPrice(bangaloreDomestic),
-      note: 'Tracked city rate',
+      note: 'Latest trusted city price',
     },
     {
       eyebrow: 'Business signal',
       title: 'Bangalore commercial 19kg',
       value: formatTrackedPrice(bangaloreCommercial),
-      note: 'Supplier-side market reference',
+      note: 'Separate business-side reference',
     },
     {
       eyebrow: 'Local proof',
@@ -56,7 +56,7 @@ export function HomePage({
       value: liveSignalsLabel,
       note: shortageSummary?.hotspot
         ? `Current hotspot: ${shortageSummary.hotspot}`
-        : 'Latest city and PIN signals',
+        : 'Latest city and PIN-level signals',
     },
   ]
 
@@ -65,19 +65,19 @@ export function HomePage({
       icon: Target,
       title: 'Built for repeat household planning',
       body:
-        'Use CylinderCheck before each refill cycle to judge timing, not after the delay has already started.',
+        'Check once before each refill cycle so timing and pressure are clearer before the delay actually starts.',
     },
     {
       icon: TriangleAlert,
       title: 'Signals local strain before broad headlines',
       body:
-        'The tracker is most useful when local pressure starts building earlier than city-wide chatter catches up.',
+        'Local strain often shows up earlier than broad city chatter. That is when the tracker is most useful.',
     },
     {
       icon: ShieldCheck,
       title: 'Honest about evidence strength',
       body:
-        'CylinderCheck is a planning tool, not an official booking-status feed. It shows evidence level instead of pretending certainty everywhere.',
+        'This is a planning tool, not an official booking feed. It tells you how strong the evidence is instead of faking certainty.',
     },
   ]
 
@@ -104,18 +104,24 @@ export function HomePage({
           >
             <div className="kicker home-hero__kicker">Check before you book</div>
             <h1 className="home-hero__title hero-title">
-              Know what your area looks like before the refill becomes urgent.
+              Read your area before the refill turns urgent.
             </h1>
             <p className="type-page-desc home-hero__desc">
-              CylinderCheck helps households judge delivery timing, shortage pressure, and the next
-              sensible booking date using their PIN. If you buy 19kg LPG for business, there&apos;s a
-              separate business path too.
+              Enter your PIN once and get a clearer household planning read: delivery timing, local
+              pressure, and the next sensible booking window. Business LPG stays on its own separate
+              path.
             </p>
 
+            <div className="home-hero__signal-line" aria-label="What the tracker helps with">
+              <span>Delivery timing</span>
+              <span>Pressure signal</span>
+              <span>Booking date</span>
+            </div>
+
             <div className="home-hero__proof">
-              <span className="home-proof-chip">PIN-level delivery planning</span>
-              <span className="home-proof-chip">Local pressure signals</span>
-              <span className="home-proof-chip">Tracked city prices</span>
+              <span className="home-proof-chip">Household-first tracker</span>
+              <span className="home-proof-chip">PIN-level planning</span>
+              <span className="home-proof-chip">Tracked city references</span>
             </div>
           </motion.div>
 
@@ -129,7 +135,7 @@ export function HomePage({
               <CardHeader kicker="Start with your PIN" title="Open the booking tracker" titleAs="h2">
                 <p className="type-card-copy mt-2 mb-0">
                   Enter your area once here and we&apos;ll carry it into the tracker. Add your last
-                  booking date too if you want a sharper planning read.
+                  booking date too if you want a sharper read.
                 </p>
               </CardHeader>
 
@@ -217,7 +223,7 @@ export function HomePage({
         <div className="home-section-heading">
           <div className="kicker">Built for planning</div>
           <h2 className="type-section-title home-section-heading__title">
-            Useful before the booking gets urgent, not after it already feels messy.
+            Useful before the booking gets messy, not after it already feels late.
           </h2>
         </div>
 

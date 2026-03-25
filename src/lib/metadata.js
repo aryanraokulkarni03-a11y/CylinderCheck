@@ -323,6 +323,37 @@ export const ROUTE_METADATA = {
 }
 
 export function getRouteMetadata(pathname = '/') {
+  // Check for dynamic city routes
+  const cityMatch = pathname.match(/^\/lpg-price-in-([a-z0-9-]+)$/)
+  if (cityMatch) {
+    const citySlug = cityMatch[1]
+    const cityName = citySlug
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+    const monthYear = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' }).format(new Date())
+    
+    return {
+      path: pathname,
+      canonicalUrl: absoluteUrl(pathname),
+      ogTitle: `LPG Cylinder Price in ${cityName} Today \u2014 ${monthYear}`,
+      ogDescription: `Check ${cityName} LPG cylinder price today for 14.2kg domestic and 19kg commercial refills. Compare rates, shortages, and delivery estimates for Indane, HP Gas, and Bharat Gas.`,
+      ogImage: DEFAULT_OG_IMAGE,
+      twitterCard: 'summary_large_image',
+      title: `LPG Cylinder Price in ${cityName} Today \u2014 ${monthYear}`,
+      description: `Check ${cityName} LPG cylinder price today for 14.2kg domestic and 19kg commercial refills. Compare rates, shortages, and delivery estimates for Indane, HP Gas, and Bharat Gas.`,
+      indexable: true,
+      schema: [
+        webPageSchema({
+          path: pathname,
+          title: `LPG Cylinder Price in ${cityName} Today \u2014 ${monthYear}`,
+          description: `Check ${cityName} LPG cylinder price today for 14.2kg domestic and 19kg commercial refills. Compare rates, shortages, and delivery estimates for Indane, HP Gas, and Bharat Gas.`
+        }),
+        ...DEFAULT_SCHEMA
+      ]
+    }
+  }
+
   const route = ROUTE_METADATA[pathname] || ROUTE_METADATA['/track']
   const canonicalUrl = absoluteUrl(route.path)
   const ogTitle = route.ogTitle || route.title

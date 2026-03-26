@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "refresh:cities": "node scripts/fetch-cities.mjs",
     "dev": "vite",
-    "build": "node scripts/fetch-cities.mjs && node scripts/generate-sitemap.mjs && vite build",
+    "build:seo": "npm run refresh:cities && npm run build",
+    "build": "node scripts/generate-sitemap.mjs && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

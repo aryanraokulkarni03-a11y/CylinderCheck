@@ -32,6 +32,7 @@ The repository reflects several recently shipped milestones:
 
 The live operational model relies on standard Node and GitHub Actions flows:
 - **Builds:** Running `npm run build` executes the prebuild script to generate the sitemap, then runs the Vite build.
+- **SEO snapshots:** Run `npm run refresh:cities` whenever you want to refresh the committed city snapshot from Supabase. Use `npm run build:seo` for SEO-focused releases or CI lanes that should refresh cities before generating the sitemap and production bundle.
 - **Alerts Dispatch:** Driven by `.github/workflows/dispatch-alerts.yml` running hourly. Alert delivery is currently email-first through the existing Supabase dispatch function.
 - **Price Scraping:** Driven by `.github/workflows/scrape-prices.yml` running twice daily (06:00 and 18:00 IST).
 - **Scrape Sandbox:** `.github/workflows/scrape-prices-sandbox.yml` provides a manual dry-run lane for concurrency, jitter, retry, and proxy experiments without publishing live prices.

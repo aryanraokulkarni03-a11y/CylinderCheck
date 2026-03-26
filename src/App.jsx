@@ -38,8 +38,8 @@ import ReportsTab from './features/reports/ReportsTab'
 import NewsTab from './features/news/NewsTab'
 import AlertsTab from './features/alerts/AlertsTab'
 import CommercialPage from './features/commercial/CommercialPage'
-import BangaloreGuidePage from './features/seo/BangaloreGuidePage'
-import { BANGALORE_GUIDES } from './features/seo/bangaloreGuides'
+
+
 import AdminTab from './features/admin/AdminTab'
 import CitySEOPage from './features/seo/CitySEOPage'
 import CitiesDirectoryPage from './features/seo/CitiesDirectoryPage'
@@ -741,15 +741,15 @@ export default function App() {
               <Route path="/cities" element={<CitiesDirectoryPage />} />
               <Route
                 path={CONTENT_ROUTES.bangalorePrice}
-                element={<BangaloreGuidePage {...BANGALORE_GUIDES[CONTENT_ROUTES.bangalorePrice]} mapPrices={mapPrices} />}
+                element={<Navigate to="/lpg-price-in-bangalore" replace />}
               />
               <Route
                 path={CONTENT_ROUTES.bangaloreDelivery}
-                element={<BangaloreGuidePage {...BANGALORE_GUIDES[CONTENT_ROUTES.bangaloreDelivery]} mapPrices={mapPrices} />}
+                element={<Navigate to="/lpg-price-in-bangalore" replace />}
               />
               <Route
                 path={CONTENT_ROUTES.bangaloreCommercial}
-                element={<BangaloreGuidePage {...BANGALORE_GUIDES[CONTENT_ROUTES.bangaloreCommercial]} mapPrices={mapPrices} />}
+                element={<Navigate to="/lpg-price-in-bangalore" replace />}
               />
               <Route path={TAB_ROUTES.support} element={<SupportPage />} />
               <Route path={TAB_ROUTES.privacy} element={<PrivacyPage />} />

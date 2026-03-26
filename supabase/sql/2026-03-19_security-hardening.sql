@@ -65,7 +65,13 @@ BEGIN
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public'
-      AND p.proname IN ('check_report_rate_limit', 'get_avg_delivery_days')
+      AND p.proname IN (
+        'check_report_rate_limit',
+        'get_avg_delivery_days',
+        'refresh_track_confidence_snapshots',
+        'touch_scrape_run_updated_at',
+        'enforce_pin_user_signal_guardrails'
+      )
   LOOP
     EXECUTE format(
       'ALTER FUNCTION %I.%I(%s) SET search_path = public, pg_temp',

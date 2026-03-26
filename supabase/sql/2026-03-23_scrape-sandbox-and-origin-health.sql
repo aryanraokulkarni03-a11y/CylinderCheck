@@ -45,6 +45,7 @@ CREATE INDEX IF NOT EXISTS scrape_runs_status_idx
 CREATE OR REPLACE FUNCTION public.touch_scrape_run_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   NEW.updated_at := NOW();

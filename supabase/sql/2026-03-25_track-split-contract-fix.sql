@@ -138,6 +138,7 @@ CREATE OR REPLACE FUNCTION public.refresh_track_confidence_snapshots()
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $function$
 BEGIN
   PERFORM public.refresh_pin_profiles();

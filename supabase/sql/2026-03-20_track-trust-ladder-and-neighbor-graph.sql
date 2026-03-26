@@ -371,6 +371,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.enforce_pin_user_signal_guardrails()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   contributor_profile public.pin_contributor_profiles%ROWTYPE;

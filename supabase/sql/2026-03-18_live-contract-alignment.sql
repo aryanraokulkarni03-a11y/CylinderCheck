@@ -44,7 +44,18 @@ BEGIN
     CREATE POLICY "Public can insert commercial leads"
       ON public.commercial_leads
       FOR INSERT
-      WITH CHECK (true);
+      WITH CHECK (
+        nullif(btrim(business_name), '') IS NOT NULL
+        AND nullif(btrim(business_type), '') IS NOT NULL
+        AND nullif(btrim(phone), '') IS NOT NULL
+        AND nullif(btrim(need_type), '') IS NOT NULL
+        AND (city IS NULL OR nullif(btrim(city), '') IS NOT NULL)
+        AND (pin IS NULL OR pin ~ '^[0-9]{6}$')
+        AND business_type IN ('restaurant', 'hotel', 'dhaba', 'bakery', 'catering', 'cloud_kitchen', 'other')
+        AND need_type IN ('induction', 'electric', 'kerosene', 'png', 'not_sure', 'other')
+        AND (cylinders_week IS NULL OR (cylinders_week >= 1 AND cylinders_week <= 1000))
+        AND (message IS NULL OR char_length(message) <= 2000)
+      );
   END IF;
 END $$;
 

@@ -26,6 +26,7 @@ CREATE INDEX IF NOT EXISTS pin_user_signals_user_pin_created_idx
 CREATE OR REPLACE FUNCTION public.enforce_pin_user_signal_guardrails()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   IF EXISTS (

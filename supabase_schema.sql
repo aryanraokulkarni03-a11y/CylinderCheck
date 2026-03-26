@@ -54,7 +54,18 @@ CREATE TABLE IF NOT EXISTS reports (
 -- Allow public read (exclude hidden) + auth insert
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can read reports"  ON reports FOR SELECT USING (is_hidden IS NOT TRUE);
-CREATE POLICY "Anyone can insert report" ON reports FOR INSERT WITH CHECK (true);
+CREATE POLICY "Authenticated users can insert report"
+  ON reports
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    auth.uid() = user_id
+    AND pin ~ '^[0-9]{6}$'
+    AND nullif(btrim(issue), '') IS NOT NULL
+    AND (city IS NULL OR nullif(btrim(city), '') IS NOT NULL)
+    AND (delivery_days IS NULL OR (delivery_days >= 1 AND delivery_days <= 30))
+    AND (company IS NULL OR company IN ('IndianOil', 'HP Gas', 'Bharat Gas'))
+  );
 
 -- 2b. Report votes table
 --     Signed-in users can upvote a report once.
@@ -94,7 +105,19 @@ CREATE TABLE IF NOT EXISTS alert_subscriptions (
 
 -- Only the service role can read subscriptions (keep contacts private)
 ALTER TABLE alert_subscriptions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can insert subscription" ON alert_subscriptions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public can insert subscription"
+  ON alert_subscriptions
+  FOR INSERT
+  WITH CHECK (
+    nullif(btrim(contact), '') IS NOT NULL
+    AND (pin IS NULL OR pin ~ '^[0-9]{6}$')
+    AND (last_booking IS NULL OR last_booking <= CURRENT_DATE)
+    AND alert_type IN ('free', 'plus', 'annual')
+    AND channel IN ('email', 'sms', 'whatsapp')
+    AND plan_code IN ('free', 'plus_monthly', 'plus_annual', 'annual')
+    AND delivery_status IN ('pending', 'needs_booking_date', 'scheduled', 'sent', 'failed')
+    AND reminder_type IN ('booking_d_minus_2')
+  );
 
 -- 3b. Verified Track signals
 --     Structured delivery / supply inputs from signed-in users.
@@ -167,6 +190,7 @@ CREATE POLICY "Anyone can read pin profiles" ON pin_profiles FOR SELECT USING (t
 CREATE OR REPLACE FUNCTION public.enforce_pin_user_signal_guardrails()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   IF EXISTS (
@@ -366,7 +390,21 @@ CREATE TABLE IF NOT EXISTS commercial_leads (
 );
 
 ALTER TABLE commercial_leads ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can insert commercial leads" ON commercial_leads FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public can insert commercial leads"
+  ON commercial_leads
+  FOR INSERT
+  WITH CHECK (
+    nullif(btrim(business_name), '') IS NOT NULL
+    AND nullif(btrim(business_type), '') IS NOT NULL
+    AND nullif(btrim(phone), '') IS NOT NULL
+    AND nullif(btrim(need_type), '') IS NOT NULL
+    AND (city IS NULL OR nullif(btrim(city), '') IS NOT NULL)
+    AND (pin IS NULL OR pin ~ '^[0-9]{6}$')
+    AND business_type IN ('restaurant', 'hotel', 'dhaba', 'bakery', 'catering', 'cloud_kitchen', 'other')
+    AND need_type IN ('induction', 'electric', 'kerosene', 'png', 'not_sure', 'other')
+    AND (cylinders_week IS NULL OR (cylinders_week >= 1 AND cylinders_week <= 1000))
+    AND (message IS NULL OR char_length(message) <= 2000)
+  );
 
 -- 7. First-sign-in notification log
 --    Used by the auth welcome email flow to avoid resending on normal session restores.

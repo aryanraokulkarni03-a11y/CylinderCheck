@@ -1,7 +1,5 @@
 // src/features/news/NewsTab.jsx
-
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import NewsMap, { getCity } from './NewsMap'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { FadeIn } from '../../components/motion/FadeIn'
 import { Loader2, MapPin, Newspaper, RefreshCw } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -10,6 +8,9 @@ import { Card } from '../../components/ui/Card'
 import { Callout } from '../../components/ui/Callout'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
 import EmptyState from '../../components/shared/EmptyState'
+import { getCity } from './newsCity'
+
+const NewsMap = lazy(() => import('./NewsMap'))
 
 const DOT = '\u00B7'
 const DOWN = '\u2193'
@@ -180,6 +181,33 @@ function getDisplayLocation(item) {
   }
 
   return ''
+}
+
+function NewsMapFallback({ mapHeading, mapLabel, mapNote }) {
+  return (
+    <div className="news-map-fallback">
+      <div className="news-map-fallback__glow" aria-hidden="true" />
+      <div className="news-map-fallback__inner">
+        <div className="news-map-fallback__label-row">
+          <span className="kicker">{mapHeading}</span>
+          <span className="badge text-[var(--text-muted)] bg-[var(--bg-inset)] border border-[var(--border)]">
+            {mapLabel}
+          </span>
+        </div>
+        <div className="news-map-fallback__panel">
+          <div className="news-map-fallback__orb" aria-hidden="true" />
+          <div className="news-map-fallback__copy">
+            <div className="news-map-fallback__line news-map-fallback__line--strong" />
+            <div className="news-map-fallback__line" />
+            <div className="news-map-fallback__line news-map-fallback__line--short" />
+          </div>
+        </div>
+        <p className="type-note news-map-fallback__note mb-0">
+          {mapNote || 'Loading the mapped LPG story surface for this route.'}
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export default function NewsTab() {
@@ -568,11 +596,21 @@ export default function NewsTab() {
               className="card--flush overflow-hidden h-[420px] lg:h-[calc(100vh-var(--topbar-height)-120px)]"
             >
               <div className="relative h-full p-1 sm:p-2">
-                <NewsMap
-                  leadCity={leadCity}
-                  leadSignalKey={leadSignalKey}
-                  onSelectCity={(c) => setSelectedCity((prev) => (prev === c ? null : c))}
-                />
+                <Suspense
+                  fallback={
+                    <NewsMapFallback
+                      mapHeading={mapHeading}
+                      mapLabel={mapLabel}
+                      mapNote={mapNote}
+                    />
+                  }
+                >
+                  <NewsMap
+                    leadCity={leadCity}
+                    leadSignalKey={leadSignalKey}
+                    onSelectCity={(c) => setSelectedCity((prev) => (prev === c ? null : c))}
+                  />
+                </Suspense>
 
                 {!mapStory ? (
                   <div className="absolute inset-4 z-[350] flex items-center justify-center pointer-events-none">

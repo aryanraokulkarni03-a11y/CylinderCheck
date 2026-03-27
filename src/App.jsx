@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -33,24 +33,22 @@ import { Topbar } from './components/layout/Topbar'
 import { BottomNav } from './components/layout/BottomNav'
 import { Footer } from './components/layout/Footer'
 
-import TrackTab from './features/track/TrackTab'
 import HomePage from './features/home/HomePage'
-import ReportsTab from './features/reports/ReportsTab'
-import NewsTab from './features/news/NewsTab'
-import AlertsTab from './features/alerts/AlertsTab'
-import CommercialPage from './features/commercial/CommercialPage'
-import CommercialCitySEOPage from './features/commercial/CommercialCitySEOPage'
-
-
-import AdminTab from './features/admin/AdminTab'
-import CitySEOPage from './features/seo/CitySEOPage'
-import CitiesDirectoryPage from './features/seo/CitiesDirectoryPage'
+const TrackTab = lazy(() => import('./features/track/TrackTab'))
+const ReportsTab = lazy(() => import('./features/reports/ReportsTab'))
+const NewsTab = lazy(() => import('./features/news/NewsTab'))
+const AlertsTab = lazy(() => import('./features/alerts/AlertsTab'))
+const CommercialPage = lazy(() => import('./features/commercial/CommercialPage'))
+const CommercialCitySEOPage = lazy(() => import('./features/commercial/CommercialCitySEOPage'))
+const AdminTab = lazy(() => import('./features/admin/AdminTab'))
+const CitySEOPage = lazy(() => import('./features/seo/CitySEOPage'))
+const CitiesDirectoryPage = lazy(() => import('./features/seo/CitiesDirectoryPage'))
 import AdminModal from './features/admin/AdminModal'
-import SupportPage from './features/support/SupportPage'
-import PrivacyPage from './features/legal/PrivacyPage'
-import TermsPage from './features/legal/TermsPage'
-import AuthCallbackPage from './features/auth/AuthCallbackPage'
-import AccountPage from './features/account/AccountPage'
+const SupportPage = lazy(() => import('./features/support/SupportPage'))
+const PrivacyPage = lazy(() => import('./features/legal/PrivacyPage'))
+const TermsPage = lazy(() => import('./features/legal/TermsPage'))
+const AuthCallbackPage = lazy(() => import('./features/auth/AuthCallbackPage'))
+const AccountPage = lazy(() => import('./features/account/AccountPage'))
 import SeoHead from './components/seo/SeoHead'
 import { getRouteMetadata } from './lib/metadata'
 import { identifyUser, resetIdentity, trackEvent, trackPageView } from './lib/analytics.js'
@@ -190,6 +188,63 @@ function SeoRouteSwitch({ mapPrices, pricesUpdatedAt }) {
   }
 
   return <CitySEOPage />
+}
+
+function RouteFallback({ pathname }) {
+  const isRailLayout = pathname.startsWith('/news')
+  const isDualLayout =
+    pathname.startsWith('/lpg-price-in-') ||
+    pathname.startsWith('/commercial-lpg-price-in-') ||
+    pathname === '/cities' ||
+    pathname === '/business'
+
+  const layoutClass = isRailLayout
+    ? 'route-fallback__frame--rail'
+    : isDualLayout
+      ? 'route-fallback__frame--dual'
+      : 'route-fallback__frame--single'
+
+  return (
+    <div className="route-fallback page-root" aria-hidden="true">
+      <div className="route-fallback__header card">
+        <div className="route-fallback__eyebrow" />
+        <div className="route-fallback__title" />
+        <div className="route-fallback__copy route-fallback__copy--wide" />
+        <div className="route-fallback__copy" />
+      </div>
+
+      <div className={`route-fallback__frame ${layoutClass}`}>
+        <div className="route-fallback__card">
+          <div className="route-fallback__line route-fallback__line--label" />
+          <div className="route-fallback__line route-fallback__line--title" />
+          <div className="route-fallback__line route-fallback__line--medium" />
+          <div className="route-fallback__line" />
+        </div>
+
+        <div className="route-fallback__card">
+          <div className="route-fallback__line route-fallback__line--label" />
+          <div className="route-fallback__panel">
+            <span className="route-fallback__chip" />
+            <span className="route-fallback__chip route-fallback__chip--short" />
+          </div>
+          <div className="route-fallback__line route-fallback__line--medium" />
+          <div className="route-fallback__line route-fallback__line--short" />
+        </div>
+
+        {isDualLayout || isRailLayout ? (
+          <div className="route-fallback__card route-fallback__card--wide">
+            <div className="route-fallback__line route-fallback__line--label" />
+            <div className="route-fallback__line route-fallback__line--title" />
+            <div className="route-fallback__stack">
+              <div className="route-fallback__line route-fallback__line--medium" />
+              <div className="route-fallback__line" />
+              <div className="route-fallback__line route-fallback__line--short" />
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
 }
 
 export default function App() {
@@ -743,85 +798,87 @@ export default function App() {
             exit={{ opacity: 0, x: -12 }}
             transition={shouldReduceMotion ? { duration: 0.01 } : springs.arrival}
           >
-            <Routes location={routerLocation}>
-              <Route path="/" element={<HomePage {...homeProps} />} />
-              <Route path={TAB_ROUTES.track} element={<TrackTab {...trackProps} />} />
-              <Route
-                path={TAB_ROUTES.reports}
-                element={
-                  <ReportsTab
-                    user={user}
-                    authLoading={authLoading}
-                    onGoogleSignIn={handleGoogleSignIn}
-                    onTrackBack={() => navigate(TAB_ROUTES.track)}
-                  />
-                }
-              />
-              <Route path={TAB_ROUTES.news} element={<NewsTab />} />
-              <Route path={TAB_ROUTES.alerts} element={<AlertsTab user={user} authLoading={authLoading} />} />
-              <Route
-                path={TAB_ROUTES.commercial}
-                element={
-                  <CommercialPage
-                    prefilledCity={normalizedCity}
-                    mapPrices={mapPrices}
-                    pricesUpdatedAt={pricesUpdatedAt}
-                    productType={LPG_PRODUCT_TYPES.commercial_19kg}
-                  />
-                }
-              />
-              <Route path="/commercial" element={<Navigate to={TAB_ROUTES.commercial} replace />} />
-              <Route
-                path="/:cityPageSlug"
-                element={<SeoRouteSwitch mapPrices={mapPrices} pricesUpdatedAt={pricesUpdatedAt} />}
-              />
-              <Route path="/cities" element={<CitiesDirectoryPage />} />
-              <Route
-                path={CONTENT_ROUTES.bangalorePrice}
-                element={<Navigate to="/lpg-price-in-bangalore" replace />}
-              />
-              <Route
-                path={CONTENT_ROUTES.bangaloreDelivery}
-                element={<Navigate to="/lpg-price-in-bangalore" replace />}
-              />
-              <Route
-                path={CONTENT_ROUTES.bangaloreCommercial}
-                element={<Navigate to="/lpg-price-in-bangalore" replace />}
-              />
-              <Route path={TAB_ROUTES.support} element={<SupportPage />} />
-              <Route path={TAB_ROUTES.privacy} element={<PrivacyPage />} />
-              <Route path={TAB_ROUTES.terms} element={<TermsPage />} />
-              <Route
-                path={TAB_ROUTES.account}
-                element={
-                  <AccountPage
-                    user={user}
-                    authLoading={authLoading}
-                    onGoogleSignIn={handleGoogleSignIn}
-                    onSignOut={handleSignOut}
-                  />
-                }
-              />
-              <Route path={TAB_ROUTES.authCallback} element={<AuthCallbackPage user={user} />} />
-              <Route
-                path={TAB_ROUTES.admin}
-                element={
-                  adminUnlocked ? (
-                    <AdminTab
-                      data={adminData}
-                      loading={adminLoading}
-                      onLock={() => {
-                        setAdminUnlocked(false)
-                        navigate(TAB_ROUTES.track, { replace: true })
-                      }}
+            <Suspense fallback={<RouteFallback pathname={routerLocation.pathname || '/'} />}>
+              <Routes location={routerLocation}>
+                <Route path="/" element={<HomePage {...homeProps} />} />
+                <Route path={TAB_ROUTES.track} element={<TrackTab {...trackProps} />} />
+                <Route
+                  path={TAB_ROUTES.reports}
+                  element={
+                    <ReportsTab
+                      user={user}
+                      authLoading={authLoading}
+                      onGoogleSignIn={handleGoogleSignIn}
+                      onTrackBack={() => navigate(TAB_ROUTES.track)}
                     />
-                  ) : (
-                    <Navigate to={TAB_ROUTES.track} replace />
-                  )
-                }
-              />
-              <Route path="*" element={<Navigate to={TAB_ROUTES.track} replace />} />
-            </Routes>
+                  }
+                />
+                <Route path={TAB_ROUTES.news} element={<NewsTab />} />
+                <Route path={TAB_ROUTES.alerts} element={<AlertsTab user={user} authLoading={authLoading} />} />
+                <Route
+                  path={TAB_ROUTES.commercial}
+                  element={
+                    <CommercialPage
+                      prefilledCity={normalizedCity}
+                      mapPrices={mapPrices}
+                      pricesUpdatedAt={pricesUpdatedAt}
+                      productType={LPG_PRODUCT_TYPES.commercial_19kg}
+                    />
+                  }
+                />
+                <Route path="/commercial" element={<Navigate to={TAB_ROUTES.commercial} replace />} />
+                <Route
+                  path="/:cityPageSlug"
+                  element={<SeoRouteSwitch mapPrices={mapPrices} pricesUpdatedAt={pricesUpdatedAt} />}
+                />
+                <Route path="/cities" element={<CitiesDirectoryPage />} />
+                <Route
+                  path={CONTENT_ROUTES.bangalorePrice}
+                  element={<Navigate to="/lpg-price-in-bangalore" replace />}
+                />
+                <Route
+                  path={CONTENT_ROUTES.bangaloreDelivery}
+                  element={<Navigate to="/lpg-price-in-bangalore" replace />}
+                />
+                <Route
+                  path={CONTENT_ROUTES.bangaloreCommercial}
+                  element={<Navigate to="/lpg-price-in-bangalore" replace />}
+                />
+                <Route path={TAB_ROUTES.support} element={<SupportPage />} />
+                <Route path={TAB_ROUTES.privacy} element={<PrivacyPage />} />
+                <Route path={TAB_ROUTES.terms} element={<TermsPage />} />
+                <Route
+                  path={TAB_ROUTES.account}
+                  element={
+                    <AccountPage
+                      user={user}
+                      authLoading={authLoading}
+                      onGoogleSignIn={handleGoogleSignIn}
+                      onSignOut={handleSignOut}
+                    />
+                  }
+                />
+                <Route path={TAB_ROUTES.authCallback} element={<AuthCallbackPage user={user} />} />
+                <Route
+                  path={TAB_ROUTES.admin}
+                  element={
+                    adminUnlocked ? (
+                      <AdminTab
+                        data={adminData}
+                        loading={adminLoading}
+                        onLock={() => {
+                          setAdminUnlocked(false)
+                          navigate(TAB_ROUTES.track, { replace: true })
+                        }}
+                      />
+                    ) : (
+                      <Navigate to={TAB_ROUTES.track} replace />
+                    )
+                  }
+                />
+                <Route path="*" element={<Navigate to={TAB_ROUTES.track} replace />} />
+              </Routes>
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </AppShell>

@@ -9,9 +9,12 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
           supabase: ['@supabase/supabase-js'],
           motion: ['motion'],
+          charts: ['recharts'],
+          maps: ['leaflet'],
+          analytics: ['posthog-js'],
         }
       }
     },
@@ -19,6 +22,6 @@ export default defineConfig({
     sourcemap: true,
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', '@supabase/supabase-js', 'motion'],
+    include: ['react', 'react-dom', 'react-router-dom', '@supabase/supabase-js', 'motion', 'recharts', 'leaflet', 'posthog-js'],
   },
 })

@@ -1,5 +1,5 @@
 // src/features/seo/CitySEOPage.jsx
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { MapPin, Store, Truck, Clock, ShieldCheck, Activity, Sparkles, ChevronDown } from 'lucide-react'
 import { motion } from 'motion/react'
@@ -7,11 +7,12 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { Card } from '../../components/ui/Card'
 import { CardBody, CardHeader } from '../../components/ui/CardParts'
 import { Callout } from '../../components/ui/Callout'
-import PriceHistoryChart from './PriceHistoryChart'
 import { supabase } from '../../supabaseClient'
 import { CITY_NORMALISE, LPG_PRODUCT_TYPES } from '../../lib/utils'
 import { springs } from '../../lib/springs'
 import citiesData from '../../data/cities.json'
+
+const PriceHistoryChart = lazy(() => import('./PriceHistoryChart'))
 
 const ARROW = '\u2192'
 const RUPEE = '\u20B9'
@@ -234,6 +235,25 @@ function pickRelatedCities(currentCity) {
     city,
     slug: city.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
   }))
+}
+
+function PriceHistoryChartFallback({ cityName }) {
+  return (
+    <Card variant="inset" className="city-chart-fallback h-full flex flex-col min-h-[260px]">
+      <CardHeader title={`Price Trend (${cityName})`} titleAs="h3" />
+      <CardBody className="city-chart-fallback__body">
+        <div className="city-chart-fallback__plot" aria-hidden="true">
+          <span className="city-chart-fallback__line city-chart-fallback__line--a" />
+          <span className="city-chart-fallback__line city-chart-fallback__line--b" />
+          <span className="city-chart-fallback__line city-chart-fallback__line--c" />
+        </div>
+        <div className="city-chart-fallback__meta">
+          <span className="city-chart-fallback__pill" />
+          <span className="city-chart-fallback__pill city-chart-fallback__pill--short" />
+        </div>
+      </CardBody>
+    </Card>
+  )
 }
 
 export default function CitySEOPage() {
@@ -477,7 +497,9 @@ export default function CitySEOPage() {
 
         <motion.div variants={springs.item} initial="hidden" animate="visible" className="flex h-full flex-col gap-6">
           <div className="flex-grow">
-            <PriceHistoryChart data={prices.history} title={`Price Trend (${normalizedCity})`} />
+            <Suspense fallback={<PriceHistoryChartFallback cityName={normalizedCity} />}>
+              <PriceHistoryChart data={prices.history} title={`Price Trend (${normalizedCity})`} />
+            </Suspense>
           </div>
 
           <Card className="flex-shrink-0">

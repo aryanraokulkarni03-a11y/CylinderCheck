@@ -13,6 +13,7 @@ import BookingDatePicker from '../track/BookingDatePicker'
 import { springs } from '../../lib/springs'
 import citiesData from '../../data/cities.json'
 
+const ARROW = '\u2192'
 const RUPEE = '\u20B9'
 
 function formatTrackedPrice(value) {

@@ -159,6 +159,16 @@ function RouteScrollManager({ pathname, search, hash }) {
   return null
 }
 
+function CitySeoRoute() {
+  const { pathname } = useLocation()
+
+  if (!pathname.startsWith('/lpg-price-in-')) {
+    return <Navigate to={TAB_ROUTES.track} replace />
+  }
+
+  return <CitySEOPage />
+}
+
 export default function App() {
   const shouldReduceMotion = useReducedMotion()
   const navigate = useNavigate()
@@ -737,7 +747,7 @@ export default function App() {
                 }
               />
               <Route path="/commercial" element={<Navigate to={TAB_ROUTES.commercial} replace />} />
-              <Route path="/lpg-price-in-*" element={<CitySEOPage />} />
+              <Route path="/:cityPageSlug" element={<CitySeoRoute />} />
               <Route path="/cities" element={<CitiesDirectoryPage />} />
               <Route
                 path={CONTENT_ROUTES.bangalorePrice}

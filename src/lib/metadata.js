@@ -60,6 +60,27 @@ const TRACK_FAQ = faqSchema([
   ),
 ])
 
+function cityPageFaqSchema(cityName) {
+  return faqSchema([
+    question(
+      `What is the LPG cylinder price in ${cityName} today?`,
+      `CylinderCheck tracks the latest trusted city-level LPG price references for ${cityName}, including the domestic 14.2kg market rate and the commercial 19kg rate when that city data is available.`,
+    ),
+    question(
+      `How should I use the ${cityName} city page before booking a refill?`,
+      `Use the ${cityName} page to understand the city-level price picture, local booking signals, and the overall market read first. Then switch to the PIN tracker when you need a more exact area-level delivery and pressure read.`,
+    ),
+    question(
+      `Are ${cityName} LPG city prices the same as the final agency quote?`,
+      `No. CylinderCheck shows tracked city market references for ${cityName}. Final booking status, refill timing, and quoted prices still come from your LPG agency or supplier.`,
+    ),
+    question(
+      `When should I use the PIN tracker instead of only the ${cityName} city page?`,
+      `Use the PIN tracker whenever you want a more precise local read for your own area inside ${cityName}, especially if delivery timing and pressure can vary between different pockets of the city.`,
+    ),
+  ])
+}
+
 const DEFAULT_SCHEMA = [
   {
     '@context': 'https://schema.org',
@@ -305,6 +326,7 @@ export function getRouteMetadata(pathname = '/') {
           title: `LPG Cylinder Price in ${cityName} Today \u2014 ${monthYear}`,
           description: `Check ${cityName} LPG cylinder price today for 14.2kg domestic and 19kg commercial refills. Compare rates, shortages, and delivery estimates for Indane, HP Gas, and Bharat Gas.`
         }),
+        cityPageFaqSchema(cityName),
         ...DEFAULT_SCHEMA
       ]
     }

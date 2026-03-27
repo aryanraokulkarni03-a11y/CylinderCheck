@@ -1,7 +1,7 @@
 // src/features/seo/CitySEOPage.jsx
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { MapPin, Store, Truck, Clock, ShieldCheck, Activity, Sparkles } from 'lucide-react'
+import { MapPin, Store, Truck, Clock, ShieldCheck, Activity, Sparkles, ChevronDown } from 'lucide-react'
 import { motion } from 'motion/react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card } from '../../components/ui/Card'
@@ -19,6 +19,20 @@ const DOMESTIC_PRODUCT = LPG_PRODUCT_TYPES.domestic_14_2kg
 const LIVE_FEED_MIN_ROWS = 3
 const LIVE_FEED_MIN_ACTIVE_ITEMS = 2
 const LIVE_FEED_MAX_ITEMS = 4
+const RELATED_CITY_LIMIT = 6
+const DISCOVERY_CITY_PRIORITY = [...(citiesData || [])]
+const CITY_RELATED_GROUPS = {
+  Bangalore: ['Hyderabad', 'Chennai', 'Pune', 'Mumbai'],
+  Mumbai: ['Pune', 'Ahmedabad', 'Surat', 'Bangalore'],
+  Delhi: ['Gurugram', 'Jaipur', 'Lucknow', 'Mumbai'],
+  Pune: ['Mumbai', 'Bangalore', 'Ahmedabad', 'Hyderabad'],
+  Hyderabad: ['Bangalore', 'Chennai', 'Pune', 'Mumbai'],
+  Chennai: ['Bangalore', 'Hyderabad', 'Kolkata', 'Mumbai'],
+  Kolkata: ['Chennai', 'Delhi', 'Hyderabad', 'Mumbai'],
+  Ahmedabad: ['Surat', 'Mumbai', 'Pune', 'Delhi'],
+  Surat: ['Ahmedabad', 'Mumbai', 'Pune', 'Delhi'],
+  Gurugram: ['Delhi', 'Jaipur', 'Lucknow', 'Mumbai'],
+}
 const SIGNAL_RANK = {
   severe: 4,
   active: 3,
@@ -137,9 +151,97 @@ function buildSignalMeta(row) {
   return meta
 }
 
+function describeCityOutlook({ cityName, strongestLevel, showLiveFeed, liveAreaCount }) {
+  if (showLiveFeed && strongestLevel === 'severe') {
+    return `${cityName} is not reading like one flat LPG market today. A few local pockets are showing sharper pressure than the wider city average, so the city page is most useful as a planning summary before you switch to your PIN.`
+  }
+
+  if (showLiveFeed && strongestLevel === 'active') {
+    return `${cityName} is showing active local movement rather than a static monthly rate table. The city page gives you the broad read first, then the PIN tracker helps tighten the planning window for your own area.`
+  }
+
+  if (showLiveFeed && strongestLevel === 'building') {
+    return `${cityName} is starting to show early local tightening in a few pockets. This is usually the point where a city-level summary becomes useful, but the best next move is still a PIN-level check if your booking timing matters.`
+  }
+
+  if (liveAreaCount > 0) {
+    return `${cityName} has enough live signal coverage to be useful as a city-level planning page, but the signals still look calmer than the more strained cities. Use it as a market read first, then confirm the exact picture by PIN if needed.`
+  }
+
+  return `${cityName} currently reads more like a clean city-level LPG reference page than a heavy live-signal page. That still makes it useful for prices, trend context, and deciding when it is worth opening the PIN tracker for a sharper local read.`
+}
+
+function buildCityFaqs({ cityName, showLiveFeed, prices, agenciesCount, liveAreaCount }) {
+  const domesticLine = prices.domestic
+    ? `CylinderCheck is currently tracking a domestic 14.2kg city rate for ${cityName}, which helps anchor the market read before you switch to your local PIN.`
+    : `CylinderCheck is still checking for the latest trusted domestic city rate in ${cityName}, so the page works more as a planning and tracker entry point until the next trusted price update lands.`
+
+  const signalLine = showLiveFeed
+    ? `${cityName} also has enough live local signal coverage right now to surface anonymous area-level booking pressure, which makes the city page more useful than a static price table alone.`
+    : `${cityName} does not have a heavy live city signal layer right now, which is why the city page stays cleaner and pushes you toward the PIN tracker for a more exact local read.`
+
+  return [
+    {
+      question: `What is the LPG price in ${cityName} today?`,
+      answer: `${domesticLine} If a commercial 19kg rate is available, CylinderCheck shows that separately so household and business pricing do not get mixed together.`,
+    },
+    {
+      question: `How should I use the ${cityName} city page before booking a refill?`,
+      answer: `Start with the city page to understand the broader price and signal picture in ${cityName}. ${signalLine}`,
+    },
+    {
+      question: `Are ${cityName} LPG city prices the same as the final agency quote?`,
+      answer: `No. CylinderCheck shows tracked city-level market references for ${cityName}. Final quoted prices, booking status, and delivery timing still come from your LPG agency or supplier.`,
+    },
+    {
+      question: `When should I open the PIN tracker instead of relying on the ${cityName} page?`,
+      answer: liveAreaCount > 0 || agenciesCount > 0
+        ? `Open the PIN tracker whenever you want a more exact read for your own part of ${cityName}. City pages are best for the broad market picture, while the tracker is better when timing, pressure, and delivery windows can differ between local pockets.`
+        : `Open the PIN tracker whenever you want a more exact read for your own part of ${cityName}. The city page is useful as a reference, but the tracker is still the better tool for precise household planning.`,
+    },
+  ]
+}
+
+function pickRelatedCities(currentCity) {
+  const priorityMap = new Map(
+    DISCOVERY_CITY_PRIORITY.map((city, index) => [city.toLowerCase(), index]),
+  )
+  const preferredCities = CITY_RELATED_GROUPS[currentCity] || []
+  const seen = new Set([currentCity.toLowerCase()])
+  const ordered = []
+
+  for (const city of preferredCities) {
+    const key = city.toLowerCase()
+    if (seen.has(key) || !priorityMap.has(key)) continue
+    seen.add(key)
+    ordered.push(city)
+  }
+
+  const fallbackCities = DISCOVERY_CITY_PRIORITY
+    .filter((city) => !seen.has(city.toLowerCase()))
+    .sort(
+      (a, b) =>
+        (priorityMap.get(a.toLowerCase()) ?? Number.MAX_SAFE_INTEGER) -
+        (priorityMap.get(b.toLowerCase()) ?? Number.MAX_SAFE_INTEGER),
+    )
+
+  for (const city of fallbackCities) {
+    if (ordered.length >= RELATED_CITY_LIMIT) break
+    ordered.push(city)
+  }
+
+  return ordered.slice(0, RELATED_CITY_LIMIT).map((city) => ({
+    city,
+    slug: city.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+  }))
+}
+
 export default function CitySEOPage() {
   const params = useParams()
-  const citySlug = params.citySlug || params['*'] || ''
+  const rawRouteSlug = params.citySlug || params.cityPageSlug || params['*'] || ''
+  const citySlug = rawRouteSlug.startsWith('lpg-price-in-')
+    ? rawRouteSlug.slice('lpg-price-in-'.length)
+    : rawRouteSlug
   const rawCity = formatCityNameFromSlug(citySlug)
   const normalizedCity = CITY_NORMALISE[rawCity.toLowerCase()] || rawCity
 
@@ -156,16 +258,14 @@ export default function CitySEOPage() {
       const { data: priceData } = await supabase
         .from('lpg_prices')
         .select('*')
-        .ilike('city', normalizedCity)
+        .eq('city', normalizedCity)
         .order('recorded_at', { ascending: false })
         .limit(50)
 
       const { data: agencyData } = await supabase
         .from('pin_track_summary_v1')
         .select('*')
-        .ilike('city', normalizedCity)
-        .eq('pressure_product_type', DOMESTIC_PRODUCT)
-        .eq('delivery_product_type', DOMESTIC_PRODUCT)
+        .eq('city', normalizedCity)
         .order('report_count_30d', { ascending: false })
         .limit(30)
 
@@ -200,7 +300,20 @@ export default function CitySEOPage() {
         setPrices({ domestic: null, commercial: null, history: [] })
       }
 
-      setCitySignals(Array.isArray(agencyData) ? agencyData : [])
+      const citySignalRows = Array.isArray(agencyData) ? agencyData : []
+      const hasProductSplit = citySignalRows.some(
+        (row) =>
+          Object.hasOwn(row, 'pressure_product_type') || Object.hasOwn(row, 'delivery_product_type'),
+      )
+      const domesticSignals = hasProductSplit
+        ? citySignalRows.filter(
+            (row) =>
+              (!Object.hasOwn(row, 'pressure_product_type') || row.pressure_product_type === DOMESTIC_PRODUCT) &&
+              (!Object.hasOwn(row, 'delivery_product_type') || row.delivery_product_type === DOMESTIC_PRODUCT),
+          )
+        : citySignalRows
+
+      setCitySignals(domesticSignals)
       setLoading(false)
     }
 
@@ -254,16 +367,59 @@ export default function CitySEOPage() {
     return uniqueAgencies.slice(0, 5)
   }, [citySignals])
 
-  const relatedCities = useMemo(() => {
-    const normalizedCurrent = normalizedCity.toLowerCase()
-    return [...(citiesData || [])]
-      .filter((city) => city.toLowerCase() !== normalizedCurrent)
-      .slice(0, 6)
-      .map((city) => ({
-        city,
-        slug: city.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      }))
-  }, [normalizedCity])
+  const strongestSignalLevel = liveSignals[0]?.pressureLevel || 'limited'
+  const cityOutlook = useMemo(
+    () =>
+      describeCityOutlook({
+        cityName: normalizedCity,
+        strongestLevel: strongestSignalLevel,
+        showLiveFeed,
+        liveAreaCount: liveSignals.length,
+      }),
+    [liveSignals.length, normalizedCity, showLiveFeed, strongestSignalLevel],
+  )
+
+  const planningCards = useMemo(
+    () => [
+      {
+        title: 'City pressure read',
+        value: showLiveFeed ? pressureLabel(strongestSignalLevel) : 'Signals still building',
+        body: showLiveFeed
+          ? `${liveSignals.length} local pocket${liveSignals.length === 1 ? '' : 's'} are shaping the city-level read right now.`
+          : `The city page is currently acting more as a clean LPG reference than a heavy live-signal dashboard.`,
+      },
+      {
+        title: 'Price reference',
+        value: prices.domestic ? `${RUPEE}${prices.domestic.price}` : 'Waiting for latest scrape',
+        body: prices.commercial
+          ? `Commercial 19kg is tracked separately at ${RUPEE}${prices.commercial.price}, so household and business reads stay distinct.`
+          : 'Domestic and commercial references do not get blended together on CylinderCheck.',
+      },
+      {
+        title: 'Best next move',
+        value: showLiveFeed || agencies.length > 0 ? 'Use the PIN tracker for exact timing' : 'Use the city page, then confirm by PIN',
+        body:
+          agencies.length > 0
+            ? `${agencies.length} trusted distributor row${agencies.length === 1 ? '' : 's'} help anchor the local utility layer below.`
+            : 'If your own area feels different from the city summary, the PIN tracker is still the sharper tool.',
+      },
+    ],
+    [agencies.length, liveSignals.length, prices.commercial, prices.domestic, showLiveFeed, strongestSignalLevel],
+  )
+
+  const cityFaqs = useMemo(
+    () =>
+      buildCityFaqs({
+        cityName: normalizedCity,
+        showLiveFeed,
+        prices,
+        agenciesCount: agencies.length,
+        liveAreaCount: liveSignals.length,
+      }),
+    [agencies.length, liveSignals.length, normalizedCity, prices, showLiveFeed],
+  )
+
+  const relatedCities = useMemo(() => pickRelatedCities(normalizedCity), [normalizedCity])
 
   const monthYear = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' }).format(
     new Date(),
@@ -342,6 +498,33 @@ export default function CitySEOPage() {
           </Card>
         </motion.div>
       </div>
+
+      <section className="page-section city-summary-strip">
+        <Card variant="inset" className="city-summary-strip__card card--utility-tight">
+          <CardHeader title={`How to read ${normalizedCity} right now`} titleAs="h2">
+            <p className="card-header__description type-card-copy mb-0">{cityOutlook}</p>
+          </CardHeader>
+          <CardBody className="city-summary-strip__body">
+            <div className="city-summary-strip__grid">
+              {planningCards.map((item) => (
+                <article key={item.title} className="city-summary-card">
+                  <p className="type-card-title mb-1">{item.title}</p>
+                  <div className="city-summary-card__value">{item.value}</div>
+                  <p className="type-note mb-0">{item.body}</p>
+                </article>
+              ))}
+            </div>
+
+            <Callout tone="clear" edge={false} className="city-summary-strip__callout">
+              <p className="type-note mb-0">
+                City pages help you judge the broader market in {normalizedCity}. When booking
+                timing becomes important for your own home, switch to the PIN tracker for the
+                sharper local read.
+              </p>
+            </Callout>
+          </CardBody>
+        </Card>
+      </section>
 
       {showLiveFeed ? (
         <motion.section
@@ -436,6 +619,32 @@ export default function CitySEOPage() {
               <Link to="/cities" className="btn-ghost w-full justify-center">
                 Browse all tracked cities {ARROW}
               </Link>
+            </div>
+          </CardBody>
+        </Card>
+      </section>
+
+      <section className="page-section city-faq">
+        <Card variant="inset" className="city-faq__card card--utility-tight">
+          <CardHeader title={`Questions people have before checking LPG in ${normalizedCity}`} titleAs="h2">
+            <p className="card-header__description type-card-copy mb-0">
+              These answers keep the city page practical: what the rate means, when to trust the
+              city read, and when to switch to the PIN tracker for something more exact.
+            </p>
+          </CardHeader>
+          <CardBody className="city-faq__body">
+            <div className="city-faq__list">
+              {cityFaqs.map((item, index) => (
+                <details key={item.question} className="city-faq__item" open={index === 0}>
+                  <summary className="city-faq__summary">
+                    <span className="type-card-title">{item.question}</span>
+                    <ChevronDown className="city-faq__caret" aria-hidden="true" />
+                  </summary>
+                  <div className="city-faq__answer">
+                    <p className="type-note mb-0">{item.answer}</p>
+                  </div>
+                </details>
+              ))}
             </div>
           </CardBody>
         </Card>

@@ -10,14 +10,30 @@ import { Callout } from '../../components/ui/Callout'
 import { springs } from '../../lib/springs'
 import citiesData from '../../data/cities.json'
 
+const FEATURED_CITY_PRIORITY = [
+  'Bangalore',
+  'Mumbai',
+  'Delhi',
+  'Pune',
+  'Hyderabad',
+  'Chennai',
+]
+
 function cityHref(city) {
   return `/lpg-price-in-${city.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
 }
 
 export default function CitiesDirectoryPage() {
   const sortedCities = useMemo(() => [...(citiesData || [])].sort((a, b) => a.localeCompare(b)), [])
-  const featuredCities = useMemo(() => sortedCities.slice(0, 6), [sortedCities])
-  const remainingCities = useMemo(() => sortedCities.slice(6), [sortedCities])
+  const featuredCities = useMemo(
+    () =>
+      FEATURED_CITY_PRIORITY.filter((city) => (citiesData || []).includes(city)).slice(0, 6),
+    [],
+  )
+  const remainingCities = useMemo(
+    () => sortedCities.filter((city) => !featuredCities.includes(city)),
+    [featuredCities, sortedCities],
+  )
 
   return (
     <div className="page-root pb-12">

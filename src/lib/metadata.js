@@ -60,39 +60,6 @@ const TRACK_FAQ = faqSchema([
   ),
 ])
 
-const BANGALORE_PRICE_FAQ = faqSchema([
-  question(
-    'What LPG price does CylinderCheck show for Bangalore?',
-    'CylinderCheck tracks published city LPG rates. Bangalore pricing surfaces the latest trusted domestic 14.2kg and commercial 19kg city-level data available in the app.',
-  ),
-  question(
-    'Are Bangalore LPG prices final supplier quotes?',
-    'No. CylinderCheck shows tracked city prices as a market reference. Final domestic or commercial quotes still come from the agency or supplier.',
-  ),
-])
-
-const BANGALORE_DELIVERY_FAQ = faqSchema([
-  question(
-    'How can I check LPG delivery time in Bangalore?',
-    'Use the booking tracker with a Bangalore PIN to check local delivery timing, shortage pressure, and the next sensible booking date before you place a refill order.',
-  ),
-  question(
-    'Does CylinderCheck cover Bangalore shortage pressure?',
-    'Yes. CylinderCheck combines local report volume and PIN-level data to show whether supply pressure is building in your Bangalore area.',
-  ),
-])
-
-const BANGALORE_COMMERCIAL_FAQ = faqSchema([
-  question(
-    'Can businesses compare commercial LPG prices in Bangalore?',
-    'Yes. CylinderCheck surfaces tracked 19kg commercial LPG city prices and a supplier directory so restaurants, caterers, and hotels can compare the current market range.',
-  ),
-  question(
-    'How should I approach a commercial LPG supplier?',
-    'Start with service area, cylinder size, refill frequency, and a direct request for the current 19kg rate, stock status, and delivery terms.',
-  ),
-])
-
 const DEFAULT_SCHEMA = [
   {
     '@context': 'https://schema.org',
@@ -263,48 +230,24 @@ export const ROUTE_METADATA = {
     title: 'Bangalore LPG Price | Domestic and commercial city rates',
     description:
       'Check Bangalore LPG prices with tracked domestic 14.2kg and commercial 19kg city-level rates, plus practical guidance before you book or buy.',
-    indexable: true,
-    schema: [
-      webPageSchema({
-        path: '/bangalore-lpg-price',
-        title: 'Bangalore LPG Price',
-        description:
-          'Tracked domestic and commercial LPG city rates for Bangalore.',
-      }),
-      BANGALORE_PRICE_FAQ,
-    ],
+    indexable: false,
+    schema: [],
   },
   '/bangalore-lpg-delivery-time': {
     path: '/bangalore-lpg-delivery-time',
     title: 'Bangalore LPG Delivery Time | Check before you book',
     description:
       'Use CylinderCheck to judge LPG delivery timing, shortage pressure, and the next sensible booking date in Bangalore before you place a refill order.',
-    indexable: true,
-    schema: [
-      webPageSchema({
-        path: '/bangalore-lpg-delivery-time',
-        title: 'Bangalore LPG Delivery Time',
-        description:
-          'Check LPG delivery timing and shortage pressure in Bangalore before you book.',
-      }),
-      BANGALORE_DELIVERY_FAQ,
-    ],
+    indexable: false,
+    schema: [],
   },
   '/bangalore-commercial-lpg': {
     path: '/bangalore-commercial-lpg',
     title: 'Bangalore Commercial LPG | 19kg price and supplier directory',
     description:
       'Browse Bangalore commercial LPG guidance, tracked 19kg city pricing, and how to compare suppliers for restaurants, caterers, and hotels.',
-    indexable: true,
-    schema: [
-      webPageSchema({
-        path: '/bangalore-commercial-lpg',
-        title: 'Bangalore Commercial LPG',
-        description:
-          'Tracked 19kg LPG pricing and supplier guidance for Bangalore businesses.',
-      }),
-      BANGALORE_COMMERCIAL_FAQ,
-    ],
+    indexable: false,
+    schema: [],
   },
   '/cities': {
     path: '/cities',

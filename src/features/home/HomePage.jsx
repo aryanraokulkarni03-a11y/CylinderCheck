@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { ArrowRight, Building2, Newspaper, ShieldCheck, Target, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -11,6 +11,7 @@ import { Callout } from '../../components/ui/Callout'
 import { Field } from '../../components/ui/Field'
 import BookingDatePicker from '../track/BookingDatePicker'
 import { springs } from '../../lib/springs'
+import citiesData from '../../data/cities.json'
 
 const RUPEE = '\u20B9'
 
@@ -33,6 +34,16 @@ export function HomePage({
   const [pinError, setPinError] = useState('')
   const bangaloreDomestic = mapPrices?.Bangalore?.domestic_14_2kg?.price
   const bangaloreCommercial = mapPrices?.Bangalore?.commercial_19kg?.price
+  const featuredCities = useMemo(
+    () =>
+      [...(citiesData || [])]
+        .slice(0, 6)
+        .map((city) => ({
+          city,
+          slug: city.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        })),
+    [],
+  )
   const liveSignalsLabel = shortageSummary?.activePinCount
     ? `${shortageSummary.activePinCount} active pressure reads`
     : 'Community signals are still building'
@@ -206,6 +217,40 @@ export function HomePage({
             Published prices and signals refresh in the live product when trusted data is available.
           </p>
         ) : null}
+      </section>
+
+      <section className="page-section home-city-hub">
+        <Card variant="inset" className="home-city-hub__card">
+          <CardHeader title="Browse tracked LPG city pages" titleAs="h2">
+            <p className="card-header__description type-card-copy mb-0">
+              Google is already finding CylinderCheck for city LPG price intent. These city pages
+              give households a quicker way into local price checks, booking signals, and the PIN
+              tracker.
+            </p>
+          </CardHeader>
+          <CardBody className="home-city-hub__body">
+            <div className="home-city-hub__grid">
+              {featuredCities.map(({ city, slug }) => (
+                <Link
+                  key={slug}
+                  to={`/lpg-price-in-${slug}`}
+                  className="home-city-hub__link"
+                >
+                  <span className="type-card-title">{city}</span>
+                  <span className="type-note">
+                    LPG price, pressure signals, and booking guidance {ARROW}
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="home-city-hub__actions">
+              <Link to="/cities" className="glass-btn w-full justify-center">
+                Open all city pages <ArrowRight size={16} />
+              </Link>
+            </div>
+          </CardBody>
+        </Card>
       </section>
 
       <BeforeYouCheckSection

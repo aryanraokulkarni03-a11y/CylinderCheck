@@ -11,6 +11,7 @@ import PriceHistoryChart from './PriceHistoryChart'
 import { supabase } from '../../supabaseClient'
 import { CITY_NORMALISE, LPG_PRODUCT_TYPES } from '../../lib/utils'
 import { springs } from '../../lib/springs'
+import citiesData from '../../data/cities.json'
 
 const ARROW = '\u2192'
 const RUPEE = '\u20B9'
@@ -253,6 +254,17 @@ export default function CitySEOPage() {
     return uniqueAgencies.slice(0, 5)
   }, [citySignals])
 
+  const relatedCities = useMemo(() => {
+    const normalizedCurrent = normalizedCity.toLowerCase()
+    return [...(citiesData || [])]
+      .filter((city) => city.toLowerCase() !== normalizedCurrent)
+      .slice(0, 6)
+      .map((city) => ({
+        city,
+        slug: city.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      }))
+  }, [normalizedCity])
+
   const monthYear = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' }).format(
     new Date(),
   )
@@ -400,6 +412,34 @@ export default function CitySEOPage() {
           </Callout>
         </motion.section>
       ) : null}
+
+      <section className="page-section city-related-rail">
+          <Card variant="inset" className="city-related-rail__card card--utility-tight">
+          <CardHeader title={`Keep browsing other tracked LPG city pages`} titleAs="h2">
+            <p className="card-header__description type-card-copy mb-0">
+              Compare other tracked city pages, then switch to the booking tracker when you need a
+              precise PIN-level read instead of city-level context.
+            </p>
+          </CardHeader>
+          <CardBody className="city-related-rail__body">
+            <div className="city-related-rail__grid">
+              {relatedCities.map(({ city, slug }) => (
+                <Link key={slug} to={`/lpg-price-in-${slug}`} className="city-related-rail__link">
+                  <span className="type-card-title">{city}</span>
+                  <span className="type-note">
+                    LPG prices, local signals, and tracker context {ARROW}
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <div className="city-related-rail__actions">
+              <Link to="/cities" className="btn-ghost w-full justify-center">
+                Browse all tracked cities {ARROW}
+              </Link>
+            </div>
+          </CardBody>
+        </Card>
+      </section>
 
       <motion.div
         initial="hidden"

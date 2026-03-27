@@ -737,7 +737,7 @@ export default function App() {
                 }
               />
               <Route path="/commercial" element={<Navigate to={TAB_ROUTES.commercial} replace />} />
-              <Route path="/lpg-price-in-:citySlug" element={<CitySEOPage />} />
+              <Route path="/lpg-price-in-*" element={<CitySEOPage />} />
               <Route path="/cities" element={<CitiesDirectoryPage />} />
               <Route
                 path={CONTENT_ROUTES.bangalorePrice}

@@ -3505,6 +3505,182 @@ body::before {
   margin-top: 2px;
 }
 
+.city-live-feed {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-8);
+}
+
+.city-live-feed__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-inline: 8px;
+}
+
+.city-live-feed__heading-copy {
+  min-width: 0;
+}
+
+.city-live-feed__intro {
+  max-width: 72ch;
+}
+
+.city-live-feed__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-raised));
+  border: 1px solid color-mix(in srgb, var(--accent-glow) 78%, transparent);
+}
+
+.city-live-feed__grid {
+  display: grid;
+  gap: 14px;
+}
+
+.city-live-feed__item {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-radius: calc(var(--radius-xl) - 2px);
+  border: 1px solid color-mix(in srgb, var(--fog-border) 88%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 92%, transparent), transparent 58%),
+    color-mix(in srgb, var(--bg-raised) 94%, var(--accent) 6%);
+  box-shadow: 0 18px 34px color-mix(in srgb, var(--shadow-modal) 14%, transparent);
+  overflow: hidden;
+}
+
+.city-live-feed__item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent-glow) 18%, transparent), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 70%, transparent), transparent 44%);
+  pointer-events: none;
+}
+
+.city-live-feed__item--severe {
+  border-color: color-mix(in srgb, var(--status-severe-border) 82%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 90%, transparent), transparent 58%),
+    color-mix(in srgb, var(--status-severe-soft) 36%, var(--bg-raised));
+}
+
+.city-live-feed__item--active {
+  border-color: color-mix(in srgb, var(--status-active-border) 78%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 90%, transparent), transparent 58%),
+    color-mix(in srgb, var(--status-active-soft) 26%, var(--bg-raised));
+}
+
+.city-live-feed__item--building {
+  border-color: color-mix(in srgb, var(--status-early-border) 76%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 90%, transparent), transparent 58%),
+    color-mix(in srgb, var(--status-early-soft) 28%, var(--bg-raised));
+}
+
+.city-live-feed__item-top,
+.city-live-feed__callout {
+  position: relative;
+  z-index: 1;
+}
+
+.city-live-feed__item-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.city-live-feed__icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--fog-border) 82%, transparent);
+  background: color-mix(in srgb, var(--glass-mid) 72%, var(--bg-raised));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fog-highlight) 82%, transparent);
+  flex-shrink: 0;
+}
+
+.city-live-feed__icon {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.city-live-feed__state {
+  color: var(--text-secondary);
+}
+
+.city-live-feed__copy {
+  position: relative;
+  z-index: 1;
+}
+
+.city-live-feed__meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.city-live-feed__meta-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--fog-border) 82%, transparent);
+  background: color-mix(in srgb, var(--glass-whisper) 88%, var(--bg-raised));
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.city-live-feed__callout {
+  display: grid;
+  gap: 14px;
+  border-radius: calc(var(--radius-xl) - 2px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fog-highlight) 94%, transparent), transparent 60%),
+    color-mix(in srgb, var(--accent) 5%, var(--callout-bg, var(--bg-inset)));
+}
+
+.city-live-feed__callout-copy {
+  min-width: 0;
+}
+
+@media (min-width: 769px) {
+  .city-live-feed__heading {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-5);
+  }
+
+  .city-live-feed__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .city-live-feed__callout {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 236px);
+    align-items: center;
+    gap: var(--space-5);
+  }
+}
+
 .home-proof-grid {
   display: grid;
   gap: 14px;

@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getIndexableMetadataEntries, SITE_URL } from '../src/lib/metadata.js'
+import { COMMERCIAL_SEO_CITIES } from '../src/lib/utils.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -25,6 +26,13 @@ if (fs.existsSync(citiesPath)) {
     console.error('Failed to parse cities.json for sitemap', e)
   }
 }
+
+COMMERCIAL_SEO_CITIES.forEach(city => {
+  const citySlug = city.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  if (!entries.find(e => e.path === `/commercial-lpg-price-in-${citySlug}`)) {
+    entries.push({ path: `/commercial-lpg-price-in-${citySlug}` })
+  }
+})
 
 const lastmod = new Date().toISOString().slice(0, 10)
 

@@ -1,3 +1,5 @@
+import { resolveCommercialSeoCitySlug } from './utils.js'
+
 const SITE_URL = 'https://www.cylindercheck.in'
 const DEFAULT_OG_IMAGE = `${SITE_URL}/brand/cylindercheck-logo-lockup-1200x360.png`
 
@@ -77,6 +79,27 @@ function cityPageFaqSchema(cityName) {
     question(
       `When should I use the PIN tracker instead of only the ${cityName} city page?`,
       `Use the PIN tracker whenever you want a more precise local read for your own area inside ${cityName}, especially if delivery timing and pressure can vary between different pockets of the city.`,
+    ),
+  ])
+}
+
+function commercialCityPageFaqSchema(cityName) {
+  return faqSchema([
+    question(
+      `What is the commercial LPG price in ${cityName} today?`,
+      `CylinderCheck tracks the latest trusted 19kg commercial LPG market reference for ${cityName} when city-level pricing is available.`,
+    ),
+    question(
+      `How should a business use the ${cityName} commercial LPG page?`,
+      `Use the ${cityName} commercial page to understand the tracked 19kg market read first, then browse suppliers if you need availability, delivery, and quote confirmation.`,
+    ),
+    question(
+      `Are ${cityName} commercial LPG prices the same as the final supplier quote?`,
+      `No. CylinderCheck shows tracked city-level commercial LPG references for ${cityName}. Final per-cylinder pricing, stock, delivery terms, and payment terms still come from the supplier.`,
+    ),
+    question(
+      `When should I browse suppliers instead of relying only on the ${cityName} commercial LPG page?`,
+      `Browse suppliers when you need current stock, delivery reach, account terms, or a quote for your exact business requirement in ${cityName}.`,
     ),
   ])
 }
@@ -300,6 +323,39 @@ export const ROUTE_METADATA = {
 }
 
 export function getRouteMetadata(pathname = '/') {
+  const commercialCityMatch = pathname.match(/^\/commercial-lpg-price-in-([a-z0-9-]+)$/)
+  if (commercialCityMatch) {
+    const commercialCity = resolveCommercialSeoCitySlug(commercialCityMatch[1])
+    if (!commercialCity) {
+      return ROUTE_METADATA['/business']
+    }
+
+    const cityName = commercialCity.cityName
+    const canonicalPath = `/commercial-lpg-price-in-${commercialCity.canonicalSlug}`
+    const monthYear = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' }).format(new Date())
+
+    return {
+      path: canonicalPath,
+      canonicalUrl: absoluteUrl(canonicalPath),
+      ogTitle: `Commercial LPG Price in ${cityName} Today \u2014 ${monthYear}`,
+      ogDescription: `Check the tracked 19kg commercial LPG price in ${cityName}, browse suppliers, and compare the city market read before you call for a business refill.`,
+      ogImage: DEFAULT_OG_IMAGE,
+      twitterCard: 'summary_large_image',
+      title: `Commercial LPG Price in ${cityName} Today \u2014 ${monthYear}`,
+      description: `Check the tracked 19kg commercial LPG price in ${cityName}, browse suppliers, and compare the city market read before you call for a business refill.`,
+      indexable: true,
+      schema: [
+        webPageSchema({
+          path: canonicalPath,
+          title: `Commercial LPG Price in ${cityName} Today \u2014 ${monthYear}`,
+          description: `Check the tracked 19kg commercial LPG price in ${cityName}, browse suppliers, and compare the city market read before you call for a business refill.`,
+        }),
+        commercialCityPageFaqSchema(cityName),
+        ...DEFAULT_SCHEMA,
+      ],
+    }
+  }
+
   // Check for dynamic city routes
   const cityMatch = pathname.match(/^\/lpg-price-in-([a-z0-9-]+)$/)
   if (cityMatch) {

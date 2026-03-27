@@ -25,6 +25,7 @@ import {
   computeUrgency,
   daysUntil,
   lookupPIN,
+  resolveCommercialSeoCitySlug,
 } from './lib/utils'
 
 import AppShell from './components/layout/AppShell'
@@ -38,6 +39,7 @@ import ReportsTab from './features/reports/ReportsTab'
 import NewsTab from './features/news/NewsTab'
 import AlertsTab from './features/alerts/AlertsTab'
 import CommercialPage from './features/commercial/CommercialPage'
+import CommercialCitySEOPage from './features/commercial/CommercialCitySEOPage'
 
 
 import AdminTab from './features/admin/AdminTab'
@@ -159,8 +161,29 @@ function RouteScrollManager({ pathname, search, hash }) {
   return null
 }
 
-function CitySeoRoute() {
+function SeoRouteSwitch({ mapPrices, pricesUpdatedAt }) {
   const { pathname } = useLocation()
+
+  if (pathname.startsWith('/commercial-lpg-price-in-')) {
+    const commercialSlug = pathname.slice('/commercial-lpg-price-in-'.length)
+    const commercialCity = resolveCommercialSeoCitySlug(commercialSlug)
+
+    if (!commercialCity) {
+      return <Navigate to={TAB_ROUTES.commercial} replace />
+    }
+
+    if (commercialSlug !== commercialCity.canonicalSlug) {
+      return <Navigate to={`/commercial-lpg-price-in-${commercialCity.canonicalSlug}`} replace />
+    }
+
+    return (
+      <CommercialCitySEOPage
+        mapPrices={mapPrices}
+        pricesUpdatedAt={pricesUpdatedAt}
+        productType={LPG_PRODUCT_TYPES.commercial_19kg}
+      />
+    )
+  }
 
   if (!pathname.startsWith('/lpg-price-in-')) {
     return <Navigate to={TAB_ROUTES.track} replace />
@@ -384,6 +407,7 @@ export default function App() {
                   price: row.price,
                   state: row.state || CITY_STATE_LABELS[row.city] || '',
                   sourceUrl: row.source_url || '',
+                  recordedAt: row.recorded_at || null,
                 }
               }
             }
@@ -747,7 +771,10 @@ export default function App() {
                 }
               />
               <Route path="/commercial" element={<Navigate to={TAB_ROUTES.commercial} replace />} />
-              <Route path="/:cityPageSlug" element={<CitySeoRoute />} />
+              <Route
+                path="/:cityPageSlug"
+                element={<SeoRouteSwitch mapPrices={mapPrices} pricesUpdatedAt={pricesUpdatedAt} />}
+              />
               <Route path="/cities" element={<CitiesDirectoryPage />} />
               <Route
                 path={CONTENT_ROUTES.bangalorePrice}

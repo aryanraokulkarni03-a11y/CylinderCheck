@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { RefreshCw } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../supabaseClient'
 import { StaggerContainer } from '../../components/motion/StaggerContainer'
 import { PillRow } from '../../components/ui/PillRow'
 import {
+  COMMERCIAL_SEO_CITIES,
   LPG_PRODUCT_LABELS,
   COMMERCIAL_CITIES_BY_STATE,
   COMMERCIAL_STATES,
@@ -16,6 +18,7 @@ import { springs } from '../../lib/springs'
 import CommercialHero from './CommercialHero'
 import VendorCard from './VendorCard'
 import { Card } from '../../components/ui/Card'
+import { CardBody, CardHeader } from '../../components/ui/CardParts'
 import { Callout } from '../../components/ui/Callout'
 import EmptyState from '../../components/shared/EmptyState'
 import { PriceTicker } from '../../components/shared/PriceTicker'
@@ -88,6 +91,13 @@ function isSameTrackedPrice(a, b) {
 
 export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUpdatedAt = null, productType }) {
   const shouldReduceMotion = useReducedMotion()
+  const featuredCommercialCities = useMemo(
+    () => COMMERCIAL_SEO_CITIES.slice(0, 5).map((city) => ({
+      city,
+      slug: city.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    })),
+    [],
+  )
 
   const defaultState = useMemo(() => {
     const st = commercialStateForCity(prefilledCity)
@@ -182,6 +192,36 @@ export default function CommercialPage({ prefilledCity, mapPrices = {}, pricesUp
   return (
     <div className="page-root">
       <CommercialHero />
+
+      <section className="page-section commercial-page-discovery">
+        <Card variant="inset" className="commercial-page-discovery__card card--utility-tight">
+          <CardHeader title="Commercial city pages worth checking first" titleAs="h2">
+            <p className="card-header__description type-card-copy mb-0">
+              Start with a tracked 19kg city market read when you know the city you buy in most often, then come back here to compare suppliers and confirm availability.
+            </p>
+          </CardHeader>
+          <CardBody className="commercial-page-discovery__body">
+            <div className="commercial-page-discovery__grid">
+              {featuredCommercialCities.map(({ city, slug }) => (
+                <Link
+                  key={slug}
+                  to={`/commercial-lpg-price-in-${slug}`}
+                  className="commercial-page-discovery__link"
+                >
+                  <span className="type-card-title">{city}</span>
+                  <span className="type-note">Tracked 19kg market read {ARROW}</span>
+                </Link>
+              ))}
+            </div>
+
+            <Callout tone="clear" edge={false} className="commercial-page-discovery__callout">
+              <p className="type-note mb-0">
+                These pages separate the city market read from the wider supplier directory so business buyers can move from price context into vendor outreach without mixing household and commercial flows.
+              </p>
+            </Callout>
+          </CardBody>
+        </Card>
+      </section>
 
       <section
         id="commercial-vendors"

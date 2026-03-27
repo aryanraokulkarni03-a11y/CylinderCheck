@@ -96,14 +96,25 @@ export const COMMERCIAL_CITIES = [
   'Chennai', 'Delhi', 'Kolkata', 'Vizag'
 ]
 
+export const COMMERCIAL_SEO_CITIES = [
+  'Bangalore',
+  'Mumbai',
+  'Delhi',
+  'Pune',
+  'Hyderabad',
+]
+
 // Commercial UX shows "states" but vendors are still stored by city (see vendors.city).
 export const COMMERCIAL_STATE_BY_CITY = {
   Mumbai: 'Maharashtra',
+  Pune: 'Maharashtra',
   Bangalore: 'Karnataka',
   Hyderabad: 'Telangana',
   Chennai: 'Tamil Nadu',
   Delhi: 'Delhi',
   Kolkata: 'West Bengal',
+  Ahmedabad: 'Gujarat',
+  Surat: 'Gujarat',
   Vizag: 'Andhra Pradesh',
 }
 
@@ -152,6 +163,32 @@ export const CITY_NORMALISE = {
   'gujarat': 'Ahmedabad',
   'tamil nadu': 'Chennai',
   'kerala': 'Kochi',
+}
+
+export function toCitySlug(city) {
+  return String(city || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+}
+
+export function resolveCommercialSeoCitySlug(slug) {
+  const rawCity = String(slug || '')
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+
+  const normalizedCity = CITY_NORMALISE[rawCity.toLowerCase()] || rawCity
+
+  if (!COMMERCIAL_SEO_CITIES.includes(normalizedCity)) {
+    return null
+  }
+
+  return {
+    cityName: normalizedCity,
+    canonicalSlug: toCitySlug(normalizedCity),
+  }
 }
 
 export const COMPANIES = ['IndianOil', 'HP Gas', 'Bharat Gas']

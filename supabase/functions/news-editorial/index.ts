@@ -7,7 +7,7 @@ const CORS = {
   "Content-Type": "application/json",
 };
 
-type EditorialAction = "approve" | "reject" | "publish" | "archive";
+type EditorialAction = "list" | "approve" | "reject" | "publish" | "archive";
 type EditorialRole = "editor" | "publisher" | "admin";
 
 type CandidateRow = {
@@ -123,7 +123,7 @@ serve(async (req) => {
     const candidateId = Number(body.candidateId);
     const candidateKey = toNullableTrimmed(body.candidateKey);
 
-    if (!["approve", "reject", "publish", "archive"].includes(action)) {
+    if (!["list", "approve", "reject", "publish", "archive"].includes(action)) {
       return jsonResponse(400, { ok: false, error: "Invalid action" });
     }
 
@@ -145,6 +145,99 @@ serve(async (req) => {
     const role = adminRow.role as EditorialRole;
     if (!canEdit(role)) {
       return jsonResponse(403, { ok: false, error: "Editorial access denied" });
+    }
+
+    if (action === "list") {
+      const limitValue = Math.min(
+        Math.max(Number(body.limit) || 80, 1),
+        200,
+      );
+
+      const { data: candidateRows, error: listError } = await supabase
+        .from("news_article_candidates")
+        .select(`
+          id,
+          candidate_key,
+          headline,
+          slug,
+          deck,
+          body_markdown,
+          hero_image_url,
+          city,
+          state,
+          category,
+          canonical_source_url,
+          source_name,
+          source_domain,
+          source_confidence,
+          normalization_confidence,
+          review_status,
+          publish_status,
+          review_notes,
+          rejection_reason,
+          published_source_at,
+          reviewed_at,
+          published_at,
+          created_at,
+          updated_at
+        `)
+        .order("published_source_at", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(limitValue);
+
+      if (listError) {
+        return jsonResponse(500, { ok: false, error: listError.message });
+      }
+
+      const counts = (candidateRows ?? []).reduce((acc, row) => {
+        const reviewStatus = String(row.review_status || "pending");
+        const publishStatus = String(row.publish_status || "draft");
+        acc.total += 1;
+        acc.byReview[reviewStatus] = (acc.byReview[reviewStatus] ?? 0) + 1;
+        acc.byPublish[publishStatus] = (acc.byPublish[publishStatus] ?? 0) + 1;
+        return acc;
+      }, {
+        total: 0,
+        byReview: {} as Record<string, number>,
+        byPublish: {} as Record<string, number>,
+      });
+
+      return jsonResponse(200, {
+        ok: true,
+        action,
+        admin: {
+          userId: user.id,
+          email: user.email ?? adminRow.email,
+          role,
+        },
+        counts,
+        candidates: (candidateRows ?? []).map((row) => ({
+          id: row.id,
+          candidateKey: row.candidate_key,
+          headline: row.headline,
+          slug: row.slug,
+          deck: row.deck,
+          bodyMarkdown: row.body_markdown,
+          heroImageUrl: row.hero_image_url,
+          city: row.city,
+          state: row.state,
+          category: row.category,
+          canonicalSourceUrl: row.canonical_source_url,
+          sourceName: row.source_name,
+          sourceDomain: row.source_domain,
+          sourceConfidence: row.source_confidence,
+          normalizationConfidence: row.normalization_confidence,
+          reviewStatus: row.review_status,
+          publishStatus: row.publish_status,
+          reviewNotes: row.review_notes,
+          rejectionReason: row.rejection_reason,
+          publishedSourceAt: row.published_source_at,
+          reviewedAt: row.reviewed_at,
+          publishedAt: row.published_at,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        })),
+      });
     }
 
     let candidateQuery = supabase

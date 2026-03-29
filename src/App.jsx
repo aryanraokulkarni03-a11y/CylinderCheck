@@ -42,6 +42,7 @@ const AlertsTab = lazy(() => import('./features/alerts/AlertsTab'))
 const CommercialPage = lazy(() => import('./features/commercial/CommercialPage'))
 const CommercialCitySEOPage = lazy(() => import('./features/commercial/CommercialCitySEOPage'))
 const AdminTab = lazy(() => import('./features/admin/AdminTab'))
+const AdminEditorialPage = lazy(() => import('./features/admin/AdminEditorialPage'))
 const CitySEOPage = lazy(() => import('./features/seo/CitySEOPage'))
 const CitiesDirectoryPage = lazy(() => import('./features/seo/CitiesDirectoryPage'))
 import AdminModal from './features/admin/AdminModal'
@@ -733,6 +734,11 @@ export default function App() {
     return false
   }, [navigate])
 
+  const handleAdminLock = useCallback(() => {
+    setAdminUnlocked(false)
+    navigate(TAB_ROUTES.track, { replace: true })
+  }, [navigate])
+
   const visibleTabs = adminUnlocked
     ? [...TABS, { id: 'admin', label: 'Admin', icon: Target }]
     : TABS
@@ -915,16 +921,32 @@ export default function App() {
                 />
                 <Route path={TAB_ROUTES.authCallback} element={<AuthCallbackPage user={user} />} />
                 <Route
+                  path="/admin/editorial"
+                  element={
+                    adminUnlocked ? (
+                      <AdminEditorialPage
+                        user={user}
+                        authLoading={authLoading}
+                        onGoogleSignIn={handleGoogleSignIn}
+                        onBack={() => navigate(TAB_ROUTES.admin)}
+                        onLock={handleAdminLock}
+                      />
+                    ) : (
+                      <Navigate to={TAB_ROUTES.track} replace />
+                    )
+                  }
+                />
+                <Route
                   path={TAB_ROUTES.admin}
                   element={
                     adminUnlocked ? (
                       <AdminTab
                         data={adminData}
                         loading={adminLoading}
-                        onLock={() => {
-                          setAdminUnlocked(false)
-                          navigate(TAB_ROUTES.track, { replace: true })
-                        }}
+                        user={user}
+                        authLoading={authLoading}
+                        onOpenEditorial={() => navigate('/admin/editorial')}
+                        onLock={handleAdminLock}
                       />
                     ) : (
                       <Navigate to={TAB_ROUTES.track} replace />

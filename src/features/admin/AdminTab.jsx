@@ -1,5 +1,5 @@
 import React from 'react'
-import { Shield, Users, Bell, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { Shield, Users, Bell, AlertTriangle, ArrowLeft, FilePenLine, Sparkles } from 'lucide-react'
 import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerContainer'
 import { FadeIn } from '../../components/motion/FadeIn'
 import { Card } from '../../components/ui/Card'
@@ -9,7 +9,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 const RUPEE = '\u20B9'
 const EM_DASH = '\u2014'
 
-export default function AdminTab({ data, loading, onLock }) {
+export default function AdminTab({ data, loading, user, authLoading, onOpenEditorial, onLock }) {
   const {
     subscriptions = [],
     reportCount = 0,
@@ -31,17 +31,61 @@ export default function AdminTab({ data, loading, onLock }) {
           title="Admin"
           description="Overview of reports, alerts, and paid subscribers. Authorized access only."
           actions={(
-            <button
-              type="button"
-              onClick={onLock}
-              className="btn-ghost"
-            >
-              <ArrowLeft size={16} />
-              <span>Lock admin</span>
-            </button>
+            <div className="editorial-page-header__actions">
+              <button
+                type="button"
+                onClick={onOpenEditorial}
+                className="btn-ghost"
+              >
+                <FilePenLine size={16} />
+                <span>Editorial workspace</span>
+              </button>
+              <button
+                type="button"
+                onClick={onLock}
+                className="btn-ghost"
+              >
+                <ArrowLeft size={16} />
+                <span>Lock admin</span>
+              </button>
+            </div>
           )}
         />
       </div>
+
+      <Card variant="featured" className="admin-editorial-launch">
+        <CardHeader
+          title="Editorial workspace"
+          titleAs="h2"
+          meta={<Sparkles size={14} className="text-[var(--accent)]" aria-hidden="true" />}
+          actions={(
+            <button
+              type="button"
+              onClick={onOpenEditorial}
+              className="btn-ghost"
+            >
+              <span>Open workspace</span>
+            </button>
+          )}
+        />
+        <CardBody className="stack-copy">
+          <p className="type-card-copy m-0">
+            Review candidate stories, refine the CylinderCheck summary, and move approved stories into the live publication flow.
+          </p>
+          <div className="admin-editorial-launch__meta">
+            <span className="badge text-[var(--accent)] bg-[var(--accent-soft)] border border-[var(--accent-glow)]">
+              Phase 2 live
+            </span>
+            <span className="type-note">
+              {authLoading
+                ? 'Checking editorial sign-in…'
+                : user?.email
+                  ? `Google signed in as ${user.email}`
+                  : 'Google sign-in required for real approve and publish actions'}
+            </span>
+          </div>
+        </CardBody>
+      </Card>
 
       <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <StaggerItem>

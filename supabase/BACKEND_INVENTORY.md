@@ -49,6 +49,13 @@ It is intentionally practical:
   - Important:
     - public read is limited to `publish_status = 'published'`
     - additive alongside `news_articles` until `/news` fully migrates
+- `public.news_editorial_admins`
+  - Canonical authenticated admin registry for editorial actions.
+  - Used by:
+    - `supabase/functions/news-editorial/index.ts`
+  - Important:
+    - controls `editor`, `publisher`, and `admin` roles
+    - avoids hardcoded publisher identity in application code
 
 ### Commercial
 - `public.vendors`
@@ -127,6 +134,8 @@ Transitional / supporting:
   - Writes normalized news feed rows
 - `lpg-news`
   - Public feed reader for `/news`
+- `news-editorial`
+  - Authenticated editorial mutation endpoint for approve/reject/publish/archive workflow
 - `dispatch-alerts`
   - Sends email reminders
 - `verify-payment`
@@ -194,6 +203,10 @@ Views:
 - `lpg-news` now supports:
   - legacy feed reads from `news_articles`
   - published-read mode from `news_article_publications`
+- `news-editorial` now owns:
+  - candidate approve/reject mutations
+  - publication promote/archive mutations
+  - authenticated role checks via `news_editorial_admins`
 - Remaining hardcoded behavior is now mostly limited to parsing heuristics and product-specific validation logic, not source/city/workflow ownership.
 - The first `indane_locator_html` rollout is intentionally publish-disabled until city-level agreement and parser stability are validated live.
 

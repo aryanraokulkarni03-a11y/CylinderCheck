@@ -541,6 +541,10 @@ CREATE TABLE IF NOT EXISTS news_article_candidates (
   publish_status            TEXT NOT NULL DEFAULT 'draft',
   review_notes              TEXT,
   rejection_reason          TEXT,
+  reviewed_by_user_id       UUID,
+  reviewed_at               TIMESTAMPTZ,
+  published_by_user_id      UUID,
+  published_at              TIMESTAMPTZ,
   metadata_json             JSONB NOT NULL DEFAULT '{}'::jsonb,
   scraped_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -584,6 +588,7 @@ CREATE TABLE IF NOT EXISTS news_article_publications (
   canonical_source_url  TEXT NOT NULL,
   source_name           TEXT NOT NULL,
   source_domain         TEXT,
+  published_by_user_id  UUID,
   publish_status        TEXT NOT NULL DEFAULT 'published',
   metadata_json         JSONB NOT NULL DEFAULT '{}'::jsonb,
   published_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -598,6 +603,9 @@ CREATE INDEX IF NOT EXISTS news_article_publications_published_idx
 
 CREATE INDEX IF NOT EXISTS news_article_publications_city_idx
   ON news_article_publications (city, category, published_at DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS news_article_publications_candidate_idx
+  ON news_article_publications (candidate_id);
 
 ALTER TABLE news_article_publications ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can read published news articles"
@@ -658,6 +666,39 @@ WHERE review_status IN ('pending', 'needs_review')
 ORDER BY published_source_at DESC, created_at DESC;
 
 REVOKE ALL ON news_review_queue_v1 FROM PUBLIC, anon, authenticated;
+
+CREATE TABLE IF NOT EXISTS news_editorial_admins (
+  user_id     UUID PRIMARY KEY,
+  email       TEXT NOT NULL,
+  role        TEXT NOT NULL DEFAULT 'editor',
+  is_active   BOOLEAN NOT NULL DEFAULT true,
+  notes       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT news_editorial_admins_role_check
+    CHECK (role IN ('editor', 'publisher', 'admin'))
+);
+
+ALTER TABLE news_editorial_admins ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION touch_news_editorial_admins_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  NEW.updated_at := NOW();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS news_editorial_admins_set_updated_at
+  ON news_editorial_admins;
+
+CREATE TRIGGER news_editorial_admins_set_updated_at
+  BEFORE UPDATE ON news_editorial_admins
+  FOR EACH ROW
+  EXECUTE FUNCTION touch_news_editorial_admins_updated_at();
 
 -- 11. Support feedback intake
 --     Reserved for support workflow capture and future product feedback forms.

@@ -133,6 +133,7 @@ These are the current observability base for the scraping layer.
 - `public.city_registry`
   - Canonical repo-managed city list for scraper scope, SEO surfaces, and news location support.
   - Seeds the current household SEO, commercial SEO, price scrape, and news city footprint.
+  - Public frontend reads should be limited to SEO-enabled rows only.
 - `public.scrape_source_registry`
   - Canonical source list for price and news ingestion.
   - Holds source host/base URL, retry defaults, and fetch-mode metadata.
@@ -145,10 +146,17 @@ These are the current observability base for the scraping layer.
 
 ## Known backend maturity notes
 
-### Phase 3E.2 foundation is in repo, but the functions still need refactors
-- The city/source/topic/runtime tables now exist as repo-managed contracts.
-- `scrape-prices` and the news helpers still read hardcoded values today.
-- The next backend slices should switch function reads from code constants to these tables.
+### Config-driven workflow status
+- `scrape-prices` now reads its enabled cities, primary source, and runtime defaults from:
+  - `city_registry`
+  - `scrape_source_registry`
+  - `scrape_runtime_config`
+- The shared news helpers now read their source, topic list, city aliases, and runtime knobs from:
+  - `city_registry`
+  - `scrape_source_registry`
+  - `scrape_topic_registry`
+  - `scrape_runtime_config`
+- Remaining hardcoded behavior is now mostly limited to parsing heuristics and product-specific validation logic, not source/city/workflow ownership.
 
 ### Current schema gaps now closed in repo
 The repo now explicitly represents:

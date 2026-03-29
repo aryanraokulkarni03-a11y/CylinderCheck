@@ -1,14 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { scrapeLatestNews } from "../_shared/news.ts";
+import { loadNewsScrapeConfig, scrapeLatestNews } from "../_shared/news.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info",
   "Content-Type": "application/json",
 };
-
-const RETENTION_DAYS = 14;
 
 function createServiceClient() {
   return createClient(
@@ -39,7 +37,8 @@ serve(async (req) => {
     }
 
     const supabase = createServiceClient();
-    const articles = await scrapeLatestNews();
+    const config = await loadNewsScrapeConfig(supabase);
+    const articles = await scrapeLatestNews(config);
 
     if (articles.length) {
       const { error: upsertError } = await supabase
@@ -51,7 +50,8 @@ serve(async (req) => {
       }
     }
 
-    const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const retentionDays = Math.max(1, Math.round(config.retentionDays));
+    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
     const { error: pruneError } = await supabase
       .from("news_articles")
       .delete()
@@ -68,7 +68,7 @@ serve(async (req) => {
         scraped_count: articles.length,
         updated_at: new Date().toISOString(),
         schedule_ist: ["07:00", "19:00"],
-        retention_days: RETENTION_DAYS,
+        retention_days: retentionDays,
       }),
       { headers: CORS },
     );

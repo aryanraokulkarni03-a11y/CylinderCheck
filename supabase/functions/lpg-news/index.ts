@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { inferDisplayLocation, NEWS_LIMIT, scrapeLatestNews } from "../_shared/news.ts";
+import { inferDisplayLocation, loadNewsScrapeConfig, scrapeLatestNews } from "../_shared/news.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -42,13 +42,13 @@ function toResponseArticle(article: StoredArticleRow) {
   };
 }
 
-async function readStoredNews() {
+async function readStoredNews(limit: number) {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("news_articles")
     .select("title, source, link, google_link, source_url, category, city, published_at, scraped_at")
     .order("published_at", { ascending: false })
-    .limit(NEWS_LIMIT);
+    .limit(limit);
 
   if (error) {
     throw error;
@@ -57,9 +57,10 @@ async function readStoredNews() {
   return (data ?? []) as StoredArticleRow[];
 }
 
-async function seedNewsCache() {
+async function seedNewsCache(limit: number) {
   const supabase = createServiceClient();
-  const scraped = await scrapeLatestNews();
+  const config = await loadNewsScrapeConfig(supabase);
+  const scraped = await scrapeLatestNews(config);
 
   if (scraped.length) {
     const { error } = await supabase
@@ -71,7 +72,7 @@ async function seedNewsCache() {
     }
   }
 
-  return scraped.map((article) => ({
+  return scraped.slice(0, limit).map((article) => ({
     title: article.title,
     source: article.source,
     link: article.link,
@@ -91,10 +92,12 @@ serve(async (req) => {
   }
 
   try {
-    const stored = await readStoredNews();
+    const config = await loadNewsScrapeConfig(createServiceClient());
+    const limit = Math.max(1, Math.round(config.newsLimit));
+    const stored = await readStoredNews(limit);
     const articles = stored.length
       ? stored.map(toResponseArticle)
-      : await seedNewsCache();
+      : await seedNewsCache(limit);
     const updatedAt = articles[0]?.scrapedAt || null;
 
     return new Response(

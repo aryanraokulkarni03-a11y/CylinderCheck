@@ -667,6 +667,14 @@ CREATE INDEX IF NOT EXISTS city_registry_surface_flags_idx
 
 ALTER TABLE city_registry ENABLE ROW LEVEL SECURITY;
 
+CREATE POLICY "Anyone can read SEO-enabled cities"
+  ON city_registry
+  FOR SELECT
+  USING (
+    household_seo_enabled = true
+    OR commercial_seo_enabled = true
+  );
+
 INSERT INTO city_registry (
   city_key,
   city_name,
@@ -934,6 +942,7 @@ INSERT INTO scrape_runtime_config (
 ) VALUES
   ('news_limit', 'news_scraper', true, '8'::jsonb, 'Maximum number of normalized news items returned to the feed.'),
   ('news_decode_timeout_ms', 'news_scraper', true, '1800'::jsonb, 'Timeout for article URL decode helpers in the news scraper.'),
+  ('news_retention_days', 'news_scraper', true, '14'::jsonb, 'Number of days normalized feed rows should be retained before pruning.'),
   ('price_fetch_timeout_ms', 'price_scraper', true, '8000'::jsonb, 'Timeout for the upstream city price page request.'),
   ('price_max_concurrency', 'price_scraper', true, '3'::jsonb, 'Default max concurrency for the price scraper.'),
   ('price_request_jitter_ms', 'price_scraper', true, '900'::jsonb, 'Delay inserted between upstream price requests.'),

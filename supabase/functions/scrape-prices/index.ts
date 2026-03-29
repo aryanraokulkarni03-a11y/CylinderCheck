@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  readEnabledCities,
+  readPrimaryScrapeSource,
+  readRuntimeConfig,
+  resolvePriceRuntimeDefaults,
+} from "../_shared/scrapeConfig.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -8,42 +14,6 @@ const CORS = {
 };
 
 const SCRAPER_NAME = "scrape-prices";
-const SOURCE_HOST = "www.goodreturns.in";
-const FETCH_TIMEOUT_MS = 8000;
-const DEFAULT_MAX_CONCURRENCY = 3;
-const DEFAULT_REQUEST_JITTER_MS = 900;
-const DEFAULT_RETRY_LIMIT = 1;
-const DEFAULT_RETRY_BASE_DELAY_MS = 1400;
-
-const CITIES = [
-  { city: "Delhi", slug: "new-delhi" },
-  { city: "Mumbai", slug: "mumbai" },
-  { city: "Bangalore", slug: "bangalore" },
-  { city: "Hyderabad", slug: "hyderabad" },
-  { city: "Chennai", slug: "chennai" },
-  { city: "Pune", slug: "pune" },
-  { city: "Kolkata", slug: "kolkata" },
-  { city: "Ahmedabad", slug: "ahmedabad" },
-  { city: "Vizag", slug: "visakhapatnam" },
-  { city: "Jaipur", slug: "jaipur" },
-  { city: "Lucknow", slug: "lucknow" },
-  { city: "Patna", slug: "patna" },
-] as const;
-
-const CITY_STATE_LABELS: Record<string, string> = {
-  Delhi: "Delhi",
-  Mumbai: "Maharashtra",
-  Bangalore: "Karnataka",
-  Hyderabad: "Telangana",
-  Chennai: "Tamil Nadu",
-  Pune: "Maharashtra",
-  Kolkata: "West Bengal",
-  Ahmedabad: "Gujarat",
-  Vizag: "Andhra Pradesh",
-  Jaipur: "Rajasthan",
-  Lucknow: "Uttar Pradesh",
-  Patna: "Bihar",
-};
 
 const PRODUCT_TYPES = ["domestic_14_2kg", "commercial_19kg"] as const;
 const MIN_PRICE = 700;
@@ -138,10 +108,23 @@ type CityScrapeResult = {
   sourceStatusCode: number | null;
 };
 
+type PriceCityConfig = {
+  city: string;
+  state: string;
+  canonicalSlug: string;
+  sourceSlug: string;
+  aliases: string[];
+};
+
 type RunConfig = {
   envRole: ScrapeMode;
   mode: ScrapeMode;
   publish: boolean;
+  sourceHost: string;
+  sourceKey: string;
+  sourceBaseUrl: string;
+  cityPathTemplate: string;
+  fetchTimeoutMs: number;
   maxConcurrency: number;
   requestJitterMs: number;
   retryLimit: number;
@@ -150,7 +133,7 @@ type RunConfig = {
   proxyUrlTemplate: string | null;
   proxyAuthHeaderName: string | null;
   proxyAuthHeaderValue: string | null;
-  selectedCities: Array<(typeof CITIES)[number]>;
+  selectedCities: PriceCityConfig[];
 };
 
 const PRODUCT_PATTERNS: Array<{ key: ProductType; patterns: RegExp[] }> = [
@@ -287,9 +270,9 @@ function shouldRetry(status: RequestStatus, attempt: number, retryLimit: number)
   return status === "timeout" || status === "rate_limited" || status === "blocked" || status === "network_error";
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit = {}) {
+async function fetchWithTimeout(url: string, timeoutMs: number, init: RequestInit = {}) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     return await fetch(url, {
@@ -358,7 +341,7 @@ async function fetchCityHtml(
     const startedAt = Date.now();
 
     try {
-      const res = await fetchWithTimeout(requestUrl, { headers });
+      const res = await fetchWithTimeout(requestUrl, config.fetchTimeoutMs, { headers });
       const latencyMs = Date.now() - startedAt;
       const html = await res.text();
       const requestStatus = classifyRequestStatus(res.status, html);
@@ -368,7 +351,7 @@ async function fetchCityHtml(
         run_id: runId,
         scraper_name: SCRAPER_NAME,
         scrape_mode: config.mode,
-        source_host: SOURCE_HOST,
+        source_host: config.sourceHost,
         target_key: city,
         target_url: sourceUrl,
         request_url: loggedRequestUrl,
@@ -408,7 +391,7 @@ async function fetchCityHtml(
         run_id: runId,
         scraper_name: SCRAPER_NAME,
         scrape_mode: config.mode,
-        source_host: SOURCE_HOST,
+        source_host: config.sourceHost,
         target_key: city,
         target_url: sourceUrl,
         request_url: loggedRequestUrl,
@@ -450,9 +433,12 @@ async function scrapeCityPrices(
   runId: number | null,
   config: RunConfig,
 ): Promise<CityScrapeResult> {
-  const sourceUrl = `https://${SOURCE_HOST}/lpg-price-in-${slug}.html`;
+  const cityPath = config.cityPathTemplate.includes("{slug}")
+    ? config.cityPathTemplate.replaceAll("{slug}", slug)
+    : config.cityPathTemplate;
+  const sourceUrl = new URL(cityPath, config.sourceBaseUrl).toString();
   const prices = emptyCandidates();
-  const state = CITY_STATE_LABELS[city] || "";
+  const state = config.selectedCities.find((entry) => entry.city === city)?.state || "";
   const fetchResult = await fetchCityHtml(sourceUrl, city, runId, config);
 
   if (!fetchResult.html) {
@@ -557,8 +543,24 @@ async function readJsonBody(req: Request) {
   }
 }
 
-function selectCities(cityInputs: unknown) {
-  if (!Array.isArray(cityInputs) || !cityInputs.length) return [...CITIES];
+function selectCities(cityInputs: unknown, availableCities: PriceCityConfig[]) {
+  if (!Array.isArray(cityInputs) || !cityInputs.length) return [...availableCities];
+
+  const aliasLookup = new Map<string, PriceCityConfig>();
+  for (const city of availableCities) {
+    const values = [
+      city.city,
+      city.canonicalSlug,
+      city.sourceSlug,
+      ...city.aliases,
+    ]
+      .map((entry) => String(entry || "").trim().toLowerCase())
+      .filter(Boolean);
+
+    for (const value of values) {
+      aliasLookup.set(value, city);
+    }
+  }
 
   const requested = new Set(
     cityInputs
@@ -566,14 +568,46 @@ function selectCities(cityInputs: unknown) {
       .filter(Boolean),
   );
 
-  const selected = CITIES.filter(({ city, slug }) =>
-    requested.has(city.toLowerCase()) || requested.has(slug.toLowerCase())
+  const selected = Array.from(
+    requested.values()
+      .map((value) => aliasLookup.get(value))
+      .filter((value): value is PriceCityConfig => Boolean(value)),
   );
 
-  return selected.length ? selected : [...CITIES];
+  return selected.length ? selected : [...availableCities];
 }
 
-function buildRunConfig(body: Record<string, unknown>): RunConfig {
+async function buildRunConfig(
+  supabase: ReturnType<typeof createClient>,
+  body: Record<string, unknown>,
+): Promise<RunConfig> {
+  const [cities, source, runtimeConfig] = await Promise.all([
+    readEnabledCities(supabase, "price_scrape_enabled"),
+    readPrimaryScrapeSource(supabase, "price"),
+    readRuntimeConfig(supabase, "price_scraper"),
+  ]);
+
+  const availableCities = cities
+    .filter((city) => city.price_source_slug)
+    .map((city) => ({
+      city: city.city_name,
+      state: city.state_name,
+      canonicalSlug: city.canonical_slug,
+      sourceSlug: city.price_source_slug || city.canonical_slug,
+      aliases: city.aliases ?? [],
+    }));
+
+  if (!availableCities.length) {
+    throw new Error("No enabled city_registry rows are available for price scraping.");
+  }
+
+  const defaults = resolvePriceRuntimeDefaults(runtimeConfig, source);
+  const sourceConfig = (source.config ?? {}) as Record<string, unknown>;
+  const cityPathTemplate = String(sourceConfig.city_path_template || "").trim();
+  if (!cityPathTemplate.includes("{slug}")) {
+    throw new Error("Primary price source config is missing a valid city_path_template.");
+  }
+
   const envRole = String(Deno.env.get("SCRAPE_ENV") ?? "production").trim().toLowerCase() === "sandbox"
     ? "sandbox"
     : "production";
@@ -588,27 +622,37 @@ function buildRunConfig(body: Record<string, unknown>): RunConfig {
     envRole,
     mode,
     publish,
+    sourceHost: source.host || new URL(source.base_url).host,
+    sourceKey: source.source_key,
+    sourceBaseUrl: source.base_url,
+    cityPathTemplate,
+    fetchTimeoutMs: parseInteger(
+      body.fetchTimeoutMs != null ? String(body.fetchTimeoutMs) : String(defaults.fetchTimeoutMs),
+      defaults.fetchTimeoutMs,
+      250,
+      60000,
+    ),
     maxConcurrency: parseInteger(
-      body.maxConcurrency != null ? String(body.maxConcurrency) : Deno.env.get("SCRAPE_MAX_CONCURRENCY"),
-      DEFAULT_MAX_CONCURRENCY,
+      body.maxConcurrency != null ? String(body.maxConcurrency) : String(defaults.maxConcurrency),
+      defaults.maxConcurrency,
       1,
       12,
     ),
     requestJitterMs: parseInteger(
-      body.requestJitterMs != null ? String(body.requestJitterMs) : Deno.env.get("SCRAPE_REQUEST_JITTER_MS"),
-      DEFAULT_REQUEST_JITTER_MS,
+      body.requestJitterMs != null ? String(body.requestJitterMs) : String(defaults.requestJitterMs),
+      defaults.requestJitterMs,
       0,
       8000,
     ),
     retryLimit: parseInteger(
-      body.retryLimit != null ? String(body.retryLimit) : Deno.env.get("SCRAPE_RETRY_LIMIT"),
-      DEFAULT_RETRY_LIMIT,
+      body.retryLimit != null ? String(body.retryLimit) : String(defaults.retryLimit),
+      defaults.retryLimit,
       0,
       5,
     ),
     retryBaseDelayMs: parseInteger(
-      body.retryBaseDelayMs != null ? String(body.retryBaseDelayMs) : Deno.env.get("SCRAPE_RETRY_BASE_DELAY_MS"),
-      DEFAULT_RETRY_BASE_DELAY_MS,
+      body.retryBaseDelayMs != null ? String(body.retryBaseDelayMs) : String(defaults.retryBaseDelayMs),
+      defaults.retryBaseDelayMs,
       250,
       15000,
     ),
@@ -616,7 +660,7 @@ function buildRunConfig(body: Record<string, unknown>): RunConfig {
     proxyUrlTemplate: Deno.env.get("SCRAPE_PROXY_URL_TEMPLATE")?.trim() || null,
     proxyAuthHeaderName: Deno.env.get("SCRAPE_PROXY_AUTH_HEADER_NAME")?.trim() || null,
     proxyAuthHeaderValue: Deno.env.get("SCRAPE_PROXY_AUTH_HEADER_VALUE")?.trim() || null,
-    selectedCities: selectCities(body.cities),
+    selectedCities: selectCities(body.cities, availableCities),
   };
 }
 
@@ -642,7 +686,7 @@ async function createScrapeRun(
       .insert({
         scraper_name: SCRAPER_NAME,
         scrape_mode: config.mode,
-        source_host: SOURCE_HOST,
+        source_host: config.sourceHost,
         publish_enabled: config.publish,
         target_count: config.selectedCities.length,
         max_concurrency: config.maxConcurrency,
@@ -651,6 +695,8 @@ async function createScrapeRun(
         proxy_label: config.proxyLabel,
         status: "running",
         config_snapshot: {
+          source_key: config.sourceKey,
+          source_base_url: config.sourceBaseUrl,
           city_count: config.selectedCities.length,
           proxy_enabled: Boolean(config.proxyUrlTemplate),
         },
@@ -726,8 +772,13 @@ serve(async (req: Request) => {
       });
     }
 
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
     const body = await readJsonBody(req);
-    const config = buildRunConfig(body);
+    const config = await buildRunConfig(supabase, body);
     const configError = validateRunConfig(config);
     if (configError) {
       return new Response(
@@ -735,11 +786,6 @@ serve(async (req: Request) => {
         { status: 400, headers: CORS },
       );
     }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    );
 
     const runId = await createScrapeRun(supabase, config);
 
@@ -788,7 +834,7 @@ serve(async (req: Request) => {
     const cityResults = await runWithConcurrency(
       config.selectedCities,
       config.maxConcurrency,
-      ({ city, slug }) => scrapeCityPrices(city, slug, runId, config),
+      ({ city, sourceSlug }) => scrapeCityPrices(city, sourceSlug, runId, config),
     );
 
     const requestLogs = cityResults.flatMap((result) => result.requestLogs);
@@ -915,7 +961,7 @@ serve(async (req: Request) => {
         scraper: SCRAPER_NAME,
         mode: config.mode,
         publish: config.publish,
-        source_host: SOURCE_HOST,
+        source_host: config.sourceHost,
         maxConcurrency: config.maxConcurrency,
         requestJitterMs: config.requestJitterMs,
         retryLimit: config.retryLimit,

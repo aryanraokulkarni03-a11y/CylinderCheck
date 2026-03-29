@@ -1,64 +1,16 @@
-const QUERIES = [
-  "LPG cylinder shortage India",
-  "gas cylinder price India 2025",
-  "LPG booking India",
-];
-
-export const NEWS_LIMIT = 8;
-const DECODE_TIMEOUT_MS = 1800;
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  buildCityAliasLookup,
+  readActiveNewsTopics,
+  readEnabledCities,
+  readPrimaryScrapeSource,
+  readRuntimeConfig,
+  resolveNewsRuntimeDefaults,
+} from "./scrapeConfig.ts";
 
 const RE_SHORTAGE = /shortage|delay|disruption|supply|scarcity|crisis|queue|queues|shut(?:ter|ting)?|sealed|switch to power|electric cooktop|electric cooktops|alternative/i;
 const RE_PRICE = /price|rate|hike|revision|subsidy|cost|expensive/i;
 const RE_POLICY = /ministry|government|policy|rule|regulation|announce|minister|customer data|oil cos seek/i;
-
-const CITY_COORDS = {
-  Delhi: true,
-  Mumbai: true,
-  Bangalore: true,
-  Hyderabad: true,
-  Chennai: true,
-  Kochi: true,
-  Pune: true,
-  Kolkata: true,
-  Ahmedabad: true,
-  Vizag: true,
-  Jaipur: true,
-  Lucknow: true,
-  Patna: true,
-  Ranchi: true,
-};
-
-const CITY_NORMALISE: Record<string, string> = {
-  visakhapatnam: "Vizag",
-  vizag: "Vizag",
-  bengaluru: "Bangalore",
-  bangalore: "Bangalore",
-  "new delhi": "Delhi",
-  delhi: "Delhi",
-  calcutta: "Kolkata",
-  kolkata: "Kolkata",
-  madras: "Chennai",
-  chennai: "Chennai",
-  kochi: "Kochi",
-  cochin: "Kochi",
-  bombay: "Mumbai",
-  mumbai: "Mumbai",
-  ranchi: "Ranchi",
-  karnataka: "Bangalore",
-  bihar: "Patna",
-  jharkhand: "Ranchi",
-  "west bengal": "Kolkata",
-  maharashtra: "Mumbai",
-  telangana: "Hyderabad",
-  "andhra pradesh": "Vizag",
-  rajasthan: "Jaipur",
-  "uttar pradesh": "Lucknow",
-  gujarat: "Ahmedabad",
-  "tamil nadu": "Chennai",
-  kerala: "Kochi",
-};
-
-const CITY_KEYS = Object.keys(CITY_COORDS);
 
 const STATE_LOCATION_LABELS: Array<[string, string]> = [
   ["andaman and nicobar islands", "Andaman and Nicobar Islands"],
@@ -130,6 +82,69 @@ type RawArticle = {
   sourceUrl: string;
 };
 
+type NewsScrapeConfig = {
+  queries: string[];
+  newsLimit: number;
+  decodeTimeoutMs: number;
+  requestTimeoutMs: number;
+  retentionDays: number;
+  rssSearchTemplate: string;
+  cityLookup: Map<string, string>;
+  cityNames: string[];
+};
+
+async function fetchWithTimeout(url: string, timeoutMs: number, init: RequestInit = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function loadNewsScrapeConfig(supabase: SupabaseClient): Promise<NewsScrapeConfig> {
+  const source = await readPrimaryScrapeSource(supabase, "news");
+  const [runtimeConfig, topics, cities] = await Promise.all([
+    readRuntimeConfig(supabase, "news_scraper"),
+    readActiveNewsTopics(supabase, source.source_key),
+    readEnabledCities(supabase, "news_location_enabled"),
+  ]);
+
+  const defaults = resolveNewsRuntimeDefaults(runtimeConfig, source);
+  const sourceConfig = (source.config ?? {}) as Record<string, unknown>;
+  const rssSearchTemplate = String(sourceConfig.rss_search_template || "").trim();
+  if (!rssSearchTemplate.includes("{query}")) {
+    throw new Error("News scrape source is missing a valid rss_search_template.");
+  }
+
+  const queries = topics
+    .map((topic) => String(topic.query_text || "").trim())
+    .filter(Boolean);
+
+  if (!queries.length) {
+    throw new Error("No enabled news topics are configured.");
+  }
+
+  const cityLookup = buildCityAliasLookup(cities);
+  const cityNames = cities.map((city) => city.city_name);
+
+  return {
+    queries,
+    newsLimit: defaults.newsLimit,
+    decodeTimeoutMs: defaults.decodeTimeoutMs,
+    requestTimeoutMs: defaults.requestTimeoutMs,
+    retentionDays: defaults.retentionDays,
+    rssSearchTemplate,
+    cityLookup,
+    cityNames,
+  };
+}
+
 function getCategory(title: string) {
   if (RE_SHORTAGE.test(title)) return "SHORTAGE SIGNALS";
   if (RE_PRICE.test(title)) return "PRICE & RATES";
@@ -157,7 +172,7 @@ function normalizeLink(link: string) {
   }
 }
 
-function normalizeCityToken(token: string) {
+function normalizeCityToken(token: string, cityLookup: Map<string, string>, cityNames: string[]) {
   const cleaned = String(token || "")
     .toLowerCase()
     .replace(/[-_]+/g, " ")
@@ -165,18 +180,18 @@ function normalizeCityToken(token: string) {
 
   if (!cleaned) return null;
 
-  for (const [needle, canonical] of Object.entries(CITY_NORMALISE)) {
+  for (const [needle, canonical] of cityLookup.entries()) {
     if (cleaned === needle || cleaned.includes(needle)) return canonical;
   }
 
-  for (const city of CITY_KEYS) {
+  for (const city of cityNames) {
     if (cleaned === city.toLowerCase()) return city;
   }
 
   return null;
 }
 
-function getCityFromLink(link: string) {
+function getCityFromLink(link: string, cityLookup: Map<string, string>, cityNames: string[]) {
   try {
     const url = new URL(String(link || "").trim());
     const parts = url.pathname
@@ -186,11 +201,11 @@ function getCityFromLink(link: string) {
 
     const cityIndex = parts.findIndex((part) => part.toLowerCase() === "city");
     if (cityIndex !== -1 && parts[cityIndex + 1]) {
-      return normalizeCityToken(parts[cityIndex + 1]);
+      return normalizeCityToken(parts[cityIndex + 1], cityLookup, cityNames);
     }
 
     for (const part of parts) {
-      const normalized = normalizeCityToken(part);
+      const normalized = normalizeCityToken(part, cityLookup, cityNames);
       if (normalized) return normalized;
     }
   } catch {
@@ -200,21 +215,21 @@ function getCityFromLink(link: string) {
   return null;
 }
 
-function getCity(title: string, link: string) {
-  const byLink = getCityFromLink(link);
+function getCity(title: string, link: string, cityLookup: Map<string, string>, cityNames: string[]) {
+  const byLink = getCityFromLink(link, cityLookup, cityNames);
   if (byLink) return byLink;
 
   const t = String(title || "").toLowerCase();
   const matches: Array<{ city: string; index: number }> = [];
 
-  for (const [needle, canonical] of Object.entries(CITY_NORMALISE)) {
+  for (const [needle, canonical] of cityLookup.entries()) {
     const index = t.indexOf(needle);
     if (index >= 0) {
       matches.push({ city: canonical, index });
     }
   }
 
-  for (const city of CITY_KEYS) {
+  for (const city of cityNames) {
     const index = t.indexOf(city.toLowerCase());
     if (index >= 0) {
       matches.push({ city, index });
@@ -227,7 +242,7 @@ function getCity(title: string, link: string) {
 }
 
 export function inferDisplayLocation(title: string, link: string, city: string | null) {
-  const exactCity = String(city || "").trim() || getCity(title, link);
+  const exactCity = String(city || "").trim();
   if (exactCity) return exactCity;
 
   const haystack = `${title || ""} ${link || ""}`.toLowerCase();
@@ -252,7 +267,7 @@ function extractGoogleArticleId(link: string) {
   }
 }
 
-async function getDecodingParams(articleId: string) {
+async function getDecodingParams(articleId: string, requestTimeoutMs: number) {
   const targets = [
     `https://news.google.com/articles/${articleId}`,
     `https://news.google.com/rss/articles/${articleId}`,
@@ -260,7 +275,7 @@ async function getDecodingParams(articleId: string) {
 
   for (const target of targets) {
     try {
-      const response = await fetch(target, {
+      const response = await fetchWithTimeout(target, requestTimeoutMs, {
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; CylinderCheck/1.0)",
         },
@@ -283,11 +298,11 @@ async function getDecodingParams(articleId: string) {
   return null;
 }
 
-async function decodeGoogleNewsUrl(googleLink: string) {
+async function decodeGoogleNewsUrl(googleLink: string, requestTimeoutMs: number) {
   const articleId = extractGoogleArticleId(googleLink);
   if (!articleId) return "";
 
-  const params = await getDecodingParams(articleId);
+  const params = await getDecodingParams(articleId, requestTimeoutMs);
   if (!params) return "";
 
   const payload = [[[
@@ -298,7 +313,7 @@ async function decodeGoogleNewsUrl(googleLink: string) {
   ]]];
 
   try {
-    const response = await fetch("https://news.google.com/_/DotsSplashUi/data/batchexecute", {
+    const response = await fetchWithTimeout("https://news.google.com/_/DotsSplashUi/data/batchexecute", requestTimeoutMs, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -338,14 +353,14 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T) {
   }
 }
 
-async function pickResolvedLink(googleLink: string, sourceUrl: string) {
+async function pickResolvedLink(googleLink: string, sourceUrl: string, config: NewsScrapeConfig) {
   if (!googleLink.includes("news.google.com/")) {
     return normalizeLink(googleLink);
   }
 
   const decodedLink = await withTimeout(
-    decodeGoogleNewsUrl(googleLink),
-    DECODE_TIMEOUT_MS,
+    decodeGoogleNewsUrl(googleLink, config.requestTimeoutMs),
+    config.decodeTimeoutMs,
     "",
   );
   if (decodedLink) return decodedLink;
@@ -414,16 +429,16 @@ function buildArticleKey(article: {
   ].join("::");
 }
 
-export async function scrapeLatestNews() {
+export async function scrapeLatestNews(config: NewsScrapeConfig) {
   const rawArticles: RawArticle[] = [];
 
-  for (const query of QUERIES) {
-    if (rawArticles.length >= NEWS_LIMIT * 2) break;
+  for (const query of config.queries) {
+    if (rawArticles.length >= config.newsLimit * 2) break;
 
-    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-IN&gl=IN&ceid=IN:en`;
+    const url = config.rssSearchTemplate.replaceAll("{query}", encodeURIComponent(query));
 
     try {
-      const res = await fetch(url, {
+      const res = await fetchWithTimeout(url, config.requestTimeoutMs, {
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; CylinderCheck/1.0)",
         },
@@ -441,7 +456,7 @@ export async function scrapeLatestNews() {
   const scrapedAt = new Date().toISOString();
   const normalized = await Promise.all(
     rawArticles.map(async (item) => {
-      const link = await pickResolvedLink(item.googleLink, item.sourceUrl);
+      const link = await pickResolvedLink(item.googleLink, item.sourceUrl, config);
       const publishedAt = new Date(item.pubDate).toISOString();
       return {
         article_key: buildArticleKey({
@@ -457,7 +472,7 @@ export async function scrapeLatestNews() {
         google_link: item.googleLink,
         source_url: item.sourceUrl,
         category: getCategory(item.title),
-        city: getCity(item.title, link),
+        city: getCity(item.title, link, config.cityLookup, config.cityNames),
         published_at: publishedAt,
         scraped_at: scrapedAt,
       } satisfies NewsArticle;
@@ -475,5 +490,5 @@ export async function scrapeLatestNews() {
   );
 
   deduped.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
-  return deduped.slice(0, NEWS_LIMIT);
+  return deduped.slice(0, config.newsLimit);
 }

@@ -26,6 +26,7 @@ import {
   daysUntil,
   lookupPIN,
   resolveCommercialSeoCitySlug,
+  resolveHouseholdSeoCitySlug,
 } from './lib/utils'
 
 import AppShell from './components/layout/AppShell'
@@ -159,7 +160,7 @@ function RouteScrollManager({ pathname, search, hash }) {
   return null
 }
 
-function SeoRouteSwitch({ mapPrices, pricesUpdatedAt }) {
+function SeoRouteSwitch({ mapPrices, pricesUpdatedAt, householdSeoCities, householdSeoCitiesLoaded }) {
   const { pathname } = useLocation()
 
   if (pathname.startsWith('/commercial-lpg-price-in-')) {
@@ -185,6 +186,20 @@ function SeoRouteSwitch({ mapPrices, pricesUpdatedAt }) {
 
   if (!pathname.startsWith('/lpg-price-in-')) {
     return <Navigate to={TAB_ROUTES.track} replace />
+  }
+
+  if (!householdSeoCitiesLoaded) {
+    return <RouteFallback pathname={pathname} />
+  }
+
+  const householdSlug = pathname.slice('/lpg-price-in-'.length)
+  const householdCity = resolveHouseholdSeoCitySlug(householdSlug, householdSeoCities)
+  if (!householdCity) {
+    return <Navigate to={TAB_ROUTES.track} replace />
+  }
+
+  if (householdSlug !== householdCity.canonicalSlug) {
+    return <Navigate to={`/lpg-price-in-${householdCity.canonicalSlug}`} replace />
   }
 
   return <CitySEOPage />
@@ -272,6 +287,8 @@ export default function App() {
   const [mapPrices, setMapPrices] = useState({})
   const [shortageSummary, setShortageSummary] = useState(null)
   const [pricesUpdatedAt, setPricesUpdatedAt] = useState(null)
+  const [householdSeoCities, setHouseholdSeoCities] = useState([])
+  const [householdSeoCitiesLoaded, setHouseholdSeoCitiesLoaded] = useState(false)
 
   // Auth
   const [user, setUser] = useState(null)
@@ -506,6 +523,34 @@ export default function App() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadHouseholdSeoCities() {
+      const { data, error } = await supabase
+        .from('city_registry')
+        .select('city_key, city_name, canonical_slug, state_name, price_source_slug, aliases')
+        .eq('household_seo_enabled', true)
+        .order('display_priority', { ascending: true })
+
+      if (cancelled) return
+
+      if (error || !Array.isArray(data)) {
+        setHouseholdSeoCities([])
+      } else {
+        setHouseholdSeoCities(data)
+      }
+
+      setHouseholdSeoCitiesLoaded(true)
+    }
+
+    loadHouseholdSeoCities()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   // Handlers (track + admin unlock). Keep backend interactions intact.
   const handleTrack = useCallback(async () => {
     if (!pin || pin.length !== 6) {
@@ -709,7 +754,10 @@ export default function App() {
     return null
   })()
 
-  const seoMetadata = getRouteMetadata(routerLocation.pathname || '/')
+  const seoMetadata = getRouteMetadata(routerLocation.pathname || '/', {
+    householdSeoCities,
+    householdSeoCitiesLoaded,
+  })
 
   const handleTabChange = useCallback((nextTab) => {
     trackEvent('Tab Navigated', { tab: nextTab })
@@ -829,7 +877,14 @@ export default function App() {
                 <Route path="/commercial" element={<Navigate to={TAB_ROUTES.commercial} replace />} />
                 <Route
                   path="/:cityPageSlug"
-                  element={<SeoRouteSwitch mapPrices={mapPrices} pricesUpdatedAt={pricesUpdatedAt} />}
+                  element={
+                    <SeoRouteSwitch
+                      mapPrices={mapPrices}
+                      pricesUpdatedAt={pricesUpdatedAt}
+                      householdSeoCities={householdSeoCities}
+                      householdSeoCitiesLoaded={householdSeoCitiesLoaded}
+                    />
+                  }
                 />
                 <Route path="/cities" element={<CitiesDirectoryPage />} />
                 <Route

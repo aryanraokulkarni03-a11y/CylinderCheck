@@ -191,6 +191,33 @@ export function resolveCommercialSeoCitySlug(slug) {
   }
 }
 
+export function resolveHouseholdSeoCitySlug(slug, cityRows = []) {
+  const slugValue = String(slug || '').trim().toLowerCase()
+  if (!slugValue || !Array.isArray(cityRows) || !cityRows.length) return null
+
+  for (const row of cityRows) {
+    const aliases = [
+      row?.canonical_slug,
+      row?.city_key,
+      row?.price_source_slug,
+      ...(Array.isArray(row?.aliases) ? row.aliases : []),
+      toCitySlug(row?.city_name),
+    ]
+      .map((entry) => String(entry || '').trim().toLowerCase())
+      .filter(Boolean)
+
+    if (!aliases.includes(slugValue)) continue
+
+    return {
+      cityName: String(row.city_name || '').trim(),
+      canonicalSlug: String(row.canonical_slug || '').trim(),
+      stateName: String(row.state_name || '').trim(),
+    }
+  }
+
+  return null
+}
+
 export const COMPANIES = ['IndianOil', 'HP Gas', 'Bharat Gas']
 export const COMPANY_EMOJI = {
   IndianOil: '🔵', 'HP Gas': '🟡', 'Bharat Gas': '🟢'

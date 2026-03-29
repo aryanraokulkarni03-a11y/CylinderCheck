@@ -1,4 +1,4 @@
-import { resolveCommercialSeoCitySlug } from './utils.js'
+import { resolveCommercialSeoCitySlug, resolveHouseholdSeoCitySlug } from './utils.js'
 
 const SITE_URL = 'https://www.cylindercheck.in'
 const DEFAULT_OG_IMAGE = `${SITE_URL}/brand/cylindercheck-logo-lockup-1200x360.png`
@@ -322,7 +322,13 @@ export const ROUTE_METADATA = {
   },
 }
 
-export function getRouteMetadata(pathname = '/') {
+export function getRouteMetadata(pathname = '/', options = {}) {
+  const householdSeoCities = Array.isArray(options.householdSeoCities) ? options.householdSeoCities : []
+  const householdSeoCitiesLoaded =
+    typeof options.householdSeoCitiesLoaded === 'boolean'
+      ? options.householdSeoCitiesLoaded
+      : householdSeoCities.length > 0
+
   const commercialCityMatch = pathname.match(/^\/commercial-lpg-price-in-([a-z0-9-]+)$/)
   if (commercialCityMatch) {
     const commercialCity = resolveCommercialSeoCitySlug(commercialCityMatch[1])
@@ -359,16 +365,28 @@ export function getRouteMetadata(pathname = '/') {
   // Check for dynamic city routes
   const cityMatch = pathname.match(/^\/lpg-price-in-([a-z0-9-]+)$/)
   if (cityMatch) {
-    const citySlug = cityMatch[1]
-    const cityName = citySlug
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
+    if (!householdSeoCitiesLoaded) {
+      return {
+        ...ROUTE_METADATA['/cities'],
+        path: pathname,
+        canonicalUrl: absoluteUrl(pathname),
+        indexable: false,
+        schema: [],
+      }
+    }
+
+    const householdCity = resolveHouseholdSeoCitySlug(cityMatch[1], householdSeoCities)
+    if (!householdCity) {
+      return ROUTE_METADATA['/track']
+    }
+
+    const cityName = householdCity.cityName
+    const canonicalPath = `/lpg-price-in-${householdCity.canonicalSlug}`
     const monthYear = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' }).format(new Date())
     
     return {
-      path: pathname,
-      canonicalUrl: absoluteUrl(pathname),
+      path: canonicalPath,
+      canonicalUrl: absoluteUrl(canonicalPath),
       ogTitle: `LPG Cylinder Price in ${cityName} Today \u2014 ${monthYear}`,
       ogDescription: `Check ${cityName} LPG cylinder price today for 14.2kg domestic and 19kg commercial refills. Compare rates, shortages, and delivery estimates for Indane, HP Gas, and Bharat Gas.`,
       ogImage: DEFAULT_OG_IMAGE,
@@ -378,7 +396,7 @@ export function getRouteMetadata(pathname = '/') {
       indexable: true,
       schema: [
         webPageSchema({
-          path: pathname,
+          path: canonicalPath,
           title: `LPG Cylinder Price in ${cityName} Today \u2014 ${monthYear}`,
           description: `Check ${cityName} LPG cylinder price today for 14.2kg domestic and 19kg commercial refills. Compare rates, shortages, and delivery estimates for Indane, HP Gas, and Bharat Gas.`
         }),

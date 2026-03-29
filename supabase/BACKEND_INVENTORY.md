@@ -145,6 +145,9 @@ Views:
 - `public.scrape_source_registry`
   - Canonical source list for price and news ingestion.
   - Holds source host/base URL, retry defaults, and fetch-mode metadata.
+  - Current price sources now include:
+    - `goodreturns_price_html` as the current publish-enabled primary source
+    - `indane_locator_html` as an official fallback source with publish disabled during rollout validation
 - `public.scrape_topic_registry`
   - Canonical news topic query list.
   - Replaces the hardcoded LPG news query set over time.
@@ -163,12 +166,14 @@ Views:
   - priority-ordered fallback across enabled price sources
   - blocked HTML capture into `raw_source_documents` when debugging is enabled
   - DB-managed resilience knobs through `scrape_runtime_config`
+  - official fallback parsing through `indane_locator_html` using approved city agency pages
 - The shared news helpers now read their source, topic list, city aliases, and runtime knobs from:
   - `city_registry`
   - `scrape_source_registry`
   - `scrape_topic_registry`
   - `scrape_runtime_config`
 - Remaining hardcoded behavior is now mostly limited to parsing heuristics and product-specific validation logic, not source/city/workflow ownership.
+- The first `indane_locator_html` rollout is intentionally publish-disabled until city-level agreement and parser stability are validated live.
 
 ### Queue/run governance status
 - Scrape workflows now have a canonical governance layer through:

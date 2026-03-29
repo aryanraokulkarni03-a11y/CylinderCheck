@@ -10,6 +10,7 @@ Run these in Supabase Dashboard -> SQL Editor.
 - `2026-03-29_scrape-job-governance.sql`: adds canonical scrape jobs, attempt tracking, raw source document staging, and lightweight source/job health views.
 - `2026-03-29_scrape-governance-hardening.sql`: hardens scrape health views with security-invoker semantics and explicitly revokes public access.
 - `2026-03-30_price-source-resilience.sql`: adds runtime knobs for price-source failover and blocked HTML capture so scrape resilience stays DB-managed.
+- `2026-03-30_indane-locator-fallback.sql`: adds `indane_locator_html` as an official publish-disabled fallback source for the first approved-city rollout.
 - `2026-03-26_track-security-advisor-fix.sql`: enables RLS and explicit public read policies on the Track read-model tables, and flips `pin_track_summary_v1` to `security_invoker`.
 - `2026-03-26_security-warning-hardening.sql`: pins mutable public function search paths and replaces permissive public insert policies with explicit checks.
 - `vendor_insert_template.sql`: template for inserting a new vendor listing row.

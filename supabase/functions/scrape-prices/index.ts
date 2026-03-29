@@ -140,6 +140,9 @@ type PriceSourceConfig = {
   sourceHost: string;
   sourceBaseUrl: string;
   cityPathTemplate: string;
+  parserMode: "city_path" | "indane_locator_products";
+  cityUrlMap: Record<string, string[]>;
+  productLabels: Partial<Record<ProductType, string[]>>;
   fetchTimeoutMs: number;
   requestJitterMs: number;
   retryLimit: number;
@@ -183,10 +186,25 @@ const PRODUCT_PATTERNS: Array<{ key: ProductType; patterns: RegExp[] }> = [
   },
 ];
 
+const DEFAULT_INDANE_PRODUCT_LABELS: Record<ProductType, string[]> = {
+  domestic_14_2kg: [
+    "Indane 14.2 kg Domestic Cylinder",
+  ],
+  commercial_19kg: [
+    "Indane 19kg XtraTeJ Cylinder",
+    "Indane 19kg Non-Domestic Cylinder",
+    "Indane 19 kg",
+  ],
+};
+
 function parseInteger(value: string | null, fallback: number, min: number, max: number) {
   const parsed = Number.parseInt(String(value ?? ""), 10);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.min(max, Math.max(min, parsed));
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function parseBoolean(value: unknown, fallback: boolean) {
@@ -222,6 +240,51 @@ function emptyCandidates(): Record<ProductType, ProductCandidate> {
   };
 }
 
+function countParsedCandidates(candidates: Record<ProductType, ProductCandidate>) {
+  return PRODUCT_TYPES.filter((productType) => candidates[productType].price != null).length;
+}
+
+function normalizeStringArray(value: unknown) {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? [trimmed] : [];
+  }
+
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry) => String(entry || "").trim())
+    .filter(Boolean);
+}
+
+function parseCityUrlMap(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {} as Record<string, string[]>;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, urls]) => [
+      key.trim().toLowerCase(),
+      normalizeStringArray(urls),
+    ]),
+  ) as Record<string, string[]>;
+}
+
+function parseProductLabels(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {} as Partial<Record<ProductType, string[]>>;
+  }
+
+  const sourceValue = value as Record<string, unknown>;
+  return PRODUCT_TYPES.reduce((acc, productType) => {
+    const labels = normalizeStringArray(sourceValue[productType]);
+    if (labels.length) {
+      acc[productType] = labels;
+    }
+    return acc;
+  }, {} as Partial<Record<ProductType, string[]>>);
+}
+
 function normalizeSourceText(html: string) {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -232,6 +295,38 @@ function normalizeSourceText(html: string) {
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function hasKnownSuccessMarkers(source: PriceSourceConfig, html: string | null) {
+  const lower = String(html ?? "").toLowerCase();
+  if (!lower) return false;
+
+  if (source.parserMode === "indane_locator_products") {
+    return lower.includes("featured products") &&
+      lower.includes("product price") &&
+      (lower.includes("indane 14.2 kg domestic cylinder") || lower.includes("indane 19kg"));
+  }
+
+  return lower.includes("goodreturns") &&
+    lower.includes("lpg price in") &&
+    (lower.includes("commercial lpg price") || lower.includes("14.2 kg domestic gas cylinder"));
+}
+
+function buildPriceSourceUrl(slug: string, source: PriceSourceConfig) {
+  const cityPath = source.cityPathTemplate.includes("{slug}")
+    ? source.cityPathTemplate.replaceAll("{slug}", slug)
+    : source.cityPathTemplate;
+  return new URL(cityPath, source.sourceBaseUrl).toString();
+}
+
+function resolveSourceUrlsForCity(slug: string, source: PriceSourceConfig) {
+  if (source.parserMode === "city_path") {
+    return [buildPriceSourceUrl(slug, source)];
+  }
+
+  const normalizedSlug = String(slug || "").trim().toLowerCase();
+  const configuredUrls = source.cityUrlMap[normalizedSlug] ?? [];
+  return configuredUrls.map((url) => new URL(url, source.sourceBaseUrl).toString());
 }
 
 function parsePrice(raw: string | undefined, productType: ProductType) {
@@ -281,16 +376,19 @@ function validateCandidate(
   };
 }
 
-function isBlockSuspected(statusCode: number | null, html: string | null) {
+function isBlockSuspected(source: PriceSourceConfig, statusCode: number | null, html: string | null) {
   if (statusCode != null && [403, 429, 503].includes(statusCode)) return true;
+  if (statusCode != null && statusCode >= 200 && statusCode < 300 && hasKnownSuccessMarkers(source, html)) {
+    return false;
+  }
   const lower = String(html ?? "").toLowerCase();
   return BLOCK_HINTS.some((hint) => lower.includes(hint));
 }
 
-function classifyRequestStatus(statusCode: number | null, html: string | null): RequestStatus {
+function classifyRequestStatus(source: PriceSourceConfig, statusCode: number | null, html: string | null): RequestStatus {
   if (statusCode == null) return "network_error";
   if (statusCode === 429) return "rate_limited";
-  if (isBlockSuspected(statusCode, html)) return "blocked";
+  if (isBlockSuspected(source, statusCode, html)) return "blocked";
   if (statusCode >= 200 && statusCode < 300) return "success";
   return "http_error";
 }
@@ -310,16 +408,110 @@ function mapRequestStatusToAttemptStatus(status: RequestStatus) {
   }
 }
 
-function buildPriceSourceUrl(slug: string, source: PriceSourceConfig) {
-  const cityPath = source.cityPathTemplate.includes("{slug}")
-    ? source.cityPathTemplate.replaceAll("{slug}", slug)
-    : source.cityPathTemplate;
-  return new URL(cityPath, source.sourceBaseUrl).toString();
-}
-
 function shouldRetry(status: RequestStatus, attempt: number, retryLimit: number) {
   if (attempt >= retryLimit) return false;
   return status === "timeout" || status === "rate_limited" || status === "blocked" || status === "network_error";
+}
+
+function parseSourceCandidates(html: string, source: PriceSourceConfig) {
+  const prices = emptyCandidates();
+  const normalizedHtml = normalizeSourceText(html);
+
+  if (source.parserMode === "indane_locator_products") {
+    for (const productType of PRODUCT_TYPES) {
+      const labels = source.productLabels[productType]?.length
+        ? source.productLabels[productType] ?? []
+        : DEFAULT_INDANE_PRODUCT_LABELS[productType];
+
+      if (!labels.length) {
+        prices[productType] = {
+          price: null,
+          parseMethod: null,
+          parseReason: "No Indane product labels were configured",
+        };
+        continue;
+      }
+
+      let matched = false;
+      for (let index = 0; index < labels.length; index += 1) {
+        const label = labels[index];
+        const escapedLabel = escapeRegExp(label);
+        const patterns = [
+          new RegExp(
+            `${escapedLabel}[\\s\\S]{0,260}?product\\s*price\\s*:?\\s*(?:Ã¢â€šÂ¹|₹|rs\\.?|inr)?\\s*([\\d,]+(?:\\.\\d{1,2})?)`,
+            "i",
+          ),
+          new RegExp(
+            `${escapedLabel}[\\s\\S]{0,200}?(?:Ã¢â€šÂ¹|₹|rs\\.?|inr)\\s*([\\d,]+(?:\\.\\d{1,2})?)`,
+            "i",
+          ),
+        ];
+
+        for (let patternIndex = 0; patternIndex < patterns.length; patternIndex += 1) {
+          const match = normalizedHtml.match(patterns[patternIndex]);
+          if (!match) continue;
+
+          const price = parsePrice(match[1], productType);
+          if (price == null) {
+            prices[productType] = {
+              price: null,
+              parseMethod: `indane:${index + 1}:${patternIndex + 1}`,
+              parseReason: "Matched Indane product text but extracted price was outside trusted range",
+            };
+            matched = true;
+            continue;
+          }
+
+          prices[productType] = {
+            price,
+            parseMethod: `indane:${index + 1}:${patternIndex + 1}`,
+            parseReason: "Matched official Indane product price",
+          };
+          matched = true;
+          break;
+        }
+
+        if (prices[productType].price != null) break;
+      }
+
+      if (!matched) {
+        prices[productType] = {
+          price: null,
+          parseMethod: null,
+          parseReason: "No configured Indane product price block matched",
+        };
+      }
+    }
+
+    return prices;
+  }
+
+  for (const { key, patterns } of PRODUCT_PATTERNS) {
+    for (let index = 0; index < patterns.length; index += 1) {
+      const pattern = patterns[index];
+      const match = normalizedHtml.match(pattern);
+      if (!match) continue;
+
+      const price = parsePrice(match[1], key);
+      if (price == null) {
+        prices[key] = {
+          price: null,
+          parseMethod: `regex:${index + 1}`,
+          parseReason: "Matched text but extracted price was outside trusted range",
+        };
+        continue;
+      }
+
+      prices[key] = {
+        price,
+        parseMethod: `regex:${index + 1}`,
+        parseReason: "Matched product-specific price",
+      };
+      break;
+    }
+  }
+
+  return prices;
 }
 
 async function fetchWithTimeout(url: string, timeoutMs: number, init: RequestInit = {}) {
@@ -398,8 +590,8 @@ async function fetchCityHtml(
       const res = await fetchWithTimeout(requestUrl, source.fetchTimeoutMs, { headers });
       const latencyMs = Date.now() - startedAt;
       const html = await res.text();
-      const requestStatus = classifyRequestStatus(res.status, html);
-      const blocked = isBlockSuspected(res.status, html);
+      const requestStatus = classifyRequestStatus(source, res.status, html);
+      const blocked = isBlockSuspected(source, res.status, html);
       if (blocked && config.captureBlockedHtml && !capturedHtml) {
         capturedHtml = html;
       }
@@ -489,105 +681,113 @@ async function fetchCityHtml(
 }
 
 async function scrapeCityPrices(
-  city: string,
-  slug: string,
+  cityConfig: PriceCityConfig,
   runId: number | null,
   config: RunConfig,
   source: PriceSourceConfig,
-): Promise<CityScrapeResult> {
-  const sourceUrl = buildPriceSourceUrl(slug, source);
-  const prices = emptyCandidates();
-  const state = config.selectedCities.find((entry) => entry.city === city)?.state || "";
-  const fetchResult = await fetchCityHtml(sourceUrl, city, runId, config, source);
+): Promise<CityScrapeResult | null> {
+  const sourceUrls = resolveSourceUrlsForCity(cityConfig.sourceSlug, source);
+  if (!sourceUrls.length) {
+    return null;
+  }
 
-  if (!fetchResult.html) {
-    const reason = fetchResult.requestStatus === "timeout"
-      ? "Timed out while reading source page"
-      : fetchResult.requestStatus === "rate_limited"
-        ? "Source rate-limited this request"
-        : fetchResult.requestStatus === "blocked"
-          ? "Source appeared to block this request"
-          : fetchResult.finalStatusCode
-            ? `Source returned ${fetchResult.finalStatusCode}`
-            : "Failed to read source page";
+  let bestSuccess: CityScrapeResult | null = null;
+  let preferredFailure: CityScrapeResult | null = null;
+  const combinedRequestLogs: RequestLogRow[] = [];
 
-    for (const productType of PRODUCT_TYPES) {
-      prices[productType] = {
-        price: null,
-        parseMethod: null,
-        parseReason: reason,
-      };
+  for (const sourceUrl of sourceUrls) {
+    const fetchResult = await fetchCityHtml(sourceUrl, cityConfig.city, runId, config, source);
+    combinedRequestLogs.push(...fetchResult.requestLogs);
+
+    if (!fetchResult.html) {
+      const prices = emptyCandidates();
+      const reason = fetchResult.requestStatus === "timeout"
+        ? "Timed out while reading source page"
+        : fetchResult.requestStatus === "rate_limited"
+          ? "Source rate-limited this request"
+          : fetchResult.requestStatus === "blocked"
+            ? "Source appeared to block this request"
+            : fetchResult.finalStatusCode
+              ? `Source returned ${fetchResult.finalStatusCode}`
+              : "Failed to read source page";
+
+      for (const productType of PRODUCT_TYPES) {
+        prices[productType] = {
+          price: null,
+          parseMethod: null,
+          parseReason: reason,
+        };
+      }
+
+      preferredFailure = pickPreferredFailure(preferredFailure, {
+        city: cityConfig.city,
+        state: cityConfig.state,
+        sourceKey: source.sourceKey,
+        sourceHost: source.sourceHost,
+        sourcePublishEnabled: source.publishEnabled,
+        sourceUrl,
+        prices,
+        requestLogs: [...combinedRequestLogs],
+        requestStatus: fetchResult.requestStatus,
+        sourceStatusCode: fetchResult.finalStatusCode,
+        rawHtml: fetchResult.capturedHtml,
+        rawHtmlKind: fetchResult.capturedHtml ? "blocked" : null,
+        attemptedSourceKeys: [source.sourceKey],
+        usedFallback: false,
+        blockedDebugHtml: fetchResult.capturedHtml,
+        blockedDebugSourceKey: fetchResult.capturedHtml ? source.sourceKey : null,
+        blockedDebugSourceHost: fetchResult.capturedHtml ? source.sourceHost : null,
+        blockedDebugSourceUrl: fetchResult.capturedHtml ? sourceUrl : null,
+      });
+      continue;
     }
 
-    return {
-      city,
-      state,
+    const prices = parseSourceCandidates(fetchResult.html, source);
+    const successfulResult: CityScrapeResult = {
+      city: cityConfig.city,
+      state: cityConfig.state,
       sourceKey: source.sourceKey,
       sourceHost: source.sourceHost,
       sourcePublishEnabled: source.publishEnabled,
       sourceUrl,
       prices,
-      requestLogs: fetchResult.requestLogs,
+      requestLogs: [...combinedRequestLogs],
       requestStatus: fetchResult.requestStatus,
       sourceStatusCode: fetchResult.finalStatusCode,
-      rawHtml: fetchResult.capturedHtml,
-      rawHtmlKind: fetchResult.capturedHtml ? "blocked" : null,
+      rawHtml: fetchResult.html,
+      rawHtmlKind: "success",
       attemptedSourceKeys: [source.sourceKey],
       usedFallback: false,
-      blockedDebugHtml: fetchResult.capturedHtml,
-      blockedDebugSourceKey: fetchResult.capturedHtml ? source.sourceKey : null,
-      blockedDebugSourceHost: fetchResult.capturedHtml ? source.sourceHost : null,
-      blockedDebugSourceUrl: fetchResult.capturedHtml ? sourceUrl : null,
+      blockedDebugHtml: null,
+      blockedDebugSourceKey: null,
+      blockedDebugSourceHost: null,
+      blockedDebugSourceUrl: null,
     };
-  }
 
-  const html = normalizeSourceText(fetchResult.html);
+    if (!bestSuccess || countParsedCandidates(successfulResult.prices) > countParsedCandidates(bestSuccess.prices)) {
+      bestSuccess = successfulResult;
+    }
 
-  for (const { key, patterns } of PRODUCT_PATTERNS) {
-    for (let index = 0; index < patterns.length; index += 1) {
-      const pattern = patterns[index];
-      const match = html.match(pattern);
-      if (!match) continue;
-
-      const price = parsePrice(match[1], key);
-      if (price == null) {
-        prices[key] = {
-          price: null,
-          parseMethod: `regex:${index + 1}`,
-          parseReason: "Matched text but extracted price was outside trusted range",
-        };
-        continue;
-      }
-
-      prices[key] = {
-        price,
-        parseMethod: `regex:${index + 1}`,
-        parseReason: "Matched product-specific price",
-      };
-      break;
+    if (countParsedCandidates(successfulResult.prices) === PRODUCT_TYPES.length) {
+      return successfulResult;
     }
   }
 
-  return {
-    city,
-    state,
-    sourceKey: source.sourceKey,
-    sourceHost: source.sourceHost,
-    sourcePublishEnabled: source.publishEnabled,
-    sourceUrl,
-    prices,
-    requestLogs: fetchResult.requestLogs,
-    requestStatus: fetchResult.requestStatus,
-    sourceStatusCode: fetchResult.finalStatusCode,
-    rawHtml: fetchResult.html,
-    rawHtmlKind: "success",
-    attemptedSourceKeys: [source.sourceKey],
-    usedFallback: false,
-    blockedDebugHtml: null,
-    blockedDebugSourceKey: null,
-    blockedDebugSourceHost: null,
-    blockedDebugSourceUrl: null,
-  };
+  if (bestSuccess) {
+    return {
+      ...bestSuccess,
+      requestLogs: [...combinedRequestLogs],
+    };
+  }
+
+  if (preferredFailure) {
+    return {
+      ...preferredFailure,
+      requestLogs: [...combinedRequestLogs],
+    };
+  }
+
+  return null;
 }
 
 function pickPreferredFailure(current: CityScrapeResult | null, next: CityScrapeResult) {
@@ -628,7 +828,11 @@ async function scrapeCityWithFallback(
 
   for (let index = 0; index < config.priceSources.length; index += 1) {
     const source = config.priceSources[index];
-    const result = await scrapeCityPrices(cityConfig.city, cityConfig.sourceSlug, runId, config, source);
+    const result = await scrapeCityPrices(cityConfig, runId, config, source);
+
+    if (!result) {
+      continue;
+    }
 
     attemptedSourceKeys.push(source.sourceKey);
     combinedLogs.push(...result.requestLogs);
@@ -684,8 +888,8 @@ async function scrapeCityWithFallback(
   return {
     ...fallbackResult,
     requestLogs: combinedLogs,
-    rawHtml: capturedBlockedHtml ?? fallbackResult.rawHtml,
-    rawHtmlKind: capturedBlockedHtml ? "blocked" : fallbackResult.rawHtmlKind,
+    rawHtml: fallbackResult.rawHtml,
+    rawHtmlKind: fallbackResult.rawHtmlKind,
     attemptedSourceKeys: [...attemptedSourceKeys],
     usedFallback: attemptedSourceKeys.length > 1,
     blockedDebugHtml: capturedBlockedHtml ?? fallbackResult.blockedDebugHtml,
@@ -791,8 +995,11 @@ async function buildRunConfig(
   const defaults = resolvePriceRuntimeDefaults(runtimeConfig, primarySource);
   const priceSources = sources.map((source) => {
     const sourceConfig = (source.config ?? {}) as Record<string, unknown>;
+    const parserMode = String(sourceConfig.parser_mode || "").trim().toLowerCase() === "indane_locator_products"
+      ? "indane_locator_products"
+      : "city_path";
     const cityPathTemplate = String(sourceConfig.city_path_template || "").trim();
-    if (!cityPathTemplate.includes("{slug}")) {
+    if (parserMode === "city_path" && !cityPathTemplate.includes("{slug}")) {
       throw new Error(`Price source ${source.source_key} is missing a valid city_path_template.`);
     }
 
@@ -801,6 +1008,9 @@ async function buildRunConfig(
       sourceHost: source.host || new URL(source.base_url).host,
       sourceBaseUrl: source.base_url,
       cityPathTemplate,
+      parserMode,
+      cityUrlMap: parseCityUrlMap(sourceConfig.city_url_map),
+      productLabels: parseProductLabels(sourceConfig.product_labels),
       fetchTimeoutMs: source.timeout_ms,
       requestJitterMs: source.request_jitter_ms,
       retryLimit: source.retry_limit,

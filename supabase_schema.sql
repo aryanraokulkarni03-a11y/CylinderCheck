@@ -802,6 +802,36 @@ INSERT INTO scrape_source_registry (
     '{"city_path_template":"/lpg-price-in-{slug}.html","product_types":["domestic_14_2kg","commercial_19kg"]}'::jsonb
   ),
   (
+    'indane_locator_html',
+    'Indane official locator product pages',
+    'price',
+    'html',
+    'locator.iocl.com',
+    'https://locator.iocl.com',
+    true,
+    false,
+    20,
+    9000,
+    1200,
+    1,
+    1800,
+    'Official fallback source for city LPG prices using manually approved Indane agency pages.',
+    '{
+      "parser_mode":"indane_locator_products",
+      "city_url_map":{
+        "bangalore":["https://locator.iocl.com/indane/indane-himu-distrubutors-gas-agency-basaveswara-nagar-bengaluru-209876/Home"],
+        "mumbai":["https://locator.iocl.com/indane/indane-khara-natural-resources-gas-agency-goregaon-east-mumbai-296697/Home"],
+        "new-delhi":["https://locator.iocl.com/indane/indane-d-s-gas-service-gas-agency-budh-vihar-new-delhi-123579/Home"],
+        "pune":["https://locator.iocl.com/indane/indane-cme-gas-agency-gas-agency-dapodi-pune-296222/Home"],
+        "hyderabad":["https://locator.iocl.com/indane/indane-jaykay-gas-service-gas-agency-habsiguda-hyderabad-212714/Home"]
+      },
+      "product_labels":{
+        "domestic_14_2kg":["Indane 14.2 kg Domestic Cylinder"],
+        "commercial_19kg":["Indane 19kg XtraTeJ Cylinder","Indane 19kg Non-Domestic Cylinder","Indane 19 kg"]
+      }
+    }'::jsonb
+  ),
+  (
     'google_news_rss',
     'Google News RSS search',
     'news',

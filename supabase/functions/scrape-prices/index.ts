@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   readEnabledCities,
-  readPrimaryScrapeSource,
+  readEnabledScrapeSources,
   readRuntimeConfig,
   resolvePriceRuntimeDefaults,
 } from "../_shared/scrapeConfig.ts";
@@ -103,17 +103,28 @@ type RequestFetchResult = {
   requestLogs: RequestLogRow[];
   requestStatus: RequestStatus;
   finalStatusCode: number | null;
+  capturedHtml: string | null;
 };
 
 type CityScrapeResult = {
   city: string;
   state: string;
+  sourceKey: string;
+  sourceHost: string;
+  sourcePublishEnabled: boolean;
   sourceUrl: string;
   prices: Record<ProductType, ProductCandidate>;
   requestLogs: RequestLogRow[];
   requestStatus: RequestStatus;
   sourceStatusCode: number | null;
   rawHtml: string | null;
+  rawHtmlKind: "success" | "blocked" | null;
+  attemptedSourceKeys: string[];
+  usedFallback: boolean;
+  blockedDebugHtml: string | null;
+  blockedDebugSourceKey: string | null;
+  blockedDebugSourceHost: string | null;
+  blockedDebugSourceUrl: string | null;
 };
 
 type PriceCityConfig = {
@@ -124,20 +135,30 @@ type PriceCityConfig = {
   aliases: string[];
 };
 
+type PriceSourceConfig = {
+  sourceKey: string;
+  sourceHost: string;
+  sourceBaseUrl: string;
+  cityPathTemplate: string;
+  fetchTimeoutMs: number;
+  requestJitterMs: number;
+  retryLimit: number;
+  retryBaseDelayMs: number;
+  publishEnabled: boolean;
+  priority: number;
+};
+
 type RunConfig = {
   envRole: ScrapeMode;
   mode: ScrapeMode;
   publish: boolean;
-  sourceHost: string;
-  sourceKey: string;
-  sourceBaseUrl: string;
-  cityPathTemplate: string;
-  fetchTimeoutMs: number;
   maxConcurrency: number;
-  requestJitterMs: number;
-  retryLimit: number;
-  retryBaseDelayMs: number;
   rawDocumentRetentionDays: number;
+  sourceFailoverEnabled: boolean;
+  captureBlockedHtml: boolean;
+  primarySourceKey: string;
+  primarySourceHost: string;
+  priceSources: PriceSourceConfig[];
   proxyLabel: string | null;
   proxyUrlTemplate: string | null;
   proxyAuthHeaderName: string | null;
@@ -289,11 +310,11 @@ function mapRequestStatusToAttemptStatus(status: RequestStatus) {
   }
 }
 
-function buildPriceSourceUrl(slug: string, config: RunConfig) {
-  const cityPath = config.cityPathTemplate.includes("{slug}")
-    ? config.cityPathTemplate.replaceAll("{slug}", slug)
-    : config.cityPathTemplate;
-  return new URL(cityPath, config.sourceBaseUrl).toString();
+function buildPriceSourceUrl(slug: string, source: PriceSourceConfig) {
+  const cityPath = source.cityPathTemplate.includes("{slug}")
+    ? source.cityPathTemplate.replaceAll("{slug}", slug)
+    : source.cityPathTemplate;
+  return new URL(cityPath, source.sourceBaseUrl).toString();
 }
 
 function shouldRetry(status: RequestStatus, attempt: number, retryLimit: number) {
@@ -349,10 +370,12 @@ async function fetchCityHtml(
   city: string,
   runId: number | null,
   config: RunConfig,
+  source: PriceSourceConfig,
 ): Promise<RequestFetchResult> {
   const requestLogs: RequestLogRow[] = [];
+  let capturedHtml: string | null = null;
 
-  for (let attempt = 0; attempt <= config.retryLimit; attempt += 1) {
+  for (let attempt = 0; attempt <= source.retryLimit; attempt += 1) {
     const { requestUrl, viaProxy } = buildOutboundUrl(sourceUrl, config);
     const loggedRequestUrl = sanitizeLoggedRequestUrl(requestUrl, viaProxy);
     const headers: Record<string, string> = {
@@ -364,7 +387,7 @@ async function fetchCityHtml(
       headers[config.proxyAuthHeaderName] = config.proxyAuthHeaderValue;
     }
 
-    const jitterMs = randomJitter(config.requestJitterMs);
+    const jitterMs = randomJitter(source.requestJitterMs);
     if (jitterMs > 0) {
       await sleep(jitterMs);
     }
@@ -372,17 +395,20 @@ async function fetchCityHtml(
     const startedAt = Date.now();
 
     try {
-      const res = await fetchWithTimeout(requestUrl, config.fetchTimeoutMs, { headers });
+      const res = await fetchWithTimeout(requestUrl, source.fetchTimeoutMs, { headers });
       const latencyMs = Date.now() - startedAt;
       const html = await res.text();
       const requestStatus = classifyRequestStatus(res.status, html);
       const blocked = isBlockSuspected(res.status, html);
+      if (blocked && config.captureBlockedHtml && !capturedHtml) {
+        capturedHtml = html;
+      }
 
       requestLogs.push({
         run_id: runId,
         scraper_name: SCRAPER_NAME,
         scrape_mode: config.mode,
-        source_host: config.sourceHost,
+        source_host: source.sourceHost,
         target_key: city,
         target_url: sourceUrl,
         request_url: loggedRequestUrl,
@@ -402,15 +428,17 @@ async function fetchCityHtml(
           requestLogs,
           requestStatus,
           finalStatusCode: res.status,
+          capturedHtml: html,
         };
       }
 
-      if (!shouldRetry(requestStatus, attempt, config.retryLimit)) {
+      if (!shouldRetry(requestStatus, attempt, source.retryLimit)) {
         return {
           html: null,
           requestLogs,
           requestStatus,
           finalStatusCode: res.status,
+          capturedHtml,
         };
       }
     } catch (error) {
@@ -422,7 +450,7 @@ async function fetchCityHtml(
         run_id: runId,
         scraper_name: SCRAPER_NAME,
         scrape_mode: config.mode,
-        source_host: config.sourceHost,
+        source_host: source.sourceHost,
         target_key: city,
         target_url: sourceUrl,
         request_url: loggedRequestUrl,
@@ -436,17 +464,18 @@ async function fetchCityHtml(
         blocked_suspected: false,
       });
 
-      if (!shouldRetry(requestStatus, attempt, config.retryLimit)) {
+      if (!shouldRetry(requestStatus, attempt, source.retryLimit)) {
         return {
           html: null,
           requestLogs,
           requestStatus,
           finalStatusCode: null,
+          capturedHtml,
         };
       }
     }
 
-    const backoffMs = config.retryBaseDelayMs * (attempt + 1);
+    const backoffMs = source.retryBaseDelayMs * (attempt + 1);
     await sleep(backoffMs);
   }
 
@@ -455,6 +484,7 @@ async function fetchCityHtml(
     requestLogs,
     requestStatus: "network_error",
     finalStatusCode: null,
+    capturedHtml,
   };
 }
 
@@ -463,11 +493,12 @@ async function scrapeCityPrices(
   slug: string,
   runId: number | null,
   config: RunConfig,
+  source: PriceSourceConfig,
 ): Promise<CityScrapeResult> {
-  const sourceUrl = buildPriceSourceUrl(slug, config);
+  const sourceUrl = buildPriceSourceUrl(slug, source);
   const prices = emptyCandidates();
   const state = config.selectedCities.find((entry) => entry.city === city)?.state || "";
-  const fetchResult = await fetchCityHtml(sourceUrl, city, runId, config);
+  const fetchResult = await fetchCityHtml(sourceUrl, city, runId, config, source);
 
   if (!fetchResult.html) {
     const reason = fetchResult.requestStatus === "timeout"
@@ -491,12 +522,22 @@ async function scrapeCityPrices(
     return {
       city,
       state,
+      sourceKey: source.sourceKey,
+      sourceHost: source.sourceHost,
+      sourcePublishEnabled: source.publishEnabled,
       sourceUrl,
       prices,
       requestLogs: fetchResult.requestLogs,
       requestStatus: fetchResult.requestStatus,
       sourceStatusCode: fetchResult.finalStatusCode,
-      rawHtml: null,
+      rawHtml: fetchResult.capturedHtml,
+      rawHtmlKind: fetchResult.capturedHtml ? "blocked" : null,
+      attemptedSourceKeys: [source.sourceKey],
+      usedFallback: false,
+      blockedDebugHtml: fetchResult.capturedHtml,
+      blockedDebugSourceKey: fetchResult.capturedHtml ? source.sourceKey : null,
+      blockedDebugSourceHost: fetchResult.capturedHtml ? source.sourceHost : null,
+      blockedDebugSourceUrl: fetchResult.capturedHtml ? sourceUrl : null,
     };
   }
 
@@ -530,12 +571,127 @@ async function scrapeCityPrices(
   return {
     city,
     state,
+    sourceKey: source.sourceKey,
+    sourceHost: source.sourceHost,
+    sourcePublishEnabled: source.publishEnabled,
     sourceUrl,
     prices,
     requestLogs: fetchResult.requestLogs,
     requestStatus: fetchResult.requestStatus,
     sourceStatusCode: fetchResult.finalStatusCode,
     rawHtml: fetchResult.html,
+    rawHtmlKind: "success",
+    attemptedSourceKeys: [source.sourceKey],
+    usedFallback: false,
+    blockedDebugHtml: null,
+    blockedDebugSourceKey: null,
+    blockedDebugSourceHost: null,
+    blockedDebugSourceUrl: null,
+  };
+}
+
+function pickPreferredFailure(current: CityScrapeResult | null, next: CityScrapeResult) {
+  if (!current) return next;
+
+  const rank = (status: RequestStatus) => {
+    switch (status) {
+      case "blocked":
+        return 5;
+      case "rate_limited":
+        return 4;
+      case "timeout":
+        return 3;
+      case "network_error":
+        return 2;
+      case "http_error":
+        return 1;
+      default:
+        return 0;
+    }
+  };
+
+  return rank(next.requestStatus) >= rank(current.requestStatus) ? next : current;
+}
+
+async function scrapeCityWithFallback(
+  cityConfig: PriceCityConfig,
+  runId: number | null,
+  config: RunConfig,
+) {
+  const combinedLogs: RequestLogRow[] = [];
+  const attemptedSourceKeys: string[] = [];
+  let preferredFailure: CityScrapeResult | null = null;
+  let capturedBlockedHtml: string | null = null;
+  let capturedBlockedSourceKey: string | null = null;
+  let capturedBlockedSourceHost: string | null = null;
+  let capturedBlockedSourceUrl: string | null = null;
+
+  for (let index = 0; index < config.priceSources.length; index += 1) {
+    const source = config.priceSources[index];
+    const result = await scrapeCityPrices(cityConfig.city, cityConfig.sourceSlug, runId, config, source);
+
+    attemptedSourceKeys.push(source.sourceKey);
+    combinedLogs.push(...result.requestLogs);
+
+    if (!capturedBlockedHtml && result.rawHtmlKind === "blocked" && result.rawHtml) {
+      capturedBlockedHtml = result.rawHtml;
+      capturedBlockedSourceKey = result.sourceKey;
+      capturedBlockedSourceHost = result.sourceHost;
+      capturedBlockedSourceUrl = result.sourceUrl;
+    }
+
+    if (result.requestStatus === "success") {
+      return {
+        ...result,
+        requestLogs: combinedLogs,
+        attemptedSourceKeys: [...attemptedSourceKeys],
+        usedFallback: index > 0,
+        blockedDebugHtml: capturedBlockedHtml,
+        blockedDebugSourceKey: capturedBlockedSourceKey,
+        blockedDebugSourceHost: capturedBlockedSourceHost,
+        blockedDebugSourceUrl: capturedBlockedSourceUrl,
+      };
+    }
+
+    preferredFailure = pickPreferredFailure(preferredFailure, result);
+
+    if (!config.sourceFailoverEnabled) {
+      break;
+    }
+  }
+
+  const fallbackResult = preferredFailure ?? {
+    city: cityConfig.city,
+    state: cityConfig.state,
+    sourceKey: config.primarySourceKey,
+    sourceHost: config.primarySourceHost,
+    sourcePublishEnabled: config.priceSources[0]?.publishEnabled ?? false,
+    sourceUrl: buildPriceSourceUrl(cityConfig.sourceSlug, config.priceSources[0]),
+    prices: emptyCandidates(),
+    requestLogs: [],
+    requestStatus: "network_error" as const,
+    sourceStatusCode: null,
+    rawHtml: null,
+    rawHtmlKind: null,
+    attemptedSourceKeys: [],
+    usedFallback: false,
+    blockedDebugHtml: null,
+    blockedDebugSourceKey: null,
+    blockedDebugSourceHost: null,
+    blockedDebugSourceUrl: null,
+  };
+
+  return {
+    ...fallbackResult,
+    requestLogs: combinedLogs,
+    rawHtml: capturedBlockedHtml ?? fallbackResult.rawHtml,
+    rawHtmlKind: capturedBlockedHtml ? "blocked" : fallbackResult.rawHtmlKind,
+    attemptedSourceKeys: [...attemptedSourceKeys],
+    usedFallback: attemptedSourceKeys.length > 1,
+    blockedDebugHtml: capturedBlockedHtml ?? fallbackResult.blockedDebugHtml,
+    blockedDebugSourceKey: capturedBlockedSourceKey ?? fallbackResult.blockedDebugSourceKey,
+    blockedDebugSourceHost: capturedBlockedSourceHost ?? fallbackResult.blockedDebugSourceHost,
+    blockedDebugSourceUrl: capturedBlockedSourceUrl ?? fallbackResult.blockedDebugSourceUrl,
   };
 }
 
@@ -611,9 +767,9 @@ async function buildRunConfig(
   supabase: ReturnType<typeof createClient>,
   body: Record<string, unknown>,
 ): Promise<RunConfig> {
-  const [cities, source, runtimeConfig] = await Promise.all([
+  const [cities, sources, runtimeConfig] = await Promise.all([
     readEnabledCities(supabase, "price_scrape_enabled"),
-    readPrimaryScrapeSource(supabase, "price"),
+    readEnabledScrapeSources(supabase, "price"),
     readRuntimeConfig(supabase, "price_scraper"),
   ]);
 
@@ -631,12 +787,28 @@ async function buildRunConfig(
     throw new Error("No enabled city_registry rows are available for price scraping.");
   }
 
-  const defaults = resolvePriceRuntimeDefaults(runtimeConfig, source);
-  const sourceConfig = (source.config ?? {}) as Record<string, unknown>;
-  const cityPathTemplate = String(sourceConfig.city_path_template || "").trim();
-  if (!cityPathTemplate.includes("{slug}")) {
-    throw new Error("Primary price source config is missing a valid city_path_template.");
-  }
+  const primarySource = sources[0];
+  const defaults = resolvePriceRuntimeDefaults(runtimeConfig, primarySource);
+  const priceSources = sources.map((source) => {
+    const sourceConfig = (source.config ?? {}) as Record<string, unknown>;
+    const cityPathTemplate = String(sourceConfig.city_path_template || "").trim();
+    if (!cityPathTemplate.includes("{slug}")) {
+      throw new Error(`Price source ${source.source_key} is missing a valid city_path_template.`);
+    }
+
+    return {
+      sourceKey: source.source_key,
+      sourceHost: source.host || new URL(source.base_url).host,
+      sourceBaseUrl: source.base_url,
+      cityPathTemplate,
+      fetchTimeoutMs: source.timeout_ms,
+      requestJitterMs: source.request_jitter_ms,
+      retryLimit: source.retry_limit,
+      retryBaseDelayMs: source.retry_base_delay_ms,
+      publishEnabled: source.publish_enabled,
+      priority: source.priority,
+    } satisfies PriceSourceConfig;
+  });
 
   const envRole = String(Deno.env.get("SCRAPE_ENV") ?? "production").trim().toLowerCase() === "sandbox"
     ? "sandbox"
@@ -652,41 +824,44 @@ async function buildRunConfig(
     envRole,
     mode,
     publish,
-    sourceHost: source.host || new URL(source.base_url).host,
-    sourceKey: source.source_key,
-    sourceBaseUrl: source.base_url,
-    cityPathTemplate,
-    fetchTimeoutMs: parseInteger(
-      body.fetchTimeoutMs != null ? String(body.fetchTimeoutMs) : String(defaults.fetchTimeoutMs),
-      defaults.fetchTimeoutMs,
-      250,
-      60000,
-    ),
     maxConcurrency: parseInteger(
       body.maxConcurrency != null ? String(body.maxConcurrency) : String(defaults.maxConcurrency),
       defaults.maxConcurrency,
       1,
       12,
     ),
-    requestJitterMs: parseInteger(
-      body.requestJitterMs != null ? String(body.requestJitterMs) : String(defaults.requestJitterMs),
-      defaults.requestJitterMs,
-      0,
-      8000,
-    ),
-    retryLimit: parseInteger(
-      body.retryLimit != null ? String(body.retryLimit) : String(defaults.retryLimit),
-      defaults.retryLimit,
-      0,
-      5,
-    ),
-    retryBaseDelayMs: parseInteger(
-      body.retryBaseDelayMs != null ? String(body.retryBaseDelayMs) : String(defaults.retryBaseDelayMs),
-      defaults.retryBaseDelayMs,
-      250,
-      15000,
-    ),
     rawDocumentRetentionDays: Math.max(1, Math.round(defaults.rawDocumentRetentionDays)),
+    sourceFailoverEnabled: parseBoolean(body.sourceFailoverEnabled, defaults.sourceFailoverEnabled),
+    captureBlockedHtml: parseBoolean(body.captureBlockedHtml, defaults.captureBlockedHtml),
+    primarySourceKey: primarySource.source_key,
+    primarySourceHost: primarySource.host || new URL(primarySource.base_url).host,
+    priceSources: priceSources.map((source) => ({
+      ...source,
+      fetchTimeoutMs: parseInteger(
+        body.fetchTimeoutMs != null ? String(body.fetchTimeoutMs) : String(source.fetchTimeoutMs),
+        source.fetchTimeoutMs,
+        250,
+        60000,
+      ),
+      requestJitterMs: parseInteger(
+        body.requestJitterMs != null ? String(body.requestJitterMs) : String(source.requestJitterMs),
+        source.requestJitterMs,
+        0,
+        8000,
+      ),
+      retryLimit: parseInteger(
+        body.retryLimit != null ? String(body.retryLimit) : String(source.retryLimit),
+        source.retryLimit,
+        0,
+        5,
+      ),
+      retryBaseDelayMs: parseInteger(
+        body.retryBaseDelayMs != null ? String(body.retryBaseDelayMs) : String(source.retryBaseDelayMs),
+        source.retryBaseDelayMs,
+        250,
+        15000,
+      ),
+    })),
     proxyLabel: Deno.env.get("SCRAPE_PROXY_LABEL")?.trim() || null,
     proxyUrlTemplate: Deno.env.get("SCRAPE_PROXY_URL_TEMPLATE")?.trim() || null,
     proxyAuthHeaderName: Deno.env.get("SCRAPE_PROXY_AUTH_HEADER_NAME")?.trim() || null,
@@ -704,6 +879,10 @@ function validateRunConfig(config: RunConfig) {
     return "Sandbox environment cannot publish live price updates.";
   }
 
+  if (!config.priceSources.length) {
+    return "No enabled price scrape sources are configured.";
+  }
+
   return null;
 }
 
@@ -717,19 +896,21 @@ async function createScrapeRun(
       .insert({
         scraper_name: SCRAPER_NAME,
         scrape_mode: config.mode,
-        source_host: config.sourceHost,
+        source_host: config.primarySourceHost,
         publish_enabled: config.publish,
         target_count: config.selectedCities.length,
         max_concurrency: config.maxConcurrency,
-        request_jitter_ms: config.requestJitterMs,
-        retry_limit: config.retryLimit,
+        request_jitter_ms: config.priceSources[0]?.requestJitterMs ?? 0,
+        retry_limit: config.priceSources[0]?.retryLimit ?? 0,
         proxy_label: config.proxyLabel,
         status: "running",
         config_snapshot: {
-          source_key: config.sourceKey,
-          source_base_url: config.sourceBaseUrl,
+          source_key: config.primarySourceKey,
+          source_hosts: config.priceSources.map((source) => source.sourceHost),
           city_count: config.selectedCities.length,
           proxy_enabled: Boolean(config.proxyUrlTemplate),
+          failover_enabled: config.sourceFailoverEnabled,
+          capture_blocked_html: config.captureBlockedHtml,
         },
       })
       .select("id")
@@ -824,12 +1005,13 @@ serve(async (req: Request) => {
     const runId = await createScrapeRun(supabase, config);
     const jobId = await createScrapeJob(supabase, {
       jobType: "price_scrape",
-      sourceKey: config.sourceKey,
+      sourceKey: config.primarySourceKey,
       triggerMode: config.mode === "sandbox" ? "manual" : "scheduled",
       payloadJson: {
         city_count: config.selectedCities.length,
         publish: config.publish,
         mode: config.mode,
+        source_keys: config.priceSources.map((source) => source.sourceKey),
       },
     });
     governanceJobId = jobId;
@@ -869,6 +1051,10 @@ serve(async (req: Request) => {
       status: "ok" | "partial" | "held";
       requestStatus: RequestStatus;
       sourceStatusCode: number | null;
+      sourceKey: string;
+      sourcePublishEnabled: boolean;
+      usedFallback: boolean;
+      attemptedSourceKeys: string[];
     }> = [];
     const upserts: Array<{
       city: string;
@@ -884,15 +1070,16 @@ serve(async (req: Request) => {
     const cityResults = await runWithConcurrency(
       config.selectedCities,
       config.maxConcurrency,
-      async ({ city, sourceSlug }) => {
-        const result = await scrapeCityPrices(city, sourceSlug, runId, config);
+      async (cityConfig) => {
+        const result = await scrapeCityWithFallback(cityConfig, runId, config);
         let rawDocumentAttemptId: number | null = null;
 
-        for (const requestLog of result.requestLogs) {
+        for (let requestIndex = 0; requestIndex < result.requestLogs.length; requestIndex += 1) {
+          const requestLog = result.requestLogs[requestIndex];
           const attemptId = await recordScrapeJobAttempt(supabase, {
             jobId,
-            attemptNumber: requestLog.attempt,
-            targetKey: city,
+            attemptNumber: requestIndex + 1,
+            targetKey: result.city,
             requestUrl: requestLog.request_url,
             sourceUrl: requestLog.target_url,
             sourceHost: requestLog.source_host,
@@ -906,6 +1093,8 @@ serve(async (req: Request) => {
 
           if (requestLog.request_status === "success") {
             rawDocumentAttemptId = attemptId;
+          } else if (!rawDocumentAttemptId && requestLog.blocked_suspected) {
+            rawDocumentAttemptId = attemptId;
           }
         }
 
@@ -913,8 +1102,8 @@ serve(async (req: Request) => {
           await storeRawSourceDocument(supabase, {
             jobId,
             attemptId: rawDocumentAttemptId,
-            sourceKey: config.sourceKey,
-            targetKey: city,
+            sourceKey: result.sourceKey,
+            targetKey: result.city,
             documentKind: "html",
             sourceUrl: result.sourceUrl,
             contentText: result.rawHtml,
@@ -922,6 +1111,36 @@ serve(async (req: Request) => {
             metadataJson: {
               request_status: result.requestStatus,
               source_status_code: result.sourceStatusCode,
+              source_host: result.sourceHost,
+              raw_html_kind: result.rawHtmlKind,
+              attempted_source_keys: result.attemptedSourceKeys,
+              used_fallback: result.usedFallback,
+            },
+          });
+        }
+
+        if (
+          result.blockedDebugHtml &&
+          result.blockedDebugSourceKey &&
+          result.blockedDebugSourceUrl &&
+          (result.rawHtmlKind !== "blocked" || result.blockedDebugHtml !== result.rawHtml)
+        ) {
+          await storeRawSourceDocument(supabase, {
+            jobId,
+            attemptId: null,
+            sourceKey: result.blockedDebugSourceKey,
+            targetKey: `${result.city}:blocked`,
+            documentKind: "html",
+            sourceUrl: result.blockedDebugSourceUrl,
+            contentText: result.blockedDebugHtml,
+            retentionDays: config.rawDocumentRetentionDays,
+            metadataJson: {
+              request_status: "blocked",
+              source_host: result.blockedDebugSourceHost,
+              raw_html_kind: "blocked",
+              attempted_source_keys: result.attemptedSourceKeys,
+              used_fallback: result.usedFallback,
+              debug_snapshot: true,
             },
           });
         }
@@ -943,10 +1162,18 @@ serve(async (req: Request) => {
         const candidate = cityResult.prices[productType];
         const previousPrice = previousPriceMap.get(`${cityResult.city}::${productType}`) ?? null;
         const validation = validateCandidate(candidate, previousPrice, productType);
+        const sourcePublishBlocked = validation.accepted && candidate.price != null && !cityResult.sourcePublishEnabled;
+        const effectiveValidation = sourcePublishBlocked
+          ? {
+            accepted: false,
+            status: "rejected" as const,
+            reason: `Accepted price from ${cityResult.sourceKey}, but publish is disabled for that source.`,
+          }
+          : validation;
         const publishedPrice =
-          validation.accepted && candidate.price != null ? candidate.price : previousPrice;
+          effectiveValidation.accepted && candidate.price != null ? candidate.price : previousPrice;
 
-        if (validation.status === "accepted" && candidate.price != null) {
+        if (effectiveValidation.status === "accepted" && candidate.price != null) {
           accepted += 1;
           if (config.publish) {
             upserts.push({
@@ -958,7 +1185,7 @@ serve(async (req: Request) => {
               recorded_at: scrapeStartedAt,
             });
           }
-        } else if (validation.status === "rejected") {
+        } else if (effectiveValidation.status === "rejected") {
           held += 1;
         } else {
           missing += 1;
@@ -975,8 +1202,8 @@ serve(async (req: Request) => {
             candidate_price: candidate.price,
             published_price: publishedPrice,
             parse_method: candidate.parseMethod,
-            validation_status: validation.status,
-            validation_reason: validation.reason,
+            validation_status: effectiveValidation.status,
+            validation_reason: effectiveValidation.reason,
             scraped_at: scrapeStartedAt,
           });
         }
@@ -992,6 +1219,10 @@ serve(async (req: Request) => {
         status: accepted > 0 ? (held > 0 || missing > 0 ? "partial" : "ok") : "held",
         requestStatus: cityResult.requestStatus,
         sourceStatusCode: cityResult.sourceStatusCode,
+        sourceKey: cityResult.sourceKey,
+        sourcePublishEnabled: cityResult.sourcePublishEnabled,
+        usedFallback: cityResult.usedFallback,
+        attemptedSourceKeys: cityResult.attemptedSourceKeys,
       });
     }
 
@@ -1042,6 +1273,8 @@ serve(async (req: Request) => {
     const held = results.filter((r) => r.status === "held").length;
     const rateLimitedRequests = requestLogs.filter((row) => row.rate_limited).length;
     const blockedRequests = requestLogs.filter((row) => row.blocked_suspected).length;
+    const fallbackCities = results.filter((result) => result.usedFallback).length;
+    const blockedSnapshots = cityResults.filter((result) => result.rawHtmlKind === "blocked").length;
 
     await updateScrapeRun(supabase, runId, {
       status: "completed",
@@ -1053,11 +1286,23 @@ serve(async (req: Request) => {
         request_attempts: requestLogs.length,
         rate_limited_requests: rateLimitedRequests,
         blocked_requests: blockedRequests,
+        fallback_cities: fallbackCities,
+        blocked_snapshots: blockedSnapshots,
       },
     });
 
+    const jobStatus = successful === results.length ? "succeeded" : successful > 0 || partial > 0 ? "partial" : "failed";
+    const responseOk = jobStatus !== "failed";
+    const responseStatus = jobStatus === "failed" ? 502 : 200;
+    const responseMessage =
+      jobStatus === "succeeded"
+        ? `${config.mode} scrape completed for ${results.length} cities`
+        : jobStatus === "partial"
+          ? `${config.mode} scrape partially completed for ${results.length} cities`
+          : `${config.mode} scrape failed for ${results.length} cities`;
+
     await finishScrapeJob(supabase, jobId, {
-      status: successful === results.length ? "succeeded" : successful > 0 || partial > 0 ? "partial" : "failed",
+      status: jobStatus,
       resultJson: {
         successful,
         partial,
@@ -1066,30 +1311,36 @@ serve(async (req: Request) => {
         request_attempts: requestLogs.length,
         rate_limited_requests: rateLimitedRequests,
         blocked_requests: blockedRequests,
+        fallback_cities: fallbackCities,
+        blocked_snapshots: blockedSnapshots,
       },
     });
 
     return new Response(
       JSON.stringify({
-        ok: true,
+        ok: responseOk,
+        jobStatus,
         scraper: SCRAPER_NAME,
         mode: config.mode,
         publish: config.publish,
-        source_host: config.sourceHost,
+        source_host: config.primarySourceHost,
+        source_hosts: config.priceSources.map((source) => source.sourceHost),
         maxConcurrency: config.maxConcurrency,
-        requestJitterMs: config.requestJitterMs,
-        retryLimit: config.retryLimit,
+        requestJitterMs: config.priceSources[0]?.requestJitterMs ?? 0,
+        retryLimit: config.priceSources[0]?.retryLimit ?? 0,
         proxyLabel: config.proxyLabel,
-        message: `${config.mode} scrape completed for ${results.length} cities`,
+        message: responseMessage,
         successful,
         partial,
         held,
         rateLimitedRequests,
         blockedRequests,
+        fallbackCities,
+        blockedSnapshots,
         results,
         updated_at: new Date().toISOString(),
       }),
-      { headers: CORS },
+      { status: responseStatus, headers: CORS },
     );
   } catch (err) {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";

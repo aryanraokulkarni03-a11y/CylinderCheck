@@ -159,6 +159,10 @@ Views:
   - `city_registry`
   - `scrape_source_registry`
   - `scrape_runtime_config`
+- `scrape-prices` now supports:
+  - priority-ordered fallback across enabled price sources
+  - blocked HTML capture into `raw_source_documents` when debugging is enabled
+  - DB-managed resilience knobs through `scrape_runtime_config`
 - The shared news helpers now read their source, topic list, city aliases, and runtime knobs from:
   - `city_registry`
   - `scrape_source_registry`

@@ -948,7 +948,9 @@ INSERT INTO scrape_runtime_config (
   ('price_max_concurrency', 'price_scraper', true, '3'::jsonb, 'Default max concurrency for the price scraper.'),
   ('price_request_jitter_ms', 'price_scraper', true, '900'::jsonb, 'Delay inserted between upstream price requests.'),
   ('price_retry_limit', 'price_scraper', true, '1'::jsonb, 'Default retry attempts for transient upstream failures.'),
-  ('price_retry_base_delay_ms', 'price_scraper', true, '1400'::jsonb, 'Base backoff delay for price scraper retries.')
+  ('price_retry_base_delay_ms', 'price_scraper', true, '1400'::jsonb, 'Base backoff delay for price scraper retries.'),
+  ('price_source_failover_enabled', 'price_scraper', true, 'true'::jsonb, 'Allow scrape-prices to try the next enabled price source when the current source blocks, times out, or fails.'),
+  ('price_capture_blocked_html', 'price_scraper', true, 'true'::jsonb, 'Store blocked price-source HTML in raw_source_documents for debugging when the scraper detects an upstream block.')
 ON CONFLICT (config_key) DO UPDATE SET
   config_scope = EXCLUDED.config_scope,
   enabled = EXCLUDED.enabled,

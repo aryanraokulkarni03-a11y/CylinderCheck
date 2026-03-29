@@ -48,6 +48,16 @@ function asNumber(value: unknown, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function asBoolean(value: unknown, fallback: boolean) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value !== "string") return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  return fallback;
+}
+
 export async function readRuntimeConfig(
   supabase: SupabaseClient,
   scope: "price_scraper" | "news_scraper" | "global",
@@ -81,6 +91,22 @@ export async function readPrimaryScrapeSource(
   if (error) throw error;
   if (!data) throw new Error(`No enabled ${sourceKind} scrape source is configured.`);
   return data as ScrapeSourceRow;
+}
+
+export async function readEnabledScrapeSources(
+  supabase: SupabaseClient,
+  sourceKind: "price" | "news",
+) {
+  const { data, error } = await supabase
+    .from("scrape_source_registry")
+    .select("source_key, source_name, source_kind, fetch_mode, host, base_url, enabled, publish_enabled, priority, timeout_ms, request_jitter_ms, retry_limit, retry_base_delay_ms, config")
+    .eq("source_kind", sourceKind)
+    .eq("enabled", true)
+    .order("priority", { ascending: true });
+
+  if (error) throw error;
+  if (!data?.length) throw new Error(`No enabled ${sourceKind} scrape sources are configured.`);
+  return data as ScrapeSourceRow[];
 }
 
 export async function readEnabledCities(
@@ -123,6 +149,8 @@ export function resolvePriceRuntimeDefaults(
     retryLimit: asNumber(runtimeConfig.price_retry_limit, source.retry_limit),
     retryBaseDelayMs: asNumber(runtimeConfig.price_retry_base_delay_ms, source.retry_base_delay_ms),
     rawDocumentRetentionDays: asNumber(runtimeConfig.raw_document_retention_days, 7),
+    sourceFailoverEnabled: asBoolean(runtimeConfig.price_source_failover_enabled, true),
+    captureBlockedHtml: asBoolean(runtimeConfig.price_capture_blocked_html, true),
   };
 }
 

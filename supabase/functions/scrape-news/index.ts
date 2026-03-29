@@ -1,6 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { loadNewsScrapeConfig, scrapeLatestNews } from "../_shared/news.ts";
+import {
+  createScrapeJob,
+  finishScrapeJob,
+  finishScrapeJobAttempt,
+  pruneExpiredRawSourceDocuments,
+  startScrapeJobAttempt,
+  storeRawSourceDocument,
+} from "../_shared/scrapeJobs.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +33,8 @@ serve(async (req) => {
     return new Response("ok", { headers: CORS });
   }
 
+  let governanceJobId: number | null = null;
+
   try {
     const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
     const token = getBearerToken(req);
@@ -37,8 +47,68 @@ serve(async (req) => {
     }
 
     const supabase = createServiceClient();
+    await pruneExpiredRawSourceDocuments(supabase);
     const config = await loadNewsScrapeConfig(supabase);
-    const articles = await scrapeLatestNews(config);
+    const jobId = await createScrapeJob(supabase, {
+      jobType: "news_scrape",
+      sourceKey: config.sourceKey,
+      triggerMode: "scheduled",
+      payloadJson: {
+        query_count: config.queries.length,
+        news_limit: config.newsLimit,
+      },
+    });
+    governanceJobId = jobId;
+
+    let feedAttempts = 0;
+    let feedSuccesses = 0;
+    let feedFailures = 0;
+    const articles = await scrapeLatestNews(config, {
+      onFeedFetch: async (event) => {
+        feedAttempts += 1;
+        if (event.status === "succeeded") {
+          feedSuccesses += 1;
+        } else {
+          feedFailures += 1;
+        }
+        const attemptId = await startScrapeJobAttempt(supabase, {
+          jobId: jobId ?? null,
+          attemptNumber: feedAttempts,
+          targetKey: event.query,
+          requestUrl: event.requestUrl,
+          sourceUrl: event.sourceUrl,
+          sourceHost: config.sourceHost,
+        });
+
+        await finishScrapeJobAttempt(supabase, attemptId, {
+          status: event.status,
+          httpStatus: event.httpStatus,
+          latencyMs: event.latencyMs,
+          errorMessage: event.errorMessage,
+          blockedSuspected: false,
+          rateLimited: event.httpStatus === 429,
+        });
+
+        if (jobId && event.contentText) {
+          await storeRawSourceDocument(supabase, {
+            jobId,
+            attemptId,
+            sourceKey: config.sourceKey,
+            targetKey: event.query,
+            documentKind: "rss",
+            sourceUrl: event.sourceUrl,
+            contentText: event.contentText,
+            retentionDays: config.rawDocumentRetentionDays,
+            fetchedAt: event.fetchedAt,
+            metadataJson: {
+              query: event.query,
+              http_status: event.httpStatus,
+              status: event.status,
+            },
+          });
+        }
+      },
+    });
 
     if (articles.length) {
       const { error: upsertError } = await supabase
@@ -46,6 +116,16 @@ serve(async (req) => {
         .upsert(articles, { onConflict: "article_key" });
 
       if (upsertError) {
+        await finishScrapeJob(supabase, jobId, {
+          status: "failed",
+          lastError: upsertError.message,
+          resultJson: {
+            feed_attempts: feedAttempts,
+            feed_successes: feedSuccesses,
+            feed_failures: feedFailures,
+            normalized_count: articles.length,
+          },
+        });
         throw upsertError;
       }
     }
@@ -58,8 +138,37 @@ serve(async (req) => {
       .lt("published_at", cutoff);
 
     if (pruneError) {
+        await finishScrapeJob(supabase, jobId, {
+          status: "failed",
+          lastError: pruneError.message,
+          resultJson: {
+            feed_attempts: feedAttempts,
+            feed_successes: feedSuccesses,
+            feed_failures: feedFailures,
+            normalized_count: articles.length,
+            retention_days: retentionDays,
+          },
+      });
       throw pruneError;
     }
+
+    const finalStatus =
+      feedAttempts === 0 || feedSuccesses === 0
+        ? "failed"
+        : feedFailures > 0
+          ? "partial"
+          : "succeeded";
+
+    await finishScrapeJob(supabase, jobId, {
+      status: finalStatus,
+      resultJson: {
+        feed_attempts: feedAttempts,
+        feed_successes: feedSuccesses,
+        feed_failures: feedFailures,
+        normalized_count: articles.length,
+        retention_days: retentionDays,
+      },
+    });
 
     return new Response(
       JSON.stringify({
@@ -73,6 +182,15 @@ serve(async (req) => {
       { headers: CORS },
     );
   } catch (err) {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (governanceJobId && supabaseUrl && serviceRoleKey) {
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      await finishScrapeJob(supabase, governanceJobId, {
+        status: "failed",
+        lastError: String(err),
+      });
+    }
     return new Response(
       JSON.stringify({ ok: false, error: String(err) }),
       { status: 500, headers: CORS },

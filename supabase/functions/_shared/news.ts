@@ -83,14 +83,33 @@ type RawArticle = {
 };
 
 type NewsScrapeConfig = {
+  sourceKey: string;
+  sourceHost: string;
   queries: string[];
   newsLimit: number;
   decodeTimeoutMs: number;
   requestTimeoutMs: number;
   retentionDays: number;
+  rawDocumentRetentionDays: number;
   rssSearchTemplate: string;
   cityLookup: Map<string, string>;
   cityNames: string[];
+};
+
+export type NewsFeedFetchEvent = {
+  query: string;
+  requestUrl: string;
+  sourceUrl: string;
+  status: "succeeded" | "failed" | "timeout";
+  httpStatus: number | null;
+  latencyMs: number;
+  errorMessage: string | null;
+  contentText: string | null;
+  fetchedAt: string;
+};
+
+type ScrapeLatestNewsOptions = {
+  onFeedFetch?: (event: NewsFeedFetchEvent) => Promise<void> | void;
 };
 
 async function fetchWithTimeout(url: string, timeoutMs: number, init: RequestInit = {}) {
@@ -134,11 +153,14 @@ export async function loadNewsScrapeConfig(supabase: SupabaseClient): Promise<Ne
   const cityNames = cities.map((city) => city.city_name);
 
   return {
+    sourceKey: source.source_key,
+    sourceHost: source.host || new URL(source.base_url).host,
     queries,
     newsLimit: defaults.newsLimit,
     decodeTimeoutMs: defaults.decodeTimeoutMs,
     requestTimeoutMs: defaults.requestTimeoutMs,
     retentionDays: defaults.retentionDays,
+    rawDocumentRetentionDays: defaults.rawDocumentRetentionDays,
     rssSearchTemplate,
     cityLookup,
     cityNames,
@@ -429,13 +451,17 @@ function buildArticleKey(article: {
   ].join("::");
 }
 
-export async function scrapeLatestNews(config: NewsScrapeConfig) {
+export async function scrapeLatestNews(
+  config: NewsScrapeConfig,
+  options: ScrapeLatestNewsOptions = {},
+) {
   const rawArticles: RawArticle[] = [];
 
   for (const query of config.queries) {
     if (rawArticles.length >= config.newsLimit * 2) break;
 
     const url = config.rssSearchTemplate.replaceAll("{query}", encodeURIComponent(query));
+    const startedAt = Date.now();
 
     try {
       const res = await fetchWithTimeout(url, config.requestTimeoutMs, {
@@ -443,12 +469,35 @@ export async function scrapeLatestNews(config: NewsScrapeConfig) {
           "User-Agent": "Mozilla/5.0 (compatible; CylinderCheck/1.0)",
         },
       });
+      const latencyMs = Date.now() - startedAt;
+      const xml = await res.text();
+
+      await options.onFeedFetch?.({
+        query,
+        requestUrl: url,
+        sourceUrl: url,
+        status: res.ok ? "succeeded" : "failed",
+        httpStatus: res.status,
+        latencyMs,
+        errorMessage: res.ok ? null : `Feed returned ${res.status}`,
+        contentText: xml || null,
+        fetchedAt: new Date().toISOString(),
+      });
 
       if (!res.ok) continue;
-
-      const xml = await res.text();
       rawArticles.push(...parseRSS(xml));
     } catch {
+      await options.onFeedFetch?.({
+        query,
+        requestUrl: url,
+        sourceUrl: url,
+        status: "timeout",
+        httpStatus: null,
+        latencyMs: Date.now() - startedAt,
+        errorMessage: "Feed request failed before a usable response was returned",
+        contentText: null,
+        fetchedAt: new Date().toISOString(),
+      });
       continue;
     }
   }

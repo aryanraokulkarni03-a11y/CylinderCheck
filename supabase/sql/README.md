@@ -7,6 +7,8 @@ Run these in Supabase Dashboard -> SQL Editor.
 - `2026-03-29_repo-contract-alignment.sql`: adds the repo-managed `vendors`, `feedback`, and `price_corrections` contracts so checked-in SQL stays aligned with production usage.
 - `2026-03-29_scrape-config-foundation.sql`: adds repo-managed city, source, topic, and runtime config tables for the 3E scraper/news backend upgrade.
 - `2026-03-29_city-registry-seo-access.sql`: exposes only SEO-enabled city registry rows to the frontend and adds a news retention runtime key.
+- `2026-03-29_scrape-job-governance.sql`: adds canonical scrape jobs, attempt tracking, raw source document staging, and lightweight source/job health views.
+- `2026-03-29_scrape-governance-hardening.sql`: hardens scrape health views with security-invoker semantics and explicitly revokes public access.
 - `2026-03-26_track-security-advisor-fix.sql`: enables RLS and explicit public read policies on the Track read-model tables, and flips `pin_track_summary_v1` to `security_invoker`.
 - `2026-03-26_security-warning-hardening.sql`: pins mutable public function search paths and replaces permissive public insert policies with explicit checks.
 - `vendor_insert_template.sql`: template for inserting a new vendor listing row.

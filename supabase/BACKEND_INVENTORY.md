@@ -125,8 +125,16 @@ Transitional / supporting:
 - `public.scrape_runs`
 - `public.scrape_request_log`
 - `public.lpg_price_scrape_log`
+- `public.scrape_jobs`
+- `public.scrape_job_attempts`
+- `public.raw_source_documents`
 
 These are the current observability base for the scraping layer.
+
+Views:
+- `public.scrape_job_health_v1`
+- `public.scrape_source_health_v1`
+  - Security-invoker views with explicit public revoke rules.
 
 ## Config foundation tables
 
@@ -157,6 +165,19 @@ These are the current observability base for the scraping layer.
   - `scrape_topic_registry`
   - `scrape_runtime_config`
 - Remaining hardcoded behavior is now mostly limited to parsing heuristics and product-specific validation logic, not source/city/workflow ownership.
+
+### Queue/run governance status
+- Scrape workflows now have a canonical governance layer through:
+  - `scrape_jobs`
+  - `scrape_job_attempts`
+  - `raw_source_documents`
+- Expired raw source payloads are now pruned during live scrape runs.
+- Canonical price attempts now reflect the real upstream retry/request history instead of flattening multiple tries into a single city record.
+- Existing legacy logs still remain in place during the rollout:
+  - `scrape_runs`
+  - `scrape_request_log`
+  - `lpg_price_scrape_log`
+- This is intentionally additive until the new governance layer has proven stable.
 
 ### Current schema gaps now closed in repo
 The repo now explicitly represents:

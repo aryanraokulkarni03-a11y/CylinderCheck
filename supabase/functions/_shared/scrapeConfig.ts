@@ -122,6 +122,7 @@ export function resolvePriceRuntimeDefaults(
     requestJitterMs: asNumber(runtimeConfig.price_request_jitter_ms, source.request_jitter_ms),
     retryLimit: asNumber(runtimeConfig.price_retry_limit, source.retry_limit),
     retryBaseDelayMs: asNumber(runtimeConfig.price_retry_base_delay_ms, source.retry_base_delay_ms),
+    rawDocumentRetentionDays: asNumber(runtimeConfig.raw_document_retention_days, 7),
   };
 }
 
@@ -134,6 +135,7 @@ export function resolveNewsRuntimeDefaults(
     decodeTimeoutMs: asNumber(runtimeConfig.news_decode_timeout_ms, 1800),
     retentionDays: asNumber(runtimeConfig.news_retention_days, 14),
     requestTimeoutMs: asNumber(runtimeConfig.news_fetch_timeout_ms, source.timeout_ms),
+    rawDocumentRetentionDays: asNumber(runtimeConfig.raw_document_retention_days, 7),
   };
 }
 

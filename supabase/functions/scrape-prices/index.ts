@@ -6,6 +6,13 @@ import {
   readRuntimeConfig,
   resolvePriceRuntimeDefaults,
 } from "../_shared/scrapeConfig.ts";
+import {
+  createScrapeJob,
+  finishScrapeJob,
+  pruneExpiredRawSourceDocuments,
+  recordScrapeJobAttempt,
+  storeRawSourceDocument,
+} from "../_shared/scrapeJobs.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -106,6 +113,7 @@ type CityScrapeResult = {
   requestLogs: RequestLogRow[];
   requestStatus: RequestStatus;
   sourceStatusCode: number | null;
+  rawHtml: string | null;
 };
 
 type PriceCityConfig = {
@@ -129,6 +137,7 @@ type RunConfig = {
   requestJitterMs: number;
   retryLimit: number;
   retryBaseDelayMs: number;
+  rawDocumentRetentionDays: number;
   proxyLabel: string | null;
   proxyUrlTemplate: string | null;
   proxyAuthHeaderName: string | null;
@@ -263,6 +272,28 @@ function classifyRequestStatus(statusCode: number | null, html: string | null): 
   if (isBlockSuspected(statusCode, html)) return "blocked";
   if (statusCode >= 200 && statusCode < 300) return "success";
   return "http_error";
+}
+
+function mapRequestStatusToAttemptStatus(status: RequestStatus) {
+  switch (status) {
+    case "success":
+      return "succeeded" as const;
+    case "timeout":
+      return "timeout" as const;
+    case "rate_limited":
+      return "rate_limited" as const;
+    case "blocked":
+      return "blocked" as const;
+    default:
+      return "failed" as const;
+  }
+}
+
+function buildPriceSourceUrl(slug: string, config: RunConfig) {
+  const cityPath = config.cityPathTemplate.includes("{slug}")
+    ? config.cityPathTemplate.replaceAll("{slug}", slug)
+    : config.cityPathTemplate;
+  return new URL(cityPath, config.sourceBaseUrl).toString();
 }
 
 function shouldRetry(status: RequestStatus, attempt: number, retryLimit: number) {
@@ -433,10 +464,7 @@ async function scrapeCityPrices(
   runId: number | null,
   config: RunConfig,
 ): Promise<CityScrapeResult> {
-  const cityPath = config.cityPathTemplate.includes("{slug}")
-    ? config.cityPathTemplate.replaceAll("{slug}", slug)
-    : config.cityPathTemplate;
-  const sourceUrl = new URL(cityPath, config.sourceBaseUrl).toString();
+  const sourceUrl = buildPriceSourceUrl(slug, config);
   const prices = emptyCandidates();
   const state = config.selectedCities.find((entry) => entry.city === city)?.state || "";
   const fetchResult = await fetchCityHtml(sourceUrl, city, runId, config);
@@ -468,6 +496,7 @@ async function scrapeCityPrices(
       requestLogs: fetchResult.requestLogs,
       requestStatus: fetchResult.requestStatus,
       sourceStatusCode: fetchResult.finalStatusCode,
+      rawHtml: null,
     };
   }
 
@@ -506,6 +535,7 @@ async function scrapeCityPrices(
     requestLogs: fetchResult.requestLogs,
     requestStatus: fetchResult.requestStatus,
     sourceStatusCode: fetchResult.finalStatusCode,
+    rawHtml: fetchResult.html,
   };
 }
 
@@ -656,6 +686,7 @@ async function buildRunConfig(
       250,
       15000,
     ),
+    rawDocumentRetentionDays: Math.max(1, Math.round(defaults.rawDocumentRetentionDays)),
     proxyLabel: Deno.env.get("SCRAPE_PROXY_LABEL")?.trim() || null,
     proxyUrlTemplate: Deno.env.get("SCRAPE_PROXY_URL_TEMPLATE")?.trim() || null,
     proxyAuthHeaderName: Deno.env.get("SCRAPE_PROXY_AUTH_HEADER_NAME")?.trim() || null,
@@ -761,6 +792,8 @@ serve(async (req: Request) => {
     return new Response("ok", { headers: CORS });
   }
 
+  let governanceJobId: number | null = null;
+
   try {
     const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
     const authHeader = req.headers.get("Authorization") ?? "";
@@ -776,6 +809,7 @@ serve(async (req: Request) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
+    await pruneExpiredRawSourceDocuments(supabase);
 
     const body = await readJsonBody(req);
     const config = await buildRunConfig(supabase, body);
@@ -788,12 +822,28 @@ serve(async (req: Request) => {
     }
 
     const runId = await createScrapeRun(supabase, config);
+    const jobId = await createScrapeJob(supabase, {
+      jobType: "price_scrape",
+      sourceKey: config.sourceKey,
+      triggerMode: config.mode === "sandbox" ? "manual" : "scheduled",
+      payloadJson: {
+        city_count: config.selectedCities.length,
+        publish: config.publish,
+        mode: config.mode,
+      },
+    });
+    governanceJobId = jobId;
 
     const { data: existingRows, error: existingError } = await supabase
       .from("lpg_prices")
       .select("city, state, product_type, price");
 
     if (existingError) {
+      await finishScrapeJob(supabase, jobId, {
+        status: "failed",
+        lastError: existingError.message,
+        resultJson: { city_count: config.selectedCities.length },
+      });
       await updateScrapeRun(supabase, runId, {
         status: "failed",
         summary: { error: existingError.message },
@@ -834,7 +884,50 @@ serve(async (req: Request) => {
     const cityResults = await runWithConcurrency(
       config.selectedCities,
       config.maxConcurrency,
-      ({ city, sourceSlug }) => scrapeCityPrices(city, sourceSlug, runId, config),
+      async ({ city, sourceSlug }) => {
+        const result = await scrapeCityPrices(city, sourceSlug, runId, config);
+        let rawDocumentAttemptId: number | null = null;
+
+        for (const requestLog of result.requestLogs) {
+          const attemptId = await recordScrapeJobAttempt(supabase, {
+            jobId,
+            attemptNumber: requestLog.attempt,
+            targetKey: city,
+            requestUrl: requestLog.request_url,
+            sourceUrl: requestLog.target_url,
+            sourceHost: requestLog.source_host,
+            status: mapRequestStatusToAttemptStatus(requestLog.request_status),
+            httpStatus: requestLog.status_code,
+            latencyMs: requestLog.latency_ms,
+            errorMessage: requestLog.error_message,
+            blockedSuspected: requestLog.blocked_suspected,
+            rateLimited: requestLog.rate_limited,
+          });
+
+          if (requestLog.request_status === "success") {
+            rawDocumentAttemptId = attemptId;
+          }
+        }
+
+        if (result.rawHtml) {
+          await storeRawSourceDocument(supabase, {
+            jobId,
+            attemptId: rawDocumentAttemptId,
+            sourceKey: config.sourceKey,
+            targetKey: city,
+            documentKind: "html",
+            sourceUrl: result.sourceUrl,
+            contentText: result.rawHtml,
+            retentionDays: config.rawDocumentRetentionDays,
+            metadataJson: {
+              request_status: result.requestStatus,
+              source_status_code: result.sourceStatusCode,
+            },
+          });
+        }
+
+        return result;
+      },
     );
 
     const requestLogs = cityResults.flatMap((result) => result.requestLogs);
@@ -908,6 +1001,14 @@ serve(async (req: Request) => {
         .upsert(upserts, { onConflict: "city,product_type" });
 
       if (dbError) {
+        await finishScrapeJob(supabase, jobId, {
+          status: "failed",
+          lastError: dbError.message,
+          resultJson: {
+            attempted_cities: results.length,
+            request_attempts: requestLogs.length,
+          },
+        });
         await updateScrapeRun(supabase, runId, {
           status: "failed",
           summary: { error: dbError.message },
@@ -955,6 +1056,19 @@ serve(async (req: Request) => {
       },
     });
 
+    await finishScrapeJob(supabase, jobId, {
+      status: successful === results.length ? "succeeded" : successful > 0 || partial > 0 ? "partial" : "failed",
+      resultJson: {
+        successful,
+        partial,
+        held,
+        published_rows: upserts.length,
+        request_attempts: requestLogs.length,
+        rate_limited_requests: rateLimitedRequests,
+        blocked_requests: blockedRequests,
+      },
+    });
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -978,6 +1092,15 @@ serve(async (req: Request) => {
       { headers: CORS },
     );
   } catch (err) {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (governanceJobId && supabaseUrl && serviceRoleKey) {
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      await finishScrapeJob(supabase, governanceJobId, {
+        status: "failed",
+        lastError: String(err),
+      });
+    }
     return new Response(
       JSON.stringify({ ok: false, error: String(err) }),
       { status: 500, headers: CORS },

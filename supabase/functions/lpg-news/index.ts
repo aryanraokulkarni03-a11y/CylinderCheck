@@ -20,6 +20,21 @@ type StoredArticleRow = {
   scraped_at: string;
 };
 
+type PublishedArticleRow = {
+  slug: string;
+  headline: string;
+  deck: string | null;
+  body_markdown: string | null;
+  hero_image_url: string | null;
+  city: string | null;
+  state: string | null;
+  category: string;
+  source_name: string;
+  canonical_source_url: string;
+  published_at: string;
+  updated_at: string;
+};
+
 function createServiceClient() {
   return createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -42,6 +57,26 @@ function toResponseArticle(article: StoredArticleRow) {
   };
 }
 
+function toPublishedResponseArticle(article: PublishedArticleRow) {
+  return {
+    title: article.headline,
+    source: article.source_name,
+    link: `/news/${article.slug}`,
+    googleLink: "",
+    sourceUrl: article.canonical_source_url,
+    category: article.category,
+    city: article.city,
+    displayLocation: article.city || article.state || "",
+    pubDate: article.published_at,
+    scrapedAt: article.updated_at,
+    slug: article.slug,
+    deck: article.deck,
+    bodyMarkdown: article.body_markdown,
+    heroImageUrl: article.hero_image_url,
+    publication: true,
+  };
+}
+
 async function readStoredNews(limit: number) {
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -55,6 +90,22 @@ async function readStoredNews(limit: number) {
   }
 
   return (data ?? []) as StoredArticleRow[];
+}
+
+async function readPublishedNews(limit: number) {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("news_article_publications")
+    .select("slug, headline, deck, body_markdown, hero_image_url, city, state, category, source_name, canonical_source_url, published_at, updated_at")
+    .eq("publish_status", "published")
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as PublishedArticleRow[];
 }
 
 async function seedNewsCache(limit: number) {
@@ -94,6 +145,19 @@ serve(async (req) => {
   try {
     const config = await loadNewsScrapeConfig(createServiceClient());
     const limit = Math.max(1, Math.round(config.newsLimit));
+    const viewMode = new URL(req.url).searchParams.get("view");
+
+    if (viewMode === "published") {
+      const publications = await readPublishedNews(limit);
+      const articles = publications.map(toPublishedResponseArticle);
+      const updatedAt = articles[0]?.scrapedAt || null;
+
+      return new Response(
+        JSON.stringify({ ok: true, articles, updatedAt, view: "published" }),
+        { headers: CORS },
+      );
+    }
+
     const stored = await readStoredNews(limit);
     const articles = stored.length
       ? stored.map(toResponseArticle)
@@ -101,7 +165,7 @@ serve(async (req) => {
     const updatedAt = articles[0]?.scrapedAt || null;
 
     return new Response(
-      JSON.stringify({ ok: true, articles, updatedAt }),
+      JSON.stringify({ ok: true, articles, updatedAt, view: "feed" }),
       { headers: CORS },
     );
   } catch (err) {

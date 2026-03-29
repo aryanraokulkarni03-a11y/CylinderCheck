@@ -74,6 +74,31 @@ export type NewsArticle = {
   scraped_at: string;
 };
 
+export type NewsArticleCandidate = {
+  candidate_key: string;
+  article_key: string;
+  source_key: string;
+  headline: string;
+  slug: string;
+  deck: string | null;
+  body_markdown: string | null;
+  body_text: string | null;
+  hero_image_url: string | null;
+  city: string | null;
+  state: string | null;
+  topic_key: string | null;
+  category: string;
+  canonical_source_url: string;
+  source_name: string;
+  source_domain: string | null;
+  source_hash: string;
+  published_source_at: string;
+  source_confidence: number;
+  normalization_confidence: number;
+  metadata_json: Record<string, unknown>;
+  scraped_at: string;
+};
+
 type RawArticle = {
   title: string;
   googleLink: string;
@@ -174,6 +199,23 @@ function getCategory(title: string) {
   return "GENERAL";
 }
 
+function clampConfidence(value: number) {
+  return Math.max(0, Math.min(0.999, Number(value.toFixed(3))));
+}
+
+function slugify(value: string) {
+  const normalized = String(value || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^\w\s-]/g, "")
+    .replace(/_/g, " ")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return normalized || "news-item";
+}
+
 function decodeXmlEntities(value: string) {
   return value
     .replace(/&amp;/g, "&")
@@ -191,6 +233,14 @@ function normalizeLink(link: string) {
     return url.toString();
   } catch {
     return link.trim();
+  }
+}
+
+function extractHostname(link: string) {
+  try {
+    return new URL(String(link || "").trim()).hostname.toLowerCase();
+  } catch {
+    return null;
   }
 }
 
@@ -273,6 +323,15 @@ export function inferDisplayLocation(title: string, link: string, city: string |
   }
 
   return "";
+}
+
+function inferState(title: string, link: string) {
+  const haystack = `${title || ""} ${link || ""}`.toLowerCase();
+  for (const [needle, label] of STATE_LOCATION_LABELS) {
+    if (haystack.includes(needle)) return label;
+  }
+
+  return null;
 }
 
 function extractGoogleArticleId(link: string) {
@@ -449,6 +508,82 @@ function buildArticleKey(article: {
     article.title.trim().toLowerCase(),
     article.publishedAt,
   ].join("::");
+}
+
+async function sha256Hex(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function buildSourceConfidence(article: NewsArticle) {
+  const domain = extractHostname(article.source_url || article.link);
+  if (!domain) return 0.45;
+  if (domain.endsWith(".gov.in") || domain.endsWith(".nic.in")) return 0.92;
+  if (domain.includes("thehindu") || domain.includes("indianexpress") || domain.includes("hindustantimes")) {
+    return 0.84;
+  }
+  return 0.72;
+}
+
+function buildNormalizationConfidence(article: NewsArticle) {
+  let score = 0.55;
+  if (article.link) score += 0.15;
+  if (article.source_url) score += 0.05;
+  if (article.city) score += 0.12;
+  if (inferState(article.title, article.link)) score += 0.06;
+  if (article.title.trim().length >= 24) score += 0.05;
+  return clampConfidence(score);
+}
+
+export async function buildNewsArticleCandidates(
+  sourceKey: string,
+  articles: NewsArticle[],
+) {
+  return await Promise.all(
+    articles.map(async (article) => {
+      const state = inferState(article.title, article.link);
+      const sourceDomain = extractHostname(article.source_url || article.link);
+      const sourceHash = await sha256Hex([
+        article.article_key,
+        article.link,
+        article.published_at,
+      ].join("::"));
+      const slug = `${slugify(article.title).slice(0, 80)}-${sourceHash.slice(0, 8)}`;
+
+      return {
+        candidate_key: article.article_key,
+        article_key: article.article_key,
+        source_key: sourceKey,
+        headline: article.title,
+        slug,
+        deck: null,
+        body_markdown: null,
+        body_text: null,
+        hero_image_url: null,
+        city: article.city,
+        state,
+        topic_key: null,
+        category: article.category,
+        canonical_source_url: article.link,
+        source_name: article.source,
+        source_domain: sourceDomain,
+        source_hash: sourceHash,
+        published_source_at: article.published_at,
+        source_confidence: buildSourceConfidence(article),
+        normalization_confidence: buildNormalizationConfidence(article),
+        metadata_json: {
+          google_link: article.google_link,
+          source_url: article.source_url,
+          scraped_at: article.scraped_at,
+          inferred_display_location: inferDisplayLocation(article.title, article.link, article.city),
+        },
+        scraped_at: article.scraped_at,
+      } satisfies NewsArticleCandidate;
+    }),
+  );
 }
 
 export async function scrapeLatestNews(

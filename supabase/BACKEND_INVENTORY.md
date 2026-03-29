@@ -35,6 +35,20 @@ It is intentionally practical:
   - Important:
     - This is not yet a full article publishing system.
     - Phase 3E should treat this as legacy feed storage or a migration source.
+- `public.news_article_candidates`
+  - Canonical staging table for scraped/normalized article candidates.
+  - Used by:
+    - `supabase/functions/scrape-news/index.ts`
+  - Important:
+    - review-first staging layer
+    - private/server-side only
+- `public.news_article_publications`
+  - Canonical publication table for reviewed news content.
+  - Used by:
+    - `supabase/functions/lpg-news/index.ts` in published read mode
+  - Important:
+    - public read is limited to `publish_status = 'published'`
+    - additive alongside `news_articles` until `/news` fully migrates
 
 ### Commercial
 - `public.vendors`
@@ -135,6 +149,8 @@ Views:
 - `public.scrape_job_health_v1`
 - `public.scrape_source_health_v1`
   - Security-invoker views with explicit public revoke rules.
+- `public.news_review_queue_v1`
+  - Security-invoker private review queue over `news_article_candidates`.
 
 ## Config foundation tables
 
@@ -172,6 +188,12 @@ Views:
   - `scrape_source_registry`
   - `scrape_topic_registry`
   - `scrape_runtime_config`
+- `scrape-news` now writes:
+  - `news_articles`
+  - `news_article_candidates`
+- `lpg-news` now supports:
+  - legacy feed reads from `news_articles`
+  - published-read mode from `news_article_publications`
 - Remaining hardcoded behavior is now mostly limited to parsing heuristics and product-specific validation logic, not source/city/workflow ownership.
 - The first `indane_locator_html` rollout is intentionally publish-disabled until city-level agreement and parser stability are validated live.
 
@@ -199,6 +221,7 @@ Phase 3E should build on:
 - repo/live contract alignment first
 - config-driven scraper workflow second
 - article-grade publishing tables after that
+- Phase 3E.5 now starts that article-grade publishing foundation while preserving the existing feed path.
 
 ## Canonical vs legacy guidance
 
@@ -207,6 +230,8 @@ Prefer these for new work:
 - `lpg_prices`
 - `vendors`
 - `news_articles` only as the current feed layer
+- `news_article_candidates`
+- `news_article_publications`
 - `scrape_runs` + `scrape_request_log` for scraper observability
 
 Avoid expanding new frontend dependencies directly on:

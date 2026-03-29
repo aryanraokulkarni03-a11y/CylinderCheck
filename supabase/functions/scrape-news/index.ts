@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { loadNewsScrapeConfig, scrapeLatestNews } from "../_shared/news.ts";
+import { buildNewsArticleCandidates, loadNewsScrapeConfig, scrapeLatestNews } from "../_shared/news.ts";
 import {
   createScrapeJob,
   finishScrapeJob,
@@ -110,6 +110,8 @@ serve(async (req) => {
       },
     });
 
+    let candidateCount = 0;
+
     if (articles.length) {
       const { error: upsertError } = await supabase
         .from("news_articles")
@@ -124,9 +126,31 @@ serve(async (req) => {
             feed_successes: feedSuccesses,
             feed_failures: feedFailures,
             normalized_count: articles.length,
+            candidate_count: candidateCount,
           },
         });
         throw upsertError;
+      }
+
+      const candidates = await buildNewsArticleCandidates(config.sourceKey, articles);
+      candidateCount = candidates.length;
+      const { error: candidateUpsertError } = await supabase
+        .from("news_article_candidates")
+        .upsert(candidates, { onConflict: "candidate_key" });
+
+      if (candidateUpsertError) {
+        await finishScrapeJob(supabase, jobId, {
+          status: "failed",
+          lastError: candidateUpsertError.message,
+          resultJson: {
+            feed_attempts: feedAttempts,
+            feed_successes: feedSuccesses,
+            feed_failures: feedFailures,
+            normalized_count: articles.length,
+            candidate_count: candidateCount,
+          },
+        });
+        throw candidateUpsertError;
       }
     }
 
@@ -146,6 +170,7 @@ serve(async (req) => {
             feed_successes: feedSuccesses,
             feed_failures: feedFailures,
             normalized_count: articles.length,
+            candidate_count: candidateCount,
             retention_days: retentionDays,
           },
       });
@@ -166,6 +191,7 @@ serve(async (req) => {
         feed_successes: feedSuccesses,
         feed_failures: feedFailures,
         normalized_count: articles.length,
+        candidate_count: candidateCount,
         retention_days: retentionDays,
       },
     });
@@ -175,6 +201,7 @@ serve(async (req) => {
         ok: true,
         message: `Scraped ${articles.length} normalized news articles`,
         scraped_count: articles.length,
+        candidate_count: candidateCount,
         updated_at: new Date().toISOString(),
         schedule_ist: ["07:00", "19:00"],
         retention_days: retentionDays,

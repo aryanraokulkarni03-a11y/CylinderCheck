@@ -128,11 +128,27 @@ Transitional / supporting:
 
 These are the current observability base for the scraping layer.
 
+## Config foundation tables
+
+- `public.city_registry`
+  - Canonical repo-managed city list for scraper scope, SEO surfaces, and news location support.
+  - Seeds the current household SEO, commercial SEO, price scrape, and news city footprint.
+- `public.scrape_source_registry`
+  - Canonical source list for price and news ingestion.
+  - Holds source host/base URL, retry defaults, and fetch-mode metadata.
+- `public.scrape_topic_registry`
+  - Canonical news topic query list.
+  - Replaces the hardcoded LPG news query set over time.
+- `public.scrape_runtime_config`
+  - Canonical runtime knob store for scraper defaults.
+  - Holds values like news limit, fetch timeout, jitter, and retry defaults.
+
 ## Known backend maturity notes
 
-### Current canonical contracts are still partly code-owned
-- Price scraper city list and thresholds still live in Edge Function code.
-- News query list, city normalization, and feed limits still live in Edge Function code.
+### Phase 3E.2 foundation is in repo, but the functions still need refactors
+- The city/source/topic/runtime tables now exist as repo-managed contracts.
+- `scrape-prices` and the news helpers still read hardcoded values today.
+- The next backend slices should switch function reads from code constants to these tables.
 
 ### Current schema gaps now closed in repo
 The repo now explicitly represents:
@@ -158,4 +174,3 @@ Prefer these for new work:
 Avoid expanding new frontend dependencies directly on:
 - `pin_data` unless only for fallback compatibility
 - raw snapshot internals unless the read model truly cannot express the need
-

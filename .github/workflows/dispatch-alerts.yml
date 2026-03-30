@@ -21,22 +21,33 @@ jobs:
       - name: Invoke dispatch-alerts
         env:
           FUNCTIONS_BASE_URL: ${{ secrets.SUPABASE_FUNCTIONS_BASE_URL }}
-          ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          ALERTS_CRON_SECRET: ${{ secrets.SUPABASE_ALERTS_CRON_SECRET }}
         run: |
+          FUNCTIONS_BASE_URL=$(printf '%s' "$FUNCTIONS_BASE_URL" | tr -d '\r\n' | xargs)
+          ALERTS_CRON_SECRET=$(printf '%s' "$ALERTS_CRON_SECRET" | tr -d '\r\n' | xargs)
+
           test -n "$FUNCTIONS_BASE_URL"
-          test -n "$ANON_KEY"
+          test -n "$ALERTS_CRON_SECRET"
+
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            trigger_mode="manual"
+          else
+            trigger_mode="scheduled"
+          fi
+
+          payload=$(jq -n --arg triggerMode "$trigger_mode" '{triggerMode: $triggerMode}')
 
           http_code=$(curl -sS -o response.json -w "%{http_code}" \
             -X POST "${FUNCTIONS_BASE_URL}/dispatch-alerts" \
-            -H "Authorization: Bearer ${ANON_KEY}" \
+            -H "Authorization: Bearer ${ALERTS_CRON_SECRET}" \
             -H "Content-Type: application/json" \
-            -d '{}')
+            -d "$payload")
 
           cat response.json
 
           test "$http_code" -ge 200
           test "$http_code" -lt 300
-          jq -e '.ok == true' response.json > /dev/null
+          jq -e '.ok == true and (.jobStatus == "succeeded" or .jobStatus == "partial")' response.json > /dev/null
 
       - name: Ping dispatch-alerts monitor success
         if: ${{ success() }}

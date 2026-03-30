@@ -88,6 +88,8 @@ It is intentionally practical:
 - `public.reports`
 - `public.report_votes`
 - `public.alert_subscriptions`
+- `public.alert_dispatch_jobs`
+- `public.alert_dispatch_attempts`
 - `public.subscriptions`
 - `public.commercial_leads`
 - `public.auth_notification_log`
@@ -138,6 +140,8 @@ Transitional / supporting:
   - Authenticated editorial mutation endpoint for approve/reject/publish/archive workflow
 - `dispatch-alerts`
   - Sends email reminders
+  - Protected by a dedicated scheduler secret
+  - Writes canonical alert dispatch job and attempt records
 - `verify-payment`
   - Writes paid subscriptions
 - `get-admin-stats`
@@ -160,6 +164,8 @@ Views:
   - Security-invoker views with explicit public revoke rules.
 - `public.news_review_queue_v1`
   - Security-invoker private review queue over `news_article_candidates`.
+- `public.alert_dispatch_health_v1`
+  - Security-invoker private health view over alert dispatch runs.
 
 ## Config foundation tables
 

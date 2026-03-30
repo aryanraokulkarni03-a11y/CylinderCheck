@@ -278,12 +278,8 @@ serve(async (req) => {
       });
     }
 
-    if ((action === "publish" || action === "archive") && !canPublish(role)) {
+    if ((action === "approve" || action === "publish" || action === "archive") && !canPublish(role)) {
       return jsonResponse(403, { ok: false, error: "Publisher access required" });
-    }
-
-    if (action === "reject" && !toNullableTrimmed(body.rejectionReason)) {
-      return jsonResponse(400, { ok: false, error: "rejectionReason is required" });
     }
 
     let candidateUpdate: Record<string, unknown> = {};
@@ -295,18 +291,6 @@ serve(async (req) => {
       last_editorial_actor_email: user.email ?? adminRow.email,
       last_editorial_action_at: now,
     };
-
-    if (action === "approve") {
-      candidateUpdate = {
-        ...editorialFields,
-        review_status: "approved",
-        publish_status: candidate.publish_status === "published" ? "published" : "ready",
-        rejection_reason: null,
-        reviewed_by_user_id: user.id,
-        reviewed_at: now,
-        metadata_json: mergeMetadata(candidate.metadata_json, metadataPatchBase),
-      };
-    }
 
     if (action === "reject") {
       candidateUpdate = {
@@ -320,20 +304,13 @@ serve(async (req) => {
       };
     }
 
-    if (action === "publish") {
-      if (candidate.review_status !== "approved") {
-        return jsonResponse(409, { ok: false, error: "Candidate must be approved before publishing" });
-      }
-
+    if (action === "approve" || action === "publish") {
       const mergedCandidate = {
         ...candidate,
         ...editorialFields,
       };
 
       const bodyMarkdown = toNullableTrimmed(mergedCandidate.body_markdown);
-      if (!bodyMarkdown) {
-        return jsonResponse(400, { ok: false, error: "bodyMarkdown is required before publishing" });
-      }
 
       candidateUpdate = {
         ...editorialFields,
@@ -407,7 +384,7 @@ serve(async (req) => {
 
     let publicationId: number | null = null;
 
-    if (action === "publish" && publicationUpdate) {
+    if ((action === "approve" || action === "publish") && publicationUpdate) {
       const { data: publicationData, error: publicationError } = await supabase
         .from("news_article_publications")
         .upsert(publicationUpdate, { onConflict: "candidate_id" })
@@ -442,7 +419,7 @@ serve(async (req) => {
       .single();
 
     if (updateCandidateError || !updatedCandidateData) {
-      if (action === "publish" && publicationId) {
+      if ((action === "approve" || action === "publish") && publicationId) {
         await supabase
           .from("news_article_publications")
           .delete()

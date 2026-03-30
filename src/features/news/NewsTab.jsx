@@ -149,7 +149,7 @@ function buildWhatsAppLink(item) {
   const source = item?.source ? String(item.source).trim() : ''
   const category = item?.category || getCategory(title)
   const city = item?.city ? String(item.city).trim() : ''
-  const link = item?.link ? String(item.link).trim() : ''
+  const link = item?.sourceUrl ? String(item.sourceUrl).trim() : item?.link ? String(item.link).trim() : ''
   const signal = city || (category !== 'GENERAL' ? category : '')
   const text = [
     'CylinderCheck LPG intel',
@@ -235,7 +235,7 @@ export default function NewsTab() {
 
     setError(null)
     setLoading(true)
-    fetch(`${SUPABASE_FUNC_URL}/lpg-news`, {
+    fetch(`${SUPABASE_FUNC_URL}/lpg-news?view=published`, {
       headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
     })
       .then((r) => r.json())
@@ -251,6 +251,8 @@ export default function NewsTab() {
             category: a.category || getCategory(a.title),
             city: a.city || getCity(a.title, a.link),
             displayLocation: a.displayLocation || '',
+            deck: a.deck || '',
+            publication: Boolean(a.publication),
           }))
           cachedNews = parsed
           cachedNewsUpdatedAt = d.updatedAt || null
@@ -258,11 +260,11 @@ export default function NewsTab() {
           setNews(parsed)
           setNewsUpdatedAt(d.updatedAt || null)
         } else {
-          setError('No recent items returned right now.')
+          setError('No published stories are live right now.')
         }
       })
       .catch(() => {
-        setError('Feed temporarily unavailable. Please try again.')
+        setError('Published stories are temporarily unavailable. Please try again.')
       })
       .finally(() => setLoading(false))
   }, [])
@@ -344,7 +346,7 @@ export default function NewsTab() {
       <PageHeader
         icon={Newspaper}
         title="News"
-        description="Shortages, price changes, and policy moves that affect LPG across India. City-tagged when location is clear."
+        description="Published LPG stories only. Reviewed updates on shortages, prices, and policy moves across India."
         actions={
           <button
             type="button"
@@ -353,7 +355,7 @@ export default function NewsTab() {
             className="btn-ghost disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 size={18} className="motion-safe:animate-spin" /> : <RefreshCw size={18} />}
-            Refresh feed
+            Refresh stories
           </button>
         }
       />
@@ -404,9 +406,9 @@ export default function NewsTab() {
           ) : !validNews.length ? (
             <div className="mt-4">
               <EmptyState
-                title="No recent news"
-                description="No recent LPG stories are showing right now. Refresh and check again."
-                actionText="Refresh feed"
+                title="No published news yet"
+                description="No reviewed LPG stories are live right now. Check again after the next editorial review."
+                actionText="Refresh stories"
                 onAction={() => fetchNews(true)}
               />
             </div>
@@ -463,6 +465,11 @@ export default function NewsTab() {
                           {leadStory.title}
                         </a>
                       </h2>
+                      {leadStory.deck ? (
+                        <p className="type-card-copy mt-4 mb-0 max-w-[42rem] text-[var(--text-secondary)]">
+                          {leadStory.deck}
+                        </p>
+                      ) : null}
 
                     </CardBody>
                   </Card>
@@ -545,6 +552,11 @@ export default function NewsTab() {
                                   {item.title}
                                 </h3>
                               </a>
+                              {item.deck ? (
+                                <p className="type-note mt-2 mb-0 text-[var(--text-secondary)]">
+                                  {item.deck}
+                                </p>
+                              ) : null}
 
                               <div className="news-signal-row__shareline">
                                 <a

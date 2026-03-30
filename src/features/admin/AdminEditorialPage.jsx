@@ -27,7 +27,6 @@ import { Callout } from '../../components/ui/Callout'
 import { Field } from '../../components/ui/Field'
 import { PillRow } from '../../components/ui/PillRow'
 import EmptyState from '../../components/shared/EmptyState'
-import LiquidGlassBtn from '../../components/shared/LiquidGlassBtn'
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import { StatCard } from '../../components/ui/StatCard'
 import { supabase } from '../../supabaseClient'
@@ -37,7 +36,6 @@ const SUPABASE_FUNC_URL = `${(import.meta.env.VITE_SUPABASE_URL || '').replace(/
 const FILTER_OPTIONS = [
   { value: 'all', label: 'All' },
   { value: 'review', label: 'Needs review' },
-  { value: 'ready', label: 'Ready' },
   { value: 'published', label: 'Published' },
   { value: 'rejected', label: 'Rejected' },
   { value: 'archived', label: 'Archived' },
@@ -87,7 +85,7 @@ function statusLabel(item) {
   if (item.publishStatus === 'published') return 'Published'
   if (item.publishStatus === 'archived') return 'Archived'
   if (item.reviewStatus === 'rejected') return 'Rejected'
-  if (item.reviewStatus === 'approved') return 'Ready to publish'
+  if (item.reviewStatus === 'approved') return 'Approved'
   if (item.reviewStatus === 'needs_review') return 'Needs review'
   return 'Pending review'
 }
@@ -113,9 +111,6 @@ function matchesFilter(item, filter) {
   if (filter === 'all') return true
   if (filter === 'review') {
     return item.reviewStatus === 'pending' || item.reviewStatus === 'needs_review'
-  }
-  if (filter === 'ready') {
-    return item.reviewStatus === 'approved' && item.publishStatus === 'ready'
   }
   if (filter === 'published') return item.publishStatus === 'published'
   if (filter === 'rejected') return item.reviewStatus === 'rejected'
@@ -180,7 +175,6 @@ export default function AdminEditorialPage({
   const counts = useMemo(() => {
     const summary = {
       review: 0,
-      ready: 0,
       published: 0,
       rejected: 0,
       archived: 0,
@@ -197,10 +191,6 @@ export default function AdminEditorialPage({
       }
       if (item.reviewStatus === 'rejected') {
         summary.rejected += 1
-        continue
-      }
-      if (item.reviewStatus === 'approved' && item.publishStatus === 'ready') {
-        summary.ready += 1
         continue
       }
       summary.review += 1
@@ -355,22 +345,6 @@ export default function AdminEditorialPage({
   const handleAction = useCallback(async (action) => {
     if (!selectedItem) return
 
-    if (action === 'reject' && !String(form.rejectionReason || '').trim()) {
-      setActionError('Add a rejection reason before rejecting this story.')
-      return
-    }
-
-    if (action === 'publish') {
-      if (!String(form.deck || '').trim()) {
-        setActionError('Add a short deck before publishing so the public card stays sharp.')
-        return
-      }
-      if (!String(form.bodyMarkdown || '').trim()) {
-        setActionError('Add the short CylinderCheck summary before publishing.')
-        return
-      }
-    }
-
     setSubmittingAction(action)
     setActionError('')
 
@@ -388,15 +362,13 @@ export default function AdminEditorialPage({
       setDirty(false)
       setActionNotice(
         action === 'approve'
-          ? 'Candidate approved and saved.'
-          : action === 'publish'
-            ? 'Story published successfully.'
-            : action === 'reject'
-              ? 'Candidate rejected.'
-              : 'Story archived.',
+          ? 'Story approved and published.'
+          : action === 'reject'
+            ? 'Candidate rejected and kept out of public news.'
+            : 'Story archived.',
       )
 
-      if (action === 'publish' || action === 'archive') {
+      if (action === 'approve' || action === 'reject' || action === 'archive') {
         setMobileDetailOpen(false)
       }
     } catch (mutationError) {
@@ -415,7 +387,7 @@ export default function AdminEditorialPage({
         markerStatus={selectedItem ? detailStatusTone : 'early'}
         icon={FilePenLine}
         title="Editorial workspace"
-        description="Review candidate stories, refine the CylinderCheck summary, and publish with mobile-first editorial control."
+        description="Review candidate stories quickly. Approve publishes immediately, reject keeps the story out of public news."
         actions={(
           <div className="editorial-page-header__actions">
             <button type="button" onClick={onBack} className="btn-ghost">
@@ -463,9 +435,9 @@ export default function AdminEditorialPage({
         <>
           <div className="editorial-overview-grid">
             <StatCard value={counts.review} label="Needs review" status="early" />
-            <StatCard value={counts.ready} label="Ready to publish" status="active" />
             <StatCard value={counts.published} label="Published" status="clear" />
             <StatCard value={counts.rejected} label="Rejected" status="severe" />
+            <StatCard value={counts.archived} label="Archived" status="active" />
           </div>
 
           <div className="editorial-workspace__layout">
@@ -601,7 +573,7 @@ export default function AdminEditorialPage({
                   <CardBody>
                     <EmptyState
                       title="Pick a candidate"
-                      description="Open a story from the queue to review, refine, approve, publish, or archive it."
+                      description="Open a story from the queue to review, refine, approve, reject, or archive it."
                       iconSlot={<EmptyEditorialIcon />}
                     />
                   </CardBody>
@@ -633,9 +605,15 @@ export default function AdminEditorialPage({
                         <h2 className="editorial-story-preview__title">
                           {selectedItem.headline}
                         </h2>
-                        <p className="type-card-copy editorial-story-preview__summary mb-0">
-                          {selectedItem.deck || 'Add a concise deck so the published story lands clearly at first glance.'}
-                        </p>
+                        {selectedItem.deck ? (
+                          <p className="type-card-copy editorial-story-preview__summary mb-0">
+                            {selectedItem.deck}
+                          </p>
+                        ) : (
+                          <p className="type-note editorial-story-preview__summary mb-0">
+                            Optional refinements like a deck or short CylinderCheck note can be added if this story needs more context.
+                          </p>
+                        )}
                       </div>
 
                       <div className="editorial-story-preview__meta-grid">
@@ -662,58 +640,53 @@ export default function AdminEditorialPage({
                       </a>
                     </section>
 
-                    <section className="editorial-form-grid">
-                      <Field label="Headline" meta="Editable for publication polish">
-                        <input
-                          value={form.headline}
-                          onChange={(event) => handleFieldChange('headline', event.target.value)}
-                          className="input"
-                          placeholder="Refine the headline if needed"
-                        />
-                      </Field>
+                    <details className="editorial-refine-disclosure">
+                      <summary className="editorial-refine-disclosure__summary">
+                        <span>Refine story details</span>
+                        <span className="type-note">Optional</span>
+                      </summary>
 
-                      <Field label="Deck" meta="Shown on the published story card">
-                        <textarea
-                          value={form.deck}
-                          onChange={(event) => handleFieldChange('deck', event.target.value)}
-                          className="input resize-y"
-                          style={{ minHeight: 96 }}
-                          placeholder="Write the short CylinderCheck deck"
-                        />
-                      </Field>
-
-                      <Field label="CylinderCheck summary" meta="Required before publish">
-                        <textarea
-                          value={form.bodyMarkdown}
-                          onChange={(event) => handleFieldChange('bodyMarkdown', event.target.value)}
-                          className="input resize-y"
-                          style={{ minHeight: 180 }}
-                          placeholder="Write the concise editorial summary with clear source attribution."
-                        />
-                      </Field>
-
-                      <Field label="Review notes" meta="Private workflow notes">
-                        <textarea
-                          value={form.reviewNotes}
-                          onChange={(event) => handleFieldChange('reviewNotes', event.target.value)}
-                          className="input resize-y"
-                          style={{ minHeight: 110 }}
-                          placeholder="Capture what changed, what still needs review, or why this is publishable."
-                        />
-                      </Field>
-
-                      {selectedItem.publishStatus !== 'published' ? (
-                        <Field label="Rejection reason" meta="Required only when rejecting">
-                          <textarea
-                            value={form.rejectionReason}
-                            onChange={(event) => handleFieldChange('rejectionReason', event.target.value)}
-                            className="input resize-y"
-                            style={{ minHeight: 96 }}
-                            placeholder="Explain why this candidate should stay out of the publication flow."
+                      <section className="editorial-form-grid">
+                        <Field label="Headline" meta="Editable publication polish">
+                          <input
+                            value={form.headline}
+                            onChange={(event) => handleFieldChange('headline', event.target.value)}
+                            className="input"
+                            placeholder="Refine the headline if needed"
                           />
                         </Field>
-                      ) : null}
-                    </section>
+
+                        <Field label="Deck" meta="Optional published card summary">
+                          <textarea
+                            value={form.deck}
+                            onChange={(event) => handleFieldChange('deck', event.target.value)}
+                            className="input resize-y"
+                            style={{ minHeight: 96 }}
+                            placeholder="Add a short deck if this story needs more context"
+                          />
+                        </Field>
+
+                        <Field label="CylinderCheck note" meta="Optional editorial context">
+                          <textarea
+                            value={form.bodyMarkdown}
+                            onChange={(event) => handleFieldChange('bodyMarkdown', event.target.value)}
+                            className="input resize-y"
+                            style={{ minHeight: 150 }}
+                            placeholder="Add a concise note with source context if needed"
+                          />
+                        </Field>
+
+                        <Field label="Review notes" meta="Private workflow notes">
+                          <textarea
+                            value={form.reviewNotes}
+                            onChange={(event) => handleFieldChange('reviewNotes', event.target.value)}
+                            className="input resize-y"
+                            style={{ minHeight: 110 }}
+                            placeholder="Optional private notes"
+                          />
+                        </Field>
+                      </section>
+                    </details>
 
                     <section className="editorial-detail__audit">
                       <div className="editorial-audit-card">
@@ -758,26 +731,21 @@ export default function AdminEditorialPage({
                           <button
                             type="button"
                             onClick={() => handleAction('approve')}
-                            disabled={submittingAction === 'approve'}
+                            disabled={!canPublish || submittingAction === 'approve'}
                             className="btn-ghost editorial-action-btn"
                           >
                             {submittingAction === 'approve' ? <Loader2 size={16} className="motion-safe:animate-spin" /> : <CheckCheck size={16} />}
-                            <span>{selectedItem.reviewStatus === 'approved' ? 'Save approved' : 'Approve'}</span>
+                            <span>Approve</span>
                           </button>
-
                           {canPublish ? (
-                            <LiquidGlassBtn
-                              className="editorial-action-btn editorial-action-btn--primary"
-                              onClick={() => handleAction('publish')}
-                              disabled={submittingAction === 'publish'}
-                            >
-                              {submittingAction === 'publish' ? <Loader2 size={16} className="motion-safe:animate-spin" /> : <Sparkles size={16} />}
-                              <span>Publish story</span>
-                            </LiquidGlassBtn>
+                            <div className="editorial-publisher-note editorial-publisher-note--quiet">
+                              <Sparkles size={16} />
+                              <span>Approve publishes immediately.</span>
+                            </div>
                           ) : (
                             <div className="editorial-publisher-note">
                               <ShieldCheck size={16} />
-                              <span>Publisher role needed to publish or archive.</span>
+                              <span>Publisher role needed to approve into public news.</span>
                             </div>
                           )}
                         </>

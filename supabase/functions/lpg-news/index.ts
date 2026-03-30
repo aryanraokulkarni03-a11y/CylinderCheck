@@ -61,7 +61,7 @@ function toPublishedResponseArticle(article: PublishedArticleRow) {
   return {
     title: article.headline,
     source: article.source_name,
-    link: `/news/${article.slug}`,
+    link: article.canonical_source_url,
     googleLink: "",
     sourceUrl: article.canonical_source_url,
     category: article.category,
@@ -145,9 +145,9 @@ serve(async (req) => {
   try {
     const config = await loadNewsScrapeConfig(createServiceClient());
     const limit = Math.max(1, Math.round(config.newsLimit));
-    const viewMode = new URL(req.url).searchParams.get("view");
+    const viewMode = new URL(req.url).searchParams.get("view")?.toLowerCase() || "published";
 
-    if (viewMode === "published") {
+    if (viewMode !== "feed") {
       const publications = await readPublishedNews(limit);
       const articles = publications.map(toPublishedResponseArticle);
       const updatedAt = articles[0]?.scrapedAt || null;

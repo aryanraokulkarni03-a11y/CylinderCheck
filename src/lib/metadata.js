@@ -329,6 +329,29 @@ export function getRouteMetadata(pathname = '/', options = {}) {
       ? options.householdSeoCitiesLoaded
       : householdSeoCities.length > 0
 
+  const newsArticleMatch = pathname.match(/^\/news\/([a-z0-9-]+)$/)
+  if (newsArticleMatch) {
+    return {
+      path: pathname,
+      canonicalUrl: absoluteUrl(pathname),
+      ogTitle: 'Published LPG News Story | CylinderCheck',
+      ogDescription: 'Read a reviewed LPG news story from CylinderCheck, with source context and related published coverage.',
+      ogImage: DEFAULT_OG_IMAGE,
+      twitterCard: 'summary_large_image',
+      title: 'Published LPG News Story | CylinderCheck',
+      description: 'Read a reviewed LPG news story from CylinderCheck, with source context and related published coverage.',
+      indexable: true,
+      schema: [
+        webPageSchema({
+          path: pathname,
+          title: 'Published LPG News Story | CylinderCheck',
+          description: 'Read a reviewed LPG news story from CylinderCheck, with source context and related published coverage.',
+        }),
+        ...DEFAULT_SCHEMA,
+      ],
+    }
+  }
+
   const commercialCityMatch = pathname.match(/^\/commercial-lpg-price-in-([a-z0-9-]+)$/)
   if (commercialCityMatch) {
     const commercialCity = resolveCommercialSeoCitySlug(commercialCityMatch[1])

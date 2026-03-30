@@ -1,5 +1,6 @@
 // src/features/news/NewsTab.jsx
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { FadeIn } from '../../components/motion/FadeIn'
 import { Loader2, MapPin, Newspaper, RefreshCw } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -161,6 +162,11 @@ function buildWhatsAppLink(item) {
   return `https://wa.me/?text=${encodeURIComponent(text)}`
 }
 
+function buildStoryHref(item) {
+  if (item?.slug) return `/news/${item.slug}`
+  return ''
+}
+
 function categoryStreamLabel(category) {
   if (category === 'SHORTAGE SIGNALS') return 'Shortage reports'
   if (category === 'PRICE & RATES') return 'Price changes'
@@ -250,8 +256,10 @@ export default function NewsTab() {
             pubDate: new Date(a.pubDate),
             category: a.category || getCategory(a.title),
             city: a.city || getCity(a.title, a.link),
+            state: a.state || '',
             displayLocation: a.displayLocation || '',
             deck: a.deck || '',
+            slug: a.slug || '',
             publication: Boolean(a.publication),
           }))
           cachedNews = parsed
@@ -456,14 +464,23 @@ export default function NewsTab() {
                       </div>
 
                       <h2 className="news-lead-card__headline">
-                        <a
-                          href={leadStory.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="news-lead-card__headline-link"
-                        >
-                          {leadStory.title}
-                        </a>
+                        {leadStory.slug ? (
+                          <Link
+                            to={buildStoryHref(leadStory)}
+                            className="news-lead-card__headline-link"
+                          >
+                            {leadStory.title}
+                          </Link>
+                        ) : (
+                          <a
+                            href={leadStory.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="news-lead-card__headline-link"
+                          >
+                            {leadStory.title}
+                          </a>
+                        )}
                       </h2>
                       {leadStory.deck ? (
                         <p className="type-card-copy mt-4 mb-0 max-w-[42rem] text-[var(--text-secondary)]">
@@ -542,16 +559,27 @@ export default function NewsTab() {
                                 </span>
                               </div>
 
-                              <a
-                                href={item.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="news-signal-row__headline-link"
-                              >
-                                <h3 className="type-list-title m-0 news-signal-row__headline">
-                                  {item.title}
-                                </h3>
-                              </a>
+                              {item.slug ? (
+                                <Link
+                                  to={buildStoryHref(item)}
+                                  className="news-signal-row__headline-link"
+                                >
+                                  <h3 className="type-list-title m-0 news-signal-row__headline">
+                                    {item.title}
+                                  </h3>
+                                </Link>
+                              ) : (
+                                <a
+                                  href={item.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="news-signal-row__headline-link"
+                                >
+                                  <h3 className="type-list-title m-0 news-signal-row__headline">
+                                    {item.title}
+                                  </h3>
+                                </a>
+                              )}
                               {item.deck ? (
                                 <p className="type-note mt-2 mb-0 text-[var(--text-secondary)]">
                                   {item.deck}

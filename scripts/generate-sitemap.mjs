@@ -34,6 +34,37 @@ COMMERCIAL_SEO_CITIES.forEach(city => {
   }
 })
 
+const publishedNewsEndpoint = process.env.VITE_SUPABASE_URL
+  ? `${process.env.VITE_SUPABASE_URL.replace(/\/$/, '')}/functions/v1/lpg-news?view=published&limit=200`
+  : ''
+
+if (publishedNewsEndpoint && process.env.VITE_SUPABASE_ANON_KEY) {
+  try {
+    const response = await fetch(publishedNewsEndpoint, {
+      headers: {
+        Authorization: `Bearer ${process.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+    })
+
+    if (response.ok) {
+      const payload = await response.json()
+      const publishedArticles = Array.isArray(payload?.articles) ? payload.articles : []
+
+      publishedArticles.forEach((article) => {
+        const slug = String(article?.slug || '').trim()
+        if (!slug) return
+
+        const path = `/news/${slug}`
+        if (!entries.find((entry) => entry.path === path)) {
+          entries.push({ path })
+        }
+      })
+    }
+  } catch (error) {
+    console.warn('Skipping published news sitemap entries:', error?.message || error)
+  }
+}
+
 const lastmod = new Date().toISOString().slice(0, 10)
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>

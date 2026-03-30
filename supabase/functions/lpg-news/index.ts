@@ -30,6 +30,7 @@ type PublishedArticleRow = {
   state: string | null;
   category: string;
   source_name: string;
+  source_domain: string | null;
   canonical_source_url: string;
   published_at: string;
   updated_at: string;
@@ -66,6 +67,8 @@ function toPublishedResponseArticle(article: PublishedArticleRow) {
     sourceUrl: article.canonical_source_url,
     category: article.category,
     city: article.city,
+    state: article.state,
+    sourceDomain: article.source_domain,
     displayLocation: article.city || article.state || "",
     pubDate: article.published_at,
     scrapedAt: article.updated_at,
@@ -96,7 +99,7 @@ async function readPublishedNews(limit: number) {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("news_article_publications")
-    .select("slug, headline, deck, body_markdown, hero_image_url, city, state, category, source_name, canonical_source_url, published_at, updated_at")
+    .select("slug, headline, deck, body_markdown, hero_image_url, city, state, category, source_name, source_domain, canonical_source_url, published_at, updated_at")
     .eq("publish_status", "published")
     .order("published_at", { ascending: false })
     .limit(limit);
@@ -106,6 +109,22 @@ async function readPublishedNews(limit: number) {
   }
 
   return (data ?? []) as PublishedArticleRow[];
+}
+
+async function readPublishedArticle(slug: string) {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("news_article_publications")
+    .select("slug, headline, deck, body_markdown, hero_image_url, city, state, category, source_name, source_domain, canonical_source_url, published_at, updated_at")
+    .eq("publish_status", "published")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? null) as PublishedArticleRow | null;
 }
 
 async function seedNewsCache(limit: number) {
@@ -143,11 +162,55 @@ serve(async (req) => {
   }
 
   try {
-    const config = await loadNewsScrapeConfig(createServiceClient());
-    const limit = Math.max(1, Math.round(config.newsLimit));
-    const viewMode = new URL(req.url).searchParams.get("view")?.toLowerCase() || "published";
+    const supabase = createServiceClient();
+    const config = await loadNewsScrapeConfig(supabase);
+    const url = new URL(req.url);
+    const configuredLimit = Math.max(1, Math.round(config.newsLimit));
+    const requestedLimit = Math.max(1, Math.min(200, Math.round(Number(url.searchParams.get("limit")) || configuredLimit)));
+    const limit = requestedLimit;
+    const viewMode = url.searchParams.get("view")?.toLowerCase() || "published";
+    const slug = url.searchParams.get("slug")?.trim() || "";
 
     if (viewMode !== "feed") {
+      if (slug) {
+        const article = await readPublishedArticle(slug);
+
+        if (!article) {
+          return new Response(
+            JSON.stringify({ ok: false, error: "Article not found", article: null, relatedArticles: [] }),
+            { headers: CORS, status: 404 },
+          );
+        }
+
+        const relatedPublications = await readPublishedNews(Math.max(limit + 1, 4));
+        const relatedArticles = relatedPublications
+          .filter((item) => item.slug !== slug)
+          .sort((a, b) => {
+            const categoryBonusA = a.category === article.category ? 1 : 0;
+            const categoryBonusB = b.category === article.category ? 1 : 0;
+            if (categoryBonusA !== categoryBonusB) return categoryBonusB - categoryBonusA;
+
+            const cityBonusA = article.city && a.city === article.city ? 1 : 0;
+            const cityBonusB = article.city && b.city === article.city ? 1 : 0;
+            if (cityBonusA !== cityBonusB) return cityBonusB - cityBonusA;
+
+            return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
+          })
+          .slice(0, Math.min(limit, 4))
+          .map(toPublishedResponseArticle);
+
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            article: toPublishedResponseArticle(article),
+            relatedArticles,
+            updatedAt: article.updated_at,
+            view: "published",
+          }),
+          { headers: CORS },
+        );
+      }
+
       const publications = await readPublishedNews(limit);
       const articles = publications.map(toPublishedResponseArticle);
       const updatedAt = articles[0]?.scrapedAt || null;

@@ -38,6 +38,7 @@ import HomePage from './features/home/HomePage'
 const TrackTab = lazy(() => import('./features/track/TrackTab'))
 const ReportsTab = lazy(() => import('./features/reports/ReportsTab'))
 const NewsTab = lazy(() => import('./features/news/NewsTab'))
+const NewsArticlePage = lazy(() => import('./features/news/NewsArticlePage'))
 const AlertsTab = lazy(() => import('./features/alerts/AlertsTab'))
 const CommercialPage = lazy(() => import('./features/commercial/CommercialPage'))
 const CommercialCitySEOPage = lazy(() => import('./features/commercial/CommercialCitySEOPage'))
@@ -868,6 +869,7 @@ export default function App() {
                   }
                 />
                 <Route path={TAB_ROUTES.news} element={<NewsTab />} />
+                <Route path="/news/:slug" element={<NewsArticlePage />} />
                 <Route path={TAB_ROUTES.alerts} element={<AlertsTab user={user} authLoading={authLoading} />} />
                 <Route
                   path={TAB_ROUTES.commercial}

@@ -53,8 +53,11 @@ const TermsPage = lazy(() => import('./features/legal/TermsPage'))
 const AuthCallbackPage = lazy(() => import('./features/auth/AuthCallbackPage'))
 const AccountPage = lazy(() => import('./features/account/AccountPage'))
 import SeoHead from './components/seo/SeoHead'
-import { getRouteMetadata } from './lib/metadata'
+import { PROJECT_SHUTDOWN_METADATA, getRouteMetadata } from './lib/metadata'
 import { identifyUser, resetIdentity, trackEvent, trackPageView } from './lib/analytics.js'
+import ProjectShutdownPage from './features/shutdown/ProjectShutdownPage'
+
+const PROJECT_DISCONTINUED = true
 
 const TABS = [
   { id: 'track', label: 'Track', icon: Target },
@@ -265,9 +268,19 @@ function RouteFallback({ pathname }) {
 }
 
 export default function App() {
+  const routerLocation = useLocation()
+
+  if (PROJECT_DISCONTINUED) {
+    return (
+      <>
+        <SeoHead metadata={PROJECT_SHUTDOWN_METADATA} />
+        <ProjectShutdownPage />
+      </>
+    )
+  }
+
   const shouldReduceMotion = useReducedMotion()
   const navigate = useNavigate()
-  const routerLocation = useLocation()
 
   // Track page views on route change
   useEffect(() => {

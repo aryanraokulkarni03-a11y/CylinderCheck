@@ -322,6 +322,21 @@ export const ROUTE_METADATA = {
   },
 }
 
+export const PROJECT_SHUTDOWN_METADATA = {
+  path: '/',
+  canonicalUrl: absoluteUrl('/'),
+  ogTitle: 'CylinderCheck has been discontinued',
+  ogDescription:
+    'CylinderCheck has been discontinued and is no longer active or maintained. Thank you to everyone who supported the project.',
+  ogImage: DEFAULT_OG_IMAGE,
+  twitterCard: 'summary_large_image',
+  title: 'CylinderCheck has been discontinued',
+  description:
+    'CylinderCheck has been discontinued and is no longer active or maintained. Thank you to everyone who supported the project.',
+  indexable: false,
+  schema: [],
+}
+
 export function getRouteMetadata(pathname = '/', options = {}) {
   const householdSeoCities = Array.isArray(options.householdSeoCities) ? options.householdSeoCities : []
   const householdSeoCitiesLoaded =

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { inferDisplayLocation, loadNewsScrapeConfig, scrapeLatestNews } from "../_shared/news.ts";
+import { requireProjectActive } from "../_shared/projectLifecycle.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -163,6 +164,15 @@ serve(async (req) => {
 
   try {
     const supabase = createServiceClient();
+    const lifecycle = await requireProjectActive({
+      supabase,
+      functionName: "lpg-news",
+      baseHeaders: CORS,
+    });
+    if (!lifecycle.ok) {
+      return lifecycle.response;
+    }
+
     const config = await loadNewsScrapeConfig(supabase);
     const url = new URL(req.url);
     const configuredLimit = Math.max(1, Math.round(config.newsLimit));

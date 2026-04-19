@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireProjectActive } from "../_shared/projectLifecycle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,6 +35,18 @@ serve(async (req) => {
   }
 
   try {
+    const lifecycle = await requireProjectActive({
+      supabase: createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      ),
+      functionName: "verify-payment",
+      baseHeaders: corsHeaders,
+    });
+    if (!lifecycle.ok) {
+      return lifecycle.response;
+    }
+
     const {
       razorpay_order_id,
       razorpay_payment_id,

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { buildNewsArticleCandidates, loadNewsScrapeConfig, scrapeLatestNews } from "../_shared/news.ts";
+import { requireProjectActive } from "../_shared/projectLifecycle.ts";
 import {
   createScrapeJob,
   finishScrapeJob,
@@ -36,6 +37,15 @@ serve(async (req) => {
   let governanceJobId: number | null = null;
 
   try {
+    const lifecycle = await requireProjectActive({
+      supabase: createServiceClient(),
+      functionName: "scrape-news",
+      baseHeaders: CORS,
+    });
+    if (!lifecycle.ok) {
+      return lifecycle.response;
+    }
+
     const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
     const token = getBearerToken(req);
 

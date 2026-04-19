@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireProjectActive } from "../_shared/projectLifecycle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -149,6 +150,18 @@ function buildEmailText(email: string) {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  const lifecycle = await requireProjectActive({
+    supabase: createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    ),
+    functionName: "notify-sign-in",
+    baseHeaders: corsHeaders,
+  });
+  if (!lifecycle.ok) {
+    return lifecycle.response;
   }
 
   if (req.method !== "POST") {

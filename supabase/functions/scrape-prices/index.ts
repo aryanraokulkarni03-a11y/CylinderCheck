@@ -13,6 +13,7 @@ import {
   recordScrapeJobAttempt,
   storeRawSourceDocument,
 } from "../_shared/scrapeJobs.ts";
+import { requireProjectActive } from "../_shared/projectLifecycle.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -1186,6 +1187,15 @@ serve(async (req: Request) => {
   let governanceJobId: number | null = null;
 
   try {
+    const lifecycle = await requireProjectActive({
+      supabase: createServiceClient(),
+      functionName: "scrape-prices",
+      baseHeaders: CORS,
+    });
+    if (!lifecycle.ok) {
+      return lifecycle.response;
+    }
+
     const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";

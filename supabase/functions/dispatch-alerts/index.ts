@@ -11,6 +11,7 @@ import {
   finishAlertDispatchJob,
   recordAlertDispatchAttempt,
 } from "../_shared/alertDispatchJobs.ts";
+import { requireProjectActive } from "../_shared/projectLifecycle.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -206,6 +207,15 @@ serve(async (req) => {
 
   if (req.method !== "POST") {
     return jsonResponse(405, { ok: false, error: "Method not allowed" });
+  }
+
+  const lifecycle = await requireProjectActive({
+    supabase: createServiceClient(),
+    functionName: "dispatch-alerts",
+    baseHeaders: CORS,
+  });
+  if (!lifecycle.ok) {
+    return lifecycle.response;
   }
 
   let jobId: number | null = null;

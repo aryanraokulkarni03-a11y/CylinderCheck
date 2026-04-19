@@ -1,9 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireProjectActive } from "../_shared/projectLifecycle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+function createServiceClient() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  );
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,6 +20,15 @@ serve(async (req) => {
   }
 
   try {
+    const lifecycle = await requireProjectActive({
+      supabase: createServiceClient(),
+      functionName: "create-order",
+      baseHeaders: corsHeaders,
+    });
+    if (!lifecycle.ok) {
+      return lifecycle.response;
+    }
+
     const { contact, pin } = await req.json();
 
     const keyId     = Deno.env.get("RAZORPAY_KEY_ID");
